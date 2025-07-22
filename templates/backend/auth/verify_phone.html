@@ -2,31 +2,449 @@
 {% load static %}
 
 {% block title %}Vérification Téléphone - Vidé-Grenier Kamer{% endblock %}
-{% block content %}
+{% block meta_description %}Vérifiez votre numéro de téléphone pour activer votre compte Vidé-Grenier Kamer et accéder à toutes les fonctionnalités de sécurité.{% endblock %}
 
-<div class="max-w-md mx-auto mt-12 bg-white rounded-xl shadow-lg p-8">
-    <div class="flex flex-col items-center mb-6">
-        <img src="{% static 'images/logo.png' %}" alt="Vidé-Grenier Kamer Logo" class="w-16 h-16 rounded-full mb-2 shadow">
-        <h1 class="text-2xl font-bold text-vgk-green-700 mb-2 text-center">Vérification du numéro de téléphone</h1>
-        <p class="text-gray-600 text-center text-sm mb-2">Activez votre compte pour profiter de toutes les fonctionnalités de <span class="font-semibold text-vgk-green-600">Vidé-Grenier Kamer</span>.</p>
-        <ul class="text-xs text-gray-500 mb-4 list-disc list-inside text-left w-full">
-            <li>Sécurisez vos transactions et votre profil</li>
-            <li>Recevez des notifications importantes</li>
-            <li>Accédez à la messagerie et au support</li>
-        </ul>
-    </div>
-    <form method="post" novalidate class="space-y-6">
-        {% csrf_token %}
-        <div>
-            <label for="code" class="block font-semibold mb-2">Code de vérification reçu par SMS</label>
-            <input type="text" name="code" id="code" maxlength="6" class="form-control w-full text-lg tracking-widest text-center" placeholder="Entrez le code" required>
-            {% if error %}<div class="text-red-500 text-xs mt-2 text-center">{{ error }}</div>{% endif %}
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center py-12 px-4">
+    <div class="max-w-lg w-full">
+        <!-- Carte principale -->
+        <div class="bg-white rounded-2xl shadow-2xl p-8 transform hover:scale-105 transition-transform duration-300">
+            <!-- Header avec animation -->
+            <div class="text-center mb-8">
+                <div class="flex justify-center mb-6">
+                    <div class="relative">
+                        <div class="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                            <i data-lucide="smartphone" class="w-12 h-12 text-white"></i>
+                        </div>
+                        <div class="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center animate-bounce">
+                            <i data-lucide="shield-check" class="w-4 h-4 text-white"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Vérification en cours...</h1>
+                <p class="text-gray-600 mb-4">Activez votre compte pour profiter de toutes les fonctionnalités de <span class="font-semibold text-blue-600">Vidé-Grenier Kamer</span></p>
+                
+                <!-- Étapes de progression -->
+                <div class="flex justify-center items-center space-x-4 mb-6">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                            <i data-lucide="check" class="w-4 h-4 text-white"></i>
+                        </div>
+                        <span class="ml-2 text-sm text-green-600 font-semibold">Inscription</span>
+                    </div>
+                    <div class="w-8 h-1 bg-blue-500"></div>
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center animate-pulse">
+                            <i data-lucide="smartphone" class="w-4 h-4 text-white"></i>
+                        </div>
+                        <span class="ml-2 text-sm text-blue-600 font-semibold">Vérification</span>
+                    </div>
+                    <div class="w-8 h-1 bg-gray-300"></div>
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                            <i data-lucide="user-check" class="w-4 h-4 text-gray-500"></i>
+                        </div>
+                        <span class="ml-2 text-sm text-gray-500">Activation</span>
+                    </div>
+                </div>
+
+                <!-- Informations sur les avantages -->
+                <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 mb-6">
+                    <h3 class="font-semibold text-gray-800 mb-3 flex items-center justify-center">
+                        <i data-lucide="star" class="w-4 h-4 mr-2 text-yellow-500"></i>
+                        Avantages de la vérification
+                    </h3>
+                    <div class="grid grid-cols-2 gap-3 text-xs text-gray-600">
+                        <div class="flex items-center">
+                            <i data-lucide="shield-check" class="w-3 h-3 mr-2 text-green-500"></i>
+                            <span>Transactions sécurisées</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i data-lucide="message-circle" class="w-3 h-3 mr-2 text-blue-500"></i>
+                            <span>Messagerie instantanée</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i data-lucide="bell" class="w-3 h-3 mr-2 text-orange-500"></i>
+                            <span>Notifications SMS</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i data-lucide="award" class="w-3 h-3 mr-2 text-purple-500"></i>
+                            <span>Badge "Vérifié"</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations sur le SMS envoyé -->
+            <div class="bg-blue-50 rounded-lg p-4 mb-6 border-l-4 border-blue-500">
+                <div class="flex items-start space-x-3">
+                    <i data-lucide="info" class="w-5 h-5 text-blue-500 mt-0.5"></i>
+                    <div>
+                        <h4 class="font-semibold text-blue-800 mb-1">Code envoyé par SMS</h4>
+                        <p class="text-blue-700 text-sm mb-2">
+                            Nous avons envoyé un code de vérification à 6 chiffres au numéro :
+                        </p>
+                        <div class="bg-white rounded-lg p-2 border border-blue-200">
+                            <span class="font-mono text-blue-800 font-semibold">{{ user.phone|default:"+237 6XX XXX XXX" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulaire de vérification -->
+            <form method="post" novalidate class="space-y-6" id="verification-form">
+                {% csrf_token %}
+                
+                <!-- Messages d'erreur -->
+                {% if error %}
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                        <div class="flex items-center">
+                            <i data-lucide="alert-circle" class="w-5 h-5 text-red-500 mr-2"></i>
+                            <div class="text-red-700 text-sm">{{ error }}</div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Champ code de vérification -->
+                <div class="space-y-2">
+                    <label for="code" class="block font-semibold text-gray-700 text-center">
+                        <i data-lucide="key" class="w-4 h-4 inline mr-2"></i>
+                        Code de vérification (6 chiffres)
+                    </label>
+                    
+                    <!-- Input spécial pour le code -->
+                    <div class="flex justify-center">
+                        <div class="grid grid-cols-6 gap-2" id="code-inputs">
+                            <!-- Ces inputs seront générés par JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Input caché pour le formulaire -->
+                    <input type="hidden" name="code" id="code-hidden" maxlength="6" required>
+                    
+                    <p class="text-xs text-gray-500 text-center mt-2">
+                        Saisissez les 6 chiffres reçus par SMS
+                    </p>
+                </div>
+
+                <!-- Timer pour renvoyer le code -->
+                <div class="text-center">
+                    <div id="resend-timer" class="text-sm text-gray-500 mb-2">
+                        Vous pouvez renvoyer le code dans <span id="countdown" class="font-semibold text-blue-600">60</span> secondes
+                    </div>
+                    <div id="resend-section" class="hidden">
+                        <p class="text-sm text-gray-600 mb-2">Vous n'avez pas reçu le code ?</p>
+                        <button type="button" onclick="resendCode()" class="text-blue-600 hover:text-blue-700 font-semibold text-sm hover:underline flex items-center justify-center mx-auto">
+                            <i data-lucide="refresh-cw" class="w-4 h-4 mr-1"></i>
+                            Renvoyer le code
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bouton de vérification -->
+                <button type="submit" id="verify-button" disabled class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-lg font-semibold text-lg shadow-lg hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                    <i data-lucide="shield-check" class="w-5 h-5 mr-2"></i>
+                    <span id="button-text">Vérifier le code</span>
+                </button>
+            </form>
+
+            <!-- Aide et support -->
+            <div class="mt-8 space-y-4">
+                <!-- FAQ rapide -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                        <i data-lucide="help-circle" class="w-4 h-4 mr-2"></i>
+                        Problèmes fréquents
+                    </h4>
+                    <div class="space-y-2 text-sm text-gray-600">
+                        <details class="cursor-pointer">
+                            <summary class="hover:text-gray-800">❓ Je n'ai pas reçu le SMS</summary>
+                            <p class="mt-2 pl-4 text-xs">Vérifiez votre boîte de réception, les messages peuvent parfois arriver avec un délai de 2-3 minutes. Assurez-vous que votre téléphone a du réseau.</p>
+                        </details>
+                        <details class="cursor-pointer">
+                            <summary class="hover:text-gray-800">❓ Le code ne fonctionne pas</summary>
+                            <p class="mt-2 pl-4 text-xs">Vérifiez que vous saisissez bien les 6 chiffres dans l'ordre. Le code expire après 10 minutes.</p>
+                        </details>
+                        <details class="cursor-pointer">
+                            <summary class="hover:text-gray-800">❓ Mauvais numéro de téléphone</summary>
+                            <p class="mt-2 pl-4 text-xs">Contactez notre support pour modifier votre numéro de téléphone.</p>
+                        </details>
+                    </div>
+                </div>
+
+                <!-- Contact support -->
+                <div class="text-center">
+                    <p class="text-xs text-gray-500 mb-2">
+                        Besoin d'aide ? Notre équipe est là pour vous
+                    </p>
+                    <div class="flex justify-center space-x-4 text-xs">
+                        <a href="tel:+237694638412" class="flex items-center text-green-600 hover:text-green-700">
+                            <i data-lucide="phone" class="w-3 h-3 mr-1"></i>
+                            Appeler
+                        </a>
+                        <a href="https://wa.me/237694638412" target="_blank" class="flex items-center text-blue-600 hover:text-blue-700">
+                            <i data-lucide="message-circle" class="w-3 h-3 mr-1"></i>
+                            WhatsApp
+                        </a>
+                        <a href="mailto:support@videgrenier-kamer.com" class="flex items-center text-purple-600 hover:text-purple-700">
+                            <i data-lucide="mail" class="w-3 h-3 mr-1"></i>
+                            Email
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
-        <button type="submit" class="w-full bg-gradient-to-r from-vgk-green-600 to-vgk-orange-500 text-white py-3 rounded-lg font-semibold text-lg shadow hover:from-vgk-green-700 hover:to-vgk-orange-600 transition">Vérifier</button>
-    </form>
-    <div class="mt-8 text-center text-sm">
-        <span>Vous n'avez pas reçu le code ?</span>
-        <a href="?resend=1" class="text-vgk-green-600 hover:underline ml-2">Renvoyer le code</a>
+
+        <!-- Sécurité -->
+        <div class="mt-8 text-center">
+            <div class="flex justify-center items-center space-x-4 text-xs text-gray-500">
+                <div class="flex items-center">
+                    <i data-lucide="shield-check" class="w-4 h-4 mr-1 text-green-500"></i>
+                    <span>Vérification sécurisée</span>
+                </div>
+                <div class="flex items-center">
+                    <i data-lucide="clock" class="w-4 h-4 mr-1 text-blue-500"></i>
+                    <span>Code valide 10 min</span>
+                </div>
+                <div class="flex items-center">
+                    <i data-lucide="lock" class="w-4 h-4 mr-1 text-purple-500"></i>
+                    <span>SSL chiffré</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    createCodeInputs();
+    startCountdown();
+});
+
+function createCodeInputs() {
+    const container = document.getElementById('code-inputs');
+    const hiddenInput = document.getElementById('code-hidden');
+    
+    for (let i = 0; i < 6; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.maxLength = '1';
+        input.className = 'w-12 h-12 text-center text-2xl font-bold border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none transition-colors duration-200 bg-gray-50 focus:bg-white';
+        input.id = `code-${i}`;
+        
+        input.addEventListener('input', function(e) {
+            const value = e.target.value;
+            
+            // Ne permettre que les chiffres
+            if (!/^\d$/.test(value) && value !== '') {
+                e.target.value = '';
+                return;
+            }
+            
+            // Passer au champ suivant
+            if (value && i < 5) {
+                document.getElementById(`code-${i + 1}`).focus();
+            }
+            
+            updateHiddenInput();
+            checkFormCompletion();
+        });
+        
+        input.addEventListener('keydown', function(e) {
+            // Permettre la suppression et revenir au champ précédent
+            if (e.key === 'Backspace' && !e.target.value && i > 0) {
+                document.getElementById(`code-${i - 1}`).focus();
+            }
+            
+            // Permettre les flèches gauche/droite
+            if (e.key === 'ArrowLeft' && i > 0) {
+                document.getElementById(`code-${i - 1}`).focus();
+            }
+            if (e.key === 'ArrowRight' && i < 5) {
+                document.getElementById(`code-${i + 1}`).focus();
+            }
+        });
+        
+        input.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const paste = (e.clipboardData || window.clipboardData).getData('text');
+            const digits = paste.replace(/\D/g, '').slice(0, 6);
+            
+            for (let j = 0; j < Math.min(digits.length, 6); j++) {
+                document.getElementById(`code-${j}`).value = digits[j];
+            }
+            
+            updateHiddenInput();
+            checkFormCompletion();
+            
+            // Focus sur le prochain champ vide ou le dernier
+            const nextEmpty = Math.min(digits.length, 5);
+            document.getElementById(`code-${nextEmpty}`).focus();
+        });
+        
+        container.appendChild(input);
+    }
+    
+    // Focus sur le premier champ
+    document.getElementById('code-0').focus();
+}
+
+function updateHiddenInput() {
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+        code += document.getElementById(`code-${i}`).value || '';
+    }
+    document.getElementById('code-hidden').value = code;
+}
+
+function checkFormCompletion() {
+    const code = document.getElementById('code-hidden').value;
+    const button = document.getElementById('verify-button');
+    
+    if (code.length === 6) {
+        button.disabled = false;
+        button.classList.remove('opacity-50', 'cursor-not-allowed');
+        
+        // Animation de succès
+        for (let i = 0; i < 6; i++) {
+            const input = document.getElementById(`code-${i}`);
+            input.classList.add('border-green-500', 'bg-green-50');
+        }
+    } else {
+        button.disabled = true;
+        button.classList.add('opacity-50', 'cursor-not-allowed');
+        
+        // Retirer l'animation de succès
+        for (let i = 0; i < 6; i++) {
+            const input = document.getElementById(`code-${i}`);
+            input.classList.remove('border-green-500', 'bg-green-50');
+        }
+    }
+}
+
+function startCountdown() {
+    let timeLeft = 60;
+    const countdown = document.getElementById('countdown');
+    const timerSection = document.getElementById('resend-timer');
+    const resendSection = document.getElementById('resend-section');
+    
+    const timer = setInterval(() => {
+        timeLeft--;
+        countdown.textContent = timeLeft;
+        
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            timerSection.classList.add('hidden');
+            resendSection.classList.remove('hidden');
+        }
+    }, 1000);
+}
+
+function resendCode() {
+    const button = event.target.closest('button');
+    const originalText = button.innerHTML;
+    
+    // Animation du bouton
+    button.innerHTML = '<i data-lucide="loader" class="w-4 h-4 mr-1 animate-spin"></i>Envoi en cours...';
+    button.disabled = true;
+    
+    // Simuler l'envoi (remplacer par un vrai appel AJAX)
+    fetch('?resend=1', {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Succès
+            button.innerHTML = '<i data-lucide="check" class="w-4 h-4 mr-1 text-green-500"></i>Code renvoyé !';
+            
+            // Redémarrer le timer
+            setTimeout(() => {
+                document.getElementById('resend-section').classList.add('hidden');
+                document.getElementById('resend-timer').classList.remove('hidden');
+                startCountdown();
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 2000);
+            
+            // Vider les champs et refocus
+            for (let i = 0; i < 6; i++) {
+                document.getElementById(`code-${i}`).value = '';
+            }
+            document.getElementById('code-0').focus();
+            updateHiddenInput();
+            checkFormCompletion();
+        } else {
+            // Erreur
+            button.innerHTML = '<i data-lucide="x" class="w-4 h-4 mr-1 text-red-500"></i>Erreur';
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 2000);
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        button.innerHTML = '<i data-lucide="x" class="w-4 h-4 mr-1 text-red-500"></i>Erreur réseau';
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }, 2000);
+    });
+}
+
+// Soumission du formulaire avec animation
+document.getElementById('verification-form').addEventListener('submit', function(e) {
+    const button = document.getElementById('verify-button');
+    const buttonText = document.getElementById('button-text');
+    
+    button.disabled = true;
+    buttonText.innerHTML = '<i data-lucide="loader" class="w-5 h-5 mr-2 animate-spin"></i>Vérification...';
+});
+</script>
+
+<style>
+/* Animations personnalisées */
+@keyframes pulse-border {
+    0%, 100% {
+        border-color: #3b82f6;
+    }
+    50% {
+        border-color: #1d4ed8;
+    }
+}
+
+.code-input:focus {
+    animation: pulse-border 1s ease-in-out infinite;
+}
+
+/* Style pour les details */
+details > summary {
+    list-style: none;
+}
+
+details > summary::-webkit-details-marker {
+    display: none;
+}
+
+details[open] > summary {
+    color: #374151;
+    font-weight: 600;
+}
+
+/* Animation de succès pour les inputs */
+.input-success {
+    animation: success-flash 0.3s ease-out;
+}
+
+@keyframes success-flash {
+    0% { background-color: #f0f9ff; }
+    50% { background-color: #dcfce7; }
+    100% { background-color: #f0fdf4; }
+}
+</style>
 {% endblock %}

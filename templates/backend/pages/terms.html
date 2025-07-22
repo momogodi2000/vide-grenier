@@ -1,25 +1,580 @@
 {% extends 'base.html' %}
- {% load static %}
+{% load static %}
 
 {% block title %}Conditions d'utilisation - Vidé-Grenier Kamer{% endblock %}
+{% block meta_description %}Conditions générales d'utilisation de Vidé-Grenier Kamer. Règles, responsabilités et droits des utilisateurs de notre marketplace camerounaise.{% endblock %}
+
 {% block content %}
-<div class="max-w-3xl mx-auto mt-12 bg-white rounded-xl shadow-lg p-8">
-    <div class="flex flex-col items-center mb-6">
-        <img src="{% static 'images/logo.png' %}" alt="Vidé-Grenier Kamer Logo" class="w-16 h-16 rounded-full mb-2 shadow">
-        <h1 class="text-2xl font-bold text-vgk-green-700 mb-2 text-center">Conditions d'utilisation</h1>
-        <p class="text-gray-600 text-center text-sm mb-4">Veuillez lire attentivement les règles d'utilisation de la plateforme Vidé-Grenier Kamer.</p>
+<div class="min-h-screen bg-gradient-to-br from-green-50 via-white to-yellow-50">
+    <!-- Hero Section -->
+    <div class="bg-gradient-to-r from-green-600 to-yellow-600 text-white py-16">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 backdrop-blur-sm">
+                <i data-lucide="file-text" class="w-10 h-10"></i>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">Conditions d'Utilisation</h1>
+            <p class="text-xl mb-4 max-w-2xl mx-auto">Règles d'utilisation de la plateforme Vidé-Grenier Kamer pour une expérience sécurisée et équitable pour tous.</p>
+            <div class="text-sm opacity-90">Version 2.0 - Effective depuis Juillet 2025</div>
+        </div>
     </div>
-    <div class="space-y-4 text-gray-700 text-base">
-        <h2 class="font-semibold text-vgk-green-700">Principes généraux</h2>
-        <ul class="list-disc list-inside ml-4 text-sm">
-            <li>Respect des autres membres et des lois en vigueur</li>
-            <li>Publication d'annonces véridiques et légales</li>
-            <li>Interdiction de vente de produits illicites</li>
-            <li>Protection des données personnelles</li>
-        </ul>
-        <h2 class="font-semibold text-vgk-green-700 mt-6">Responsabilités</h2>
-        <p>Chaque utilisateur est responsable des informations qu'il publie et des transactions réalisées sur la plateforme.</p>
-        <p>Pour toute question, contactez-nous via la page <a href="/contact/" class="text-vgk-green-600 hover:underline">Contact</a>.</p>
+
+    <div class="max-w-4xl mx-auto px-4 py-16">
+        <!-- Fil d'Ariane -->
+        <nav class="mb-8 text-sm text-gray-500 flex items-center space-x-2 bg-white rounded-lg px-4 py-2 shadow">
+            <a href="/" class="hover:text-green-600 transition-colors duration-200">
+                <i data-lucide="home" class="w-4 h-4 inline mr-1"></i>Accueil
+            </a>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <span class="font-semibold text-green-700">Conditions d'utilisation</span>
+        </nav>
+
+        <!-- Résumé des Points Clés -->
+        <div class="bg-gradient-to-r from-green-50 to-yellow-100 rounded-2xl p-8 mb-12 border-l-4 border-green-500">
+            <h2 class="text-2xl font-bold text-green-700 mb-4 flex items-center">
+                <i data-lucide="key" class="w-6 h-6 mr-2"></i>
+                Points Clés à Retenir
+            </h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-white rounded-lg p-4 shadow text-center">
+                    <i data-lucide="users" class="w-8 h-8 text-green-500 mx-auto mb-2"></i>
+                    <div class="font-semibold text-gray-800">Communauté Respectueuse</div>
+                    <p class="text-sm text-gray-600">Respect mutuel entre tous les membres</p>
+                </div>
+                <div class="bg-white rounded-lg p-4 shadow text-center">
+                    <i data-lucide="shield-check" class="w-8 h-8 text-blue-500 mx-auto mb-2"></i>
+                    <div class="font-semibold text-gray-800">Transactions Sécurisées</div>
+                    <p class="text-sm text-gray-600">Protection acheteur et vendeur</p>
+                </div>
+                <div class="bg-white rounded-lg p-4 shadow text-center">
+                    <i data-lucide="gavel" class="w-8 h-8 text-orange-500 mx-auto mb-2"></i>
+                    <div class="font-semibold text-gray-800">Conformité Légale</div>
+                    <p class="text-sm text-gray-600">Respect des lois camerounaises</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl p-8 space-y-10">
+            <!-- 1. Acceptance des Conditions -->
+            <section>
+                <h2 class="text-2xl font-bold text-green-700 mb-4 flex items-center border-b border-gray-200 pb-2">
+                    <i data-lucide="check-circle" class="w-6 h-6 mr-2"></i>
+                    1. Acceptation des Conditions
+                </h2>
+                <div class="space-y-4">
+                    <p class="text-gray-700 leading-relaxed">
+                        En utilisant Vidé-Grenier Kamer, vous acceptez d'être lié par ces conditions d'utilisation. Si vous n'acceptez pas ces termes, veuillez ne pas utiliser notre plateforme.
+                    </p>
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <h4 class="font-bold text-blue-700 mb-2">Qui peut utiliser notre service ?</h4>
+                        <ul class="text-gray-600 space-y-1">
+                            <li>• Personnes âgées de 18 ans et plus</li>
+                            <li>• Résidents du Cameroun (Douala et Yaoundé prioritaires)</li>
+                            <li>• Détenteurs d'un numéro de téléphone valide</li>
+                            <li>• Utilisateurs respectant les lois locales</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Principes Généraux -->
+            <section>
+                <h2 class="text-2xl font-bold text-blue-700 mb-4 flex items-center border-b border-gray-200 pb-2">
+                    <i data-lucide="compass" class="w-6 h-6 mr-2"></i>
+                    2. Principes Généraux de la Communauté
+                </h2>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <h4 class="font-bold text-gray-800 flex items-center">
+                            <i data-lucide="heart" class="w-5 h-5 mr-2 text-red-500"></i>
+                            Valeurs Fondamentales
+                        </h4>
+                        <ul class="text-gray-600 space-y-2 ml-7">
+                            <li>• Respect des autres membres et de leurs biens</li>
+                            <li>• Honnêteté dans toutes les transactions</li>
+                            <li>• Communication courtoise et constructive</li>
+                            <li>• Protection de l'environnement par la réutilisation</li>
+                        </ul>
+                    </div>
+                    <div class="space-y-4">
+                        <h4 class="font-bold text-gray-800 flex items-center">
+                            <i data-lucide="ban" class="w-5 h-5 mr-2 text-red-500"></i>
+                            Comportements Interdits
+                        </h4>
+                        <ul class="text-gray-600 space-y-2 ml-7">
+                            <li>• Harcèlement ou discrimination</li>
+                            <li>• Contenu offensant ou inapproprié</li>
+                            <li>• Escroquerie ou tentative de fraude</li>
+                            <li>• Violation des droits d'autrui</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Utilisation de la Plateforme -->
+            <section>
+                <h2 class="text-2xl font-bold text-purple-700 mb-4 flex items-center border-b border-gray-200 pb-2">
+                    <i data-lucide="monitor" class="w-6 h-6 mr-2"></i>
+                    3. Utilisation de la Plateforme
+                </h2>
+                <div class="space-y-6">
+                    <div class="bg-purple-50 rounded-lg p-6">
+                        <h4 class="font-bold text-purple-700 mb-3">Création et Gestion de Compte</h4>
+                        <ul class="text-gray-600 space-y-2">
+                            <li>• <strong>Informations exactes :</strong> Vous devez fournir des informations véridiques lors de l'inscription</li>
+                            <li>• <strong>Sécurité :</strong> Vous êtes responsable de la sécurité de votre mot de passe</li>
+                            <li>• <strong>Utilisation personnelle :</strong> Un compte par personne, usage non commercial sauf autorisation</li>
+                            <li>• <strong>Mise à jour :</strong> Maintenez vos informations de contact à jour</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-green-50 rounded-lg p-6">
+                        <h4 class="font-bold text-green-700 mb-3">Publication d'Annonces</h4>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <h5 class="font-semibold text-gray-800 mb-2">✅ Autorisé</h5>
+                                <ul class="text-sm text-gray-600 space-y-1">
+                                    <li>• Articles de seconde main personnels</li>
+                                    <li>• Photos réelles et récentes</li>
+                                    <li>• Descriptions honnêtes et détaillées</li>
+                                    <li>• Prix raisonnables et négociables</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h5 class="font-semibold text-gray-800 mb-2">❌ Interdit</h5>
+                                <ul class="text-sm text-gray-600 space-y-1">
+                                    <li>• Produits illégaux ou dangereux</li>
+                                    <li>• Articles neufs sans autorisation</li>
+                                    <li>• Contenu sexuel ou violent</li>
+                                    <li>• Animaux vivants ou produits dérivés</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. Transactions et Paiements -->
+            <section>
+                <h2 class="text-2xl font-bold text-orange-700 mb-4 flex items-center border-b border-gray-200 pb-2">
+                    <i data-lucide="credit-card" class="w-6 h-6 mr-2"></i>
+                    4. Transactions et Paiements
+                </h2>
+                <div class="space-y-6">
+                    <div class="bg-orange-50 rounded-lg p-6">
+                        <h4 class="font-bold text-orange-700 mb-3">Modes de Paiement Acceptés</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-white rounded-lg p-4 text-center shadow">
+                                <i data-lucide="smartphone" class="w-8 h-8 text-orange-500 mx-auto mb-2"></i>
+                                <div class="font-semibold">Orange Money</div>
+                                <p class="text-xs text-gray-600">Paiement mobile sécurisé</p>
+                            </div>
+                            <div class="bg-white rounded-lg p-4 text-center shadow">
+                                <i data-lucide="phone" class="w-8 h-8 text-yellow-500 mx-auto mb-2"></i>
+                                <div class="font-semibold">MTN Mobile Money</div>
+                                <p class="text-xs text-gray-600">Solution mobile MTN</p>
+                            </div>
+                            <div class="bg-white rounded-lg p-4 text-center shadow">
+                                <i data-lucide="credit-card" class="w-8 h-8 text-blue-500 mx-auto mb-2"></i>
+                                <div class="font-semibold">Carte Bancaire</div>
+                                <p class="text-xs text-gray-600">Visa, Mastercard</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50 rounded-lg p-6">
+                        <h4 class="font-bold text-blue-700 mb-3">Système de Protection</h4>
+                        <ul class="text-gray-600 space-y-2">
+                            <li>• <strong>Paiement sécurisé :</strong> Fonds bloqués jusqu'à confirmation de réception</li>
+                            <li>• <strong>Garantie de remboursement :</strong> 7 jours pour signaler un problème</li>
+                            <li>• <strong>Support dédié :</strong> Médiation en cas de litige</li>
+                            <li>• <strong>Évaluation mutuelle :</strong> Système de notation pour la confiance</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. Responsabilités -->
+            <section>
+                <h2 class="text-2xl font-bold text-red-700 mb-4 flex items-center border-b border-gray-200 pb-2">
+                    <i data-lucide="alert-triangle" class="w-6 h-6 mr-2"></i>
+                    5. Responsabilités des Parties
+                </h2>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-red-50 rounded-lg p-6">
+                        <h4 class="font-bold text-red-700 mb-3">Responsabilités des Utilisateurs</h4>
+                        <ul class="text-gray-600 space-y-2">
+                            <li>• Véracité des informations publiées</li>
+                            <li>• Respect des lois camerounaises</li>
+                            <li>• Sécurité des transactions</li>
+                            <li>• Communication respectueuse</li>
+                            <li>• Signalement des abus</li>
+                        </ul>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-6">
+                        <h4 class="font-bold text-green-700 mb-3">Engagements de Vidé-Grenier Kamer</h4>
+                        <ul class="text-gray-600 space-y-2">
+                            <li>• Plateforme sécurisée et fonctionnelle</li>
+                            <li>• Protection des données personnelles</li>
+                            <li>• Support client réactif</li>
+                            <li>• Modération des contenus</li>
+                            <li>• Amélioration continue du service</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. Propriété Intellectuelle -->
+            <section>
+                <h2 class="text-2xl font-bold text-indigo-700 mb-4 flex items-center border-b border-gray-200 pb-2">
+                    <i data-lucide="copyright" class="w-6 h-6 mr-2"></i>
+                    6. Propriété Intellectuelle
+                </h2>
+                <div class="bg-indigo-50 rounded-lg p-6">
+                    <p class="text-gray-700 mb-4">
+                        Le contenu de la plateforme Vidé-Grenier Kamer (design, logos, textes, fonctionnalités) est protégé par les droits de propriété intellectuelle.
+                    </p>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="font-bold text-indigo-700 mb-2">Vos Droits</h4>
+                            <ul class="text-sm text-gray-600 space-y-1">
+                                <li>• Utilisation personnelle de la plateforme</li>
+                                <li>• Publication de vos propres contenus</li>
+                                <li>• Partage de liens vers nos pages</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-indigo-700 mb-2">Nos Droits</h4>
+                            <ul class="text-sm text-gray-600 space-y-1">
+                                <li>• Marque "Vidé-Grenier Kamer"</li>
+                                <li>• Design et interface utilisateur</li>
+                                <li>• Code source et algorithmes</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. Suspension et Résiliation -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-700 mb-4 flex items-center border-b border-gray-200 pb-2">
+                    <i data-lucide="user-x" class="w-6 h-6 mr-2"></i>
+                    7. Suspension et Résiliation
+                </h2>
+                <div class="space-y-4">
+                    <div class="bg-yellow-50 rounded-lg p-6">
+                        <h4 class="font-bold text-yellow-700 mb-3">Motifs de Suspension</h4>
+                        <ul class="text-gray-600 space-y-2">
+                            <li>• Violation répétée des conditions d'utilisation</li>
+                            <li>• Activité frauduleuse ou suspicieuse</li>
+                            <li>• Harcèlement d'autres utilisateurs</li>
+                            <li>• Publication de contenu illégal</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h4 class="font-bold text-gray-700 mb-3">Procédure</h4>
+                        <p class="text-gray-600">
+                            En cas de violation, nous appliquons une politique progressive : avertissement, suspension temporaire, puis suspension définitive si nécessaire. Vous avez le droit de faire appel de toute décision.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 8. Modifications -->
+            <section>
+                <h2 class="text-2xl font-bold text-teal-700 mb-4 flex items-center border-b border-gray-200 pb-2">
+                    <i data-lucide="edit" class="w-6 h-6 mr-2"></i>
+                    8. Modifications des Conditions
+                </h2>
+                <div class="bg-teal-50 rounded-lg p-6">
+                    <p class="text-gray-700 mb-4">
+                        Nous nous réservons le droit de modifier ces conditions d'utilisation à tout moment pour refléter les changements dans nos services ou la législation.
+                    </p>
+                    <div class="bg-white rounded-lg p-4">
+                        <h4 class="font-bold text-teal-700 mb-2">Notification des Changements</h4>
+                        <ul class="text-gray-600 space-y-1">
+                            <li>• Email à tous les utilisateurs actifs</li>
+                            <li>• Notification dans l'application</li>
+                            <li>• Publication sur notre site web</li>
+                            <li>• Délai de 30 jours avant application</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 9. Droit Applicable -->
+            <section>
+                <h2 class="text-2xl font-bold text-pink-700 mb-4 flex items-center border-b border-gray-200 pb-2">
+                    <i data-lucide="scale" class="w-6 h-6 mr-2"></i>
+                    9. Droit Applicable et Juridiction
+                </h2>
+                <div class="bg-pink-50 rounded-lg p-6">
+                    <p class="text-gray-700 mb-4">
+                        Ces conditions d'utilisation sont régies par le droit camerounais. Tout litige sera soumis à la juridiction des tribunaux de Douala, Cameroun.
+                    </p>
+                    <div class="bg-white rounded-lg p-4">
+                        <h4 class="font-bold text-pink-700 mb-2">Résolution des Conflits</h4>
+                        <ol class="text-gray-600 space-y-1">
+                            <li>1. Médiation via notre service client</li>
+                            <li>2. Arbitrage si accord mutuel</li>
+                            <li>3. Recours aux tribunaux en dernier ressort</li>
+                        </ol>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 10. Sanctions et Mesures Disciplinaires -->
+            <section>
+                <h2 class="text-2xl font-bold text-red-600 mb-4 flex items-center border-b border-gray-200 pb-2">
+                    <i data-lucide="alert-octagon" class="w-6 h-6 mr-2"></i>
+                    10. Sanctions et Mesures Disciplinaires
+                </h2>
+                <div class="space-y-4">
+                    <div class="bg-red-50 rounded-lg p-6">
+                        <h4 class="font-bold text-red-700 mb-3">Échelle des Sanctions</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-3 p-3 bg-white rounded-lg border-l-4 border-yellow-400">
+                                <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-500"></i>
+                                <div>
+                                    <div class="font-semibold text-gray-800">1. Avertissement</div>
+                                    <p class="text-sm text-gray-600">Première violation mineure des conditions</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3 p-3 bg-white rounded-lg border-l-4 border-orange-400">
+                                <i data-lucide="pause-circle" class="w-5 h-5 text-orange-500"></i>
+                                <div>
+                                    <div class="font-semibold text-gray-800">2. Suspension Temporaire</div>
+                                    <p class="text-sm text-gray-600">7 à 30 jours selon la gravité</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3 p-3 bg-white rounded-lg border-l-4 border-red-500">
+                                <i data-lucide="x-circle" class="w-5 h-5 text-red-500"></i>
+                                <div>
+                                    <div class="font-semibold text-gray-800">3. Suspension Définitive</div>
+                                    <p class="text-sm text-gray-600">Violations graves ou répétées</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 11. Contact -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-700 mb-4 flex items-center border-b border-gray-200 pb-2">
+                    <i data-lucide="message-circle" class="w-6 h-6 mr-2"></i>
+                    11. Contact et Questions
+                </h2>
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <p class="text-gray-700 mb-4">
+                        Pour toute question concernant ces conditions d'utilisation ou nos services :
+                    </p>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="flex items-center space-x-3">
+                            <i data-lucide="mail" class="w-5 h-5 text-blue-500"></i>
+                            <a href="mailto:legal@videgrenier-kamer.com" class="text-blue-600 hover:underline">legal@videgrenier-kamer.com</a>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i data-lucide="phone" class="w-5 h-5 text-green-500"></i>
+                            <a href="tel:+237694638412" class="text-green-600 hover:underline">+237 694 63 84 12</a>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i data-lucide="map-pin" class="w-5 h-5 text-orange-500"></i>
+                            <span class="text-gray-700">Douala & Yaoundé, Cameroun</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i data-lucide="message-square" class="w-5 h-5 text-purple-500"></i>
+                            <a href="https://wa.me/237694638412" target="_blank" class="text-purple-600 hover:underline">WhatsApp Support</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Acceptation et Navigation -->
+        <div class="mt-12 space-y-6">
+            <!-- Boutons d'action -->
+            <div class="text-center bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl p-8 text-white">
+                <h3 class="text-2xl font-bold mb-4">Prêt à Rejoindre Notre Communauté ?</h3>
+                <p class="mb-6 text-lg">En vous inscrivant, vous acceptez ces conditions et rejoignez des milliers d'utilisateurs satisfaits.</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{% url 'backend:register' %}" class="bg-white text-green-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center">
+                        <i data-lucide="user-plus" class="w-5 h-5 mr-2"></i>
+                        Créer mon compte
+                    </a>
+                    <a href="{% url 'backend:contact' %}" class="bg-transparent border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-colors duration-200 flex items-center justify-center">
+                        <i data-lucide="help-circle" class="w-5 h-5 mr-2"></i>
+                        Poser une question
+                    </a>
+                </div>
+            </div>
+
+            <!-- Documents connexes -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 text-center">Documents Connexes</h3>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <a href="{% url 'backend:privacy' %}" class="flex items-center space-x-3 p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200">
+                        <i data-lucide="shield-check" class="w-6 h-6 text-blue-500"></i>
+                        <div>
+                            <div class="font-semibold text-gray-800">Politique de Confidentialité</div>
+                            <p class="text-xs text-gray-600">Protection de vos données</p>
+                        </div>
+                    </a>
+                    <a href="{% url 'backend:about' %}" class="flex items-center space-x-3 p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors duration-200">
+                        <i data-lucide="info" class="w-6 h-6 text-green-500"></i>
+                        <div>
+                            <div class="font-semibold text-gray-800">À Propos</div>
+                            <p class="text-xs text-gray-600">Notre histoire et mission</p>
+                        </div>
+                    </a>
+                    <a href="{% url 'backend:contact' %}" class="flex items-center space-x-3 p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors duration-200">
+                        <i data-lucide="message-circle" class="w-6 h-6 text-orange-500"></i>
+                        <div>
+                            <div class="font-semibold text-gray-800">Support & Contact</div>
+                            <p class="text-xs text-gray-600">Aide et assistance</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Dernière mise à jour -->
+            <div class="text-center text-sm text-gray-500 bg-gray-50 rounded-lg p-4">
+                <div class="flex items-center justify-center space-x-2 mb-2">
+                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                    <span>Dernière mise à jour : 22 Juillet 2025</span>
+                </div>
+                <p>Ces conditions entrent en vigueur immédiatement pour tous les nouveaux utilisateurs et 30 jours après notification pour les utilisateurs existants.</p>
+            </div>
+        </div>
     </div>
 </div>
+
+<script>
+// Smooth scrolling for internal links
+document.addEventListener('DOMContentLoaded', function() {
+    const links = document.querySelectorAll('a[href^="#"]');
+    links.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+});
+
+// Reading progress indicator
+function createReadingProgress() {
+    const progressBar = document.createElement('div');
+    progressBar.className = 'fixed top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-blue-500 z-50 transition-all duration-300';
+    progressBar.style.transform = 'scaleX(0)';
+    progressBar.style.transformOrigin = 'left';
+    document.body.appendChild(progressBar);
+
+    window.addEventListener('scroll', function() {
+        const scrollTop = window.pageYOffset;
+        const docHeight = document.body.offsetHeight - window.innerHeight;
+        const scrollPercent = scrollTop / docHeight;
+        progressBar.style.transform = `scaleX(${scrollPercent})`;
+    });
+}
+
+// Initialize reading progress
+createReadingProgress();
+
+// Print functionality
+function printTerms() {
+    window.print();
+}
+
+// Add print button dynamically
+document.addEventListener('DOMContentLoaded', function() {
+    const printButton = document.createElement('button');
+    printButton.innerHTML = '<i data-lucide="printer" class="w-4 h-4 mr-2"></i>Imprimer';
+    printButton.className = 'fixed bottom-6 right-6 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-colors duration-200 flex items-center text-sm';
+    printButton.onclick = printTerms;
+    document.body.appendChild(printButton);
+    
+    // Initialize Lucide icons for the new button
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+});
+</script>
+
+<style>
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    body {
+        font-size: 12pt;
+        line-height: 1.5;
+    }
+    
+    h1, h2, h3 {
+        page-break-after: avoid;
+    }
+    
+    .bg-gradient-to-r,
+    .bg-gradient-to-br {
+        background: #f8f9fa !important;
+        color: #333 !important;
+    }
+}
+
+/* Smooth animations */
+section {
+    animation: fadeInUp 0.6s ease-out forwards;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+section:nth-child(1) { animation-delay: 0.1s; }
+section:nth-child(2) { animation-delay: 0.2s; }
+section:nth-child(3) { animation-delay: 0.3s; }
+section:nth-child(4) { animation-delay: 0.4s; }
+section:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Enhanced hover effects */
+.hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #22c55e, #3b82f6);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #16a34a, #2563eb);
+}
+</style>
 {% endblock %}

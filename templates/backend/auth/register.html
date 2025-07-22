@@ -2,74 +2,443 @@
 {% load static %}
 
 {% block title %}Inscription - Vidé-Grenier Kamer{% endblock %}
+{% block meta_description %}Créez votre compte Vidé-Grenier Kamer et rejoignez la première marketplace camerounaise de seconde main. Inscription gratuite et sécurisée.{% endblock %}
+
 {% block content %}
+<div class="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 py-12 px-4">
+    <div class="max-w-4xl mx-auto">
+        <!-- Hero Section -->
+        <div class="text-center mb-12">
+            <div class="flex justify-center mb-6">
+                <div class="relative">
+                    <img src="{% static 'images/logo.png' %}" alt="Vidé-Grenier Kamer Logo" class="w-24 h-24 rounded-full shadow-2xl border-4 border-white">
+                    <div class="absolute inset-0 bg-gradient-to-t from-vgk-green-600/20 to-transparent rounded-full"></div>
+                    <div class="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center animate-pulse">
+                        <i data-lucide="plus" class="w-4 h-4 text-white"></i>
+                    </div>
+                </div>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">Rejoignez la Communauté</h1>
+            <p class="text-xl text-gray-600 mb-6 max-w-2xl mx-auto">
+                Créez votre compte <span class="font-semibold text-vgk-green-600">Vidé-Grenier Kamer</span> et profitez de tous les avantages de notre marketplace camerounaise !
+            </p>
+            
+            <!-- Statistiques -->
+            <div class="flex justify-center space-x-8 mb-8">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-vgk-green-600">15K+</div>
+                    <div class="text-sm text-gray-500">Membres actifs</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-vgk-orange-600">100K+</div>
+                    <div class="text-sm text-gray-500">Articles vendus</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600">98%</div>
+                    <div class="text-sm text-gray-500">Satisfaction</div>
+                </div>
+            </div>
+        </div>
 
+        <!-- Carte principale -->
+        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div class="grid lg:grid-cols-2">
+                <!-- Panneau gauche - Avantages -->
+                <div class="bg-gradient-to-br from-vgk-green-600 to-vgk-orange-500 p-8 text-white lg:flex lg:flex-col lg:justify-center">
+                    <div class="mb-8">
+                        <h2 class="text-3xl font-bold mb-6">Pourquoi nous rejoindre ?</h2>
+                        
+                        <div class="space-y-6">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                    <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-lg mb-1">Vendez Facilement</h3>
+                                    <p class="text-white/90 text-sm">Publiez vos annonces en quelques clics et touchez des milliers d'acheteurs potentiels</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-lg mb-1">Achetez en Sécurité</h3>
+                                    <p class="text-white/90 text-sm">Paiement mobile sécurisé et protection acheteur garantie sur toutes vos transactions</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                    <i data-lucide="heart" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-lg mb-1">Sauvegardez vos Favoris</h3>
+                                    <p class="text-white/90 text-sm">Créez votre liste de souhaits et recevez des notifications sur vos articles préférés</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                    <i data-lucide="users" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-lg mb-1">Support Dédié</h3>
+                                    <p class="text-white/90 text-sm">Équipe support disponible 6j/7 via WhatsApp, email et téléphone</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Témoignage -->
+                    <div class="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <img src="{% static 'images/icons/marie.png' %}" alt="Marie" class="w-10 h-10 rounded-full">
+                            <div>
+                                <div class="font-semibold">Marie L.</div>
+                                <div class="text-xs text-white/70">Douala, utilisatrice depuis 6 mois</div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-white/90 italic">"J'ai vendu mes anciens appareils en 2 jours ! L'inscription est super simple et le support est formidable."</p>
+                    </div>
+                </div>
 
-<div class="max-w-lg mx-auto mt-12 bg-white rounded-xl shadow-lg p-8">
-    <div class="flex flex-col items-center mb-6">
-        <img src="{% static 'images/logo.png' %}" alt="Vidé-Grenier Kamer Logo" class="w-16 h-16 rounded-full mb-2 shadow">
-        <h1 class="text-2xl font-bold text-vgk-green-700 mb-2 text-center">Créer un compte</h1>
-        <p class="text-gray-600 text-center text-sm mb-2">Rejoignez <span class="font-semibold text-vgk-green-600">Vidé-Grenier Kamer</span> et profitez de tous les avantages de la communauté !</p>
-        <ul class="text-xs text-gray-500 mb-4 list-disc list-inside text-left w-full">
-            <li>Publiez vos annonces et vendez facilement</li>
-            <li>Suivez vos commandes et favoris</li>
-            <li>Bénéficiez d'un support client dédié</li>
-        </ul>
-    </div>
-    <form method="post" novalidate class="space-y-6">
-        {% csrf_token %}
-        {% if form.non_field_errors %}
-            <div class="mb-4 text-red-600 text-sm text-center">{{ form.non_field_errors }}</div>
-        {% endif %}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <label class="block font-semibold mb-2">{{ form.first_name.label }}</label>
-                {{ form.first_name }}
-                {% if form.first_name.errors %}<div class="text-red-500 text-xs mt-1">{{ form.first_name.errors }}</div>{% endif %}
+                <!-- Panneau droit - Formulaire -->
+                <div class="p-8">
+                    <div class="max-w-lg mx-auto">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Créer votre compte</h2>
+                        
+                        <form method="post" novalidate class="space-y-6">
+                            {% csrf_token %}
+                            
+                            <!-- Messages d'erreur globaux -->
+                            {% if form.non_field_errors %}
+                                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                                    <div class="flex items-center">
+                                        <i data-lucide="alert-circle" class="w-5 h-5 text-red-500 mr-2"></i>
+                                        <div class="text-red-700 text-sm">{{ form.non_field_errors }}</div>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <!-- Prénom et Nom -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label class="block font-semibold text-gray-700 text-sm">
+                                        <i data-lucide="user" class="w-4 h-4 inline mr-2"></i>
+                                        {{ form.first_name.label }} *
+                                    </label>
+                                    {{ form.first_name }}
+                                    {% if form.first_name.errors %}
+                                        <div class="text-red-500 text-xs mt-1 flex items-center">
+                                            <i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i>
+                                            {{ form.first_name.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block font-semibold text-gray-700 text-sm">
+                                        <i data-lucide="user" class="w-4 h-4 inline mr-2"></i>
+                                        {{ form.last_name.label }} *
+                                    </label>
+                                    {{ form.last_name }}
+                                    {% if form.last_name.errors %}
+                                        <div class="text-red-500 text-xs mt-1 flex items-center">
+                                            <i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i>
+                                            {{ form.last_name.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="space-y-2">
+                                <label class="block font-semibold text-gray-700 text-sm">
+                                    <i data-lucide="mail" class="w-4 h-4 inline mr-2"></i>
+                                    {{ form.email.label }} *
+                                </label>
+                                <div class="relative">
+                                    {{ form.email }}
+                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                        <i data-lucide="at-sign" class="w-5 h-5 text-gray-400"></i>
+                                    </div>
+                                </div>
+                                {% if form.email.errors %}
+                                    <div class="text-red-500 text-xs mt-1 flex items-center">
+                                        <i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i>
+                                        {{ form.email.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Téléphone -->
+                            <div class="space-y-2">
+                                <label class="block font-semibold text-gray-700 text-sm">
+                                    <i data-lucide="phone" class="w-4 h-4 inline mr-2"></i>
+                                    {{ form.phone.label }} *
+                                </label>
+                                <div class="relative">
+                                    {{ form.phone }}
+                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                        <i data-lucide="smartphone" class="w-5 h-5 text-gray-400"></i>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500">Format: +237 6XX XX XX XX</p>
+                                {% if form.phone.errors %}
+                                    <div class="text-red-500 text-xs mt-1 flex items-center">
+                                        <i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i>
+                                        {{ form.phone.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Ville -->
+                            <div class="space-y-2">
+                                <label class="block font-semibold text-gray-700 text-sm">
+                                    <i data-lucide="map-pin" class="w-4 h-4 inline mr-2"></i>
+                                    {{ form.city.label }} *
+                                </label>
+                                {{ form.city }}
+                                {% if form.city.errors %}
+                                    <div class="text-red-500 text-xs mt-1 flex items-center">
+                                        <i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i>
+                                        {{ form.city.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Mots de passe -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label class="block font-semibold text-gray-700 text-sm">
+                                        <i data-lucide="lock" class="w-4 h-4 inline mr-2"></i>
+                                        {{ form.password1.label }} *
+                                    </label>
+                                    <div class="relative">
+                                        {{ form.password1 }}
+                                        <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="togglePassword('{{ form.password1.id_for_label }}', 'toggle-password1-icon')">
+                                            <i data-lucide="eye" class="w-5 h-5 text-gray-400 hover:text-gray-600" id="toggle-password1-icon"></i>
+                                        </button>
+                                    </div>
+                                    {% if form.password1.errors %}
+                                        <div class="text-red-500 text-xs mt-1 flex items-center">
+                                            <i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i>
+                                            {{ form.password1.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block font-semibold text-gray-700 text-sm">
+                                        <i data-lucide="lock" class="w-4 h-4 inline mr-2"></i>
+                                        {{ form.password2.label }} *
+                                    </label>
+                                    <div class="relative">
+                                        {{ form.password2 }}
+                                        <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="togglePassword('{{ form.password2.id_for_label }}', 'toggle-password2-icon')">
+                                            <i data-lucide="eye" class="w-5 h-5 text-gray-400 hover:text-gray-600" id="toggle-password2-icon"></i>
+                                        </button>
+                                    </div>
+                                    {% if form.password2.errors %}
+                                        <div class="text-red-500 text-xs mt-1 flex items-center">
+                                            <i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i>
+                                            {{ form.password2.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Exigences mot de passe -->
+                            <div class="bg-blue-50 rounded-lg p-4">
+                                <h4 class="font-semibold text-blue-800 mb-2 text-sm">Exigences du mot de passe :</h4>
+                                <ul class="text-xs text-blue-700 space-y-1">
+                                    <li>• Au moins 8 caractères</li>
+                                    <li>• Mélange de lettres majuscules et minuscules</li>
+                                    <li>• Au moins un chiffre</li>
+                                    <li>• Au moins un caractère spécial</li>
+                                </ul>
+                            </div>
+
+                            <!-- Acceptation des conditions -->
+                            <div class="space-y-3">
+                                <div class="flex items-start space-x-3">
+                                    {{ form.terms_accepted }}
+                                    <label for="{{ form.terms_accepted.id_for_label }}" class="text-sm text-gray-600 cursor-pointer">
+                                        J'accepte les <a href="{% url 'backend:terms' %}" target="_blank" class="text-vgk-green-600 hover:underline font-semibold">conditions d'utilisation</a> et la <a href="{% url 'backend:privacy' %}" target="_blank" class="text-vgk-green-600 hover:underline font-semibold">politique de confidentialité</a> de Vidé-Grenier Kamer
+                                    </label>
+                                </div>
+                                {% if form.terms_accepted.errors %}
+                                    <div class="text-red-500 text-xs flex items-center">
+                                        <i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i>
+                                        {{ form.terms_accepted.errors }}
+                                    </div>
+                                {% endif %}
+
+                                <div class="flex items-center space-x-3">
+                                    <input type="checkbox" id="newsletter" class="w-4 h-4 text-vgk-green-600 border-gray-300 rounded focus:ring-vgk-green-500">
+                                    <label for="newsletter" class="text-sm text-gray-600 cursor-pointer">
+                                        Je souhaite recevoir les newsletters et offres spéciales par email
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Bouton d'inscription -->
+                            <button type="submit" class="w-full bg-gradient-to-r from-vgk-green-600 to-vgk-orange-500 text-white py-4 rounded-lg font-semibold text-lg shadow-lg hover:from-vgk-green-700 hover:to-vgk-orange-600 transform hover:scale-105 transition-all duration-200 flex items-center justify-center">
+                                <i data-lucide="user-plus" class="w-5 h-5 mr-2"></i>
+                                Créer mon compte gratuitement
+                            </button>
+                        </form>
+
+                        <!-- Divider -->
+                        <div class="my-8 relative">
+                            <div class="absolute inset-0 flex items-center">
+                                <div class="w-full border-t border-gray-300"></div>
+                            </div>
+                            <div class="relative flex justify-center text-sm">
+                                <span class="px-2 bg-white text-gray-500">ou</span>
+                            </div>
+                        </div>
+
+                        <!-- Inscription Sociale -->
+                        <div class="space-y-3">
+                            <button class="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200">
+                                <img src="{% static 'images/icons/google.png' %}" alt="Google" class="w-5 h-5 mr-3">
+                                S'inscrire avec Google
+                            </button>
+                            <button class="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200">
+                                <img src="{% static 'images/icons/facebook.png' %}" alt="Facebook" class="w-5 h-5 mr-3">
+                                S'inscrire avec Facebook
+                            </button>
+                        </div>
+
+                        <!-- Lien vers Connexion -->
+                        <div class="mt-8 text-center">
+                            <p class="text-gray-600">
+                                Déjà inscrit ?
+                                <a href="{% url 'backend:login' %}" class="text-vgk-green-600 hover:text-vgk-green-700 font-semibold hover:underline ml-1">
+                                    Se connecter
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div>
-                <label class="block font-semibold mb-2">{{ form.last_name.label }}</label>
-                {{ form.last_name }}
-                {% if form.last_name.errors %}<div class="text-red-500 text-xs mt-1">{{ form.last_name.errors }}</div>{% endif %}
+        </div>
+
+        <!-- Sécurité et Confiance -->
+        <div class="mt-12 text-center">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Pourquoi nous faire confiance ?</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="text-center">
+                        <i data-lucide="shield-check" class="w-8 h-8 text-green-500 mx-auto mb-2"></i>
+                        <div class="font-semibold text-gray-800 text-sm">Données Sécurisées</div>
+                        <p class="text-xs text-gray-600">Chiffrement SSL et protection RGPD</p>
+                    </div>
+                    <div class="text-center">
+                        <i data-lucide="phone" class="w-8 h-8 text-blue-500 mx-auto mb-2"></i>
+                        <div class="font-semibold text-gray-800 text-sm">Support 6j/7</div>
+                        <p class="text-xs text-gray-600">Équipe disponible par WhatsApp</p>
+                    </div>
+                    <div class="text-center">
+                        <i data-lucide="credit-card" class="w-8 h-8 text-orange-500 mx-auto mb-2"></i>
+                        <div class="font-semibold text-gray-800 text-sm">Paiement Sécurisé</div>
+                        <p class="text-xs text-gray-600">Orange Money, MTN, Cartes</p>
+                    </div>
+                    <div class="text-center">
+                        <i data-lucide="map-pin" class="w-8 h-8 text-purple-500 mx-auto mb-2"></i>
+                        <div class="font-semibold text-gray-800 text-sm">Points de Retrait</div>
+                        <p class="text-xs text-gray-600">Douala et Yaoundé</p>
+                    </div>
+                </div>
             </div>
         </div>
-        <div>
-            <label class="block font-semibold mb-2">{{ form.email.label }}</label>
-            {{ form.email }}
-            {% if form.email.errors %}<div class="text-red-500 text-xs mt-1">{{ form.email.errors }}</div>{% endif %}
-        </div>
-        <div>
-            <label class="block font-semibold mb-2">{{ form.phone.label }}</label>
-            {{ form.phone }}
-            {% if form.phone.errors %}<div class="text-red-500 text-xs mt-1">{{ form.phone.errors }}</div>{% endif %}
-        </div>
-        <div>
-            <label class="block font-semibold mb-2">{{ form.city.label }}</label>
-            {{ form.city }}
-            {% if form.city.errors %}<div class="text-red-500 text-xs mt-1">{{ form.city.errors }}</div>{% endif %}
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <label class="block font-semibold mb-2">{{ form.password1.label }}</label>
-                {{ form.password1 }}
-                {% if form.password1.errors %}<div class="text-red-500 text-xs mt-1">{{ form.password1.errors }}</div>{% endif %}
-            </div>
-            <div>
-                <label class="block font-semibold mb-2">{{ form.password2.label }}</label>
-                {{ form.password2 }}
-                {% if form.password2.errors %}<div class="text-red-500 text-xs mt-1">{{ form.password2.errors }}</div>{% endif %}
-            </div>
-        </div>
-        <div class="flex items-center mb-2">
-            {{ form.terms_accepted }}
-            <label class="ml-2 text-sm">J'accepte les <a href="/terms/" class="text-vgk-green-600 hover:underline">conditions d'utilisation</a></label>
-            {% if form.terms_accepted.errors %}<div class="text-red-500 text-xs ml-2">{{ form.terms_accepted.errors }}</div>{% endif %}
-        </div>
-        <button type="submit" class="w-full bg-gradient-to-r from-vgk-green-600 to-vgk-orange-500 text-white py-3 rounded-lg font-semibold text-lg shadow hover:from-vgk-green-700 hover:to-vgk-orange-600 transition">Créer mon compte</button>
-    </form>
-    <div class="mt-8 text-center text-sm">
-        <span class="text-gray-500">Déjà inscrit ?</span>
-        <a href="/login/" class="text-vgk-green-600 hover:underline font-semibold ml-2">Se connecter</a>
     </div>
 </div>
+
+<script>
+function togglePassword(fieldId, iconId) {
+    const passwordField = document.getElementById(fieldId);
+    const toggleIcon = document.getElementById(iconId);
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        toggleIcon.setAttribute('data-lucide', 'eye-off');
+    } else {
+        passwordField.type = 'password';
+        toggleIcon.setAttribute('data-lucide', 'eye');
+    }
+    
+    // Reinitialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+// Form validation indicators
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordField = document.getElementById('{{ form.password1.id_for_label }}');
+    const confirmField = document.getElementById('{{ form.password2.id_for_label }}');
+    
+    if (passwordField) {
+        passwordField.addEventListener('input', function() {
+            validatePassword(this.value);
+        });
+    }
+    
+    if (confirmField) {
+        confirmField.addEventListener('input', function() {
+            validatePasswordMatch();
+        });
+    }
+});
+
+function validatePassword(password) {
+    const requirements = {
+        length: password.length >= 8,
+        uppercase: /[A-Z]/.test(password),
+        lowercase: /[a-z]/.test(password),
+        number: /\d/.test(password),
+        special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
+    
+    // Visual feedback could be added here
+}
+
+function validatePasswordMatch() {
+    const password1 = document.getElementById('{{ form.password1.id_for_label }}').value;
+    const password2 = document.getElementById('{{ form.password2.id_for_label }}').value;
+    
+    // Visual feedback for password match could be added here
+}
+</script>
+
+<style>
+/* Custom form styling */
+input[type="text"], input[type="password"], input[type="email"], input[type="tel"], select {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vgk-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white;
+}
+
+input[type="checkbox"] {
+    @apply w-4 h-4 text-vgk-green-600 border-gray-300 rounded focus:ring-vgk-green-500;
+}
+
+select {
+    @apply appearance-none bg-white;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+}
+
+/* Animation for form validation */
+.field-valid {
+    @apply border-green-500 bg-green-50;
+}
+
+.field-invalid {
+    @apply border-red-500 bg-red-50;
+}
+</style>
 {% endblock %}
