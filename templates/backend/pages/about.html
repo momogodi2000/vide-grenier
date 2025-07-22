@@ -1,33 +1,234 @@
+<!-- ABOUT PAGE (about.html) -->
 {% extends 'base.html' %}
- {% load static %}
+{% load static %}
 
 {% block title %}À propos - Vidé-Grenier Kamer{% endblock %}
+{% block meta_description %}Découvrez l'histoire de Vidé-Grenier Kamer, la première marketplace camerounaise dédiée à la seconde main. Notre mission, notre équipe et nos valeurs.{% endblock %}
+
 {% block content %}
-<div class="max-w-2xl mx-auto mt-12 bg-white rounded-xl shadow-lg p-8">
-    <div class="flex flex-col items-center mb-6">
-        <img src="{% static 'images/logo.png' %}" alt="Vidé-Grenier Kamer Logo" class="w-16 h-16 rounded-full mb-2 shadow">
-        <h1 class="text-2xl font-bold text-vgk-green-700 mb-2 text-center">À propos de Vidé-Grenier Kamer</h1>
-        <p class="text-gray-600 text-center text-sm mb-4">La première marketplace camerounaise dédiée à la vente et l'achat d'articles de seconde main, en toute sécurité et simplicité.</p>
+<div class="min-h-screen bg-gradient-to-br from-green-50 via-white to-orange-50">
+    <!-- Hero Section -->
+    <div class="relative overflow-hidden bg-gradient-to-r from-vgk-green-600 to-vgk-orange-500 text-white py-20">
+        <div class="absolute inset-0 bg-black opacity-10"></div>
+        <div class="relative max-w-4xl mx-auto px-4 text-center">
+            <div class="animate-fade-in-up">
+                <img src="{% static 'images/logo-white.png' %}" alt="Vidé-Grenier Kamer Logo" class="w-24 h-24 mx-auto mb-6 rounded-full shadow-2xl border-4 border-white/20">
+                <h1 class="text-5xl font-bold mb-4">À propos de Vidé-Grenier Kamer</h1>
+                <p class="text-xl mb-8 max-w-3xl mx-auto">La première marketplace camerounaise dédiée à la vente et l'achat d'articles de seconde main, en toute sécurité et simplicité.</p>
+                <div class="flex justify-center space-x-6">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold">10K+</div>
+                        <div class="text-sm opacity-90">Utilisateurs actifs</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold">50K+</div>
+                        <div class="text-sm opacity-90">Articles vendus</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold">2</div>
+                        <div class="text-sm opacity-90">Villes principales</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="space-y-6 text-gray-700 text-base">
-        <p><strong>Notre mission :</strong> Faciliter l'accès à des produits abordables, encourager la réutilisation et soutenir l'économie locale. Nous croyons que chaque objet mérite une seconde vie et que la consommation responsable est la clé d'un avenir meilleur.</p>
-        <p><strong>Nos valeurs :</strong></p>
-        <ul class="list-disc list-inside ml-4 text-sm">
-            <li><span class="font-semibold text-vgk-green-700">Confiance :</span> Transactions sécurisées et transparence pour tous les membres.</li>
-            <li><span class="font-semibold text-vgk-green-700">Solidarité :</span> Soutien à l'économie locale et entraide entre utilisateurs.</li>
-            <li><span class="font-semibold text-vgk-green-700">Innovation :</span> Plateforme moderne, intuitive et évolutive.</li>
-            <li><span class="font-semibold text-vgk-green-700">Respect :</span> Protection de l'environnement et des données personnelles.</li>
-        </ul>
-        <p><strong>Fonctionnalités principales :</strong></p>
-        <ul class="list-disc list-inside ml-4 text-sm">
-            <li>Publication et gestion d'annonces en quelques clics</li>
-            <li>Messagerie intégrée pour faciliter les échanges</li>
-            <li>Suivi des commandes, paiements et livraisons</li>
-            <li>Notifications personnalisées et offres exclusives</li>
-            <li>Support client disponible 7j/7</li>
-        </ul>
-        <p><strong>Notre équipe :</strong> Vidé-Grenier Kamer est animée par des passionnés du digital et de l'économie circulaire, basés au Cameroun. Nous travaillons chaque jour pour améliorer votre expérience et vous offrir un service de qualité.</p>
-        <p>Rejoignez-nous et participez à une communauté dynamique qui valorise la seconde vie des objets ! Ensemble, faisons de la seconde main un réflexe malin et solidaire.</p>
+
+    <div class="max-w-6xl mx-auto px-4 py-16">
+        <!-- Fil d'Ariane -->
+        <nav class="mb-8 text-sm text-gray-500 flex items-center space-x-2 bg-white rounded-lg px-4 py-2 shadow">
+            <a href="/" class="hover:text-vgk-green-600 transition-colors duration-200">
+                <i data-lucide="home" class="w-4 h-4 inline mr-1"></i>Accueil
+            </a>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <span class="font-semibold text-vgk-green-700">À propos</span>
+        </nav>
+
+        <!-- Mission Section -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-12 transform hover:scale-105 transition-transform duration-300">
+            <div class="text-center mb-8">
+                <h2 class="text-4xl font-bold text-vgk-green-700 mb-4">Notre Mission</h2>
+                <div class="w-24 h-1 bg-gradient-to-r from-vgk-green-500 to-vgk-orange-500 mx-auto mb-6"></div>
+                <p class="text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
+                    Bienvenue chez Vidé-Grenier Kamer, là où chaque objet trouve une seconde chance et chaque acheteur découvre des trésors uniques.
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div class="space-y-4">
+                    <p class="text-gray-600 leading-relaxed">
+                        Née d'une passion pour la consommation responsable et d'un engagement profond pour notre belle planète, notre mission est de lutter contre le gaspillage en donnant une nouvelle vie aux objets. Nous croyons que le style et la qualité ne devraient pas être éphémères.
+                    </p>
+                    <p class="text-gray-600 leading-relaxed">
+                        C'est pourquoi nous chinons et sélectionnons avec le plus grand soin des pièces de qualité, chargées d'histoire, prêtes à entamer une nouvelle aventure avec vous et à enrichir votre quotidien.
+                    </p>
+                    <p class="text-gray-600 leading-relaxed">
+                        Notre concept s'inspire de l'esprit communautaire des vide-greniers traditionnels et de la richesse culturelle camerounaise, valorisant la transmission, l'authenticité et le partage entre générations.
+                    </p>
+                </div>
+                <div class="relative">
+                    <img src="{% static 'images/mission-illustration.jpg' %}" alt="Notre mission" class="w-full h-64 object-cover rounded-xl shadow-lg">
+                    <div class="absolute inset-0 bg-gradient-to-t from-vgk-green-600/30 to-transparent rounded-xl"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Valeurs Section -->
+        <div class="grid md:grid-cols-3 gap-8 mb-12">
+            <div class="bg-green-50 rounded-xl p-6 text-center hover:shadow-lg transition-shadow duration-300">
+                <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="recycle" class="w-8 h-8 text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold text-vgk-green-700 mb-2">Durabilité</h3>
+                <p class="text-gray-600">Contribuer à un monde plus durable en prolongeant la vie des objets et en réduisant les déchets.</p>
+            </div>
+            <div class="bg-orange-50 rounded-xl p-6 text-center hover:shadow-lg transition-shadow duration-300">
+                <div class="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="shield" class="w-8 h-8 text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold text-vgk-orange-600 mb-2">Sécurité</h3>
+                <p class="text-gray-600">Garantir des transactions sécurisées avec notre système de paiement mobile intégré et nos points de retrait.</p>
+            </div>
+            <div class="bg-blue-50 rounded-xl p-6 text-center hover:shadow-lg transition-shadow duration-300">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="users" class="w-8 h-8 text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold text-blue-600 mb-2">Communauté</h3>
+                <p class="text-gray-600">Créer une communauté bienveillante où chacun peut acheter, vendre et échanger en toute confiance.</p>
+            </div>
+        </div>
+
+        <!-- Notre Histoire -->
+        <div class="bg-gradient-to-r from-green-50 to-orange-50 rounded-2xl p-8 mb-12 shadow-lg">
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div>
+                    <h3 class="text-3xl font-bold text-vgk-green-700 mb-6 flex items-center">
+                        <i data-lucide="book-open" class="w-8 h-8 mr-3"></i>
+                        Notre Histoire
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-3 h-3 bg-vgk-green-500 rounded-full mt-2"></div>
+                            <div>
+                                <div class="font-semibold text-gray-800">2023 - L'idée</div>
+                                <p class="text-gray-600">De la passion est né un projet. Vidé-Grenier Kamer a vu le jour d'une conviction simple : le commerce peut être à la fois stylé, abordable et respectueux de la planète.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="w-3 h-3 bg-vgk-orange-500 rounded-full mt-2"></div>
+                            <div>
+                                <div class="font-semibold text-gray-800">2024 - Développement</div>
+                                <p class="text-gray-600">Création de la plateforme avec une équipe passionnée d'ingénieurs informatiques camerounais, intégrant les spécificités locales.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="w-3 h-3 bg-blue-500 rounded-full mt-2"></div>
+                            <div>
+                                <div class="font-semibold text-gray-800">2025 - Lancement</div>
+                                <p class="text-gray-600">Lancement officiel à Douala et Yaoundé avec des fonctionnalités innovantes comme le paiement mobile et les points de retrait.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative">
+                    <img src="{% static 'images/team-story.jpg' %}" alt="Notre équipe au travail" class="w-full h-80 object-cover rounded-xl shadow-lg">
+                    <div class="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-2">
+                        <div class="text-sm font-semibold text-vgk-green-700">Est. 2023</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notre équipe -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-12">
+            <div class="text-center mb-10">
+                <h3 class="text-3xl font-bold text-vgk-green-700 mb-4">Rencontrez Notre Équipe</h3>
+                <div class="w-24 h-1 bg-gradient-to-r from-vgk-green-500 to-vgk-orange-500 mx-auto mb-4"></div>
+                <p class="text-gray-600 max-w-2xl mx-auto">Une équipe passionnée de professionnels camerounais dédiés à révolutionner le commerce de seconde main au Cameroun.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="text-center group">
+                    <div class="relative mb-4">
+                        <img src="{% static 'images/team/alain.jpg' %}" alt="Alain Momeni" class="w-32 h-32 rounded-full mx-auto shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                        <div class="absolute inset-0 bg-gradient-to-t from-vgk-green-600/20 to-transparent rounded-full group-hover:from-vgk-green-600/30 transition-all duration-300"></div>
+                    </div>
+                    <h4 class="font-bold text-xl text-gray-800 mb-1">Alain Momeni</h4>
+                    <p class="text-vgk-green-600 font-semibold mb-2">Co-Fondateur & CTO</p>
+                    <p class="text-sm text-gray-600 mb-4">Ingénieur Informatique passionné par les technologies web et l'innovation au service de l'Afrique.</p>
+                    <div class="flex justify-center space-x-3">
+                        <a href="#" class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700 transition-colors">
+                            <i data-lucide="facebook" class="w-4 h-4"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center text-white hover:bg-blue-500 transition-colors">
+                            <i data-lucide="twitter" class="w-4 h-4"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 bg-blue-800 rounded-full flex items-center justify-center text-white hover:bg-blue-900 transition-colors">
+                            <i data-lucide="linkedin" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="text-center group">
+                    <div class="relative mb-4">
+                        <img src="{% static 'images/team/fina.jpg' %}" alt="Fina Momeni" class="w-32 h-32 rounded-full mx-auto shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                        <div class="absolute inset-0 bg-gradient-to-t from-vgk-orange-600/20 to-transparent rounded-full group-hover:from-vgk-orange-600/30 transition-all duration-300"></div>
+                    </div>
+                    <h4 class="font-bold text-xl text-gray-800 mb-1">Fina Momeni</h4>
+                    <p class="text-vgk-orange-600 font-semibold mb-2">Co-Fondatrice & CEO</p>
+                    <p class="text-sm text-gray-600 mb-4">Visionnaire et entrepreneure, elle dirige la stratégie business et le développement de l'entreprise.</p>
+                    <div class="flex justify-center space-x-3">
+                        <a href="#" class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700 transition-colors">
+                            <i data-lucide="facebook" class="w-4 h-4"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center text-white hover:bg-blue-500 transition-colors">
+                            <i data-lucide="twitter" class="w-4 h-4"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 bg-blue-800 rounded-full flex items-center justify-center text-white hover:bg-blue-900 transition-colors">
+                            <i data-lucide="linkedin" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="text-center group">
+                    <div class="relative mb-4">
+                        <img src="{% static 'images/team/yvan.jpg' %}" alt="Yvan Momo" class="w-32 h-32 rounded-full mx-auto shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                        <div class="absolute inset-0 bg-gradient-to-t from-blue-600/20 to-transparent rounded-full group-hover:from-blue-600/30 transition-all duration-300"></div>
+                    </div>
+                    <h4 class="font-bold text-xl text-gray-800 mb-1">Yvan Momo</h4>
+                    <p class="text-blue-600 font-semibold mb-2">Co-Fondateur & Lead Developer</p>
+                    <p class="text-sm text-gray-600 mb-4">Ingénieur Informatique spécialisé dans l'architecture logicielle et l'expérience utilisateur.</p>
+                    <div class="flex justify-center space-x-3">
+                        <a href="#" class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700 transition-colors">
+                            <i data-lucide="facebook" class="w-4 h-4"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center text-white hover:bg-blue-500 transition-colors">
+                            <i data-lucide="twitter" class="w-4 h-4"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 bg-blue-800 rounded-full flex items-center justify-center text-white hover:bg-blue-900 transition-colors">
+                            <i data-lucide="linkedin" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- Animation CSS -->
+<style>
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fade-in-up 0.8s ease-out;
+}
+</style>
 {% endblock %}

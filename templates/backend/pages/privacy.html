@@ -1,26 +1,267 @@
+
+<!-- ================================================== -->
+<!-- PRIVACY POLICY PAGE (privacy.html) -->
+<!-- ================================================== -->
+
 {% extends 'base.html' %}
- {% load static %}
+{% load static %}
 
 {% block title %}Politique de confidentialité - Vidé-Grenier Kamer{% endblock %}
+{% block meta_description %}Découvrez comment Vidé-Grenier Kamer protège vos données personnelles. Politique de confidentialité conforme au RGPD et aux lois camerounaises.{% endblock %}
+
 {% block content %}
-<div class="max-w-3xl mx-auto mt-12 bg-white rounded-xl shadow-lg p-8">
-    <div class="flex flex-col items-center mb-6">
-        <img src="{% static 'images/logo.png' %}" alt="Vidé-Grenier Kamer Logo" class="w-16 h-16 rounded-full mb-2 shadow">
-        <h1 class="text-2xl font-bold text-vgk-green-700 mb-2 text-center">Politique de confidentialité</h1>
-        <p class="text-gray-600 text-center text-sm mb-4">Votre vie privée est importante pour nous. Découvrez comment nous protégeons vos données.</p>
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <!-- Hero Section -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 backdrop-blur-sm">
+                <i data-lucide="shield-check" class="w-10 h-10"></i>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">Politique de Confidentialité</h1>
+            <p class="text-xl mb-4 max-w-2xl mx-auto">Votre vie privée est notre priorité. Découvrez comment nous protégeons et utilisons vos données personnelles.</p>
+            <div class="text-sm opacity-90">Dernière mise à jour : Juillet 2025</div>
+        </div>
     </div>
-    <div class="space-y-4 text-gray-700 text-base">
-        <h2 class="font-semibold text-vgk-green-700">Collecte des données</h2>
-        <p>Nous collectons uniquement les informations nécessaires à la gestion de votre compte et à l'amélioration de nos services.</p>
-        <h2 class="font-semibold text-vgk-green-700 mt-6">Utilisation des données</h2>
-        <ul class="list-disc list-inside ml-4 text-sm">
-            <li>Sécurisation des transactions</li>
-            <li>Personnalisation de l'expérience utilisateur</li>
-            <li>Envoi d'informations et d'offres pertinentes</li>
-        </ul>
-        <h2 class="font-semibold text-vgk-green-700 mt-6">Vos droits</h2>
-        <p>Vous pouvez à tout moment demander la modification ou la suppression de vos données personnelles via votre profil ou en nous contactant.</p>
-        <p>Pour toute question, contactez-nous via la page <a href="/contact/" class="text-vgk-green-600 hover:underline">Contact</a>.</p>
+
+    <div class="max-w-4xl mx-auto px-4 py-16">
+        <!-- Fil d'Ariane -->
+        <nav class="mb-8 text-sm text-gray-500 flex items-center space-x-2 bg-white rounded-lg px-4 py-2 shadow">
+            <a href="/" class="hover:text-blue-600 transition-colors duration-200">
+                <i data-lucide="home" class="w-4 h-4 inline mr-1"></i>Accueil
+            </a>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <span class="font-semibold text-blue-700">Politique de confidentialité</span>
+        </nav>
+
+        <!-- Résumé Exécutif -->
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-100 rounded-2xl p-8 mb-12 border-l-4 border-blue-500">
+            <h2 class="text-2xl font-bold text-blue-700 mb-4 flex items-center">
+                <i data-lucide="info" class="w-6 h-6 mr-2"></i>
+                En Résumé
+            </h2>
+            <div class="grid md:grid-cols-3 gap-6 text-center">
+                <div class="bg-white rounded-lg p-4 shadow">
+                    <i data-lucide="lock" class="w-8 h-8 text-blue-500 mx-auto mb-2"></i>
+                    <div class="font-semibold text-gray-800">Données Sécurisées</div>
+                    <p class="text-sm text-gray-600">Chiffrement SSL et stockage sécurisé</p>
+                </div>
+                <div class="bg-white rounded-lg p-4 shadow">
+                    <i data-lucide="eye-off" class="w-8 h-8 text-green-500 mx-auto mb-2"></i>
+                    <div class="font-semibold text-gray-800">Pas de Vente</div>
+                    <p class="text-sm text-gray-600">Nous ne vendons jamais vos données</p>
+                </div>
+                <div class="bg-white rounded-lg p-4 shadow">
+                    <i data-lucide="settings" class="w-8 h-8 text-orange-500 mx-auto mb-2"></i>
+                    <div class="font-semibold text-gray-800">Vous Contrôlez</div>
+                    <p class="text-sm text-gray-600">Gérez vos préférences facilement</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl p-8 space-y-8">
+            <!-- 1. Collecte des données -->
+            <section>
+                <h2 class="text-2xl font-bold text-blue-700 mb-4 flex items-center border-b border-gray-200 pb-2">
+                    <i data-lucide="database" class="w-6 h-6 mr-2"></i>
+                    1. Collecte des Données Personnelles
+                </h2>
+                <div class="space-y-4">
+                    <p class="text-gray-700 leading-relaxed">
+                        Nous collectons uniquement les informations nécessaires pour vous offrir la meilleure expérience sur Vidé-Grenier Kamer et assurer la sécurité de nos transactions.
+                    </p>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-blue-50 rounded-lg p-4">
+                            <h4 class="font-bold text-blue-700 mb-2">Données d'Inscription</h4>
+                            <ul class="text-sm text-gray-600 space-y-1">
+                                <li>• Nom et prénom</li>
+                                <li>• Adresse email</li>
+                                <li>• Numéro de téléphone</li>
+                                <li>• Ville de résidence</li>
+                            </ul>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-4">
+                            <h4 class="font-bold text-green-700 mb-2">Données d'Utilisation</h4>
+                            <ul class="text-sm text-gray-600 space-y-1">
+                                <li>• Historique de navigation</li>
+                                <li>• Préférences produits</li>
+                                <li>• Interactions plateforme</li>
+                                <li>• Données de géolocalisation</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Utilisation des données -->
+            <section>
+                <h2 class="text-2xl font-bold text-green-700 mb-4 flex items-center border-b border-gray-200 pb-2">
+                    <i data-lucide="cpu" class="w-6 h-6 mr-2"></i>
+                    2. Utilisation de Vos Données
+                </h2>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <h4 class="font-bold text-gray-800 flex items-center">
+                            <i data-lucide="shield" class="w-5 h-5 mr-2 text-green-500"></i>
+                            Sécurité & Transactions
+                        </h4>
+                        <ul class="text-gray-600 space-y-2 ml-7">
+                            <li>• Vérification d'identité</li>
+                            <li>• Prévention de la fraude</li>
+                            <li>• Sécurisation des paiements</li>
+                            <li>• Gestion des litiges</li>
+                        </ul>
+                    </div>
+                    <div class="space-y-4">
+                        <h4 class="font-bold text-gray-800 flex items-center">
+                            <i data-lucide="heart" class="w-5 h-5 mr-2 text-red-500"></i>
+                            Amélioration Service
+                        </h4>
+                        <ul class="text-gray-600 space-y-2 ml-7">
+                            <li>• Personnalisation expérience</li>
+                            <li>• Recommandations produits</li>
+                            <li>• Support client optimisé</li>
+                            <li>• Notifications pertinentes</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Partage des données -->
+            <section>
+                <h2 class="text-2xl font-bold text-orange-700 mb-4 flex items-center border-b border-gray-200 pb-2">
+                    <i data-lucide="share-2" class="w-6 h-6 mr-2"></i>
+                    3. Partage et Transfert de Données
+                </h2>
+                <div class="bg-orange-50 rounded-lg p-6 mb-4">
+                    <p class="text-orange-800 font-semibold mb-2">
+                        <i data-lucide="alert-triangle" class="w-5 h-5 inline mr-2"></i>
+                        Engagement Strict : Nous ne vendons JAMAIS vos données personnelles.
+                    </p>
+                </div>
+                <div class="space-y-4">
+                    <h4 class="font-bold text-gray-800">Partage Autorisé Uniquement :</h4>
+                    <ul class="text-gray-600 space-y-2 ml-4">
+                        <li>• <strong>Prestataires de paiement</strong> (Orange Money, MTN) pour les transactions</li>
+                        <li>• <strong>Services de livraison</strong> pour l'acheminement des commandes</li>
+                        <li>• <strong>Autorités légales</strong> sur demande judiciaire uniquement</li>
+                        <li>• <strong>Partenaires techniques</strong> avec accords de confidentialité stricts</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 4. Vos droits -->
+            <section>
+                <h2 class="text-2xl font-bold text-purple-700 mb-4 flex items-center border-b border-gray-200 pb-2">
+                    <i data-lucide="user-check" class="w-6 h-6 mr-2"></i>
+                    4. Vos Droits et Contrôles
+                </h2>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-purple-50 rounded-lg p-4">
+                        <h4 class="font-bold text-purple-700 mb-3">Droits d'Accès</h4>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>✓ Consulter vos données</li>
+                            <li>✓ Télécharger vos informations</li>
+                            <li>✓ Historique complet d'activité</li>
+                        </ul>
+                    </div>
+                    <div class="bg-red-50 rounded-lg p-4">
+                        <h4 class="font-bold text-red-700 mb-3">Droits de Suppression</h4>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>✓ Supprimer votre compte</li>
+                            <li>✓ Effacer données personnelles</li>
+                            <li>✓ Désinscription newsletters</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-6 p-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-white">
+                    <p class="font-semibold text-center">
+                        <i data-lucide="mail" class="w-5 h-5 inline mr-2"></i>
+                        Pour exercer vos droits : <a href="mailto:privacy@videgrenier-kamer.com" class="underline">privacy@videgrenier-kamer.com</a>
+                    </p>
+                </div>
+            </section>
+
+            <!-- 5. Sécurité -->
+            <section>
+                <h2 class="text-2xl font-bold text-red-700 mb-4 flex items-center border-b border-gray-200 pb-2">
+                    <i data-lucide="shield-check" class="w-6 h-6 mr-2"></i>
+                    5. Sécurité et Protection
+                </h2>
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="text-center bg-red-50 rounded-lg p-4">
+                        <i data-lucide="lock" class="w-12 h-12 text-red-500 mx-auto mb-2"></i>
+                        <h4 class="font-bold text-gray-800 mb-2">Chiffrement SSL</h4>
+                        <p class="text-sm text-gray-600">Toutes vos données sont chiffrées en transit et au repos</p>
+                    </div>
+                    <div class="text-center bg-blue-50 rounded-lg p-4">
+                        <i data-lucide="server" class="w-12 h-12 text-blue-500 mx-auto mb-2"></i>
+                        <h4 class="font-bold text-gray-800 mb-2">Serveurs Sécurisés</h4>
+                        <p class="text-sm text-gray-600">Infrastructure hébergée avec certificats de sécurité</p>
+                    </div>
+                    <div class="text-center bg-green-50 rounded-lg p-4">
+                        <i data-lucide="eye" class="w-12 h-12 text-green-500 mx-auto mb-2"></i>
+                        <h4 class="font-bold text-gray-800 mb-2">Surveillance 24/7</h4>
+                        <p class="text-sm text-gray-600">Monitoring continu contre les intrusions</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. Cookies -->
+            <section>
+                <h2 class="text-2xl font-bold text-yellow-700 mb-4 flex items-center border-b border-gray-200 pb-2">
+                    <i data-lucide="cookie" class="w-6 h-6 mr-2"></i>
+                    6. Gestion des Cookies
+                </h2>
+                <div class="bg-yellow-50 rounded-lg p-6">
+                    <p class="text-gray-700 mb-4">
+                        Nous utilisons des cookies pour améliorer votre expérience de navigation et analyser l'utilisation de notre site.
+                    </p>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="font-bold text-yellow-700 mb-2">Cookies Essentiels</h4>
+                            <p class="text-sm text-gray-600">Nécessaires au fonctionnement du site (connexion, panier)</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-yellow-700 mb-2">Cookies Analytiques</h4>
+                            <p class="text-sm text-gray-600">Nous aident à comprendre comment vous utilisez le site</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. Contact -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-700 mb-4 flex items-center border-b border-gray-200 pb-2">
+                    <i data-lucide="message-circle" class="w-6 h-6 mr-2"></i>
+                    7. Nous Contacter
+                </h2>
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <p class="text-gray-700 mb-4">
+                        Pour toute question concernant cette politique de confidentialité ou vos données personnelles :
+                    </p>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="flex items-center space-x-3">
+                            <i data-lucide="mail" class="w-5 h-5 text-blue-500"></i>
+                            <a href="mailto:privacy@videgrenier-kamer.com" class="text-blue-600 hover:underline">privacy@videgrenier-kamer.com</a>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i data-lucide="phone" class="w-5 h-5 text-green-500"></i>
+                            <span class="text-gray-700">+237 694 63 84 12</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Call to Action -->
+        <div class="text-center mt-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
+            <h3 class="text-2xl font-bold mb-4">Des Questions sur Vos Données ?</h3>
+            <p class="mb-6 text-lg">Notre équipe est là pour vous accompagner dans la gestion de votre vie privée.</p>
+            <a href="{% url 'backend:contact' %}" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200">
+                Nous Contacter
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}
