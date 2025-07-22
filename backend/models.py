@@ -163,10 +163,11 @@ class Product(models.Model):
     @property
     def commission_amount(self):
         if self.source == 'CLIENT':
-            # Importation locale pour éviter les imports circulaires
             from django.conf import settings
-            return self.price * settings.VGK_SETTINGS.get('COMMISSION_RATE', 0.08)
-        return 0
+            from decimal import Decimal
+            commission_rate = Decimal(str(settings.VGK_SETTINGS.get('COMMISSION_RATE', 0.08)))
+            return self.price * commission_rate
+        return Decimal('0')
     
     @property
     def seller_amount(self):
@@ -545,3 +546,55 @@ class Analytics(models.Model):
     
     def __str__(self):
         return f"{self.metric_type} - {self.created_at}"
+    
+
+
+
+
+# Models to add for search functionality
+class SavedSearch(models.Model):
+    """Recherches sauvegardées par les utilisateurs"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_searches')
+    name = models.CharField(max_length=100)
+    query_params = models.TextField()  # JSON string of search parameters
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'saved_searches'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.email} - {self.name}"
+    
+    @property
+    def query_description(self):
+        """Description lisible de la recherche"""
+        try:
+            params = json.loads(self.query_params)
+            parts = []
+            
+            if params.get('q'):
+                parts.append(f"Mots-clés: {params['q']}")
+            if params.get('category'):
+                parts.append(f"Catégorie: {params['category']}")
+            if params.get('price_min') or params.get('price_max'):
+                price_range = f"Prix: {params.get('price_min', '0')} - {params.get('price_max', '∞')} FCFA"
+                parts.append(price_range)
+                
+            return ' | '.join(parts) if parts else 'Recherche personnalisée'
+        except:
+            return 'Recherche personnalisée'
+
+
+class SearchAlert(models.Model):
+    """Alertes de recherche pour notifications"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='search_alerts')
+    name = models.CharField(max_length=100)
+    query_params = models.TextField()
+    is_active = models.BooleanField(default=True)
+    last_notification = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'search_alerts'
+        ordering = ['-created_at']

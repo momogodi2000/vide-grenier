@@ -11,7 +11,12 @@ const CORE_CACHE_RESOURCES = [
   '/static/js/pwa.js',
   '/static/images/icons/icon-192x192.png',
   '/static/images/icons/icon-512x512.png',
-  OFFLINE_URL
+  OFFLINE_URL,
+  // Pre-cache product detail template for offline
+  '/products/',
+  '/products/1/',
+  '/products/2/',
+  // Add more product URLs as needed for popular items
 ];
 
 // Ressources à cacher au runtime
@@ -256,8 +261,15 @@ async function staleWhileRevalidate(request) {
 function getOfflineResponse(request) {
   const url = new URL(request.url);
   
-  // Pages HTML - rediriger vers page offline
+  // Pages HTML - rediriger vers page offline ou cache produit
   if (request.headers.get('accept').includes('text/html')) {
+    // Try to match product detail page in cache
+    if (request.url.includes('/products/')) {
+      return caches.match(request.url).then(response => {
+        if (response) return response;
+        return caches.match(OFFLINE_URL);
+      });
+    }
     return caches.match(OFFLINE_URL);
   }
   

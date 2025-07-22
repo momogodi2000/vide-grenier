@@ -1,0 +1,353 @@
+{% extends 'backend/base.html' %}
+{% load static %}
+
+{% block title %}Mes Favoris - Vidé-Grenier Kamer{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-12">
+    <div class="container mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-12">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-800 mb-4">Mes Favoris</h1>
+                    <p class="text-xl text-gray-600">{{ favorites.count }} produit{{ favorites.count|pluralize }} sauvegardé{{ favorites.count|pluralize }}</p>
+                </div>
+                
+                {% if favorites.exists %}
+                <div class="flex space-x-4">
+                    <button class="px-6 py-3 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors font-medium"
+                            onclick="clearAllFavorites()">
+                        <i data-lucide="trash-2" class="w-5 h-5 inline mr-2"></i>
+                        Tout supprimer
+                    </button>
+                    <button class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                            onclick="shareWishlist()">
+                        <i data-lucide="share-2" class="w-5 h-5 inline mr-2"></i>
+                        Partager
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if favorites.exists %}
+        <!-- Filtres -->
+        <div class="mb-8 bg-white rounded-2xl shadow-lg p-6">
+            <div class="flex flex-wrap gap-4 items-center">
+                <select id="filter-category" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    <option value="">Toutes les catégories</option>
+                    {% for category in favorite_categories %}
+                    <option value="{{ category.slug }}">{{ category.name }} ({{ category.count }})</option>
+                    {% endfor %}
+                </select>
+                
+                <select id="filter-price" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    <option value="">Tous les prix</option>
+                    <option value="0-50000">Moins de 50 000 FCFA</option>
+                    <option value="50000-200000">50 000 - 200 000 FCFA</option>
+                    <option value="200000-500000">200 000 - 500 000 FCFA</option>
+                    <option value="500000+">Plus de 500 000 FCFA</option>
+                </select>
+                
+                <select id="sort-favorites" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    <option value="newest">Plus récemment ajouté</option>
+                    <option value="oldest">Plus anciennement ajouté</option>
+                    <option value="price-low">Prix croissant</option>
+                    <option value="price-high">Prix décroissant</option>
+                    <option value="title">Nom A-Z</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Favoris Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="favorites-grid">
+            {% for favorite in favorites %}
+            <div class="favorite-item bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300"
+                 data-category="{{ favorite.product.category.slug }}"
+                 data-price="{{ favorite.product.price }}"
+                 data-title="{{ favorite.product.title }}"
+                 data-date="{{ favorite.created_at|date:'Y-m-d' }}">
+                
+                <div class="relative">
+                    {% if favorite.product.main_image %}
+                    <img src="{{ favorite.product.main_image.image.url }}" 
+                         alt="{{ favorite.product.title }}" 
+                         class="w-full h-48 object-cover">
+                    {% else %}
+                    <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                        <i data-lucide="image" class="w-12 h-12 text-gray-400"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Badge de disponibilité -->
+                    {% if favorite.product.status == 'ACTIVE' %}
+                    <div class="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                        Disponible
+                    </div>
+                    {% elif favorite.product.status == 'SOLD' %}
+                    <div class="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                        Vendu
+                    </div>
+                    {% elif favorite.product.status == 'RESERVED' %}
+                    <div class="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                        Réservé
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Bouton supprimer des favoris -->
+                    <button class="absolute top-2 right-2 p-2 bg-white rounded-full shadow-lg hover:bg-red-50 transition-colors"
+                            onclick="removeFavorite({{ favorite.id }})">
+                        <i data-lucide="heart-crack" class="w-4 h-4 text-red-500"></i>
+                    </button>
+                    
+                    <!-- Date d'ajout aux favoris -->
+                    <div class="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+                        Ajouté {{ favorite.created_at|timesince }}
+                    </div>
+                </div>
+                
+                <div class="p-4">
+                    <div class="mb-2">
+                        <span class="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">
+                            {{ favorite.product.category.name }}
+                        </span>
+                    </div>
+                    
+                    <h3 class="font-semibold text-gray-800 mb-2 line-clamp-2">{{ favorite.product.title }}</h3>
+                    
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-2xl font-bold text-green-600">{{ favorite.product.price|floatformat:0 }} FCFA</span>
+                        <span class="text-sm bg-gray-100 text-gray-600 px-2 py-1 rounded">{{ favorite.product.condition }}</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                        <span class="flex items-center">
+                            <i data-lucide="map-pin" class="w-4 h-4 mr-1"></i>
+                            {{ favorite.product.city }}
+                        </span>
+                        <span>{{ favorite.product.created_at|timesince }}</span>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="flex space-x-2">
+                        <a href="{% url 'backend:product_detail' slug=favorite.product.slug %}" 
+                           class="flex-1 bg-green-600 text-white text-center py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
+                            Voir détails
+                        </a>
+                        
+                        {% if favorite.product.status == 'ACTIVE' %}
+                        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                                onclick="contactSeller({{ favorite.product.id }})">
+                            <i data-lucide="message-circle" class="w-4 h-4"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Alertes de prix -->
+                    <div class="mt-3 pt-3 border-t border-gray-100">
+                        <label class="flex items-center space-x-2 text-sm">
+                            <input type="checkbox" class="rounded text-green-600 focus:ring-green-500" 
+                                   onchange="togglePriceAlert({{ favorite.product.id }}, this.checked)">
+                            <span class="text-gray-600">M'alerter si le prix baisse</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Message si aucun favori après filtrage -->
+        <div id="no-results" class="hidden text-center py-12">
+            <div class="text-6xl text-gray-300 mb-4">🔍</div>
+            <h3 class="text-xl font-semibold text-gray-600 mb-2">Aucun favori trouvé</h3>
+            <p class="text-gray-500">Essayez de modifier vos filtres</p>
+        </div>
+
+        {% else %}
+        <!-- État vide -->
+        <div class="text-center py-20">
+            <div class="text-8xl text-gray-300 mb-6">💔</div>
+            <h2 class="text-3xl font-bold text-gray-600 mb-4">Aucun favori pour le moment</h2>
+            <p class="text-xl text-gray-500 mb-8">Commencez à ajouter des produits à vos favoris !</p>
+            <a href="{% url 'backend:product_list' %}" 
+               class="inline-flex items-center px-8 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                <i data-lucide="heart" class="w-5 h-5 mr-2"></i>
+                Explorer les produits
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const categoryFilter = document.getElementById('filter-category');
+    const priceFilter = document.getElementById('filter-price');
+    const sortSelect = document.getElementById('sort-favorites');
+    const favoritesGrid = document.getElementById('favorites-grid');
+    const noResults = document.getElementById('no-results');
+    
+    function filterAndSort() {
+        const items = Array.from(favoritesGrid.querySelectorAll('.favorite-item'));
+        let visibleItems = [];
+        
+        items.forEach(item => {
+            let show = true;
+            
+            // Filtre par catégorie
+            if (categoryFilter.value && item.dataset.category !== categoryFilter.value) {
+                show = false;
+            }
+            
+            // Filtre par prix
+            if (priceFilter.value) {
+                const price = parseFloat(item.dataset.price);
+                const range = priceFilter.value;
+                
+                if (range === '0-50000' && price >= 50000) show = false;
+                if (range === '50000-200000' && (price < 50000 || price >= 200000)) show = false;
+                if (range === '200000-500000' && (price < 200000 || price >= 500000)) show = false;
+                if (range === '500000+' && price < 500000) show = false;
+            }
+            
+            if (show) {
+                visibleItems.push(item);
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // Tri
+        const sortType = sortSelect.value;
+        visibleItems.sort((a, b) => {
+            switch (sortType) {
+                case 'newest':
+                    return new Date(b.dataset.date) - new Date(a.dataset.date);
+                case 'oldest':
+                    return new Date(a.dataset.date) - new Date(b.dataset.date);
+                case 'price-low':
+                    return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
+                case 'price-high':
+                    return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
+                case 'title':
+                    return a.dataset.title.localeCompare(b.dataset.title);
+                default:
+                    return 0;
+            }
+        });
+        
+        // Réorganiser les éléments
+        visibleItems.forEach(item => favoritesGrid.appendChild(item));
+        
+        // Afficher/masquer le message "aucun résultat"
+        if (visibleItems.length === 0) {
+            noResults.classList.remove('hidden');
+            favoritesGrid.classList.add('hidden');
+        } else {
+            noResults.classList.add('hidden');
+            favoritesGrid.classList.remove('hidden');
+        }
+    }
+    
+    categoryFilter.addEventListener('change', filterAndSort);
+    priceFilter.addEventListener('change', filterAndSort);
+    sortSelect.addEventListener('change', filterAndSort);
+});
+
+function removeFavorite(favoriteId) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce produit de vos favoris ?')) {
+        fetch(`/favorites/${favoriteId}/remove/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.querySelector(`[onclick="removeFavorite(${favoriteId})"]`).closest('.favorite-item').remove();
+                location.reload(); // Recharger pour mettre à jour les compteurs
+            }
+        })
+        .catch(error => console.error('Erreur:', error));
+    }
+}
+
+function clearAllFavorites() {
+    if (confirm('Êtes-vous sûr de vouloir supprimer TOUS vos favoris ? Cette action est irréversible.')) {
+        fetch('/favorites/clear-all/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        })
+        .catch(error => console.error('Erreur:', error));
+    }
+}
+
+function contactSeller(productId) {
+    window.location.href = `/chat/start/${productId}/`;
+}
+
+function togglePriceAlert(productId, enabled) {
+    fetch('/favorites/price-alert/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            product_id: productId,
+            enabled: enabled
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Afficher une notification de succès
+            showNotification(enabled ? 'Alerte de prix activée' : 'Alerte de prix désactivée');
+        }
+    })
+    .catch(error => console.error('Erreur:', error));
+}
+
+function shareWishlist() {
+    const shareData = {
+        title: 'Ma liste de favoris - Vidé-Grenier Kamer',
+        text: 'Découvrez ma sélection de produits favoris',
+        url: window.location.href
+    };
+    
+    if (navigator.share) {
+        navigator.share(shareData);
+    } else {
+        // Fallback: copier le lien
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            showNotification('Lien copié dans le presse-papiers');
+        });
+    }
+}
+
+function showNotification(message) {
+    // Créer une notification temporaire
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

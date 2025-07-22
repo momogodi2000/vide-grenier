@@ -9,8 +9,15 @@
     <!-- SEO Meta Tags -->
     <title>{% block title %}Vidé-Grenier Kamer - Marketplace camerounaise{% endblock %}</title>
     <meta name="description" content="{% block description %}Marketplace camerounaise de seconde main. Vendez et achetez facilement avec des moyens de paiement locaux.{% endblock %}">
-    <meta name="keywords" content="vidé-grenier, marketplace, Cameroun, seconde main, vente, achat">
+    <meta name="keywords" content="vidé-grenier, marketplace, Cameroun, seconde main, vente, achat, produits, annonces, mobile, PWA, APK, offline, synchronisation">
     <meta name="author" content="Vidé-Grenier Kamer">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ request.build_absolute_uri }}">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Vidé-Grenier Kamer">
+    <meta name="twitter:description" content="Marketplace camerounaise de seconde main">
+    <meta name="twitter:image" content="{% static 'images/og-image.jpg' %}">
     
     <!-- Open Graph -->
     <meta property="og:title" content="{% block og_title %}Vidé-Grenier Kamer{% endblock %}">
@@ -18,6 +25,15 @@
     <meta property="og:image" content="{% static 'images/og-image.jpg' %}">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
     <meta property="og:type" content="website">
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
     
     <!-- Favicons -->
     <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
@@ -108,6 +124,75 @@
             </div>
         </div>
     </div>
+
+    <!-- Device Detection & PWA Install Logic -->
+    <script>
+      let deferredPrompt;
+      const pwaBanner = document.getElementById('pwa-banner');
+      const pwaInstallBtn = document.getElementById('pwa-install-btn');
+      const pwaCloseBtn = document.getElementById('pwa-close-btn');
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (window.matchMedia('(max-width: 600px)').matches) {
+          pwaBanner.classList.remove('hidden');
+        }
+      });
+      if (pwaInstallBtn) {
+        pwaInstallBtn.addEventListener('click', () => {
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+              if (choiceResult.outcome === 'accepted') {
+                pwaBanner.classList.add('hidden');
+              }
+              deferredPrompt = null;
+            });
+          }
+        });
+      }
+      if (pwaCloseBtn) {
+        pwaCloseBtn.addEventListener('click', () => {
+          pwaBanner.classList.add('hidden');
+        });
+      }
+    </script>
+
+    <!-- Offline Local DB & Sync Logic -->
+    <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.min.js"></script>
+    <script>
+      // Initialize IndexedDB using Dexie
+      const db = new Dexie('vgk_offline_db');
+      db.version(1).stores({
+        actions: '++id, type, payload, timestamp, synced',
+        states: '++id, key, value, timestamp, synced'
+      });
+
+      // Example: Save user action offline
+      function saveUserAction(type, payload) {
+        db.actions.add({ type, payload, timestamp: Date.now(), synced: false });
+      }
+
+      // Example: Save app state offline
+      function saveAppState(key, value) {
+        db.states.put({ key, value, timestamp: Date.now(), synced: false });
+      }
+
+      // Sync logic: Try to sync when online
+      async function syncOfflineData() {
+        if (navigator.onLine) {
+          const unsyncedActions = await db.actions.where('synced').equals(false).toArray();
+          const unsyncedStates = await db.states.where('synced').equals(false).toArray();
+          // TODO: Send unsyncedActions and unsyncedStates to server via API
+          // On success, mark as synced
+          await Promise.all(unsyncedActions.map(a => db.actions.update(a.id, { synced: true })));
+          await Promise.all(unsyncedStates.map(s => db.states.update(s.id, { synced: true })));
+        }
+      }
+
+      window.addEventListener('online', syncOfflineData);
+      document.addEventListener('DOMContentLoaded', syncOfflineData);
+    </script>
     
     <!-- Navigation -->
     {% include 'components/navbar.html' %}

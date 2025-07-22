@@ -1,0 +1,351 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Points de Retrait - Vidé-Grenier Kamer{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-12">
+    <div class="container mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-12">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-800 mb-4">Points de Retrait</h1>
+                    <p class="text-xl text-gray-600">{{ pickup_points.count }} point{{ pickup_points.count|pluralize }} de retrait disponible{{ pickup_points.count|pluralize }}</p>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button onclick="showOnMap()" 
+                            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center">
+                        <i data-lucide="map" class="w-5 h-5 mr-2"></i>
+                        Voir sur la carte
+                    </button>
+                    
+                    {% if user.is_staff %}
+                    <a href="{% url 'backend:pickup_create' %}" 
+                       class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center">
+                        <i data-lucide="plus" class="w-5 h-5 mr-2"></i>
+                        Ajouter un point
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+            <div class="flex flex-wrap gap-4 items-center">
+                <div class="flex-1 relative min-w-64">
+                    <input type="text" 
+                           id="search-pickup" 
+                           placeholder="Rechercher par nom ou adresse..." 
+                           class="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    <div class="absolute left-4 top-1/2 transform -translate-y-1/2">
+                        <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <select id="filter-city" class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    <option value="">Toutes les villes</option>
+                    <option value="DOUALA">Douala</option>
+                    <option value="YAOUNDE">Yaoundé</option>
+                    <option value="BAFOUSSAM">Bafoussam</option>
+                    <option value="GAROUA">Garoua</option>
+                    <option value="BAMENDA">Bamenda</option>
+                </select>
+                
+                <select id="filter-type" class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    <option value="">Tous les types</option>
+                    <option value="SHOP">Boutique</option>
+                    <option value="KIOSK">Kiosque</option>
+                    <option value="OFFICE">Bureau</option>
+                    <option value="OTHER">Autre</option>
+                </select>
+                
+                <button onclick="clearFilters()" 
+                        class="px-4 py-3 text-gray-600 hover:text-gray-800 underline">
+                    Effacer filtres
+                </button>
+            </div>
+        </div>
+
+        <!-- Vue carte (cachée par défaut) -->
+        <div id="map-container" class="hidden bg-white rounded-2xl shadow-lg p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">Carte des points de retrait</h2>
+                <button onclick="hideMap()" 
+                        class="p-2 text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div id="pickup-map" class="w-full h-96 bg-gray-200 rounded-lg flex items-center justify-center">
+                <div class="text-center text-gray-500">
+                    <i data-lucide="map-pin" class="w-12 h-12 mx-auto mb-2"></i>
+                    <p>Carte des points de retrait</p>
+                    <p class="text-sm">Intégration Google Maps à venir</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des points de retrait -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="pickup-grid">
+            {% for pickup in pickup_points %}
+            <div class="pickup-item bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+                 data-city="{{ pickup.city }}"
+                 data-type="{{ pickup.pickup_type }}"
+                 data-name="{{ pickup.name|lower }}"
+                 data-address="{{ pickup.address|lower }}">
+                
+                <!-- Image ou icône -->
+                <div class="relative h-48 bg-gradient-to-r from-green-500 to-green-600">
+                    {% if pickup.image %}
+                    <img src="{{ pickup.image.url }}" 
+                         alt="{{ pickup.name }}" 
+                         class="w-full h-full object-cover">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-white">
+                        <div class="text-center">
+                            <i data-lucide="map-pin" class="w-16 h-16 mx-auto mb-2"></i>
+                            <p class="text-lg font-medium">{{ pickup.get_pickup_type_display }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Badge de statut -->
+                    {% if pickup.is_active %}
+                    <div class="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                        Actif
+                    </div>
+                    {% else %}
+                    <div class="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                        Fermé
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Badge de ville -->
+                    <div class="absolute top-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+                        {{ pickup.city }}
+                    </div>
+                </div>
+                
+                <div class="p-6">
+                    <div class="mb-4">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">{{ pickup.name }}</h3>
+                        <p class="text-gray-600 flex items-start">
+                            <i data-lucide="map-pin" class="w-5 h-5 mr-2 mt-0.5 text-gray-400"></i>
+                            {{ pickup.address }}
+                        </p>
+                    </div>
+                    
+                    <!-- Informations de contact -->
+                    <div class="space-y-2 mb-4">
+                        {% if pickup.phone %}
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i data-lucide="phone" class="w-4 h-4 mr-2 text-gray-400"></i>
+                            <a href="tel:{{ pickup.phone }}" class="hover:text-green-600">{{ pickup.phone }}</a>
+                        </div>
+                        {% endif %}
+                        
+                        {% if pickup.email %}
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i data-lucide="mail" class="w-4 h-4 mr-2 text-gray-400"></i>
+                            <a href="mailto:{{ pickup.email }}" class="hover:text-green-600">{{ pickup.email }}</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Horaires -->
+                    {% if pickup.opening_hours %}
+                    <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center text-sm text-gray-600 mb-1">
+                            <i data-lucide="clock" class="w-4 h-4 mr-2 text-gray-400"></i>
+                            <span class="font-medium">Horaires d'ouverture</span>
+                        </div>
+                        <p class="text-sm text-gray-600 ml-6">{{ pickup.opening_hours }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Statistiques -->
+                    <div class="grid grid-cols-2 gap-4 mb-4 text-center">
+                        <div class="bg-blue-50 rounded-lg p-3">
+                            <div class="text-2xl font-bold text-blue-600">{{ pickup.orders.count }}</div>
+                            <div class="text-xs text-blue-600">Commandes</div>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-3">
+                            <div class="text-2xl font-bold text-green-600">
+                                {% if pickup.average_rating %}{{ pickup.average_rating|floatformat:1 }}{% else %}N/A{% endif %}
+                            </div>
+                            <div class="text-xs text-green-600">Note moyenne</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <!-- Details link removed: No 'pickup_detail' view exists -->
+                        </a>
+                        
+                        <div class="flex space-x-2">
+                            <button onclick="getDirections('{{ pickup.address|escapejs }}')" 
+                                    class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                <i data-lucide="navigation" class="w-4 h-4 inline mr-1"></i>
+                                Itinéraire
+                            </button>
+                            <button onclick="sharePickupPoint({{ pickup.id }})" 
+                                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm">
+                                <i data-lucide="share-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Message si aucun résultat -->
+        <div id="no-results" class="hidden text-center py-20">
+            <div class="text-8xl text-gray-300 mb-6">📍</div>
+            <h2 class="text-3xl font-bold text-gray-600 mb-4">Aucun point de retrait trouvé</h2>
+            <p class="text-xl text-gray-500 mb-8">Essayez de modifier vos filtres</p>
+        </div>
+
+        <!-- Informations supplémentaires -->
+        <div class="mt-12 bg-white rounded-2xl shadow-lg p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">À propos des points de retrait</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="shield-check" class="w-8 h-8 text-green-600"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-800 mb-2">Sécurisé</h3>
+                    <p class="text-gray-600 text-sm">Vos commandes sont sécurisées dans nos points de retrait partenaires</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="clock" class="w-8 h-8 text-blue-600"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-800 mb-2">Horaires flexibles</h3>
+                    <p class="text-gray-600 text-sm">Récupérez vos commandes selon vos disponibilités</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="map-pin" class="w-8 h-8 text-purple-600"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-800 mb-2">Proximité</h3>
+                    <p class="text-gray-600 text-sm">Points de retrait disponibles dans toutes les grandes villes</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search-pickup');
+    const cityFilter = document.getElementById('filter-city');
+    const typeFilter = document.getElementById('filter-type');
+    const pickupGrid = document.getElementById('pickup-grid');
+    const noResults = document.getElementById('no-results');
+    
+    function filterPickupPoints() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedCity = cityFilter.value;
+        const selectedType = typeFilter.value;
+        
+        const pickupItems = pickupGrid.querySelectorAll('.pickup-item');
+        let visibleCount = 0;
+        
+        pickupItems.forEach(item => {
+            const name = item.dataset.name;
+            const address = item.dataset.address;
+            const city = item.dataset.city;
+            const type = item.dataset.type;
+            
+            let show = true;
+            
+            // Filtre par recherche
+            if (searchTerm && !name.includes(searchTerm) && !address.includes(searchTerm)) {
+                show = false;
+            }
+            
+            // Filtre par ville
+            if (selectedCity && city !== selectedCity) {
+                show = false;
+            }
+            
+            // Filtre par type
+            if (selectedType && type !== selectedType) {
+                show = false;
+            }
+            
+            if (show) {
+                item.style.display = 'block';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // Afficher/masquer le message "aucun résultat"
+        if (visibleCount === 0) {
+            noResults.classList.remove('hidden');
+            pickupGrid.classList.add('hidden');
+        } else {
+            noResults.classList.add('hidden');
+            pickupGrid.classList.remove('hidden');
+        }
+    }
+    
+    searchInput.addEventListener('input', filterPickupPoints);
+    cityFilter.addEventListener('change', filterPickupPoints);
+    typeFilter.addEventListener('change', filterPickupPoints);
+});
+
+function showOnMap() {
+    document.getElementById('map-container').classList.remove('hidden');
+    // Ici, vous pourriez initialiser une vraie carte avec Google Maps ou Leaflet
+}
+
+function hideMap() {
+    document.getElementById('map-container').classList.add('hidden');
+}
+
+function clearFilters() {
+    document.getElementById('search-pickup').value = '';
+    document.getElementById('filter-city').value = '';
+    document.getElementById('filter-type').value = '';
+    
+    // Réafficher tous les éléments
+    const pickupItems = document.querySelectorAll('.pickup-item');
+    pickupItems.forEach(item => {
+        item.style.display = 'block';
+    });
+    
+    document.getElementById('no-results').classList.add('hidden');
+    document.getElementById('pickup-grid').classList.remove('hidden');
+}
+
+function getDirections(address) {
+    // Ouvrir dans Google Maps
+    const encodedAddress = encodeURIComponent(address);
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`, '_blank');
+}
+
+function sharePickupPoint(pickupId) {
+    const url = window.location.origin + `/pickup/${pickupId}/`;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'Point de retrait - Vidé-Grenier Kamer',
+            text: 'Découvrez ce point de retrait',
+            url: url
+        });
+    } else {
+        // Fallback: copier le lien
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Lien copié dans le presse-papiers');
+        });
+    }
+}
+</script>
+{% endblock %}

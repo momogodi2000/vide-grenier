@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Détail de l'avis - Vidé-Grenier Kamer{% endblock %}
+{% block content %}
+<div class="max-w-xl mx-auto py-12">
+    <div class="bg-white rounded-xl shadow p-8">
+        <h1 class="text-2xl font-bold text-vgk-green-700 mb-4">Avis de {{ review.user_name }}</h1>
+        <div class="mb-2 text-gray-600">Commentaire : {{ review.comment }}</div>
+        <div class="mb-2 text-yellow-500 font-bold">Note : {{ review.rating }}/5</div>
+        <div class="mb-2 text-xs text-gray-400">Publié le : {{ review.created_at|date:"d/m/Y H:i" }}</div>
+        <div class="mt-6">
+            <a href="{% url 'backend:review_list' %}" class="text-vgk-green-600 hover:underline">← Retour à la liste</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

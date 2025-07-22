@@ -1,0 +1,514 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ pickup_point.name }} - Point de Retrait{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-12">
+    <div class="container mx-auto px-4">
+        
+        <!-- Breadcrumb -->
+        <nav class="mb-8">
+            <ol class="flex items-center space-x-2 text-sm">
+                <li><a href="{% url 'backend:home' %}" class="text-green-600 hover:text-green-700">Accueil</a></li>
+                <li><i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i></li>
+                <li><a href="{% url 'backend:pickup_list' %}" class="text-green-600 hover:text-green-700">Points de retrait</a></li>
+                <li><i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i></li>
+                <li class="text-gray-600">{{ pickup_point.name }}</li>
+            </ol>
+        </nav>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Colonne principale -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- En-tête du point de retrait -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                    <div class="relative h-64 bg-gradient-to-r from-green-500 to-green-600">
+                        {% if pickup_point.image %}
+                        <img src="{{ pickup_point.image.url }}" 
+                             alt="{{ pickup_point.name }}" 
+                             class="w-full h-full object-cover">
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-white">
+                            <div class="text-center">
+                                <i data-lucide="map-pin" class="w-20 h-20 mx-auto mb-4"></i>
+                                <h3 class="text-2xl font-bold">{{ pickup_point.get_pickup_type_display }}</h3>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Badge de statut -->
+                        <div class="absolute top-6 right-6">
+                            {% if pickup_point.is_active %}
+                            <span class="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-medium">
+                                <i data-lucide="check-circle" class="w-4 h-4 inline mr-1"></i>
+                                Actif
+                            </span>
+                            {% else %}
+                            <span class="bg-red-500 text-white px-4 py-2 rounded-full text-sm font-medium">
+                                <i data-lucide="x-circle" class="w-4 h-4 inline mr-1"></i>
+                                Fermé
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Badge de ville -->
+                        <div class="absolute top-6 left-6">
+                            <span class="bg-black bg-opacity-50 text-white px-4 py-2 rounded-full text-sm font-medium">
+                                <i data-lucide="map-pin" class="w-4 h-4 inline mr-1"></i>
+                                {{ pickup_point.city }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="p-8">
+                        <div class="flex items-start justify-between mb-6">
+                            <div>
+                                <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ pickup_point.name }}</h1>
+                                <p class="text-lg text-gray-600 flex items-center">
+                                    <i data-lucide="map-pin" class="w-5 h-5 mr-2 text-gray-400"></i>
+                                    {{ pickup_point.address }}
+                                </p>
+                            </div>
+                            
+                            <div class="flex space-x-3">
+                                <button onclick="sharePickupPoint()" 
+                                        class="p-3 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">
+                                    <i data-lucide="share-2" class="w-5 h-5"></i>
+                                </button>
+                                <button onclick="addToFavorites()" 
+                                        class="p-3 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors">
+                                    <i data-lucide="heart" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Description -->
+                        {% if pickup_point.description %}
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Description</h3>
+                            <p class="text-gray-600 leading-relaxed">{{ pickup_point.description }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Statistiques -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="bg-blue-50 rounded-xl p-4 text-center">
+                                <div class="text-2xl font-bold text-blue-600">{{ pickup_point.orders.count }}</div>
+                                <div class="text-sm text-blue-600">Commandes traitées</div>
+                            </div>
+                            <div class="bg-green-50 rounded-xl p-4 text-center">
+                                <div class="text-2xl font-bold text-green-600">
+                                    {% if pickup_point.average_rating %}{{ pickup_point.average_rating|floatformat:1 }}{% else %}N/A{% endif %}
+                                </div>
+                                <div class="text-sm text-green-600">Note moyenne</div>
+                            </div>
+                            <div class="bg-purple-50 rounded-xl p-4 text-center">
+                                <div class="text-2xl font-bold text-purple-600">{{ pickup_point.reviews.count }}</div>
+                                <div class="text-sm text-purple-600">Avis clients</div>
+                            </div>
+                            <div class="bg-yellow-50 rounded-xl p-4 text-center">
+                                <div class="text-2xl font-bold text-yellow-600">
+                                    {% if pickup_point.response_time %}{{ pickup_point.response_time }}h{% else %}N/A{% endif %}
+                                </div>
+                                <div class="text-sm text-yellow-600">Temps de réponse</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Services et commodités -->
+                {% if pickup_point.services.exists %}
+                <div class="bg-white rounded-2xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Services disponibles</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {% for service in pickup_point.services.all %}
+                        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                <i data-lucide="check" class="w-5 h-5 text-green-600"></i>
+                            </div>
+                            <span class="text-gray-700 font-medium">{{ service.name }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Avis clients -->
+                <div class="bg-white rounded-2xl shadow-lg p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Avis clients</h2>
+                        {% if user.is_authenticated %}
+                        <button onclick="openReviewModal()" 
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            Laisser un avis
+                        </button>
+                        {% endif %}
+                    </div>
+                    
+                    {% if pickup_point.reviews.exists %}
+                    <div class="space-y-6">
+                        {% for review in pickup_point.reviews.all|slice:":5" %}
+                        <div class="border-b border-gray-200 pb-6 last:border-b-0">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                                    {% if review.user.profile_picture %}
+                                    <img src="{{ review.user.profile_picture.url }}" 
+                                         alt="{{ review.user.get_full_name }}" 
+                                         class="w-12 h-12 rounded-full object-cover">
+                                    {% else %}
+                                    <i data-lucide="user" class="w-6 h-6 text-gray-400"></i>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div>
+                                            <h4 class="font-semibold text-gray-800">{{ review.user.get_full_name }}</h4>
+                                            <div class="flex items-center space-x-1">
+                                                {% for i in "12345" %}
+                                                {% if forloop.counter <= review.rating %}
+                                                <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                                {% else %}
+                                                <i data-lucide="star" class="w-4 h-4 text-gray-300"></i>
+                                                {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <span class="text-sm text-gray-500">{{ review.created_at|timesince }}</span>
+                                    </div>
+                                    <p class="text-gray-600">{{ review.comment }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% if pickup_point.reviews.count > 5 %}
+                        <div class="text-center">
+                            <a href="{% url 'backend:pickup_reviews' pk=pickup_point.pk %}" 
+                               class="text-green-600 hover:text-green-700 font-medium">
+                                Voir tous les avis ({{ pickup_point.reviews.count }})
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8 text-gray-500">
+                        <i data-lucide="message-circle" class="w-12 h-12 mx-auto mb-4"></i>
+                        <p>Aucun avis pour le moment</p>
+                        <p class="text-sm">Soyez le premier à laisser un avis !</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                
+                <!-- Informations de contact -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Informations de contact</h3>
+                <div class="space-y-4">
+                    {% if pickup_point.phone %}
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="phone" class="w-5 h-5 text-green-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Téléphone</p>
+                            <a href="tel:{{ pickup_point.phone }}" class="text-gray-800 hover:text-green-600 font-medium">
+                                {{ pickup_point.phone }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if pickup_point.email %}
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="mail" class="w-5 h-5 text-blue-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Email</p>
+                            <a href="mailto:{{ pickup_point.email }}" class="text-gray-800 hover:text-blue-600 font-medium">
+                                {{ pickup_point.email }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="map-pin" class="w-5 h-5 text-purple-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Adresse</p>
+                            <p class="text-gray-800 font-medium">{{ pickup_point.address }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 space-y-3">
+                    <button onclick="getDirections()" 
+                            class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center">
+                        <i data-lucide="navigation" class="w-5 h-5 mr-2"></i>
+                        Obtenir l'itinéraire
+                    </button>
+                    
+                    <button onclick="callPickupPoint()" 
+                            class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center">
+                        <i data-lucide="phone" class="w-5 h-5 mr-2"></i>
+                        Appeler
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Horaires d'ouverture -->
+            {% if pickup_point.opening_hours %}
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Horaires d'ouverture</h3>
+                <div class="space-y-2">
+                    <div class="flex items-center space-x-3">
+                        <i data-lucide="clock" class="w-5 h-5 text-gray-400"></i>
+                        <div>
+                            <p class="text-gray-800 font-medium">{{ pickup_point.opening_hours }}</p>
+                            <p class="text-sm text-green-600">Ouvert maintenant</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Instructions spéciales -->
+            {% if pickup_point.special_instructions %}
+            <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-6">
+                <h3 class="text-lg font-semibold text-yellow-800 mb-3 flex items-center">
+                    <i data-lucide="info" class="w-5 h-5 mr-2"></i>
+                    Instructions spéciales
+                </h3>
+                <p class="text-yellow-700">{{ pickup_point.special_instructions }}</p>
+            </div>
+            {% endif %}
+            
+            <!-- Actions rapides -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Actions rapides</h3>
+                <div class="space-y-3">
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'backend:order_create' %}?pickup_point={{ pickup_point.id }}" 
+                       class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center">
+                        <i data-lucide="shopping-bag" class="w-5 h-5 mr-2"></i>
+                        Choisir ce point
+                    </a>
+                    {% endif %}
+                    
+                    <button onclick="reportIssue()" 
+                            class="w-full bg-red-100 text-red-600 py-3 rounded-lg hover:bg-red-200 transition-colors font-medium flex items-center justify-center">
+                        <i data-lucide="flag" class="w-5 h-5 mr-2"></i>
+                        Signaler un problème
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Points de retrait similaires -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Autres points à proximité</h3>
+                <div class="space-y-3">
+                    {% for similar in similar_pickup_points %}
+                    <a href="{% url 'backend:pickup_detail' pk=similar.pk %}" 
+                       class="block p-3 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors">
+                        <h4 class="font-medium text-gray-800">{{ similar.name }}</h4>
+                        <p class="text-sm text-gray-600">{{ similar.address }}</p>
+                        <div class="flex items-center justify-between mt-2">
+                            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">{{ similar.city }}</span>
+                            <span class="text-xs text-green-600">{{ similar.distance|floatformat:1 }} km</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal pour avis -->
+    <div id="review-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold text-gray-800">Laisser un avis</h3>
+                <button onclick="closeReviewModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5 text-gray-500"></i>
+                </button>
+            </div>
+            
+            <form id="review-form" method="POST" action="{% url 'backend:pickup_review' pk=pickup_point.pk %}">
+                {% csrf_token %}
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Note</label>
+                    <div class="flex space-x-1" id="rating-stars">
+                        {% for i in "12345" %}
+                        <button type="button" class="star-btn text-gray-300 hover:text-yellow-400 focus:outline-none" data-rating="{{ forloop.counter }}">
+                            <i data-lucide="star" class="w-8 h-8"></i>
+                        </button>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="rating" id="rating-input" required>
+                </div>
+                
+                <div class="mb-6">
+                    <label for="comment" class="block text-sm font-medium text-gray-700 mb-2">Commentaire</label>
+                    <textarea name="comment" id="comment" rows="4" 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                              placeholder="Partagez votre expérience..."></textarea>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button type="button" onclick="closeReviewModal()" 
+                            class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        Annuler
+                    </button>
+                    <button type="submit" 
+                            class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        Publier l'avis
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+<script>
+function getDirections() {
+    const address = "{{ pickup_point.address|escapejs }}";
+    const encodedAddress = encodeURIComponent(address);
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`, '_blank');
+}
+
+function callPickupPoint() {
+    {% if pickup_point.phone %}
+    window.location.href = 'tel:{{ pickup_point.phone }}';
+    {% else %}
+    alert('Numéro de téléphone non disponible');
+    {% endif %}
+}
+
+function sharePickupPoint() {
+    const shareData = {
+        title: '{{ pickup_point.name }} - Point de retrait',
+        text: 'Découvrez ce point de retrait sur Vidé-Grenier Kamer',
+        url: window.location.href
+    };
+    
+    if (navigator.share) {
+        navigator.share(shareData);
+    } else {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            alert('Lien copié dans le presse-papiers');
+        });
+    }
+}
+
+function addToFavorites() {
+    fetch(`/pickup/{{ pickup_point.pk }}/toggle-favorite/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.is_favorite ? 'Ajouté aux favoris' : 'Retiré des favoris');
+        }
+    })
+    .catch(error => console.error('Erreur:', error));
+}
+
+function reportIssue() {
+    const reason = prompt('Décrivez le problème rencontré :');
+    if (reason) {
+        fetch(`/pickup/{{ pickup_point.pk }}/report/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason: reason })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Signalement envoyé avec succès');
+            }
+        })
+        .catch(error => console.error('Erreur:', error));
+    }
+}
+
+function openReviewModal() {
+    document.getElementById('review-modal').classList.remove('hidden');
+}
+
+function closeReviewModal() {
+    document.getElementById('review-modal').classList.add('hidden');
+    // Réinitialiser le formulaire
+    document.getElementById('review-form').reset();
+    document.getElementById('rating-input').value = '';
+    document.querySelectorAll('.star-btn').forEach(btn => {
+        btn.classList.remove('text-yellow-400');
+        btn.classList.add('text-gray-300');
+    });
+}
+
+// Gestion des étoiles de notation
+document.addEventListener('DOMContentLoaded', function() {
+    const starBtns = document.querySelectorAll('.star-btn');
+    const ratingInput = document.getElementById('rating-input');
+    
+    starBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const rating = parseInt(this.dataset.rating);
+            ratingInput.value = rating;
+            
+            // Mettre à jour l'affichage des étoiles
+            starBtns.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.remove('text-gray-300');
+                    star.classList.add('text-yellow-400');
+                } else {
+                    star.classList.remove('text-yellow-400');
+                    star.classList.add('text-gray-300');
+                }
+            });
+        });
+        
+        btn.addEventListener('mouseenter', function() {
+            const rating = parseInt(this.dataset.rating);
+            starBtns.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.add('text-yellow-400');
+                } else {
+                    star.classList.remove('text-yellow-400');
+                }
+            });
+        });
+    });
+    
+    document.getElementById('rating-stars').addEventListener('mouseleave', function() {
+        const currentRating = parseInt(ratingInput.value) || 0;
+        starBtns.forEach((star, index) => {
+            if (index < currentRating) {
+                star.classList.add('text-yellow-400');
+                star.classList.remove('text-gray-300');
+            } else {
+                star.classList.remove('text-yellow-400');
+                star.classList.add('text-gray-300');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

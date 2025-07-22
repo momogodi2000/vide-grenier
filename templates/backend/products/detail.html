@@ -148,7 +148,7 @@
                             {% if product.original_price %}
                             <div class="text-right">
                                 <div class="text-lg line-through text-green-200">{{ product.original_price|floatformat:0 }} FCFA</div>
-                                <div class="text-sm text-green-100">Économisez {{ product.original_price|sub:product.price|floatformat:0 }} FCFA</div>
+                                <div class="text-sm text-green-100">Économisez {{ product.original_price|floatformat:0|add:"-"|add:product.price|floatformat:0 }} FCFA</div>
                             </div>
                             {% endif %}
                         </div>

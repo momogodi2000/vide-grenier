@@ -228,10 +228,12 @@
                     <div class="space-y-4">
                         <form id="newsletter-form" class="flex space-x-3">
                             <input type="email" 
+                                   id="newsletter-email"
                                    placeholder="Votre adresse email" 
                                    class="flex-1 px-4 py-3 rounded-full border-0 focus:ring-2 focus:ring-white/50 outline-none"
                                    required>
                             <button type="submit" 
+                                    id="newsletter-submit"
                                     class="bg-white text-green-600 px-6 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors whitespace-nowrap">
                                 S'abonner
                             </button>
@@ -240,6 +242,7 @@
                         <div class="flex items-center space-x-2 text-white/80 text-sm">
                             <i data-lucide="shield-check" class="w-4 h-4"></i>
                             <span>Pas de spam, désabonnement facile</span>
+                            <span id="newsletter-feedback" class="ml-2 text-green-300"></span>
                         </div>
                     </div>
                 </div>
@@ -292,6 +295,50 @@
     <div class="border-t border-gray-800 bg-gray-950">
         <div class="container mx-auto px-4 py-6">
             <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                  const form = document.getElementById('newsletter-form');
+                  const emailInput = document.getElementById('newsletter-email');
+                  const feedback = document.getElementById('newsletter-feedback');
+                  form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const email = emailInput.value.trim();
+                    feedback.textContent = '';
+                    if (!email) {
+                      feedback.textContent = 'Veuillez entrer une adresse email.';
+                      feedback.classList.remove('text-green-300');
+                      feedback.classList.add('text-red-400');
+                      return;
+                    }
+                    fetch('/api/newsletter/subscribe/', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': (document.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+                      },
+                      body: JSON.stringify({ email })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                      if (data.success) {
+                        feedback.textContent = 'Merci, vous êtes abonné !';
+                        feedback.classList.remove('text-red-400');
+                        feedback.classList.add('text-green-300');
+                        form.reset();
+                      } else {
+                        feedback.textContent = data.error || 'Erreur, réessayez.';
+                        feedback.classList.remove('text-green-300');
+                        feedback.classList.add('text-red-400');
+                      }
+                    })
+                    .catch(() => {
+                      feedback.textContent = 'Erreur réseau, réessayez.';
+                      feedback.classList.remove('text-green-300');
+                      feedback.classList.add('text-red-400');
+                    });
+                  });
+                });
+                </script>
                 <div class="text-gray-400 text-sm">
                     © {{ CURRENT_YEAR }} Vidé-Grenier Kamer. Tous droits réservés.
                     <span class="mx-2">•</span>

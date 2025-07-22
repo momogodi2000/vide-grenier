@@ -91,6 +91,7 @@ from .models import (
     Chat, Message, Favorite, SearchHistory, Notification, 
     AdminStock, PickupPoint, Analytics
 )
+from .models import SavedSearch
 from .utils import send_sms_notification, send_email_notification
 
 
@@ -618,3 +619,63 @@ class RecommendedProductsView(LoginRequiredMixin, TemplateView):
         
         context['recommended_products'] = recommended_products
         return context
+
+
+
+## update
+
+# Add these views to complete the functionality
+
+class CategoryListView(ListView):
+    """Liste complète de toutes les catégories"""
+    model = Category
+    template_name = 'backend/categories/list.html'
+    context_object_name = 'categories'
+    
+    def get_queryset(self):
+        return Category.objects.filter(is_active=True, parent__isnull=True).prefetch_related('children')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['main_categories'] = Category.objects.filter(
+            is_active=True, 
+            parent__isnull=True
+        )[:6]
+        context['total_categories'] = Category.objects.filter(is_active=True).count()
+        context['total_products'] = Product.objects.filter(status='ACTIVE').count()
+        context['avg_products_per_category'] = (
+            context['total_products'] / context['total_categories'] 
+            if context['total_categories'] > 0 else 0
+        )
+        return context
+
+
+class ProductAdvancedSearchView(TemplateView):
+    """Page de recherche avancée"""
+    template_name = 'backend/search/advanced.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = Category.objects.filter(is_active=True).order_by('name')
+        
+        if self.request.user.is_authenticated:
+            context['saved_searches'] = SavedSearch.objects.filter(
+                user=self.request.user
+            ).order_by('-created_at')[:10]
+        
+        # Recherches populaires
+        context['popular_searches'] = SearchHistory.objects.values('search_term').annotate(
+            count=Count('search_term')
+        ).order_by('-count')[:10]
+        
+        return context
+
+
+class SavedSearchesView(LoginRequiredMixin, ListView):
+    """Liste des recherches sauvegardées"""
+    model = SavedSearch
+    template_name = 'backend/search/saved.html'
+    context_object_name = 'saved_searches'
+    
+    def get_queryset(self):
+        return SavedSearch.objects.filter(user=self.request.user).order_by('-created_at')

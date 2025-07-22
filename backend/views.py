@@ -880,6 +880,16 @@ class ReviewListView(ListView):
         ).select_related('reviewer', 'order__product').order_by('-created_at')
 
 
+class ReviewDetailView(DetailView):
+    """Détail d'un avis public"""
+    model = Review
+    template_name = 'backend/reviews/detail.html'
+    context_object_name = 'review'
+    
+    def get_queryset(self):
+        return Review.objects.filter(is_verified=True).select_related('reviewer', 'order__product')
+
+
 class AdminPanelView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     """Panel d'administration principal"""
     template_name = 'backend/admin/panel.html'

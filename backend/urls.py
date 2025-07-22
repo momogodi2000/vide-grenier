@@ -3,6 +3,7 @@
 from django.urls import path
 from . import views
 from . import additional_views
+from .views_newsletter import newsletter_subscribe
 
 app_name = 'backend'
 
@@ -57,6 +58,8 @@ urlpatterns = [
     # ============= AVIS ET ÉVALUATIONS =============
     path('review/create/<uuid:order_id>/', views.ReviewCreateView.as_view(), name='review_create'),
     path('reviews/', views.ReviewListView.as_view(), name='review_list'),
+
+    path('review/<uuid:pk>/', views.ReviewDetailView.as_view(), name='review_detail'),
     
     # ============= ADMINISTRATION =============
     path('admin-panel/', views.AdminPanelView.as_view(), name='admin_panel'),
@@ -163,4 +166,9 @@ urlpatterns += [
 urlpatterns += [
     path('search/advanced/', additional_views.ProductAdvancedSearchView.as_view(), name='advanced_search'),
     path('search/saved/', additional_views.SavedSearchesView.as_view(), name='saved_searches'),
+]
+
+# ============= ABONNEMENT À LA NEWSLETTER =============
+urlpatterns += [
+    path('api/newsletter/subscribe/', newsletter_subscribe, name='newsletter_subscribe'),
 ]
