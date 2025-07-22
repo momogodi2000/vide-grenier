@@ -1,0 +1,123 @@
+
+# render.yaml (Configuration Render)
+services:
+  - type: web
+    name: vide-grenier-kamer
+    env: python
+    plan: pro
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+      python manage.py migrate
+    startCommand: gunicorn --workers 4 --timeout 120 vide.wsgi:application
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: vide.settings.production
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: false
+      - key: ALLOWED_HOSTS
+        value: vide-grenier-kamer.onrender.com
+    healthCheckPath: /health/
+
+databases:
+  - name: vgk-postgres
+    plan: pro
+    databaseName: vgk_production
+    user: vgk_user
+
+redis:
+  - name: vgk-redis
+    plan: pro
+    ipAllowList: []
+
+# docker-compose.yml (pour développement local avec services)
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgresql://postgres:password@db:5432/vgk_dev
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    command: python manage.py runserver 0.0.0.0:8000
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: vgk_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  celery:
+    build: .
+    command: celery -A vide worker --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgresql://postgres:password@db:5432/vgk_dev
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  postgres_data:
+
+# Dockerfile
+FROM python:3.11-slim
+
+# Variables d'environnement
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Répertoire de travail
+WORKDIR /app
+
+# Installer les dépendances système
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        postgresql-client \
+        build-essential \
+        libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Installer les dépendances Python
+COPY requirements.txt /app/
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+
+# Copier le projet
+COPY . /app/
+
+# Créer les dossiers nécessaires
+RUN mkdir -p /app/static /app/media /app/logs
+
+# Exposer le port
+EXPOSE 8000
+
+# Script de démarrage
+COPY entrypoint.sh /app/
+RUN chmod +x /app/entrypoint.sh
+
+# Commande par défaut
+CMD ["/app/entrypoint.sh"]

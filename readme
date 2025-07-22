@@ -1,0 +1,156 @@
+
+# README.md
+# Vidé-Grenier Kamer
+
+Marketplace camerounaise de seconde main - Version 2.5
+
+## 🚀 Installation et Configuration
+
+### Prérequis
+- Python 3.11+
+- PostgreSQL 15+ (production)
+- Redis 7+ (production)
+- Git
+
+### Installation Rapide
+
+1. **Cloner le projet**
+```bash
+git clone <repo-url>
+cd vide-grenier-kamer
+```
+
+2. **Créer l'environnement virtuel**
+```bash
+python -m venv vide_grenier_env
+source vide_grenier_env/bin/activate  # Linux/Mac
+# ou
+vide_grenier_env\Scripts\activate  # Windows
+```
+
+3. **Installer les dépendances**
+```bash
+pip install -r requirements.txt
+```
+
+4. **Configuration**
+```bash
+cp .env.example .env
+# Modifier .env avec vos paramètres
+```
+
+5. **Setup complet automatique**
+```bash
+python manage.py setup_vgk
+```
+
+6. **Démarrer le serveur**
+```bash
+python manage.py runserver
+```
+
+### Utilisateurs de Test
+
+**Administrateurs:**
+- admin@vgk.com / AdminVGK2025!
+- superadmin@vgk.com / AdminVGK2025!
+
+**Clients de test:**
+- alice.douala@gmail.com / TestVGK2025!
+- bob.yaounde@gmail.com / TestVGK2025!
+- claire.bafoussam@gmail.com / TestVGK2025!
+- david.garoua@gmail.com / TestVGK2025!
+- emma.bamenda@gmail.com / TestVGK2025!
+
+## 📚 Documentation
+
+### URLs Principales
+- 🏠 Accueil: `/`
+- 🔐 Connexion: `/auth/login/`
+- 📊 Dashboard: `/dashboard/`
+- 🛍️ Produits: `/products/`
+- ⚙️ Admin: `/admin/`
+
+### Commandes Utiles
+```bash
+# Créer des utilisateurs de test
+python manage.py create_test_users --with-demo-data
+
+# Peupler les catégories
+python manage.py populate_categories
+
+# Setup complet
+python manage.py setup_vgk
+
+# Migrations
+python manage.py makemigrations
+python manage.py migrate
+
+# Collecter les statiques
+python manage.py collectstatic
+```
+
+## 🏗️ Architecture
+
+### Structure du Projet
+```
+vide/
+├── manage.py
+├── requirements.txt
+├── .env
+├── vide/
+│   ├── settings/
+│   ├── urls.py
+│   ├── wsgi.py
+│   └── asgi.py
+└── backend/
+    ├── models/
+    ├── views/
+    ├── templates/
+    ├── static/
+    └── management/
+```
+
+### Technologies
+- **Backend**: Django 4.2 + DRF
+- **Base de données**: PostgreSQL / SQLite
+- **Cache**: Redis
+- **Frontend**: Django Templates + Tailwind CSS
+- **Real-time**: Django Channels
+- **Deployment**: Render
+
+## 🎯 Fonctionnalités
+
+- ✅ Authentification complète avec 2FA
+- ✅ Gestion produits avec images multiples
+- ✅ Système de paiement mobile (Campay, Orange Money, MTN)
+- ✅ Chat temps réel entre acheteurs/vendeurs
+- ✅ Système d'avis et évaluations
+- ✅ Points de retrait physiques
+- ✅ Dashboard admin complet
+- ✅ PWA avec support offline
+- ✅ Notifications temps réel
+- ✅ Système de fidélité
+- ✅ Analytics intégrés
+
+## 🚀 Déploiement
+
+### Render (Production)
+1. Connecter le repository GitHub
+2. Configurer les variables d'environnement
+3. Déployer automatiquement
+
+### Docker (Développement)
+```bash
+docker-compose up -d
+```
+
+## 📞 Support
+
+Pour toute question ou problème:
+- 📧 Email: support@videgrenier-kamer.com
+- 📱 WhatsApp: +237 694 63 84 12
+
+---
+
+**Vidé-Grenier Kamer** - *Vendez, Achetez, Économisez – Simplicité et Sécurité*
