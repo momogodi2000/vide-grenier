@@ -38,12 +38,12 @@
     <link rel="manifest" href="{% url 'manifest' %}">
     
     <!-- Preload Critical Resources -->
-    <link rel="preload" href="{% static 'css/tailwind.min.css' %}" as="style">
+    <link rel="preload" href="{% static 'tailwind.min.css' %}" as="style">
     <link rel="preload" href="{% static 'js/app.js' %}" as="script">
     
     <!-- CSS -->
     {% load static %}
-    <link href="{% static 'css/tailwind.min.css' %}" rel="stylesheet">
+    <link href="{% static 'tailwind.min.css' %}" rel="stylesheet">
     <link href="{% static 'css/custom.css' %}" rel="stylesheet">
     <link href="{% static 'css/animations.css' %}" rel="stylesheet">
     
@@ -104,7 +104,7 @@
     {% include 'components/navigation.html' %}
     
     <!-- Notifications Toast Container -->
-    <div id="toast-container" class="fixed top-20 right-4 z-50 space-y-2"></div>
+    {% include 'components/notifications.html' %}
     
     <!-- Main Content -->
     <main id="main-content" class="min-h-screen">
@@ -123,6 +123,8 @@
     <button id="back-to-top" class="fixed bottom-6 right-6 bg-green-600 text-white p-3 rounded-full shadow-lg opacity-0 invisible transition-all duration-300 hover:bg-green-700 hover:scale-110 z-40">
         <i data-lucide="arrow-up" class="w-6 h-6"></i>
     </button>
+
+    {% include 'components/loading.html' %}
     
     <!-- JavaScript -->
     <script src="{% static 'js/utils.js' %}"></script>
@@ -180,5 +182,9 @@
             }
         };
     </script>
+    {% include 'components/notifications.html' %}
+    {% include 'components/footer.html' %}
+    {% include 'components/chat_widget.html' %}
+    {% include 'components/loading.html' %}
 </body>
 </html>

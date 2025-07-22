@@ -1,0 +1,945 @@
+<!-- templates/components/filters.html -->
+{% load static %}
+
+<!-- Conteneur principal des filtres -->
+<div id="filters-container" class="bg-white rounded-lg shadow-lg p-6 sticky top-20 max-h-[calc(100vh-100px)] overflow-y-auto">
+    <!-- En-tête des filtres -->
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 flex items-center space-x-2">
+            <i data-lucide="filter" class="w-5 h-5 text-green-600"></i>
+            <span>Filtres</span>
+        </h3>
+        
+        <!-- Bouton reset -->
+        <button id="reset-filters" class="text-sm text-gray-500 hover:text-red-500 transition-colors flex items-center space-x-1">
+            <i data-lucide="x-circle" class="w-4 h-4"></i>
+            <span>Réinitialiser</span>
+        </button>
+    </div>
+    
+    <!-- Formulaire de filtres -->
+    <form id="filters-form" class="space-y-6" method="GET">
+        
+        <!-- Recherche textuelle -->
+        <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">
+                <i data-lucide="search" class="w-4 h-4 inline mr-1"></i>
+                Recherche
+            </label>
+            <div class="relative">
+                <input type="text" 
+                       name="q" 
+                       id="search-filter"
+                       value="{{ current_filters.q }}"
+                       placeholder="Rechercher un produit..." 
+                       class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors">
+                <i data-lucide="search" class="absolute left-2.5 top-2.5 w-4 h-4 text-gray-400"></i>
+            </div>
+        </div>
+        
+        <!-- Catégories -->
+        <div class="space-y-3">
+            <label class="block text-sm font-medium text-gray-700">
+                <i data-lucide="grid-3x3" class="w-4 h-4 inline mr-1"></i>
+                Catégorie
+            </label>
+            
+            <select name="category" 
+                    id="category-filter" 
+                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors">
+                <option value="">Toutes les catégories</option>
+                {% for category in categories %}
+                <option value="{{ category.slug }}" {% if current_filters.category == category.slug %}selected{% endif %}>
+                    {{ category.name }} ({{ category.products_count|default:0 }})
+                </option>
+                    {% for subcategory in category.children.all %}
+                    <option value="{{ subcategory.slug }}" {% if current_filters.category == subcategory.slug %}selected{% endif %}>
+                        &nbsp;&nbsp;→ {{ subcategory.name }} ({{ subcategory.products_count|default:0 }})
+                    </option>
+                    {% endfor %}
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Fourchette de prix -->
+        <div class="space-y-3">
+            <label class="block text-sm font-medium text-gray-700">
+                <i data-lucide="banknote" class="w-4 h-4 inline mr-1"></i>
+                Prix (FCFA)
+            </label>
+            
+            <!-- Slider de prix -->
+            <div class="px-2">
+                <div id="price-slider" class="mb-4"></div>
+                <div class="flex justify-between text-sm text-gray-600">
+                    <span id="min-price-display">0</span>
+                    <span id="max-price-display">1,000,000</span>
+                </div>
+            </div>
+            
+            <!-- Inputs manuels -->
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Prix minimum</label>
+                    <input type="number" 
+                           name="min_price" 
+                           id="min-price-input"
+                           value="{{ current_filters.min_price }}"
+                           placeholder="0" 
+                           min="0"
+                           step="1000"
+                           class="w-full p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Prix maximum</label>
+                    <input type="number" 
+                           name="max_price" 
+                           id="max-price-input"
+                           value="{{ current_filters.max_price }}"
+                           placeholder="1000000" 
+                           min="0"
+                           step="1000"
+                           class="w-full p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                </div>
+            </div>
+            
+            <!-- Fourchettes prédéfinies -->
+            <div class="grid grid-cols-2 gap-2">
+                <button type="button" class="price-range-btn text-xs py-1 px-2 border border-gray-300 rounded hover:bg-green-50 hover:border-green-300 transition-colors" 
+                        data-min="0" data-max="50000">
+                    0 - 50K
+                </button>
+                <button type="button" class="price-range-btn text-xs py-1 px-2 border border-gray-300 rounded hover:bg-green-50 hover:border-green-300 transition-colors" 
+                        data-min="50000" data-max="100000">
+                    50K - 100K
+                </button>
+                <button type="button" class="price-range-btn text-xs py-1 px-2 border border-gray-300 rounded hover:bg-green-50 hover:border-green-300 transition-colors" 
+                        data-min="100000" data-max="500000">
+                    100K - 500K
+                </button>
+                <button type="button" class="price-range-btn text-xs py-1 px-2 border border-gray-300 rounded hover:bg-green-50 hover:border-green-300 transition-colors" 
+                        data-min="500000" data-max="">
+                    500K+
+                </button>
+            </div>
+        </div>
+        
+        <!-- Ville / Localisation -->
+        <div class="space-y-3">
+            <label class="block text-sm font-medium text-gray-700">
+                <i data-lucide="map-pin" class="w-4 h-4 inline mr-1"></i>
+                Localisation
+            </label>
+            
+            <select name="city" 
+                    id="city-filter" 
+                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors">
+                <option value="">Toutes les villes</option>
+                {% for city_code, city_name in cities %}
+                <option value="{{ city_code }}" {% if current_filters.city == city_code %}selected{% endif %}>
+                    {{ city_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- État/Condition -->
+        <div class="space-y-3">
+            <label class="block text-sm font-medium text-gray-700">
+                <i data-lucide="star" class="w-4 h-4 inline mr-1"></i>
+                État du produit
+            </label>
+            
+            <div class="space-y-2">
+                {% for condition_code, condition_name in conditions %}
+                <label class="flex items-center space-x-2 cursor-pointer group">
+                    <input type="radio" 
+                           name="condition" 
+                           value="{{ condition_code }}"
+                           {% if current_filters.condition == condition_code %}checked{% endif %}
+                           class="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500">
+                    <span class="text-sm text-gray-700 group-hover:text-green-600 transition-colors">{{ condition_name }}</span>
+                </label>
+                {% endfor %}
+                
+                <!-- Option "Tous" -->
+                <label class="flex items-center space-x-2 cursor-pointer group">
+                    <input type="radio" 
+                           name="condition" 
+                           value=""
+                           {% if not current_filters.condition %}checked{% endif %}
+                           class="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500">
+                    <span class="text-sm text-gray-700 group-hover:text-green-600 transition-colors">Tous les états</span>
+                </label>
+            </div>
+        </div>
+        
+        <!-- Options supplémentaires -->
+        <div class="space-y-3">
+            <label class="block text-sm font-medium text-gray-700">
+                <i data-lucide="settings" class="w-4 h-4 inline mr-1"></i>
+                Options
+            </label>
+            
+            <div class="space-y-2">
+                <!-- Négociable -->
+                <label class="flex items-center space-x-2 cursor-pointer group">
+                    <input type="checkbox" 
+                           name="negotiable" 
+                           value="1"
+                           {% if current_filters.negotiable %}checked{% endif %}
+                           class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                    <span class="text-sm text-gray-700 group-hover:text-green-600 transition-colors">Prix négociable</span>
+                </label>
+                
+                <!-- Avec images -->
+                <label class="flex items-center space-x-2 cursor-pointer group">
+                    <input type="checkbox" 
+                           name="has_images" 
+                           value="1"
+                           {% if current_filters.has_images %}checked{% endif %}
+                           class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                    <span class="text-sm text-gray-700 group-hover:text-green-600 transition-colors">Avec photos</span>
+                </label>
+                
+                <!-- Vendeur vérifié -->
+                <label class="flex items-center space-x-2 cursor-pointer group">
+                    <input type="checkbox" 
+                           name="verified_seller" 
+                           value="1"
+                           {% if current_filters.verified_seller %}checked{% endif %}
+                           class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                    <span class="text-sm text-gray-700 group-hover:text-green-600 transition-colors">Vendeur vérifié</span>
+                </label>
+                
+                <!-- En vedette -->
+                <label class="flex items-center space-x-2 cursor-pointer group">
+                    <input type="checkbox" 
+                           name="featured" 
+                           value="1"
+                           {% if current_filters.featured %}checked{% endif %}
+                           class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                    <span class="text-sm text-gray-700 group-hover:text-green-600 transition-colors">Produits en vedette</span>
+                </label>
+            </div>
+        </div>
+        
+        <!-- Date de publication -->
+        <div class="space-y-3">
+            <label class="block text-sm font-medium text-gray-700">
+                <i data-lucide="calendar" class="w-4 h-4 inline mr-1"></i>
+                Date de publication
+            </label>
+            
+            <select name="date_range" 
+                    id="date-filter" 
+                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors">
+                <option value="">Toutes les dates</option>
+                <option value="today" {% if current_filters.date_range == 'today' %}selected{% endif %}>Aujourd'hui</option>
+                <option value="week" {% if current_filters.date_range == 'week' %}selected{% endif %}>Cette semaine</option>
+                <option value="month" {% if current_filters.date_range == 'month' %}selected{% endif %}>Ce mois</option>
+                <option value="3months" {% if current_filters.date_range == '3months' %}selected{% endif %}>3 derniers mois</option>
+            </select>
+        </div>
+        
+        <!-- Tri -->
+        <div class="space-y-3">
+            <label class="block text-sm font-medium text-gray-700">
+                <i data-lucide="sort-desc" class="w-4 h-4 inline mr-1"></i>
+                Trier par
+            </label>
+            
+            <select name="sort" 
+                    id="sort-filter" 
+                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors">
+                <option value="-created_at" {% if current_filters.sort == '-created_at' %}selected{% endif %}>Plus récent</option>
+                <option value="created_at" {% if current_filters.sort == 'created_at' %}selected{% endif %}>Plus ancien</option>
+                <option value="price" {% if current_filters.sort == 'price' %}selected{% endif %}>Prix croissant</option>
+                <option value="-price" {% if current_filters.sort == '-price' %}selected{% endif %}>Prix décroissant</option>
+                <option value="-views_count" {% if current_filters.sort == '-views_count' %}selected{% endif %}>Plus populaire</option>
+                <option value="title" {% if current_filters.sort == 'title' %}selected{% endif %}>Alphabétique</option>
+            </select>
+        </div>
+        
+        <!-- Boutons d'action -->
+        <div class="space-y-3 pt-4 border-t border-gray-200">
+            <button type="submit" 
+                    class="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center space-x-2">
+                <i data-lucide="search" class="w-4 h-4"></i>
+                <span>Appliquer les filtres</span>
+            </button>
+            
+            <button type="button" 
+                    id="save-search-btn"
+                    class="w-full border border-green-600 text-green-600 py-2 px-4 rounded-lg hover:bg-green-50 transition-colors font-medium flex items-center justify-center space-x-2">
+                <i data-lucide="bookmark" class="w-4 h-4"></i>
+                <span>Sauvegarder la recherche</span>
+            </button>
+        </div>
+    </form>
+    
+    <!-- Filtres actifs -->
+    <div id="active-filters" class="mt-6 pt-4 border-t border-gray-200">
+        <div class="flex items-center justify-between mb-3">
+            <h4 class="text-sm font-medium text-gray-700">Filtres actifs</h4>
+            <span id="results-count" class="text-xs text-gray-500">{{ total_results|default:0 }} résultats</span>
+        </div>
+        
+        <div id="active-filters-list" class="flex flex-wrap gap-2">
+            <!-- Les tags de filtres actifs seront ajoutés ici par JavaScript -->
+        </div>
+    </div>
+    
+    <!-- Recherches populaires -->
+    <div class="mt-6 pt-4 border-t border-gray-200">
+        <h4 class="text-sm font-medium text-gray-700 mb-3">Recherches populaires</h4>
+        <div class="flex flex-wrap gap-2">
+            <button type="button" class="popular-search-btn text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-full hover:bg-green-100 hover:text-green-700 transition-colors" data-query="iPhone">
+                iPhone
+            </button>
+            <button type="button" class="popular-search-btn text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-full hover:bg-green-100 hover:text-green-700 transition-colors" data-query="MacBook">
+                MacBook
+            </button>
+            <button type="button" class="popular-search-btn text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-full hover:bg-green-100 hover:text-green-700 transition-colors" data-query="Vêtements femme">
+                Vêtements femme
+            </button>
+            <button type="button" class="popular-search-btn text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-full hover:bg-green-100 hover:text-green-700 transition-colors" data-query="Meuble">
+                Meubles
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Version mobile des filtres -->
+<div id="mobile-filters" class="lg:hidden">
+    <!-- Bouton d'ouverture -->
+    <button id="mobile-filters-btn" 
+            class="fixed bottom-20 right-4 w-14 h-14 bg-green-600 text-white rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-110 flex items-center justify-center z-40">
+        <i data-lucide="filter" class="w-6 h-6"></i>
+        <span id="active-filters-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center opacity-0 scale-0 transition-all duration-300">
+            0
+        </span>
+    </button>
+    
+    <!-- Modal des filtres mobile -->
+    <div id="mobile-filters-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 opacity-0 invisible transition-all duration-300">
+        <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[85vh] overflow-hidden transform translate-y-full transition-transform duration-300">
+            <!-- En-tête -->
+            <div class="flex items-center justify-between p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
+                <h3 class="text-lg font-semibold text-gray-800">Filtres</h3>
+                <div class="flex items-center space-x-2">
+                    <button id="mobile-reset-filters" class="text-sm text-gray-500 hover:text-red-500 transition-colors">
+                        Réinitialiser
+                    </button>
+                    <button id="mobile-filters-close" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Contenu des filtres -->
+            <div class="p-4 overflow-y-auto max-h-[calc(85vh-120px)]">
+                <!-- Version simplifiée des filtres pour mobile -->
+                <form id="mobile-filters-form" class="space-y-4">
+                    
+                    <!-- Recherche rapide -->
+                    <div class="relative">
+                        <input type="text" 
+                               name="q" 
+                               placeholder="Rechercher..." 
+                               class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        <i data-lucide="search" class="absolute left-3 top-3.5 w-4 h-4 text-gray-400"></i>
+                    </div>
+                    
+                    <!-- Catégorie rapide -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" class="category-quick-btn p-3 border border-gray-300 rounded-lg text-center hover:bg-green-50 hover:border-green-300 transition-colors" data-category="electronique">
+                            <div class="text-2xl mb-1">📱</div>
+                            <div class="text-xs">Électronique</div>
+                        </button>
+                        <button type="button" class="category-quick-btn p-3 border border-gray-300 rounded-lg text-center hover:bg-green-50 hover:border-green-300 transition-colors" data-category="vetements">
+                            <div class="text-2xl mb-1">👕</div>
+                            <div class="text-xs">Vêtements</div>
+                        </button>
+                        <button type="button" class="category-quick-btn p-3 border border-gray-300 rounded-lg text-center hover:bg-green-50 hover:border-green-300 transition-colors" data-category="maison">
+                            <div class="text-2xl mb-1">🏠</div>
+                            <div class="text-xs">Maison</div>
+                        </button>
+                        <button type="button" class="category-quick-btn p-3 border border-gray-300 rounded-lg text-center hover:bg-green-50 hover:border-green-300 transition-colors" data-category="vehicules">
+                            <div class="text-2xl mb-1">🚗</div>
+                            <div class="text-xs">Véhicules</div>
+                        </button>
+                    </div>
+                    
+                    <!-- Prix rapide -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Budget</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" class="price-quick-btn py-2 px-3 border border-gray-300 rounded text-sm hover:bg-green-50 hover:border-green-300 transition-colors" data-max="50000">
+                                < 50K FCFA
+                            </button>
+                            <button type="button" class="price-quick-btn py-2 px-3 border border-gray-300 rounded text-sm hover:bg-green-50 hover:border-green-300 transition-colors" data-min="50000" data-max="200000">
+                                50K - 200K
+                            </button>
+                            <button type="button" class="price-quick-btn py-2 px-3 border border-gray-300 rounded text-sm hover:bg-green-50 hover:border-green-300 transition-colors" data-min="200000" data-max="500000">
+                                200K - 500K
+                            </button>
+                            <button type="button" class="price-quick-btn py-2 px-3 border border-gray-300 rounded text-sm hover:bg-green-50 hover:border-green-300 transition-colors" data-min="500000">
+                                > 500K FCFA
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Ville -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Ville</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" class="city-quick-btn py-2 px-3 border border-gray-300 rounded text-sm hover:bg-green-50 hover:border-green-300 transition-colors" data-city="douala">
+                                Douala
+                            </button>
+                            <button type="button" class="city-quick-btn py-2 px-3 border border-gray-300 rounded text-sm hover:bg-green-50 hover:border-green-300 transition-colors" data-city="yaounde">
+                                Yaoundé
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Options rapides -->
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" name="negotiable" class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                            <span class="text-sm">Prix négociable uniquement</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" name="has_images" class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                            <span class="text-sm">Avec photos uniquement</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" name="verified_seller" class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                            <span class="text-sm">Vendeurs vérifiés uniquement</span>
+                        </label>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Pied de page avec actions -->
+            <div class="p-4 border-t border-gray-200 bg-white">
+                <div class="flex space-x-3">
+                    <button id="mobile-filters-apply" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors">
+                        Appliquer
+                    </button>
+                    <button id="mobile-filters-cancel" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        Annuler
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript pour la gestion des filtres -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elements
+    const filtersForm = document.getElementById('filters-form');
+    const mobileFiltersForm = document.getElementById('mobile-filters-form');
+    const resetBtn = document.getElementById('reset-filters');
+    const mobileResetBtn = document.getElementById('mobile-reset-filters');
+    const saveSearchBtn = document.getElementById('save-search-btn');
+    const activeFiltersList = document.getElementById('active-filters-list');
+    
+    // Gestion du slider de prix
+    initPriceSlider();
+    
+    // Gestion des fourchettes de prix prédéfinies
+    document.querySelectorAll('.price-range-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const min = this.dataset.min;
+            const max = this.dataset.max;
+            
+            document.getElementById('min-price-input').value = min;
+            document.getElementById('max-price-input').value = max || '';
+            
+            updatePriceSlider(min, max);
+            updateActiveFilters();
+        });
+    });
+    
+    // Gestion des recherches populaires
+    document.querySelectorAll('.popular-search-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const query = this.dataset.query;
+            document.getElementById('search-filter').value = query;
+            filtersForm.submit();
+        });
+    });
+    
+    // Auto-submit sur changement
+    const autoSubmitElements = ['#category-filter', '#city-filter', '#date-filter', '#sort-filter'];
+    autoSubmitElements.forEach(selector => {
+        const element = document.querySelector(selector);
+        if (element) {
+            element.addEventListener('change', function() {
+                updateActiveFilters();
+                // Délai pour permettre à l'utilisateur de voir le changement
+                setTimeout(() => {
+                    filtersForm.submit();
+                }, 300);
+            });
+        }
+    });
+    
+    // Gestion des checkboxes
+    filtersForm.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(input => {
+        input.addEventListener('change', function() {
+            updateActiveFilters();
+            // Auto-submit après un délai
+            setTimeout(() => {
+                filtersForm.submit();
+            }, 500);
+        });
+    });
+    
+    // Reset des filtres
+    resetBtn?.addEventListener('click', function() {
+        // Réinitialiser le formulaire
+        filtersForm.reset();
+        
+        // Réinitialiser le slider de prix
+        resetPriceSlider();
+        
+        // Soumettre pour rafraîchir
+        setTimeout(() => {
+            filtersForm.submit();
+        }, 100);
+    });
+    
+    // Sauvegarder la recherche
+    saveSearchBtn?.addEventListener('click', function() {
+        const formData = new FormData(filtersForm);
+        const searchParams = new URLSearchParams(formData);
+        
+        // Envoyer à l'API pour sauvegarder
+        fetch('/api/save-search/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                search_params: searchParams.toString(),
+                url: window.location.pathname + '?' + searchParams.toString()
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Recherche sauvegardée avec succès !', 'success');
+            } else {
+                showToast('Erreur lors de la sauvegarde', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showToast('Erreur lors de la sauvegarde', 'error');
+        });
+    });
+    
+    // Gestion des filtres mobile
+    initMobileFilters();
+    
+    // Mettre à jour les filtres actifs au chargement
+    updateActiveFilters();
+    
+    // Initialiser le slider de prix
+    function initPriceSlider() {
+        // Implementation avec une bibliothèque de slider ou custom
+        // Ici on utilise des inputs range simples
+        const minPriceInput = document.getElementById('min-price-input');
+        const maxPriceInput = document.getElementById('max-price-input');
+        const minDisplay = document.getElementById('min-price-display');
+        const maxDisplay = document.getElementById('max-price-display');
+        
+        function updateDisplays() {
+            if (minDisplay) minDisplay.textContent = formatPrice(minPriceInput.value || 0);
+            if (maxDisplay) maxDisplay.textContent = formatPrice(maxPriceInput.value || 1000000);
+        }
+        
+        minPriceInput?.addEventListener('input', updateDisplays);
+        maxPriceInput?.addEventListener('input', updateDisplays);
+        
+        updateDisplays();
+    }
+    
+    function updatePriceSlider(min, max) {
+        const minInput = document.getElementById('min-price-input');
+        const maxInput = document.getElementById('max-price-input');
+        const minDisplay = document.getElementById('min-price-display');
+        const maxDisplay = document.getElementById('max-price-display');
+        
+        if (minInput) minInput.value = min || '';
+        if (maxInput) maxInput.value = max || '';
+        
+        if (minDisplay) minDisplay.textContent = formatPrice(min || 0);
+        if (maxDisplay) maxDisplay.textContent = formatPrice(max || 1000000);
+    }
+    
+    function resetPriceSlider() {
+        updatePriceSlider('', '');
+    }
+    
+    function formatPrice(price) {
+        return new Intl.NumberFormat('fr-FR').format(price);
+    }
+    
+    // Mettre à jour l'affichage des filtres actifs
+    function updateActiveFilters() {
+        if (!activeFiltersList) return;
+        
+        const formData = new FormData(filtersForm);
+        const filters = [];
+        
+        // Analyser chaque filtre
+        for (let [key, value] of formData.entries()) {
+            if (value && value.trim() !== '') {
+                let label = '';
+                let displayValue = value;
+                
+                switch (key) {
+                    case 'q':
+                        label = 'Recherche';
+                        displayValue = `"${value}"`;
+                        break;
+                    case 'category':
+                        label = 'Catégorie';
+                        displayValue = document.querySelector(`option[value="${value}"]`)?.textContent || value;
+                        break;
+                    case 'city':
+                        label = 'Ville';
+                        displayValue = document.querySelector(`option[value="${value}"]`)?.textContent || value;
+                        break;
+                    case 'min_price':
+                        label = 'Prix min';
+                        displayValue = formatPrice(value) + ' FCFA';
+                        break;
+                    case 'max_price':
+                        label = 'Prix max';
+                        displayValue = formatPrice(value) + ' FCFA';
+                        break;
+                    case 'condition':
+                        label = 'État';
+                        displayValue = document.querySelector(`input[name="condition"][value="${value}"]`)?.nextElementSibling?.textContent || value;
+                        break;
+                    case 'sort':
+                        if (value !== '-created_at') { // Valeur par défaut
+                            label = 'Tri';
+                            displayValue = document.querySelector(`option[value="${value}"]`)?.textContent || value;
+                        }
+                        break;
+                    case 'negotiable':
+                        label = 'Négociable';
+                        displayValue = '';
+                        break;
+                    case 'has_images':
+                        label = 'Avec photos';
+                        displayValue = '';
+                        break;
+                    case 'verified_seller':
+                        label = 'Vendeur vérifié';
+                        displayValue = '';
+                        break;
+                    case 'featured':
+                        label = 'En vedette';
+                        displayValue = '';
+                        break;
+                    case 'date_range':
+                        label = 'Date';
+                        displayValue = document.querySelector(`option[value="${value}"]`)?.textContent || value;
+                        break;
+                }
+                
+                if (label) {
+                    filters.push({ key, label, value: displayValue });
+                }
+            }
+        }
+        
+        // Afficher les filtres actifs
+        activeFiltersList.innerHTML = '';
+        
+        if (filters.length === 0) {
+            activeFiltersList.innerHTML = '<span class="text-xs text-gray-500">Aucun filtre actif</span>';
+        } else {
+            filters.forEach(filter => {
+                const tag = document.createElement('div');
+                tag.className = 'inline-flex items-center space-x-1 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs';
+                tag.innerHTML = `
+                    <span>${filter.label}${filter.value ? ': ' + filter.value : ''}</span>
+                    <button type="button" class="remove-filter hover:text-red-600 transition-colors" data-filter="${filter.key}">
+                        <i data-lucide="x" class="w-3 h-3"></i>
+                    </button>
+                `;
+                activeFiltersList.appendChild(tag);
+            });
+            
+            // Réinitialiser les icônes Lucide
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+            
+            // Gérer la suppression des filtres individuels
+            activeFiltersList.querySelectorAll('.remove-filter').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const filterKey = this.dataset.filter;
+                    const element = filtersForm.querySelector(`[name="${filterKey}"]`);
+                    
+                    if (element) {
+                        if (element.type === 'checkbox' || element.type === 'radio') {
+                            element.checked = false;
+                        } else {
+                            element.value = '';
+                        }
+                    }
+                    
+                    updateActiveFilters();
+                    filtersForm.submit();
+                });
+            });
+        }
+        
+        // Mettre à jour le compteur mobile
+        const mobileCount = document.getElementById('active-filters-count');
+        if (mobileCount) {
+            if (filters.length > 0) {
+                mobileCount.textContent = filters.length;
+                mobileCount.classList.remove('opacity-0', 'scale-0');
+            } else {
+                mobileCount.classList.add('opacity-0', 'scale-0');
+            }
+        }
+    }
+    
+    // Gestion des filtres mobile
+    function initMobileFilters() {
+        const mobileBtn = document.getElementById('mobile-filters-btn');
+        const mobileModal = document.getElementById('mobile-filters-modal');
+        const mobileClose = document.getElementById('mobile-filters-close');
+        const mobileCancel = document.getElementById('mobile-filters-cancel');
+        const mobileApply = document.getElementById('mobile-filters-apply');
+        
+        // Ouvrir
+        mobileBtn?.addEventListener('click', function() {
+            mobileModal.classList.remove('opacity-0', 'invisible');
+            mobileModal.querySelector('.bg-white').classList.remove('translate-y-full');
+            document.body.style.overflow = 'hidden';
+        });
+        
+        // Fermer
+        function closeMobileFilters() {
+            mobileModal.querySelector('.bg-white').classList.add('translate-y-full');
+            setTimeout(() => {
+                mobileModal.classList.add('opacity-0', 'invisible');
+                document.body.style.overflow = '';
+            }, 300);
+        }
+        
+        mobileClose?.addEventListener('click', closeMobileFilters);
+        mobileCancel?.addEventListener('click', closeMobileFilters);
+        
+        // Fermer en cliquant sur l'overlay
+        mobileModal?.addEventListener('click', function(e) {
+            if (e.target === mobileModal) {
+                closeMobileFilters();
+            }
+        });
+        
+        // Appliquer les filtres mobile
+        mobileApply?.addEventListener('click', function() {
+            // Copier les valeurs du formulaire mobile vers le formulaire principal
+            const mobileFormData = new FormData(mobileFiltersForm);
+            
+            for (let [key, value] of mobileFormData.entries()) {
+                const mainInput = filtersForm.querySelector(`[name="${key}"]`);
+                if (mainInput) {
+                    if (mainInput.type === 'checkbox') {
+                        mainInput.checked = true;
+                    } else {
+                        mainInput.value = value;
+                    }
+                }
+            }
+            
+            closeMobileFilters();
+            filtersForm.submit();
+        });
+        
+        // Gestion des boutons rapides mobile
+        document.querySelectorAll('.category-quick-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Retirer la sélection des autres boutons
+                document.querySelectorAll('.category-quick-btn').forEach(b => b.classList.remove('bg-green-100', 'border-green-500'));
+                
+                // Sélectionner ce bouton
+                this.classList.add('bg-green-100', 'border-green-500');
+                
+                // Mettre à jour le formulaire principal
+                const categorySelect = filtersForm.querySelector('[name="category"]');
+                if (categorySelect) {
+                    categorySelect.value = this.dataset.category;
+                }
+            });
+        });
+        
+        document.querySelectorAll('.price-quick-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Retirer la sélection des autres boutons
+                document.querySelectorAll('.price-quick-btn').forEach(b => b.classList.remove('bg-green-100', 'border-green-500'));
+                
+                // Sélectionner ce bouton
+                this.classList.add('bg-green-100', 'border-green-500');
+                
+                // Mettre à jour les champs de prix
+                const minPrice = filtersForm.querySelector('[name="min_price"]');
+                const maxPrice = filtersForm.querySelector('[name="max_price"]');
+                
+                if (minPrice) minPrice.value = this.dataset.min || '';
+                if (maxPrice) maxPrice.value = this.dataset.max || '';
+            });
+        });
+        
+        document.querySelectorAll('.city-quick-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Retirer la sélection des autres boutons
+                document.querySelectorAll('.city-quick-btn').forEach(b => b.classList.remove('bg-green-100', 'border-green-500'));
+                
+                // Sélectionner ce bouton
+                this.classList.add('bg-green-100', 'border-green-500');
+                
+                // Mettre à jour le formulaire principal
+                const citySelect = filtersForm.querySelector('[name="city"]');
+                if (citySelect) {
+                    citySelect.value = this.dataset.city;
+                }
+            });
+        });
+    }
+});
+
+// Fonction utilitaire pour les notifications
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-20 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white transform translate-x-full transition-transform duration-300 ${
+        type === 'success' ? 'bg-green-600' : 
+        type === 'error' ? 'bg-red-600' : 
+        'bg-blue-600'
+    }`;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.remove('translate-x-full');
+    }, 100);
+    
+    setTimeout(() => {
+        toast.classList.add('translate-x-full');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                document.body.removeChild(toast);
+            }
+        }, 300);
+    }, 3000);
+}
+</script>
+
+<!-- CSS supplémentaire pour les filtres -->
+<style>
+/* Scrollbar personnalisée pour le conteneur de filtres */
+#filters-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+#filters-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+#filters-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+#filters-container::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+/* Animations pour les filtres mobile */
+#mobile-filters-modal .bg-white {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Boutons de filtres rapides */
+.category-quick-btn.selected,
+.price-quick-btn.selected,
+.city-quick-btn.selected {
+    background-color: #dcfce7;
+    border-color: #16a34a;
+    color: #15803d;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    #filters-container {
+        position: relative;
+        top: auto;
+        max-height: none;
+    }
+}
+
+/* Animation d'entrée pour les tags de filtres actifs */
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+#active-filters-list > div {
+    animation: fadeInScale 0.3s ease-out;
+}
+
+/* Styles pour les inputs de type range (si utilisés) */
+input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: #e5e7eb;
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #16a34a;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #16a34a;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+</style>

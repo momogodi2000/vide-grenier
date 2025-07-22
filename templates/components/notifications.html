@@ -1,0 +1,1323 @@
+<!-- templates/components/notifications.html -->
+{% load static %}
+
+<!-- Container principal des notifications -->
+<div id="notifications-system" class="fixed top-0 left-0 w-full h-full pointer-events-none z-[9999]">
+    
+    <!-- Zone des toasts (coin supérieur droit) -->
+    <div id="toast-container" class="fixed top-20 right-4 space-y-3 pointer-events-auto">
+        <!-- Les toasts seront ajoutés ici dynamiquement -->
+    </div>
+    
+    <!-- Zone des notifications push (coin supérieur) -->
+    <div id="push-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 max-w-md w-full mx-4 pointer-events-auto">
+        <!-- Les notifications push seront ajoutées ici -->
+    </div>
+    
+    <!-- Zone des bannières (pleine largeur en haut) -->
+    <div id="banner-container" class="fixed top-0 left-0 right-0 pointer-events-auto">
+        <!-- Les bannières seront ajoutées ici -->
+    </div>
+    
+    <!-- Centre de notifications (modal) -->
+    <div id="notification-center" class="fixed inset-0 bg-black/50 backdrop-blur-sm opacity-0 invisible transition-all duration-300 pointer-events-auto">
+        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl transform translate-x-full transition-transform duration-300">
+            <!-- En-tête du centre de notifications -->
+            <div class="bg-gradient-to-r from-green-600 to-green-700 text-white p-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i data-lucide="bell" class="w-6 h-6"></i>
+                    <h2 class="text-lg font-semibold">Notifications</h2>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="mark-all-read" class="text-sm text-green-100 hover:text-white transition-colors" title="Tout marquer comme lu">
+                        <i data-lucide="check-check" class="w-4 h-4"></i>
+                    </button>
+                    <button id="notification-settings" class="text-sm text-green-100 hover:text-white transition-colors" title="Paramètres">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                    </button>
+                    <button id="close-notification-center" class="text-sm text-green-100 hover:text-white transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Filtres -->
+            <div class="border-b border-gray-200 p-4">
+                <div class="flex space-x-2">
+                    <button class="notification-filter active px-3 py-1 text-sm rounded-full bg-green-100 text-green-700" data-filter="all">
+                        Toutes
+                    </button>
+                    <button class="notification-filter px-3 py-1 text-sm rounded-full bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-700 transition-colors" data-filter="unread">
+                        Non lues
+                    </button>
+                    <button class="notification-filter px-3 py-1 text-sm rounded-full bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-700 transition-colors" data-filter="orders">
+                        Commandes
+                    </button>
+                    <button class="notification-filter px-3 py-1 text-sm rounded-full bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-700 transition-colors" data-filter="messages">
+                        Messages
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Liste des notifications -->
+            <div id="notifications-list" class="flex-1 overflow-y-auto max-h-[calc(100vh-160px)]">
+                <!-- Les notifications seront chargées ici -->
+                <div id="notifications-loading" class="p-8 text-center">
+                    <div class="animate-spin rounded-full h-8 w-8 border-2 border-green-600 border-t-transparent mx-auto mb-4"></div>
+                    <p class="text-gray-500">Chargement des notifications...</p>
+                </div>
+                
+                <div id="notifications-empty" class="hidden p-8 text-center">
+                    <div class="text-gray-400 mb-4">
+                        <i data-lucide="bell-off" class="w-12 h-12 mx-auto mb-2"></i>
+                    </div>
+                    <p class="text-gray-500">Aucune notification</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de paramètres de notifications -->
+    <div id="notification-settings-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm opacity-0 invisible transition-all duration-300 pointer-events-auto">
+        <div class="absolute inset-4 md:inset-8 bg-white rounded-2xl shadow-2xl transform scale-95 transition-transform duration-300 overflow-hidden">
+            <!-- En-tête -->
+            <div class="bg-gradient-to-r from-green-600 to-green-700 text-white p-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-semibold">Paramètres de notifications</h2>
+                    <button id="close-settings-modal" class="text-white hover:text-gray-200 transition-colors">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Contenu -->
+            <div class="p-6 overflow-y-auto max-h-[calc(100vh-200px)]">
+                <!-- Notifications push -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Notifications push</h3>
+                    <div class="space-y-4">
+                        <label class="flex items-center justify-between">
+                            <div>
+                                <div class="font-medium text-gray-700">Activer les notifications push</div>
+                                <div class="text-sm text-gray-500">Recevoir des notifications même quand le site est fermé</div>
+                            </div>
+                            <input type="checkbox" id="enable-push" class="w-5 h-5 text-green-600 rounded focus:ring-green-500">
+                        </label>
+                        
+                        <label class="flex items-center justify-between">
+                            <div>
+                                <div class="font-medium text-gray-700">Nouvelles commandes</div>
+                                <div class="text-sm text-gray-500">Quand quelqu'un achète vos produits</div>
+                            </div>
+                            <input type="checkbox" id="notify-orders" class="w-5 h-5 text-green-600 rounded focus:ring-green-500" checked>
+                        </label>
+                        
+                        <label class="flex items-center justify-between">
+                            <div>
+                                <div class="font-medium text-gray-700">Nouveaux messages</div>
+                                <div class="text-sm text-gray-500">Messages dans le chat ou questions sur vos produits</div>
+                            </div>
+                            <input type="checkbox" id="notify-messages" class="w-5 h-5 text-green-600 rounded focus:ring-green-500" checked>
+                        </label>
+                        
+                        <label class="flex items-center justify-between">
+                            <div>
+                                <div class="font-medium text-gray-700">Alertes de prix</div>
+                                <div class="text-sm text-gray-500">Quand des produits correspondant à vos recherches sont publiés</div>
+                            </div>
+                            <input type="checkbox" id="notify-price-alerts" class="w-5 h-5 text-green-600 rounded focus:ring-green-500">
+                        </label>
+                        
+                        <label class="flex items-center justify-between">
+                            <div>
+                                <div class="font-medium text-gray-700">Promotions et actualités</div>
+                                <div class="text-sm text-gray-500">Offres spéciales et nouveautés VGK</div>
+                            </div>
+                            <input type="checkbox" id="notify-promotions" class="w-5 h-5 text-green-600 rounded focus:ring-green-500">
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Notifications par email -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Notifications par email</h3>
+                    <div class="space-y-4">
+                        <label class="flex items-center justify-between">
+                            <div>
+                                <div class="font-medium text-gray-700">Résumé hebdomadaire</div>
+                                <div class="text-sm text-gray-500">Résumé de votre activité sur VGK</div>
+                            </div>
+                            <input type="checkbox" id="email-weekly" class="w-5 h-5 text-green-600 rounded focus:ring-green-500" checked>
+                        </label>
+                        
+                        <label class="flex items-center justify-between">
+                            <div>
+                                <div class="font-medium text-gray-700">Commandes importantes</div>
+                                <div class="text-sm text-gray-500">Confirmations de commande et statuts de livraison</div>
+                            </div>
+                            <input type="checkbox" id="email-orders" class="w-5 h-5 text-green-600 rounded focus:ring-green-500" checked>
+                        </label>
+                        
+                        <label class="flex items-center justify-between">
+                            <div>
+                                <div class="font-medium text-gray-700">Conseils et astuces</div>
+                                <div class="text-sm text-gray-500">Tips pour mieux vendre sur VGK</div>
+                            </div>
+                            <input type="checkbox" id="email-tips" class="w-5 h-5 text-green-600 rounded focus:ring-green-500">
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Notifications SMS -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Notifications SMS</h3>
+                    <div class="space-y-4">
+                        <label class="flex items-center justify-between">
+                            <div>
+                                <div class="font-medium text-gray-700">Commandes urgentes</div>
+                                <div class="text-sm text-gray-500">SMS pour les commandes importantes</div>
+                            </div>
+                            <input type="checkbox" id="sms-urgent" class="w-5 h-5 text-green-600 rounded focus:ring-green-500">
+                        </label>
+                        
+                        <label class="flex items-center justify-between">
+                            <div>
+                                <div class="font-medium text-gray-700">Codes de retrait</div>
+                                <div class="text-sm text-gray-500">Codes pour récupérer vos achats</div>
+                            </div>
+                            <input type="checkbox" id="sms-pickup" class="w-5 h-5 text-green-600 rounded focus:ring-green-500" checked>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Boutons d'action -->
+                <div class="flex space-x-4 pt-6 border-t border-gray-200">
+                    <button id="save-notification-settings" class="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                        Sauvegarder
+                    </button>
+                    <button id="cancel-settings" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        Annuler
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Templates pour les différents types de notifications -->
+
+<!-- Template Toast -->
+<template id="toast-template">
+    <div class="toast-notification max-w-sm bg-white border border-gray-200 rounded-lg shadow-lg p-4 transform translate-x-full transition-all duration-300">
+        <div class="flex items-start space-x-3">
+            <div class="flex-shrink-0">
+                <div class="toast-icon w-8 h-8 rounded-full flex items-center justify-center">
+                    <i class="w-4 h-4"></i>
+                </div>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="toast-title font-medium text-gray-900 text-sm"></div>
+                <div class="toast-message text-sm text-gray-600 mt-1"></div>
+                <div class="toast-time text-xs text-gray-400 mt-1"></div>
+            </div>
+            <button class="toast-close flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+        
+        <!-- Actions (optionnel) -->
+        <div class="toast-actions hidden mt-3 flex space-x-2">
+            <button class="toast-action-primary text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors">
+                Action
+            </button>
+            <button class="toast-action-secondary text-xs text-gray-600 hover:text-gray-800 transition-colors">
+                Ignorer
+            </button>
+        </div>
+    </div>
+</template>
+
+<!-- Template Notification Push -->
+<template id="push-template">
+    <div class="push-notification bg-white border border-gray-200 rounded-lg shadow-xl p-4 transform -translate-y-full opacity-0 transition-all duration-500">
+        <div class="flex items-center space-x-3">
+            <div class="push-icon w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1">
+                <div class="push-title font-semibold text-gray-900"></div>
+                <div class="push-message text-sm text-gray-600 mt-1"></div>
+            </div>
+            <button class="push-close text-gray-400 hover:text-gray-600 transition-colors">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+</template>
+
+<!-- Template Bannière -->
+<template id="banner-template">
+    <div class="banner-notification bg-gradient-to-r from-green-600 to-green-700 text-white p-4 transform -translate-y-full transition-transform duration-500">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="banner-icon w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                    <i class="w-4 h-4"></i>
+                </div>
+                <div>
+                    <div class="banner-title font-semibold"></div>
+                    <div class="banner-message text-sm opacity-90"></div>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="banner-action hidden bg-white text-green-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+                    Action
+                </button>
+                <button class="banner-close text-white hover:text-gray-200 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Template Notification dans le centre -->
+<template id="notification-item-template">
+    <div class="notification-item border-b border-gray-100 p-4 hover:bg-gray-50 transition-colors cursor-pointer" data-notification-id="">
+        <div class="flex space-x-3">
+            <div class="notification-icon w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between">
+                    <div class="notification-title font-medium text-gray-900 text-sm"></div>
+                    <div class="notification-time text-xs text-gray-400 ml-2"></div>
+                </div>
+                <div class="notification-message text-sm text-gray-600 mt-1"></div>
+                <div class="notification-meta flex items-center space-x-2 mt-2 text-xs text-gray-500">
+                    <span class="notification-type"></span>
+                    <span class="notification-read-status hidden">•</span>
+                </div>
+            </div>
+            <div class="notification-unread w-2 h-2 bg-green-500 rounded-full flex-shrink-0 mt-2"></div>
+        </div>
+    </div>
+</template>
+
+<!-- CSS pour les animations et styles -->
+<style>
+/* Animations pour les toasts */
+.toast-notification {
+    animation: slideInRight 0.3s ease-out forwards;
+}
+
+.toast-notification.removing {
+    animation: slideOutRight 0.3s ease-in forwards;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Animations pour les notifications push */
+.push-notification.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.push-notification.removing {
+    animation: fadeOutUp 0.5s ease-in forwards;
+}
+
+@keyframes fadeOutUp {
+    to {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+}
+
+/* Animations pour les bannières */
+.banner-notification.show {
+    transform: translateY(0);
+}
+
+.banner-notification.removing {
+    transform: translateY(-100%);
+}
+
+/* Style pour le centre de notifications */
+#notification-center.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+#notification-center.show > div {
+    transform: translateX(0);
+}
+
+/* Style pour les filtres de notifications */
+.notification-filter.active {
+    background-color: #dcfce7;
+    color: #15803d;
+}
+
+/* Style pour les notifications non lues */
+.notification-item.unread {
+    background-color: #f0fdf4;
+    border-left: 4px solid #16a34a;
+}
+
+.notification-item.unread .notification-unread {
+    display: block;
+}
+
+.notification-item.read .notification-unread {
+    display: none;
+}
+
+/* Styles pour les icônes selon le type */
+.toast-icon.success { background-color: #16a34a; color: white; }
+.toast-icon.error { background-color: #dc2626; color: white; }
+.toast-icon.warning { background-color: #d97706; color: white; }
+.toast-icon.info { background-color: #2563eb; color: white; }
+
+.push-icon.order { background-color: #16a34a; color: white; }
+.push-icon.message { background-color: #2563eb; color: white; }
+.push-icon.alert { background-color: #d97706; color: white; }
+.push-icon.system { background-color: #6b7280; color: white; }
+
+.notification-icon.order { background-color: #dcfce7; color: #16a34a; }
+.notification-icon.message { background-color: #dbeafe; color: #2563eb; }
+.notification-icon.alert { background-color: #fed7aa; color: #d97706; }
+.notification-icon.system { background-color: #f3f4f6; color: #6b7280; }
+
+/* Modal paramètres */
+#notification-settings-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+#notification-settings-modal.show > div {
+    transform: scale(1);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    #toast-container {
+        right: 1rem;
+        left: 1rem;
+    }
+    
+    .toast-notification {
+        max-width: none;
+    }
+    
+    #notification-center > div {
+        width: 100%;
+        max-width: none;
+    }
+    
+    #push-container {
+        left: 1rem;
+        right: 1rem;
+        transform: none;
+        max-width: none;
+    }
+}
+
+/* Scrollbar pour le centre de notifications */
+#notifications-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+#notifications-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+#notifications-list::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 2px;
+}
+
+#notifications-list::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+</style>
+
+<!-- JavaScript pour la gestion des notifications -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configuration
+    const NOTIFICATION_CONFIG = {
+        maxToasts: 5,
+        toastDuration: 5000,
+        pushDuration: 8000,
+        bannerDuration: 10000,
+        checkInterval: 30000, // 30 secondes
+        apiEndpoint: '/api/notifications/',
+        soundEnabled: true
+    };
+
+    // State
+    let notifications = [];
+    let isNotificationCenterOpen = false;
+    let lastNotificationCheck = Date.now();
+    let notificationPermission = 'default';
+
+    // Elements
+    const toastContainer = document.getElementById('toast-container');
+    const pushContainer = document.getElementById('push-container');
+    const bannerContainer = document.getElementById('banner-container');
+    const notificationCenter = document.getElementById('notification-center');
+    const notificationsList = document.getElementById('notifications-list');
+    const notificationFilters = document.querySelectorAll('.notification-filter');
+    const markAllReadBtn = document.getElementById('mark-all-read');
+    const notificationSettingsBtn = document.getElementById('notification-settings');
+    const closeNotificationCenterBtn = document.getElementById('close-notification-center');
+
+    // Templates
+    const toastTemplate = document.getElementById('toast-template');
+    const pushTemplate = document.getElementById('push-template');
+    const bannerTemplate = document.getElementById('banner-template');
+    const notificationItemTemplate = document.getElementById('notification-item-template');
+
+    // Initialisation
+    init();
+
+    function init() {
+        // Demander la permission pour les notifications
+        requestNotificationPermission();
+        
+        // Event listeners
+        setupEventListeners();
+        
+        // Charger les notifications existantes
+        loadNotifications();
+        
+        // Démarrer la vérification périodique
+        startPeriodicCheck();
+        
+        // Charger les paramètres
+        loadNotificationSettings();
+    }
+
+    function requestNotificationPermission() {
+        if ('Notification' in window) {
+            Notification.requestPermission().then(permission => {
+                notificationPermission = permission;
+                if (permission === 'granted') {
+                    console.log('Permissions de notification accordées');
+                }
+            });
+        }
+    }
+
+    function setupEventListeners() {
+        // Boutons du centre de notifications
+        closeNotificationCenterBtn?.addEventListener('click', closeNotificationCenter);
+        markAllReadBtn?.addEventListener('click', markAllNotificationsRead);
+        notificationSettingsBtn?.addEventListener('click', openNotificationSettings);
+        
+        // Filtres
+        notificationFilters.forEach(filter => {
+            filter.addEventListener('click', function() {
+                setActiveFilter(this.dataset.filter);
+            });
+        });
+        
+        // Modal de paramètres
+        document.getElementById('close-settings-modal')?.addEventListener('click', closeNotificationSettings);
+        document.getElementById('cancel-settings')?.addEventListener('click', closeNotificationSettings);
+        document.getElementById('save-notification-settings')?.addEventListener('click', saveNotificationSettings);
+        
+        // Fermer les modals en cliquant sur l'overlay
+        notificationCenter.addEventListener('click', function(e) {
+            if (e.target === notificationCenter) {
+                closeNotificationCenter();
+            }
+        });
+        
+        document.getElementById('notification-settings-modal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeNotificationSettings();
+            }
+        });
+    }
+
+    function loadNotifications() {
+        fetch(`${NOTIFICATION_CONFIG.apiEndpoint}list/`)
+            .then(response => response.json())
+            .then(data => {
+                notifications = data.notifications || [];
+                renderNotificationsList();
+                updateNotificationBadge();
+            })
+            .catch(error => {
+                console.error('Erreur lors du chargement des notifications:', error);
+                hideNotificationsLoading();
+            });
+    }
+
+    function startPeriodicCheck() {
+        setInterval(() => {
+            checkNewNotifications();
+        }, NOTIFICATION_CONFIG.checkInterval);
+    }
+
+    function checkNewNotifications() {
+        fetch(`${NOTIFICATION_CONFIG.apiEndpoint}check/?since=${lastNotificationCheck}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.notifications && data.notifications.length > 0) {
+                    data.notifications.forEach(notification => {
+                        handleNewNotification(notification);
+                    });
+                    lastNotificationCheck = Date.now();
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de la vérification des notifications:', error);
+            });
+    }
+
+    function handleNewNotification(notification) {
+        // Ajouter à la liste
+        notifications.unshift(notification);
+        
+        // Afficher selon le type
+        switch (notification.display_type) {
+            case 'toast':
+                showToast(notification);
+                break;
+            case 'push':
+                showPushNotification(notification);
+                break;
+            case 'banner':
+                showBanner(notification);
+                break;
+            default:
+                showToast(notification);
+        }
+        
+        // Mettre à jour l'interface
+        renderNotificationsList();
+        updateNotificationBadge();
+        
+        // Son de notification
+        playNotificationSound();
+        
+        // Notification native du navigateur
+        if (notificationPermission === 'granted' && notification.show_native) {
+            showNativeNotification(notification);
+        }
+    }
+
+    function showToast(notification) {
+        const toast = createToastElement(notification);
+        toastContainer.appendChild(toast);
+        
+        // Animation d'entrée
+        setTimeout(() => {
+            toast.classList.remove('translate-x-full');
+        }, 100);
+        
+        // Auto-remove
+        setTimeout(() => {
+            removeToast(toast);
+        }, notification.duration || NOTIFICATION_CONFIG.toastDuration);
+        
+        // Limiter le nombre de toasts
+        limitToasts();
+    }
+
+    function createToastElement(notification) {
+        const toast = toastTemplate.content.cloneNode(true);
+        const toastElement = toast.querySelector('.toast-notification');
+        
+        // Remplir le contenu
+        toast.querySelector('.toast-title').textContent = notification.title;
+        toast.querySelector('.toast-message').textContent = notification.message;
+        toast.querySelector('.toast-time').textContent = formatTime(notification.created_at);
+        
+        // Icône et couleur selon le type
+        const icon = toast.querySelector('.toast-icon i');
+        const iconContainer = toast.querySelector('.toast-icon');
+        
+        switch (notification.type) {
+            case 'order':
+                icon.setAttribute('data-lucide', 'shopping-cart');
+                iconContainer.classList.add('success');
+                break;
+            case 'message':
+                icon.setAttribute('data-lucide', 'message-circle');
+                iconContainer.classList.add('info');
+                break;
+            case 'alert':
+                icon.setAttribute('data-lucide', 'alert-triangle');
+                iconContainer.classList.add('warning');
+                break;
+            case 'error':
+                icon.setAttribute('data-lucide', 'x-circle');
+                iconContainer.classList.add('error');
+                break;
+            default:
+                icon.setAttribute('data-lucide', 'bell');
+                iconContainer.classList.add('info');
+        }
+        
+        // Actions
+        if (notification.actions && notification.actions.length > 0) {
+            const actionsContainer = toast.querySelector('.toast-actions');
+            actionsContainer.classList.remove('hidden');
+            
+            const primaryBtn = toast.querySelector('.toast-action-primary');
+            const secondaryBtn = toast.querySelector('.toast-action-secondary');
+            
+            if (notification.actions[0]) {
+                primaryBtn.textContent = notification.actions[0].label;
+                primaryBtn.addEventListener('click', () => {
+                    handleNotificationAction(notification, notification.actions[0]);
+                    removeToast(toastElement);
+                });
+            }
+            
+            if (notification.actions[1]) {
+                secondaryBtn.textContent = notification.actions[1].label;
+                secondaryBtn.addEventListener('click', () => {
+                    handleNotificationAction(notification, notification.actions[1]);
+                    removeToast(toastElement);
+                });
+            }
+        }
+        
+        // Bouton fermer
+        toast.querySelector('.toast-close').addEventListener('click', () => {
+            removeToast(toastElement);
+        });
+        
+        // Click sur la notification
+        toastElement.addEventListener('click', () => {
+            handleNotificationClick(notification);
+            removeToast(toastElement);
+        });
+        
+        // Réinitialiser les icônes Lucide
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+        
+        return toastElement;
+    }
+
+    function removeToast(toast) {
+        toast.classList.add('removing');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }
+
+    function limitToasts() {
+        const toasts = toastContainer.querySelectorAll('.toast-notification');
+        if (toasts.length > NOTIFICATION_CONFIG.maxToasts) {
+            for (let i = 0; i < toasts.length - NOTIFICATION_CONFIG.maxToasts; i++) {
+                removeToast(toasts[i]);
+            }
+        }
+    }
+
+    function showPushNotification(notification) {
+        const push = createPushElement(notification);
+        pushContainer.appendChild(push);
+        
+        // Animation d'entrée
+        setTimeout(() => {
+            push.classList.add('show');
+        }, 100);
+        
+        // Auto-remove
+        setTimeout(() => {
+            removePushNotification(push);
+        }, notification.duration || NOTIFICATION_CONFIG.pushDuration);
+    }
+
+    function createPushElement(notification) {
+        const push = pushTemplate.content.cloneNode(true);
+        const pushElement = push.querySelector('.push-notification');
+        
+        // Remplir le contenu
+        push.querySelector('.push-title').textContent = notification.title;
+        push.querySelector('.push-message').textContent = notification.message;
+        
+        // Icône selon le type
+        const icon = push.querySelector('.push-icon i');
+        const iconContainer = push.querySelector('.push-icon');
+        
+        switch (notification.type) {
+            case 'order':
+                icon.setAttribute('data-lucide', 'shopping-cart');
+                iconContainer.classList.add('order');
+                break;
+            case 'message':
+                icon.setAttribute('data-lucide', 'message-circle');
+                iconContainer.classList.add('message');
+                break;
+            case 'alert':
+                icon.setAttribute('data-lucide', 'alert-triangle');
+                iconContainer.classList.add('alert');
+                break;
+            default:
+                icon.setAttribute('data-lucide', 'bell');
+                iconContainer.classList.add('system');
+        }
+        
+        // Bouton fermer
+        push.querySelector('.push-close').addEventListener('click', () => {
+            removePushNotification(pushElement);
+        });
+        
+        // Click sur la notification
+        pushElement.addEventListener('click', () => {
+            handleNotificationClick(notification);
+            removePushNotification(pushElement);
+        });
+        
+        // Réinitialiser les icônes Lucide
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+        
+        return pushElement;
+    }
+
+    function removePushNotification(push) {
+        push.classList.add('removing');
+        setTimeout(() => {
+            if (push.parentNode) {
+                push.parentNode.removeChild(push);
+            }
+        }, 500);
+    }
+
+    function showBanner(notification) {
+        const banner = createBannerElement(notification);
+        bannerContainer.appendChild(banner);
+        
+        // Animation d'entrée
+        setTimeout(() => {
+            banner.classList.add('show');
+        }, 100);
+        
+        // Auto-remove si spécifié
+        if (notification.auto_dismiss !== false) {
+            setTimeout(() => {
+                removeBanner(banner);
+            }, notification.duration || NOTIFICATION_CONFIG.bannerDuration);
+        }
+    }
+
+    function createBannerElement(notification) {
+        const banner = bannerTemplate.content.cloneNode(true);
+        const bannerElement = banner.querySelector('.banner-notification');
+        
+        // Remplir le contenu
+        banner.querySelector('.banner-title').textContent = notification.title;
+        banner.querySelector('.banner-message').textContent = notification.message;
+        
+        // Icône
+        const icon = banner.querySelector('.banner-icon i');
+        icon.setAttribute('data-lucide', notification.icon || 'info');
+        
+        // Action principale
+        if (notification.action) {
+            const actionBtn = banner.querySelector('.banner-action');
+            actionBtn.classList.remove('hidden');
+            actionBtn.textContent = notification.action.label;
+            actionBtn.addEventListener('click', () => {
+                handleNotificationAction(notification, notification.action);
+                removeBanner(bannerElement);
+            });
+        }
+        
+        // Bouton fermer
+        banner.querySelector('.banner-close').addEventListener('click', () => {
+            removeBanner(bannerElement);
+        });
+        
+        // Réinitialiser les icônes Lucide
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+        
+        return bannerElement;
+    }
+
+    function removeBanner(banner) {
+        banner.classList.add('removing');
+        setTimeout(() => {
+            if (banner.parentNode) {
+                banner.parentNode.removeChild(banner);
+            }
+        }, 500);
+    }
+
+    function showNativeNotification(notification) {
+        if ('Notification' in window && notificationPermission === 'granted') {
+            const nativeNotif = new Notification(notification.title, {
+                body: notification.message,
+                icon: '/static/images/icons/icon-192x192.png',
+                badge: '/static/images/icons/icon-96x96.png',
+                tag: notification.id,
+                requireInteraction: notification.type === 'order'
+            });
+            
+            nativeNotif.onclick = () => {
+                window.focus();
+                handleNotificationClick(notification);
+                nativeNotif.close();
+            };
+            
+            // Auto-close après 8 secondes
+            setTimeout(() => {
+                nativeNotif.close();
+            }, 8000);
+        }
+    }
+
+    function handleNotificationClick(notification) {
+        // Marquer comme lue
+        markNotificationAsRead(notification.id);
+        
+        // Navigation selon le type
+        switch (notification.type) {
+            case 'order':
+                if (notification.data && notification.data.order_id) {
+                    window.location.href = `/orders/${notification.data.order_id}/`;
+                }
+                break;
+            case 'message':
+                if (notification.data && notification.data.chat_id) {
+                    window.location.href = `/chat/${notification.data.chat_id}/`;
+                }
+                break;
+            case 'product':
+                if (notification.data && notification.data.product_slug) {
+                    window.location.href = `/products/${notification.data.product_slug}/`;
+                }
+                break;
+            default:
+                if (notification.url) {
+                    window.location.href = notification.url;
+                }
+        }
+    }
+
+    function handleNotificationAction(notification, action) {
+        // Envoyer l'action au serveur
+        fetch(`${NOTIFICATION_CONFIG.apiEndpoint}action/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+                notification_id: notification.id,
+                action: action.type,
+                data: action.data
+            })
+        }).then(response => response.json())
+          .then(data => {
+              if (data.success && action.url) {
+                  window.location.href = action.url;
+              }
+          }).catch(console.error);
+    }
+
+    function openNotificationCenter() {
+        isNotificationCenterOpen = true;
+        notificationCenter.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        
+        // Charger les notifications si nécessaire
+        if (notifications.length === 0) {
+            loadNotifications();
+        }
+    }
+
+    function closeNotificationCenter() {
+        isNotificationCenterOpen = false;
+        notificationCenter.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    function renderNotificationsList(filter = 'all') {
+        hideNotificationsLoading();
+        
+        const filteredNotifications = filterNotifications(notifications, filter);
+        
+        if (filteredNotifications.length === 0) {
+            showNotificationsEmpty();
+            return;
+        }
+        
+        hideNotificationsEmpty();
+        
+        const listContainer = document.createElement('div');
+        
+        filteredNotifications.forEach(notification => {
+            const item = createNotificationItem(notification);
+            listContainer.appendChild(item);
+        });
+        
+        // Remplacer le contenu
+        const existingItems = notificationsList.querySelectorAll('.notification-item');
+        existingItems.forEach(item => item.remove());
+        
+        notificationsList.appendChild(listContainer);
+    }
+
+    function createNotificationItem(notification) {
+        const item = notificationItemTemplate.content.cloneNode(true);
+        const itemElement = item.querySelector('.notification-item');
+        
+        // Remplir le contenu
+        itemElement.dataset.notificationId = notification.id;
+        item.querySelector('.notification-title').textContent = notification.title;
+        item.querySelector('.notification-message').textContent = notification.message;
+        item.querySelector('.notification-time').textContent = formatTime(notification.created_at);
+        item.querySelector('.notification-type').textContent = getNotificationTypeLabel(notification.type);
+        
+        // Icône selon le type
+        const icon = item.querySelector('.notification-icon i');
+        const iconContainer = item.querySelector('.notification-icon');
+        
+        switch (notification.type) {
+            case 'order':
+                icon.setAttribute('data-lucide', 'shopping-cart');
+                iconContainer.classList.add('order');
+                break;
+            case 'message':
+                icon.setAttribute('data-lucide', 'message-circle');
+                iconContainer.classList.add('message');
+                break;
+            case 'alert':
+                icon.setAttribute('data-lucide', 'alert-triangle');
+                iconContainer.classList.add('alert');
+                break;
+            default:
+                icon.setAttribute('data-lucide', 'bell');
+                iconContainer.classList.add('system');
+        }
+        
+        // État lu/non lu
+        if (notification.is_read) {
+            itemElement.classList.add('read');
+        } else {
+            itemElement.classList.add('unread');
+        }
+        
+        // Click sur la notification
+        itemElement.addEventListener('click', () => {
+            handleNotificationClick(notification);
+            closeNotificationCenter();
+        });
+        
+        // Réinitialiser les icônes Lucide
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+        
+        return itemElement;
+    }
+
+    function filterNotifications(notifications, filter) {
+        switch (filter) {
+            case 'unread':
+                return notifications.filter(n => !n.is_read);
+            case 'orders':
+                return notifications.filter(n => n.type === 'order');
+            case 'messages':
+                return notifications.filter(n => n.type === 'message');
+            default:
+                return notifications;
+        }
+    }
+
+    function setActiveFilter(filter) {
+        notificationFilters.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.filter === filter) {
+                btn.classList.add('active');
+            }
+        });
+        
+        renderNotificationsList(filter);
+    }
+
+    function markNotificationAsRead(notificationId) {
+        fetch(`${NOTIFICATION_CONFIG.apiEndpoint}mark-read/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({ notification_id: notificationId })
+        }).then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  // Mettre à jour localement
+                  const notification = notifications.find(n => n.id === notificationId);
+                  if (notification) {
+                      notification.is_read = true;
+                  }
+                  updateNotificationBadge();
+              }
+          }).catch(console.error);
+    }
+
+    function markAllNotificationsRead() {
+        fetch(`${NOTIFICATION_CONFIG.apiEndpoint}mark-all-read/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            }
+        }).then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  // Mettre à jour localement
+                  notifications.forEach(n => n.is_read = true);
+                  renderNotificationsList();
+                  updateNotificationBadge();
+                  showToast({
+                      title: 'Notifications',
+                      message: 'Toutes les notifications ont été marquées comme lues',
+                      type: 'success'
+                  });
+              }
+          }).catch(console.error);
+    }
+
+    function updateNotificationBadge() {
+        const unreadCount = notifications.filter(n => !n.is_read).length;
+        
+        // Mettre à jour tous les badges de notification dans l'interface
+        const badges = document.querySelectorAll('.notification-badge');
+        badges.forEach(badge => {
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        });
+        
+        // Mettre à jour le titre de la page
+        if (unreadCount > 0) {
+            document.title = `(${unreadCount}) VGK - Vidé-Grenier Kamer`;
+        } else {
+            document.title = 'VGK - Vidé-Grenier Kamer';
+        }
+    }
+
+    function playNotificationSound() {
+        if (NOTIFICATION_CONFIG.soundEnabled) {
+            try {
+                const audio = new Audio('/static/sounds/notification.mp3');
+                audio.volume = 0.3;
+                audio.play().catch(() => {
+                    // Ignorer si le son ne peut pas être joué
+                });
+            } catch (e) {
+                // Son non disponible
+            }
+        }
+    }
+
+    function openNotificationSettings() {
+        const modal = document.getElementById('notification-settings-modal');
+        modal.classList.add('show');
+    }
+
+    function closeNotificationSettings() {
+        const modal = document.getElementById('notification-settings-modal');
+        modal.classList.remove('show');
+    }
+
+    function loadNotificationSettings() {
+        const settings = localStorage.getItem('vgk_notification_settings');
+        if (settings) {
+            try {
+                const parsed = JSON.parse(settings);
+                
+                // Appliquer les paramètres aux checkboxes
+                Object.keys(parsed).forEach(key => {
+                    const checkbox = document.getElementById(key);
+                    if (checkbox) {
+                        checkbox.checked = parsed[key];
+                    }
+                });
+                
+                NOTIFICATION_CONFIG.soundEnabled = parsed['sound-enabled'] !== false;
+            } catch (e) {
+                console.error('Erreur lors du chargement des paramètres:', e);
+            }
+        }
+    }
+
+    function saveNotificationSettings() {
+        const settings = {};
+        
+        // Récupérer toutes les checkboxes
+        const checkboxes = document.querySelectorAll('#notification-settings-modal input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            settings[checkbox.id] = checkbox.checked;
+        });
+        
+        // Sauvegarder localement
+        localStorage.setItem('vgk_notification_settings', JSON.stringify(settings));
+        
+        // Envoyer au serveur
+        fetch(`${NOTIFICATION_CONFIG.apiEndpoint}settings/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify(settings)
+        }).then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  showToast({
+                      title: 'Paramètres sauvegardés',
+                      message: 'Vos préférences de notification ont été mises à jour',
+                      type: 'success'
+                  });
+                  closeNotificationSettings();
+              } else {
+                  showToast({
+                      title: 'Erreur',
+                      message: 'Impossible de sauvegarder les paramètres',
+                      type: 'error'
+                  });
+              }
+          }).catch(error => {
+              console.error('Erreur lors de la sauvegarde:', error);
+              showToast({
+                  title: 'Erreur',
+                  message: 'Impossible de sauvegarder les paramètres',
+                  type: 'error'
+              });
+          });
+        
+        // Appliquer les paramètres immédiatement
+        NOTIFICATION_CONFIG.soundEnabled = settings['sound-enabled'] !== false;
+    }
+
+    function hideNotificationsLoading() {
+        const loading = document.getElementById('notifications-loading');
+        if (loading) loading.style.display = 'none';
+    }
+
+    function showNotificationsEmpty() {
+        const empty = document.getElementById('notifications-empty');
+        if (empty) empty.classList.remove('hidden');
+    }
+
+    function hideNotificationsEmpty() {
+        const empty = document.getElementById('notifications-empty');
+        if (empty) empty.classList.add('hidden');
+    }
+
+    function getNotificationTypeLabel(type) {
+        switch (type) {
+            case 'order': return 'Commande';
+            case 'message': return 'Message';
+            case 'alert': return 'Alerte';
+            case 'system': return 'Système';
+            default: return 'Notification';
+        }
+    }
+
+    function formatTime(timestamp) {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diff = now - date;
+        
+        if (diff < 60000) { // Moins d'une minute
+            return 'À l\'instant';
+        } else if (diff < 3600000) { // Moins d'une heure
+            const minutes = Math.floor(diff / 60000);
+            return `Il y a ${minutes} min`;
+        } else if (diff < 86400000) { // Moins d'un jour
+            const hours = Math.floor(diff / 3600000);
+            return `Il y a ${hours}h`;
+        } else if (date.toDateString() === now.toDateString()) { // Aujourd'hui
+            return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        } else {
+            return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+        }
+    }
+
+    function getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    }
+
+    // API publique pour d'autres scripts
+    window.VGKNotifications = {
+        show: handleNewNotification,
+        showToast: showToast,
+        showPush: showPushNotification,
+        showBanner: showBanner,
+        openCenter: openNotificationCenter,
+        markAsRead: markNotificationAsRead,
+        updateBadge: updateNotificationBadge
+    };
+
+    // Écouter les événements personnalisés
+    window.addEventListener('vgk:notification', function(e) {
+        handleNewNotification(e.detail);
+    });
+});
+
+// Service Worker pour les notifications push (optionnel)
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then(registration => {
+        console.log('Service Worker enregistré');
+        
+        // S'abonner aux notifications push
+        registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: 'YOUR_VAPID_PUBLIC_KEY' // À remplacer
+        }).then(subscription => {
+            // Envoyer la subscription au serveur
+            fetch('/api/notifications/subscribe/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value
+                },
+                body: JSON.stringify(subscription)
+            });
+        }).catch(console.error);
+    }).catch(console.error);
+}
+</script>
