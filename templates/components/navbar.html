@@ -1,8 +1,10 @@
 <!-- Simple responsive navbar for Vide-Grenier Kamer -->
+ {% load static %}
+
 <nav class="bg-vgk-green-600 text-white shadow-lg">
     <div class="container mx-auto px-4 py-3 flex items-center justify-between">
         <a href="/" class="flex items-center space-x-2">
-            <img src="#" alt="Logo" class="h-8 w-8 rounded-full">
+            <img src="{% static 'images/logo.png' %}" alt="Logo" class="h-8 w-8 rounded-full">
             <span class="font-bold text-lg">Vidé-Grenier Kamer</span>
         </a>
         <ul class="hidden md:flex space-x-6 font-medium">
