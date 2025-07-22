@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+ {% load static %}
+
+{% block title %}Aide - Vidé-Grenier Kamer{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto mt-12 bg-white rounded-xl shadow-lg p-8">
+    <div class="flex flex-col items-center mb-6">
+        <img src="{% static 'images/logo.png' %}" alt="Vidé-Grenier Kamer Logo" class="w-16 h-16 rounded-full mb-2 shadow">
+        <h1 class="text-2xl font-bold text-vgk-green-700 mb-2 text-center">Centre d'aide</h1>
+        <p class="text-gray-600 text-center text-sm mb-4">Retrouvez ici les réponses aux questions fréquentes et des guides pour utiliser la plateforme.</p>
+    </div>
+    <div class="space-y-4 text-gray-700 text-base">
+        <h2 class="font-semibold text-vgk-green-700">FAQ</h2>
+        <ul class="list-disc list-inside ml-4 text-sm">
+            <li>Comment créer un compte ?</li>
+            <li>Comment publier une annonce ?</li>
+            <li>Comment contacter un vendeur ?</li>
+            <li>Quels sont les moyens de paiement ?</li>
+            <li>Comment signaler un problème ?</li>
+        </ul>
+        <p>Pour toute autre question, contactez notre support via la page <a href="/contact/" class="text-vgk-green-600 hover:underline">Contact</a>.</p>
+    </div>
+</div>
+{% endblock %}

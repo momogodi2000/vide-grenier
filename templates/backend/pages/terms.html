@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+ {% load static %}
+
+{% block title %}Conditions d'utilisation - Vidé-Grenier Kamer{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto mt-12 bg-white rounded-xl shadow-lg p-8">
+    <div class="flex flex-col items-center mb-6">
+        <img src="{% static 'images/logo.png' %}" alt="Vidé-Grenier Kamer Logo" class="w-16 h-16 rounded-full mb-2 shadow">
+        <h1 class="text-2xl font-bold text-vgk-green-700 mb-2 text-center">Conditions d'utilisation</h1>
+        <p class="text-gray-600 text-center text-sm mb-4">Veuillez lire attentivement les règles d'utilisation de la plateforme Vidé-Grenier Kamer.</p>
+    </div>
+    <div class="space-y-4 text-gray-700 text-base">
+        <h2 class="font-semibold text-vgk-green-700">Principes généraux</h2>
+        <ul class="list-disc list-inside ml-4 text-sm">
+            <li>Respect des autres membres et des lois en vigueur</li>
+            <li>Publication d'annonces véridiques et légales</li>
+            <li>Interdiction de vente de produits illicites</li>
+            <li>Protection des données personnelles</li>
+        </ul>
+        <h2 class="font-semibold text-vgk-green-700 mt-6">Responsabilités</h2>
+        <p>Chaque utilisateur est responsable des informations qu'il publie et des transactions réalisées sur la plateforme.</p>
+        <p>Pour toute question, contactez-nous via la page <a href="/contact/" class="text-vgk-green-600 hover:underline">Contact</a>.</p>
+    </div>
+</div>
+{% endblock %}

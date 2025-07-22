@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Comparaison de produits - Vidé-Grenier Kamer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .comparison-table {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    }
+    .feature-highlight {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .price-badge {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+    .best-deal {
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+    <!-- Header Section -->
+    <div class="bg-gradient-to-r from-green-600 to-orange-500 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold mb-2">Comparaison de Produits</h1>
+                    <p class="text-lg text-green-100">Comparez jusqu'à 4 produits côte à côte</p>
+                </div>
+                <div class="hidden md:block">
+                    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                        <div class="flex items-center space-x-4">
+                            <i data-lucide="scale" class="w-8 h-8"></i>
+                            <div>
+                                <div class="font-semibold">{{ products|length }}/4 produits</div>
+                                <div class="text-sm text-green-100">comparés</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        {% if not products %}
+        <!-- Empty State -->
+        <div class="text-center py-16">
+            <div class="bg-white rounded-3xl p-12 shadow-xl max-w-2xl mx-auto">
+                <div class="mb-8">
+                    <div class="w-32 h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i data-lucide="scale" class="w-16 h-16 text-gray-400"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4">Aucun produit à comparer</h2>
+                    <p class="text-xl text-gray-600 mb-8">Commencez par sélectionner des produits depuis la page de recherche ou les catégories</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <a href="{% url 'backend:product_list' %}" 
+                       class="bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-4 rounded-2xl hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 font-semibold flex items-center justify-center space-x-2">
+                        <i data-lucide="search" class="w-5 h-5"></i>
+                        <span>Parcourir les produits</span>
+                    </a>
+                    <a href="{% url 'backend:category_list' %}" 
+                       class="border-2 border-gray-200 text-gray-700 px-8 py-4 rounded-2xl hover:border-green-300 hover:bg-green-50 transform hover:-translate-y-1 transition-all duration-300 font-semibold flex items-center justify-center space-x-2">
+                        <i data-lucide="grid-3x3" class="w-5 h-5"></i>
+                        <span>Explorer les catégories</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+
+        <!-- Comparison Actions -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+            <div class="flex items-center space-x-4">
+                <button id="clearAll" class="flex items-center space-x-2 px-6 py-3 bg-red-100 text-red-700 rounded-full hover:bg-red-200 transition-colors">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    <span>Tout effacer</span>
+                </button>
+                <button id="printComparison" class="flex items-center space-x-2 px-6 py-3 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    <span>Imprimer</span>
+                </button>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <span class="text-sm text-gray-600">Partager:</span>
+                <button class="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors">
+                    <i data-lucide="facebook" class="w-4 h-4"></i>
+                </button>
+                <button class="p-2 bg-blue-400 text-white rounded-full hover:bg-blue-500 transition-colors">
+                    <i data-lucide="twitter" class="w-4 h-4"></i>
+                </button>
+                <button class="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors">
+                    <i data-lucide="share-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="comparison-table rounded-3xl overflow-hidden shadow-2xl">
+            <!-- Product Headers -->
+            <div class="grid grid-cols-1 lg:grid-cols-{{ products|length|add:"1" }} gap-6 p-8">
+                <!-- Feature Column -->
+                <div class="hidden lg:block">
+                    <div class="sticky top-0 bg-white rounded-2xl p-6 shadow-lg">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Caractéristiques</h3>
+                        <div class="space-y-4 text-sm">
+                            <div class="font-medium text-gray-700">Prix</div>
+                            <div class="font-medium text-gray-700">Vendeur</div>
+                            <div class="font-medium text-gray-700">Catégorie</div>
+                            <div class="font-medium text-gray-700">État</div>
+                            <div class="font-medium text-gray-700">Vues</div>
+                            <div class="font-medium text-gray-700">Note</div>
+                            <div class="font-medium text-gray-700">Livraison</div>
+                            <div class="font-medium text-gray-700">Garantie</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Cards -->
+                {% for product in products %}
+                <div class="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow {% if product.is_best_deal %}best-deal{% endif %}">
+                    {% if product.is_best_deal %}
+                    <div class="bg-gradient-to-r from-green-600 to-green-700 text-white text-sm font-semibold px-4 py-2 rounded-full text-center mb-4">
+                        🏆 Meilleure offre
+                    </div>
+                    {% endif %}
+
+                    <!-- Product Image -->
+                    <div class="relative mb-6 group">
+                        {% if product.images.first %}
+                        <img src="{{ product.images.first.image.url }}" 
+                             alt="{{ product.name }}"
+                             class="w-full h-48 object-cover rounded-xl group-hover:scale-105 transition-transform duration-300">
+                        {% else %}
+                        <div class="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
+                            <i data-lucide="image" class="w-12 h-12 text-gray-400"></i>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Remove Button -->
+                        <button class="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors flex items-center justify-center shadow-lg"
+                                onclick="removeProduct('{{ product.id }}')">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                    <!-- Product Info -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-bold text-gray-800 line-clamp-2 hover:text-green-600 transition-colors">
+                            <a href="{% url 'backend:product_detail' slug=product.slug %}">{{ product.name }}</a>
+                        </h3>
+
+                        <!-- Mobile Features List -->
+                        <div class="lg:hidden space-y-3 text-sm">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Prix:</span>
+                                <span class="price-badge text-white font-bold px-3 py-1 rounded-full">
+                                    {{ product.price|floatformat:0 }} FCFA
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Vendeur:</span>
+                                <span class="font-medium">{{ product.seller.get_full_name|truncatechars:15 }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Catégorie:</span>
+                                <span class="font-medium">{{ product.category.name }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Desktop Features -->
+                        <div class="hidden lg:block space-y-4 text-sm">
+                            <div class="text-center">
+                                <span class="price-badge text-white font-bold px-4 py-2 rounded-full text-lg">
+                                    {{ product.price|floatformat:0 }} FCFA
+                                </span>
+                            </div>
+                            <div class="text-center">
+                                <a href="{% url 'backend:seller_profile' pk=product.seller.pk %}" 
+                                   class="text-green-600 hover:text-green-700 font-medium">
+                                    {{ product.seller.get_full_name|truncatechars:20 }}
+                                </a>
+                            </div>
+                            <div class="text-center font-medium">{{ product.category.name }}</div>
+                            <div class="text-center">
+                                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                                    {{ product.condition|default:"Bon état" }}
+                                </span>
+                            </div>
+                            <div class="text-center">{{ product.views_count }} vues</div>
+                            <div class="text-center">
+                                <div class="flex items-center justify-center space-x-1">
+                                    {% for i in "12345" %}
+                                    <i data-lucide="star" class="w-4 h-4 {% if forloop.counter <= product.average_rating %}text-yellow-400 fill-current{% else %}text-gray-300{% endif %}"></i>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="text-center">Gratuite</div>
+                            <div class="text-center">7 jours</div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="space-y-2 pt-4 border-t border-gray-100">
+                            <a href="{% url 'backend:product_detail' slug=product.slug %}" 
+                               class="block w-full bg-gradient-to-r from-green-600 to-green-700 text-white text-center py-3 rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 font-semibold">
+                                Voir le produit
+                            </a>
+                            <button class="w-full border-2 border-gray-200 text-gray-700 py-3 rounded-xl hover:border-green-300 hover:bg-green-50 transition-colors font-semibold flex items-center justify-center space-x-2">
+                                <i data-lucide="message-circle" class="w-4 h-4"></i>
+                                <span>Contacter</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Recommendation Section -->
+        <div class="mt-12 bg-white rounded-3xl p-8 shadow-lg">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">Produits similaires recommandés</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {% for product in recommended_products|slice:":4" %}
+                <div class="bg-gray-50 rounded-2xl p-4 hover:shadow-lg transition-shadow group">
+                    {% if product.images.first %}
+                    <img src="{{ product.images.first.image.url }}" 
+                         alt="{{ product.name }}"
+                         class="w-full h-32 object-cover rounded-lg mb-3 group-hover:scale-105 transition-transform">
+                    {% endif %}
+                    <h4 class="font-semibold text-gray-800 text-sm line-clamp-2 mb-2">{{ product.name }}</h4>
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-green-600">{{ product.price|floatformat:0 }} FCFA</span>
+                        <button class="bg-green-600 text-white px-3 py-1 rounded-full text-xs hover:bg-green-700 transition-colors"
+                                onclick="addToComparison('{{ product.id }}')">
+                            + Comparer
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- JavaScript for Comparison Functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Lucide icons
+    lucide.createIcons();
+    
+    // Clear all products
+    document.getElementById('clearAll')?.addEventListener('click', function() {
+        if (confirm('Êtes-vous sûr de vouloir effacer tous les produits de la comparaison ?')) {
+            window.location.href = '{% url "backend:product_compare" %}';
+        }
+    });
+    
+    // Print comparison
+    document.getElementById('printComparison')?.addEventListener('click', function() {
+        window.print();
+    });
+});
+
+function removeProduct(productId) {
+    const currentUrl = new URL(window.location.href);
+    const products = currentUrl.searchParams.get('products')?.split(',').filter(Boolean) || [];
+    const updatedProducts = products.filter(id => id !== productId);
+    
+    currentUrl.searchParams.set('products', updatedProducts.join(','));
+    window.location.href = currentUrl.toString();
+}
+
+function addToComparison(productId) {
+    const currentUrl = new URL(window.location.href);
+    const products = currentUrl.searchParams.get('products')?.split(',').filter(Boolean) || [];
+    
+    if (!products.includes(productId) && products.length < 4) {
+        products.push(productId);
+        currentUrl.searchParams.set('products', products.join(','));
+        window.location.href = currentUrl.toString();
+    } else if (products.length >= 4) {
+        alert('Vous ne pouvez comparer que 4 produits maximum.');
+    }
+}
+</script>
+{% endblock %}

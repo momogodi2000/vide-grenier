@@ -1,0 +1,600 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Publier un produit - Vidé-Grenier Kamer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    }
+    .upload-zone {
+        border: 2px dashed #10b981;
+        background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+        transition: all 0.3s ease;
+    }
+    .upload-zone:hover {
+        border-color: #059669;
+        transform: scale(1.02);
+        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.1);
+    }
+    .category-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+        transition: all 0.3s ease;
+    }
+    .category-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+    .preview-image {
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    }
+    .step-indicator {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen form-container">
+    <!-- Header Section -->
+    <div class="bg-gradient-to-r from-green-600 to-orange-500 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-4xl font-bold mb-2">Publier un nouveau produit</h1>
+                        <p class="text-lg text-green-100">Vendez facilement vos articles sur Vidé-Grenier Kamer</p>
+                    </div>
+                    <div class="hidden md:block">
+                        <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                            <div class="text-center">
+                                <div class="text-3xl font-bold mb-1">10%</div>
+                                <div class="text-sm text-green-100">Commission seulement</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Progress Steps -->
+            <div class="flex items-center justify-center mb-8">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold">1</div>
+                        <span class="font-medium text-gray-700">Informations</span>
+                    </div>
+                    <div class="w-16 h-1 bg-gray-300 rounded"></div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 font-semibold">2</div>
+                        <span class="font-medium text-gray-500">Photos</span>
+                    </div>
+                    <div class="w-16 h-1 bg-gray-300 rounded"></div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 font-semibold">3</div>
+                        <span class="font-medium text-gray-500">Finaliser</span>
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" id="productForm" class="space-y-8">
+                {% csrf_token %}
+                
+                <!-- Main Content Card -->
+                <div class="bg-white rounded-3xl shadow-xl p-8">
+                    <!-- Step 1: Basic Information -->
+                    <div class="step-content" data-step="1">
+                        <div class="mb-8">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Informations de base</h2>
+                            <p class="text-gray-600">Décrivez votre produit de manière détaillée pour attirer plus d'acheteurs</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <!-- Left Column -->
+                            <div class="space-y-6">
+                                <!-- Product Name -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Nom du produit *</label>
+                                    {{ form.name }}
+                                    <p class="text-xs text-gray-500 mt-1">Soyez précis et descriptif (max 100 caractères)</p>
+                                </div>
+
+                                <!-- Category Selection -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Catégorie *</label>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        {% for category in categories %}
+                                        <div class="category-card border-2 border-gray-200 rounded-xl p-4 cursor-pointer hover:border-green-300"
+                                             data-category="{{ category.id }}">
+                                            <div class="text-center">
+                                                <div class="text-2xl mb-2">{{ category.icon }}</div>
+                                                <div class="text-sm font-semibold">{{ category.name }}</div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {{ form.category.as_hidden }}
+                                </div>
+
+                                <!-- Condition -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">État du produit *</label>
+                                    {{ form.condition }}
+                                </div>
+
+                                <!-- Price -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Prix (FCFA) *</label>
+                                    <div class="relative">
+                                        {{ form.price }}
+                                        <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                            <span class="text-gray-500 font-medium">FCFA</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">Prix conseillé basé sur des produits similaires: 15,000 - 25,000 FCFA</p>
+                                </div>
+                            </div>
+
+                            <!-- Right Column -->
+                            <div class="space-y-6">
+                                <!-- Description -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Description détaillée *</label>
+                                    {{ form.description }}
+                                    <div class="flex items-center justify-between mt-2">
+                                        <p class="text-xs text-gray-500">Décrivez les détails, défauts, marque, etc.</p>
+                                        <span class="text-xs text-gray-400" id="charCount">0/500</span>
+                                    </div>
+                                </div>
+
+                                <!-- Brand -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Marque (optionnel)</label>
+                                    {{ form.brand }}
+                                </div>
+
+                                <!-- Size -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Taille/Dimensions (optionnel)</label>
+                                    {{ form.size }}
+                                    <p class="text-xs text-gray-500 mt-1">Ex: 42, L, 170cm x 80cm</p>
+                                </div>
+
+                                <!-- Location -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Localisation *</label>
+                                    {{ form.location }}
+                                    <p class="text-xs text-gray-500 mt-1">Ville où se trouve le produit</p>
+                                </div>
+
+                                <!-- Negotiable -->
+                                <div class="flex items-center space-x-3">
+                                    {{ form.is_negotiable }}
+                                    <label class="text-sm font-medium text-gray-700">Prix négociable</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end mt-8">
+                            <button type="button" class="next-step bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-3 rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 font-semibold">
+                                Suivant: Ajouter des photos
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Photos -->
+                    <div class="step-content hidden" data-step="2">
+                        <div class="mb-8">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Photos du produit</h2>
+                            <p class="text-gray-600">Ajoutez jusqu'à 5 photos de qualité pour présenter votre produit</p>
+                        </div>
+
+                        <!-- Upload Zone -->
+                        <div class="upload-zone rounded-2xl p-8 text-center mb-6">
+                            <div class="max-w-md mx-auto">
+                                <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i data-lucide="camera" class="w-12 h-12 text-green-600"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-2">Glissez vos photos ici</h3>
+                                <p class="text-gray-600 mb-4">ou cliquez pour sélectionner des fichiers</p>
+                                <input type="file" name="images" multiple accept="image/*" class="hidden" id="imageUpload">
+                                <button type="button" onclick="document.getElementById('imageUpload').click()" 
+                                        class="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all duration-300 font-semibold">
+                                    Sélectionner des photos
+                                </button>
+                                <p class="text-xs text-gray-500 mt-2">JPG, PNG - Max 5MB par photo</p>
+                            </div>
+                        </div>
+
+                        <!-- Photo Preview Grid -->
+                        <div id="photoPreview" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+                            <!-- Preview images will be inserted here dynamically -->
+                        </div>
+
+                        <!-- Photo Tips -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i data-lucide="lightbulb" class="w-4 h-4 text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-blue-800 mb-2">Conseils pour de meilleures photos</h4>
+                                    <ul class="text-sm text-blue-700 space-y-1">
+                                        <li>• Utilisez un bon éclairage naturel</li>
+                                        <li>• Montrez le produit sous tous les angles</li>
+                                        <li>• Incluez les défauts visibles pour être transparent</li>
+                                        <li>• Évitez les photos floues ou sombres</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between mt-8">
+                            <button type="button" class="prev-step text-gray-600 hover:text-gray-800 font-semibold px-6 py-3 rounded-xl border-2 border-gray-200 hover:border-gray-300 transition-colors">
+                                Précédent
+                            </button>
+                            <button type="button" class="next-step bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-3 rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 font-semibold">
+                                Suivant: Finaliser
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Finalize -->
+                    <div class="step-content hidden" data-step="3">
+                        <div class="mb-8">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Finaliser votre annonce</h2>
+                            <p class="text-gray-600">Vérifiez et confirmez les informations avant publication</p>
+                        </div>
+
+                        <!-- Product Summary -->
+                        <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 mb-8">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Aperçu de votre produit</h3>
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <!-- Product Preview -->
+                                <div class="bg-white rounded-xl p-4">
+                                    <div class="preview-image rounded-lg h-48 mb-3 flex items-center justify-center">
+                                        <i data-lucide="image" class="w-12 h-12 text-gray-400"></i>
+                                    </div>
+                                    <h4 class="font-semibold text-gray-800 mb-2" id="previewName">Nom du produit</h4>
+                                    <div class="text-2xl font-bold text-green-600 mb-2" id="previewPrice">0 FCFA</div>
+                                    <p class="text-sm text-gray-600 line-clamp-3" id="previewDescription">Description du produit</p>
+                                </div>
+
+                                <!-- Details Summary -->
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between py-2 border-b border-gray-200">
+                                        <span class="text-gray-600">Catégorie:</span>
+                                        <span class="font-medium" id="previewCategory">-</span>
+                                    </div>
+                                    <div class="flex items-center justify-between py-2 border-b border-gray-200">
+                                        <span class="text-gray-600">État:</span>
+                                        <span class="font-medium" id="previewCondition">-</span>
+                                    </div>
+                                    <div class="flex items-center justify-between py-2 border-b border-gray-200">
+                                        <span class="text-gray-600">Localisation:</span>
+                                        <span class="font-medium" id="previewLocation">-</span>
+                                    </div>
+                                    <div class="flex items-center justify-between py-2 border-b border-gray-200">
+                                        <span class="text-gray-600">Prix négociable:</span>
+                                        <span class="font-medium" id="previewNegotiable">Non</span>
+                                    </div>
+                                    <div class="flex items-center justify-between py-2">
+                                        <span class="text-gray-600">Photos:</span>
+                                        <span class="font-medium" id="previewPhotos">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Publishing Options -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <!-- Visibility Options -->
+                            <div class="bg-white border-2 border-gray-200 rounded-xl p-6">
+                                <h4 class="font-semibold text-gray-800 mb-4">Options de visibilité</h4>
+                                <div class="space-y-3">
+                                    <label class="flex items-center space-x-3 cursor-pointer">
+                                        <input type="radio" name="visibility" value="public" checked class="text-green-600">
+                                        <div>
+                                            <div class="font-medium">Publication publique</div>
+                                            <div class="text-sm text-gray-500">Visible par tous les utilisateurs</div>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center space-x-3 cursor-pointer">
+                                        <input type="radio" name="visibility" value="draft" class="text-green-600">
+                                        <div>
+                                            <div class="font-medium">Brouillon</div>
+                                            <div class="text-sm text-gray-500">Sauvegarder pour publier plus tard</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Boost Options -->
+                            <div class="bg-white border-2 border-gray-200 rounded-xl p-6">
+                                <h4 class="font-semibold text-gray-800 mb-4">Options de promotion</h4>
+                                <div class="space-y-3">
+                                    <label class="flex items-center justify-between cursor-pointer">
+                                        <div class="flex items-center space-x-3">
+                                            <input type="checkbox" name="promote" class="text-green-600">
+                                            <div>
+                                                <div class="font-medium">Mettre en avant</div>
+                                                <div class="text-sm text-gray-500">+2,000 FCFA - 7 jours</div>
+                                            </div>
+                                        </div>
+                                        <div class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">Recommandé</div>
+                                    </label>
+                                    <label class="flex items-center space-x-3 cursor-pointer">
+                                        <input type="checkbox" name="urgent" class="text-green-600">
+                                        <div>
+                                            <div class="font-medium">Badge "Urgent"</div>
+                                            <div class="text-sm text-gray-500">+500 FCFA - 3 jours</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Terms and Conditions -->
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-8">
+                            <label class="flex items-start space-x-3 cursor-pointer">
+                                <input type="checkbox" name="terms" required class="mt-1 text-green-600">
+                                <div class="text-sm">
+                                    <p class="text-gray-700 mb-2">
+                                        En publiant cette annonce, j'accepte les 
+                                        <a href="{% url 'backend:terms' %}" class="text-green-600 hover:text-green-700 font-medium">conditions d'utilisation</a> 
+                                        et je certifie que:
+                                    </p>
+                                    <ul class="text-gray-600 space-y-1 text-xs">
+                                        <li>• Je suis propriétaire légitime de cet article</li>
+                                        <li>• Les informations fournies sont exactes</li>
+                                        <li>• Je m'engage à respecter les règles de la plateforme</li>
+                                        <li>• Une commission de 10% sera prélevée lors de la vente</li>
+                                    </ul>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex items-center justify-between">
+                            <button type="button" class="prev-step text-gray-600 hover:text-gray-800 font-semibold px-6 py-3 rounded-xl border-2 border-gray-200 hover:border-gray-300 transition-colors">
+                                Précédent
+                            </button>
+                            <div class="flex items-center space-x-4">
+                                <button type="submit" name="action" value="draft" 
+                                        class="bg-gray-200 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-300 transition-colors font-semibold">
+                                    Sauvegarder en brouillon
+                                </button>
+                                <button type="submit" name="action" value="publish" 
+                                        class="bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-3 rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 font-semibold flex items-center space-x-2">
+                                    <i data-lucide="upload" class="w-5 h-5"></i>
+                                    <span>Publier maintenant</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Help Sidebar -->
+                <div class="bg-white rounded-3xl shadow-lg p-6">
+                    <h3 class="font-semibold text-gray-800 mb-4 flex items-center space-x-2">
+                        <i data-lucide="help-circle" class="w-5 h-5 text-green-600"></i>
+                        <span>Aide à la publication</span>
+                    </h3>
+                    
+                    <div class="space-y-4 text-sm">
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <div class="font-medium text-green-800 mb-1">💡 Conseil du jour</div>
+                            <p class="text-green-700">Les produits avec 3+ photos se vendent 2x plus vite!</p>
+                        </div>
+                        
+                        <div>
+                            <div class="font-medium text-gray-800 mb-2">Questions fréquentes:</div>
+                            <ul class="space-y-2 text-gray-600">
+                                <li>
+                                    <button class="text-left hover:text-green-600 transition-colors">
+                                        • Comment fixer le bon prix?
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="text-left hover:text-green-600 transition-colors">
+                                        • Quand suis-je payé?
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="text-left hover:text-green-600 transition-colors">
+                                        • Comment modifier mon annonce?
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="border-t border-gray-200 pt-4">
+                            <a href="{% url 'backend:help' %}" 
+                               class="flex items-center space-x-2 text-green-600 hover:text-green-700 transition-colors">
+                                <i data-lucide="external-link" class="w-4 h-4"></i>
+                                <span>Voir le guide complet</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+    
+    let currentStep = 1;
+    const totalSteps = 3;
+    
+    // Step navigation
+    function showStep(step) {
+        document.querySelectorAll('.step-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+        document.querySelector(`[data-step="${step}"]`).classList.remove('hidden');
+        
+        // Update progress indicators
+        for (let i = 1; i <= totalSteps; i++) {
+            const indicator = document.querySelector(`.step-indicator:nth-child(${i*2-1})`);
+            const line = document.querySelector(`.w-16:nth-child(${i*2})`);
+            
+            if (i <= step) {
+                indicator?.classList.remove('bg-gray-300');
+                indicator?.classList.add('step-indicator');
+                line?.classList.remove('bg-gray-300');
+                line?.classList.add('bg-green-600');
+            } else {
+                indicator?.classList.add('bg-gray-300');
+                indicator?.classList.remove('step-indicator');
+                line?.classList.add('bg-gray-300');
+                line?.classList.remove('bg-green-600');
+            }
+        }
+        
+        currentStep = step;
+    }
+    
+    // Next step buttons
+    document.querySelectorAll('.next-step').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (currentStep < totalSteps) {
+                if (validateStep(currentStep)) {
+                    showStep(currentStep + 1);
+                    if (currentStep === 3) {
+                        updatePreview();
+                    }
+                }
+            }
+        });
+    });
+    
+    // Previous step buttons
+    document.querySelectorAll('.prev-step').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (currentStep > 1) {
+                showStep(currentStep - 1);
+            }
+        });
+    });
+    
+    // Category selection
+    document.querySelectorAll('.category-card').forEach(card => {
+        card.addEventListener('click', function() {
+            document.querySelectorAll('.category-card').forEach(c => {
+                c.classList.remove('border-green-500', 'bg-green-50');
+                c.classList.add('border-gray-200');
+            });
+            this.classList.add('border-green-500', 'bg-green-50');
+            this.classList.remove('border-gray-200');
+            
+            const categoryId = this.dataset.category;
+            document.querySelector('#id_category').value = categoryId;
+        });
+    });
+    
+    // Image upload handling
+    document.getElementById('imageUpload').addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        const previewContainer = document.getElementById('photoPreview');
+        
+        files.forEach(file => {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.createElement('div');
+                    preview.className = 'relative group';
+                    preview.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-32 object-cover rounded-lg">
+                        <button type="button" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <i data-lucide="x" class="w-3 h-3"></i>
+                        </button>
+                    `;
+                    previewContainer.appendChild(preview);
+                    
+                    // Remove button functionality
+                    preview.querySelector('button').addEventListener('click', function() {
+                        preview.remove();
+                        updatePhotoCount();
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        updatePhotoCount();
+        lucide.createIcons();
+    });
+    
+    // Character count for description
+    const description = document.querySelector('#id_description');
+    if (description) {
+        description.addEventListener('input', function() {
+            const count = this.value.length;
+            document.getElementById('charCount').textContent = `${count}/500`;
+        });
+    }
+    
+    // Update photo count
+    function updatePhotoCount() {
+        const count = document.querySelectorAll('#photoPreview > div').length;
+        document.getElementById('previewPhotos').textContent = count;
+    }
+    
+    // Form validation
+    function validateStep(step) {
+        let isValid = true;
+        
+        if (step === 1) {
+            const required = ['name', 'category', 'condition', 'price', 'description', 'location'];
+            required.forEach(field => {
+                const input = document.querySelector(`#id_${field}`);
+                if (!input || !input.value.trim()) {
+                    isValid = false;
+                    input?.classList.add('border-red-500');
+                } else {
+                    input?.classList.remove('border-red-500');
+                }
+            });
+        }
+        
+        if (!isValid) {
+            alert('Veuillez remplir tous les champs obligatoires.');
+        }
+        
+        return isValid;
+    }
+    
+    // Update preview
+    function updatePreview() {
+        const name = document.querySelector('#id_name')?.value || 'Nom du produit';
+        const price = document.querySelector('#id_price')?.value || '0';
+        const description = document.querySelector('#id_description')?.value || 'Description du produit';
+        const category = document.querySelector('#id_category option:checked')?.text || '-';
+        const condition = document.querySelector('#id_condition option:checked')?.text || '-';
+        const location = document.querySelector('#id_location')?.value || '-';
+        const negotiable = document.querySelector('#id_is_negotiable')?.checked ? 'Oui' : 'Non';
+        
+        document.getElementById('previewName').textContent = name;
+        document.getElementById('previewPrice').textContent = `${parseInt(price).toLocaleString()} FCFA`;
+        document.getElementById('previewDescription').textContent = description;
+        document.getElementById('previewCategory').textContent = category;
+        document.getElementById('previewCondition').textContent = condition;
+        document.getElementById('previewLocation').textContent = location;
+        document.getElementById('previewNegotiable').textContent = negotiable;
+        
+        updatePhotoCount();
+    }
+    
+    // Initialize
+    showStep(1);
+});
+</script>
+{% endblock %}

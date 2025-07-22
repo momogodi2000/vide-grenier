@@ -1,22 +1,25 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block title %}Mon Profil - Vidé-Grenier Kamer{% endblock %}
 {% block content %}
+
 <div class="max-w-2xl mx-auto mt-12 bg-white rounded-xl shadow-lg p-8">
-    <h1 class="text-2xl font-bold text-vgk-green-700 mb-6 text-center">Mon Profil</h1>
-    <div class="flex flex-col md:flex-row items-center md:space-x-8">
-        <div class="mb-6 md:mb-0">
-            <img src="{{ user.profile_picture.url|default:'/static/images/avatar-default.png' }}" alt="Photo de profil" class="w-32 h-32 rounded-full object-cover border-4 border-vgk-green-600">
+    <h1 class="text-2xl font-bold text-vgk-green-700 mb-8 text-center">Mon Profil</h1>
+    <div class="flex flex-col md:flex-row items-center md:space-x-10">
+        <div class="mb-8 md:mb-0 flex-shrink-0">
+            <img src="{{ user.profile_picture.url|default:'/static/images/avatar-default.png' }}" alt="Photo de profil" class="w-36 h-36 rounded-full object-cover border-4 border-vgk-green-600 shadow">
         </div>
-        <div class="flex-1">
-            <div class="mb-2 text-lg font-semibold">{{ user.get_full_name }}</div>
-            <div class="mb-2 text-gray-600"><i data-lucide="mail" class="inline w-5 h-5 mr-1"></i> {{ user.email }}</div>
-            <div class="mb-2 text-gray-600"><i data-lucide="phone" class="inline w-5 h-5 mr-1"></i> {{ user.phone }}</div>
-            <div class="mb-2 text-gray-600"><i data-lucide="map-pin" class="inline w-5 h-5 mr-1"></i> {{ user.get_city_display }}</div>
-            <div class="mb-2 text-gray-600"><i data-lucide="shield-check" class="inline w-5 h-5 mr-1"></i> Statut: {% if user.phone_verified %}<span class="text-green-600 font-bold">Téléphone vérifié</span>{% else %}<span class="text-red-600 font-bold">Non vérifié</span>{% endif %}</div>
-            <div class="mb-2 text-gray-600"><i data-lucide="star" class="inline w-5 h-5 mr-1"></i> Fidélité: <span class="font-bold">{{ user.loyalty_level }}</span> ({{ user.loyalty_points }} pts)</div>
-            <div class="mb-2 text-gray-600"><i data-lucide="calendar" class="inline w-5 h-5 mr-1"></i> Inscrit le {{ user.date_joined|date:'d/m/Y' }}</div>
-            <div class="mt-6">
-                <a href="/profile/edit/" class="bg-vgk-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-vgk-green-700 transition">Modifier le profil</a>
+        <div class="flex-1 space-y-4">
+            <div class="text-xl font-semibold text-gray-800">{{ user.get_full_name }}</div>
+            <div class="flex items-center text-gray-600"><i data-lucide="mail" class="inline w-5 h-5 mr-2"></i> <span>{{ user.email }}</span></div>
+            <div class="flex items-center text-gray-600"><i data-lucide="phone" class="inline w-5 h-5 mr-2"></i> <span>{{ user.phone }}</span></div>
+            <div class="flex items-center text-gray-600"><i data-lucide="map-pin" class="inline w-5 h-5 mr-2"></i> <span>{{ user.get_city_display }}</span></div>
+            <div class="flex items-center text-gray-600"><i data-lucide="shield-check" class="inline w-5 h-5 mr-2"></i> Statut: {% if user.phone_verified %}<span class="text-green-600 font-bold">Téléphone vérifié</span>{% else %}<span class="text-red-600 font-bold">Non vérifié</span>{% endif %}</div>
+            <div class="flex items-center text-gray-600"><i data-lucide="star" class="inline w-5 h-5 mr-2"></i> Fidélité: <span class="font-bold">{{ user.loyalty_level }}</span> ({{ user.loyalty_points }} pts)</div>
+            <div class="flex items-center text-gray-600"><i data-lucide="calendar" class="inline w-5 h-5 mr-2"></i> Inscrit le {{ user.date_joined|date:'d/m/Y' }}</div>
+            <div class="mt-8">
+                <a href="/profile/edit/" class="bg-vgk-green-600 text-white px-6 py-3 rounded-lg font-semibold text-lg shadow hover:bg-vgk-green-700 transition">Modifier le profil</a>
             </div>
         </div>
     </div>

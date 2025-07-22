@@ -1,35 +1,44 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block title %}Connexion - Vidé-Grenier Kamer{% endblock %}
 {% block content %}
+
 <div class="max-w-md mx-auto mt-12 bg-white rounded-xl shadow-lg p-8">
-    <h1 class="text-2xl font-bold text-vgk-green-700 mb-6 text-center">Connexion à votre compte</h1>
-    <form method="post" novalidate>
+    <div class="flex flex-col items-center mb-6">
+        <img src="{% static 'images/logo.png' %}" alt="Vidé-Grenier Kamer Logo" class="w-16 h-16 rounded-full mb-2 shadow">
+        <h1 class="text-2xl font-bold text-vgk-green-700 mb-2 text-center">Connexion à votre compte</h1>
+        <p class="text-gray-600 text-center text-sm mb-2">Bienvenue sur <span class="font-semibold text-vgk-green-600">Vidé-Grenier Kamer</span>, la première marketplace camerounaise de seconde main !</p>
+        <ul class="text-xs text-gray-500 mb-4 list-disc list-inside text-left w-full">
+            <li>Accédez à vos favoris et commandes</li>
+            <li>Vendez et achetez en toute sécurité</li>
+            <li>Recevez des notifications et offres exclusives</li>
+        </ul>
+    </div>
+    <form method="post" novalidate class="space-y-6">
         {% csrf_token %}
         {% if form.non_field_errors %}
-            <div class="mb-4 text-red-600 text-sm">{{ form.non_field_errors }}</div>
+            <div class="mb-4 text-red-600 text-sm text-center">{{ form.non_field_errors }}</div>
         {% endif %}
-        <div class="mb-4">
-            {{ form.username.label_tag }}
+        <div>
+            <label class="block font-semibold mb-2">{{ form.username.label }}</label>
             {{ form.username }}
-            {% if form.username.errors %}
-                <div class="text-red-500 text-xs">{{ form.username.errors }}</div>
-            {% endif %}
+            {% if form.username.errors %}<div class="text-red-500 text-xs mt-1">{{ form.username.errors }}</div>{% endif %}
         </div>
-        <div class="mb-4">
-            {{ form.password.label_tag }}
+        <div>
+            <label class="block font-semibold mb-2">{{ form.password.label }}</label>
             {{ form.password }}
-            {% if form.password.errors %}
-                <div class="text-red-500 text-xs">{{ form.password.errors }}</div>
-            {% endif %}
+            {% if form.password.errors %}<div class="text-red-500 text-xs mt-1">{{ form.password.errors }}</div>{% endif %}
         </div>
-        <div class="mb-4 flex items-center">
+        <div class="flex items-center mb-2">
             {{ form.remember_me }}
             <label class="ml-2 text-sm">Se souvenir de moi</label>
         </div>
-        <button type="submit" class="w-full bg-vgk-green-600 text-white py-2 rounded-lg font-semibold hover:bg-vgk-green-700 transition">Se connecter</button>
+        <button type="submit" class="w-full bg-gradient-to-r from-vgk-green-600 to-vgk-orange-500 text-white py-3 rounded-lg font-semibold text-lg shadow hover:from-vgk-green-700 hover:to-vgk-orange-600 transition">Se connecter</button>
     </form>
-    <div class="mt-6 text-center text-sm">
-        <a href="/register/" class="text-vgk-green-600 hover:underline">Créer un compte</a>
+    <div class="mt-8 text-center text-sm">
+        <span class="text-gray-500">Pas encore de compte ?</span>
+        <a href="/register/" class="text-vgk-green-600 hover:underline font-semibold ml-2">Créer un compte</a>
     </div>
 </div>
 {% endblock %}

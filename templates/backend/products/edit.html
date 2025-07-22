@@ -1,0 +1,810 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Modifier {{ product.name }} - Vidé-Grenier Kamer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-container {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    }
+    .form-section {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid #e2e8f0;
+    }
+    .image-preview {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    }
+    .save-button {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+    }
+    .save-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4);
+    }
+    .delete-zone {
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        border: 1px solid #fecaca;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen edit-container">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-green-600 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-4xl font-bold mb-2">Modifier votre produit</h1>
+                        <p class="text-lg text-blue-100">Mettez à jour les informations de votre annonce</p>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-4">
+                        <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold mb-1">{{ product.views_count }}</div>
+                                <div class="text-sm text-blue-100">vues</div>
+                            </div>
+                        </div>
+                        <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold mb-1">{{ product.created_at|timesince }}</div>
+                                <div class="text-sm text-blue-100">en ligne</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Navigation Tabs -->
+            <div class="bg-white rounded-2xl shadow-lg p-2 mb-8">
+                <div class="flex space-x-2">
+                    <button class="tab-button active flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300" data-tab="basic">
+                        <i data-lucide="edit-3" class="w-5 h-5 inline-block mr-2"></i>
+                        Informations de base
+                    </button>
+                    <button class="tab-button flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300" data-tab="images">
+                        <i data-lucide="images" class="w-5 h-5 inline-block mr-2"></i>
+                        Photos
+                    </button>
+                    <button class="tab-button flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300" data-tab="settings">
+                        <i data-lucide="settings" class="w-5 h-5 inline-block mr-2"></i>
+                        Paramètres
+                    </button>
+                </div>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" id="editForm">
+                {% csrf_token %}
+                
+                <!-- Basic Information Tab -->
+                <div class="tab-content active" data-tab="basic">
+                    <div class="form-section rounded-3xl p-8 shadow-lg mb-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold text-gray-800">Informations principales</h2>
+                            <div class="text-sm text-gray-500">
+                                Dernière modification: {{ product.updated_at|date:"d/m/Y H:i" }}
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <!-- Left Column -->
+                            <div class="space-y-6">
+                                <!-- Product Name -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Nom du produit *
+                                        <span class="text-xs font-normal text-gray-500 ml-1">({{ form.name.value|length|default:0 }}/100)</span>
+                                    </label>
+                                    <input type="text" name="name" value="{{ form.name.value|default:'' }}" 
+                                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors"
+                                           maxlength="100" required>
+                                    {% if form.name.errors %}
+                                        <p class="text-red-500 text-xs mt-1">{{ form.name.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Category -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Catégorie *</label>
+                                    <select name="category" 
+                                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors" 
+                                            required>
+                                        <option value="">Sélectionnez une catégorie</option>
+                                        {% for category in categories %}
+                                        <option value="{{ category.id }}" {% if category.id == form.category.value %}selected{% endif %}>
+                                            {{ category.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <!-- Condition -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">État du produit *</label>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        {% for choice in form.condition.field.choices %}
+                                        <label class="condition-choice border-2 border-gray-200 rounded-xl p-4 cursor-pointer hover:border-green-300 transition-colors {% if choice.0 == form.condition.value %}border-green-500 bg-green-50{% endif %}">
+                                            <input type="radio" name="condition" value="{{ choice.0 }}" 
+                                                   class="hidden" {% if choice.0 == form.condition.value %}checked{% endif %}>
+                                            <div class="text-center">
+                                                <div class="font-medium">{{ choice.1 }}</div>
+                                            </div>
+                                        </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <!-- Price -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Prix (FCFA) *</label>
+                                    <div class="relative">
+                                        <input type="number" name="price" value="{{ form.price.value|default:'' }}" 
+                                               class="w-full px-4 py-3 pr-16 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors"
+                                               min="0" step="500" required>
+                                        <div class="absolute inset-y-0 right-0 flex items-center pr-4">
+                                            <span class="text-gray-500 font-medium">FCFA</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between mt-2">
+                                        <p class="text-xs text-gray-500">Prix suggéré: 15,000 - 25,000 FCFA</p>
+                                        <label class="flex items-center space-x-2 text-sm">
+                                            <input type="checkbox" name="is_negotiable" 
+                                                   {% if form.is_negotiable.value %}checked{% endif %}
+                                                   class="rounded border-gray-300 text-green-600">
+                                            <span class="text-gray-700">Prix négociable</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column -->
+                            <div class="space-y-6">
+                                <!-- Description -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Description détaillée *
+                                        <span class="text-xs font-normal text-gray-500 ml-1" id="descCharCount">({{ form.description.value|length|default:0 }}/1000)</span>
+                                    </label>
+                                    <textarea name="description" rows="6" 
+                                              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors resize-none"
+                                              maxlength="1000" required placeholder="Décrivez votre produit en détail...">{{ form.description.value|default:'' }}</textarea>
+                                    <p class="text-xs text-gray-500 mt-1">Mentionnez l'état, la marque, les défauts éventuels, etc.</p>
+                                </div>
+
+                                <!-- Brand -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Marque (optionnel)</label>
+                                    <input type="text" name="brand" value="{{ form.brand.value|default:'' }}" 
+                                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors"
+                                           placeholder="Ex: Nike, Samsung, Zara...">
+                                </div>
+
+                                <!-- Size -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Taille/Dimensions (optionnel)</label>
+                                    <input type="text" name="size" value="{{ form.size.value|default:'' }}" 
+                                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors"
+                                           placeholder="Ex: XL, 42, 170cm x 80cm">
+                                </div>
+
+                                <!-- Location -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Localisation *</label>
+                                    <select name="location" 
+                                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 transition-colors" 
+                                            required>
+                                        <option value="">Sélectionnez une ville</option>
+                                        <option value="Douala" {% if form.location.value == "Douala" %}selected{% endif %}>Douala</option>
+                                        <option value="Yaoundé" {% if form.location.value == "Yaoundé" %}selected{% endif %}>Yaoundé</option>
+                                        <option value="Bafoussam" {% if form.location.value == "Bafoussam" %}selected{% endif %}>Bafoussam</option>
+                                        <option value="Bamenda" {% if form.location.value == "Bamenda" %}selected{% endif %}>Bamenda</option>
+                                        <option value="Garoua" {% if form.location.value == "Garoua" %}selected{% endif %}>Garoua</option>
+                                        <option value="Maroua" {% if form.location.value == "Maroua" %}selected{% endif %}>Maroua</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Images Tab -->
+                <div class="tab-content" data-tab="images">
+                    <div class="form-section rounded-3xl p-8 shadow-lg mb-8">
+                        <div class="mb-6">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Gestion des photos</h2>
+                            <p class="text-gray-600">Ajoutez, supprimez ou réorganisez vos photos</p>
+                        </div>
+
+                        <!-- Current Images -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Photos actuelles</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4" id="currentImages">
+                                {% for image in product.images.all %}
+                                <div class="relative group image-preview rounded-xl overflow-hidden" data-image-id="{{ image.id }}">
+                                    <img src="{{ image.image.url }}" alt="Photo produit" class="w-full h-32 object-cover">
+                                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
+                                        <button type="button" class="set-primary w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white hover:bg-green-600 transition-colors {% if image.is_primary %}hidden{% endif %}"
+                                                title="Définir comme photo principale">
+                                            <i data-lucide="star" class="w-4 h-4"></i>
+                                        </button>
+                                        <button type="button" class="delete-image w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600 transition-colors"
+                                                title="Supprimer cette photo">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                    {% if image.is_primary %}
+                                    <div class="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                                        Principale
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Upload New Images -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Ajouter de nouvelles photos</h3>
+                            <div class="border-2 border-dashed border-green-300 rounded-2xl p-8 text-center bg-green-50 hover:bg-green-100 transition-colors">
+                                <div class="max-w-md mx-auto">
+                                    <div class="w-16 h-16 bg-green-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <i data-lucide="camera" class="w-8 h-8 text-green-600"></i>
+                                    </div>
+                                    <h4 class="text-lg font-semibold text-gray-800 mb-2">Glissez vos photos ici</h4>
+                                    <p class="text-gray-600 mb-4">ou cliquez pour sélectionner des fichiers</p>
+                                    <input type="file" name="new_images" multiple accept="image/*" class="hidden" id="newImageUpload">
+                                    <button type="button" onclick="document.getElementById('newImageUpload').click()" 
+                                            class="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-colors font-semibold">
+                                        Sélectionner des photos
+                                    </button>
+                                    <p class="text-xs text-gray-500 mt-2">Maximum 5 photos - JPG, PNG - 5MB max par photo</p>
+                                </div>
+                            </div>
+
+                            <!-- New Images Preview -->
+                            <div id="newImagesPreview" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-4 hidden"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Tab -->
+                <div class="tab-content" data-tab="settings">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Visibility Settings -->
+                        <div class="form-section rounded-3xl p-8 shadow-lg">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-6">Paramètres de visibilité</h2>
+                            
+                            <div class="space-y-4">
+                                <label class="flex items-start space-x-3 cursor-pointer p-4 border-2 border-gray-200 rounded-xl hover:border-green-300 transition-colors">
+                                    <input type="radio" name="status" value="ACTIVE" 
+                                           {% if product.status == "ACTIVE" %}checked{% endif %}
+                                           class="mt-1 text-green-600">
+                                    <div>
+                                        <div class="font-semibold text-gray-800">Publié</div>
+                                        <div class="text-sm text-gray-600">Visible par tous les utilisateurs</div>
+                                    </div>
+                                </label>
+                                
+                                <label class="flex items-start space-x-3 cursor-pointer p-4 border-2 border-gray-200 rounded-xl hover:border-green-300 transition-colors">
+                                    <input type="radio" name="status" value="DRAFT" 
+                                           {% if product.status == "DRAFT" %}checked{% endif %}
+                                           class="mt-1 text-green-600">
+                                    <div>
+                                        <div class="font-semibold text-gray-800">Brouillon</div>
+                                        <div class="text-sm text-gray-600">Non visible, en cours de rédaction</div>
+                                    </div>
+                                </label>
+                                
+                                <label class="flex items-start space-x-3 cursor-pointer p-4 border-2 border-gray-200 rounded-xl hover:border-green-300 transition-colors">
+                                    <input type="radio" name="status" value="PAUSED" 
+                                           {% if product.status == "PAUSED" %}checked{% endif %}
+                                           class="mt-1 text-green-600">
+                                    <div>
+                                        <div class="font-semibold text-gray-800">En pause</div>
+                                        <div class="text-sm text-gray-600">Temporairement masqué</div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Promotion Options -->
+                            <div class="mt-8 pt-6 border-t border-gray-200">
+                                <h3 class="font-semibold text-gray-800 mb-4">Options de promotion</h3>
+                                <div class="space-y-3">
+                                    <label class="flex items-center justify-between cursor-pointer p-3 bg-orange-50 rounded-xl">
+                                        <div class="flex items-center space-x-3">
+                                            <input type="checkbox" name="promote" 
+                                                   {% if product.is_promoted %}checked{% endif %}
+                                                   class="text-orange-600">
+                                            <div>
+                                                <div class="font-medium text-gray-800">Mettre en avant</div>
+                                                <div class="text-sm text-gray-600">+2,000 FCFA - 7 jours</div>
+                                            </div>
+                                        </div>
+                                        <div class="text-xs bg-orange-200 text-orange-800 px-2 py-1 rounded-full">⭐ Recommandé</div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Statistics -->
+                        <div class="form-section rounded-3xl p-8 shadow-lg">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-6">Statistiques</h2>
+                            
+                            <div class="space-y-6">
+                                <div class="flex items-center justify-between p-4 bg-blue-50 rounded-xl">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center">
+                                            <i data-lucide="eye" class="w-6 h-6 text-blue-600"></i>
+                                        </div>
+                                        <div>
+                                            <div class="font-semibold text-gray-800">Vues</div>
+                                            <div class="text-sm text-gray-600">Total des consultations</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-2xl font-bold text-blue-600">{{ product.views_count }}</div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-4 bg-green-50 rounded-xl">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center">
+                                            <i data-lucide="heart" class="w-6 h-6 text-green-600"></i>
+                                        </div>
+                                        <div>
+                                            <div class="font-semibold text-gray-800">Favoris</div>
+                                            <div class="text-sm text-gray-600">Ajouté aux favoris</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-2xl font-bold text-green-600">{{ product.favorites_count|default:0 }}</div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-4 bg-purple-50 rounded-xl">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center">
+                                            <i data-lucide="message-circle" class="w-6 h-6 text-purple-600"></i>
+                                        </div>
+                                        <div>
+                                            <div class="font-semibold text-gray-800">Messages</div>
+                                            <div class="text-sm text-gray-600">Conversations initiées</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-2xl font-bold text-purple-600">{{ product.chats.count }}</div>
+                                </div>
+                            </div>
+
+                            <!-- Performance Tip -->
+                            <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <i data-lucide="lightbulb" class="w-4 h-4 text-yellow-600"></i>
+                                    </div>
+                                    <div class="text-sm">
+                                        <div class="font-semibold text-yellow-800 mb-1">💡 Conseil de performance</div>
+                                        <p class="text-yellow-700">
+                                            {% if product.views_count < 10 %}
+                                            Ajoutez plus de photos et améliorez votre description pour attirer plus de vues.
+                                            {% elif product.views_count < 50 %}
+                                            Votre annonce performe bien ! Pensez à la promouvoir pour plus de visibilité.
+                                            {% else %}
+                                            Excellente performance ! Votre annonce est très attractive.
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Danger Zone -->
+                    <div class="delete-zone rounded-3xl p-8 shadow-lg mt-8">
+                        <h2 class="text-2xl font-bold text-red-800 mb-6">Zone dangereuse</h2>
+                        
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-red-800 mb-2">Supprimer cette annonce</h3>
+                                <p class="text-red-700 text-sm mb-4">
+                                    Cette action est irréversible. Toutes les données de cette annonce seront définitivement supprimées.
+                                </p>
+                            </div>
+                            <button type="button" id="deleteProductBtn" 
+                                    class="bg-red-600 text-white px-6 py-3 rounded-xl hover:bg-red-700 transition-colors font-semibold">
+                                Supprimer l'annonce
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-between mt-8 p-6 bg-white rounded-2xl shadow-lg">
+                    <div class="flex items-center space-x-4">
+                        <a href="{% url 'backend:product_detail' slug=product.slug %}" 
+                           class="text-gray-600 hover:text-gray-800 font-semibold px-6 py-3 rounded-xl border-2 border-gray-200 hover:border-gray-300 transition-colors flex items-center space-x-2">
+                            <i data-lucide="eye" class="w-5 h-5"></i>
+                            <span>Aperçu</span>
+                        </a>
+                        <button type="button" id="saveDraft" 
+                                class="text-gray-700 bg-gray-200 hover:bg-gray-300 font-semibold px-6 py-3 rounded-xl transition-colors">
+                            Sauvegarder en brouillon
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button type="submit" name="action" value="save" 
+                                class="save-button text-white font-semibold px-8 py-3 rounded-xl transition-all duration-300 flex items-center space-x-2">
+                            <i data-lucide="save" class="w-5 h-5"></i>
+                            <span>Enregistrer les modifications</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-8 max-w-md w-full">
+        <div class="text-center mb-6">
+            <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="trash-2" class="w-10 h-10 text-red-600"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Supprimer cette annonce ?</h3>
+            <p class="text-gray-600">Cette action est définitive et ne peut pas être annulée.</p>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+            <button id="cancelDelete" class="flex-1 py-3 text-gray-600 hover:text-gray-800 font-semibold border border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
+                Annuler
+            </button>
+            <a href="{% url 'backend:product_delete' slug=product.slug %}" 
+               class="flex-1 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors text-center">
+                Oui, supprimer
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+    
+    // Tab functionality
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetTab = this.dataset.tab;
+            
+            // Remove active class from all tabs
+            tabButtons.forEach(btn => {
+                btn.classList.remove('active', 'bg-green-600', 'text-white');
+                btn.classList.add('text-gray-600', 'hover:bg-gray-100');
+            });
+            
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Add active class to clicked tab
+            this.classList.add('active', 'bg-green-600', 'text-white');
+            this.classList.remove('text-gray-600', 'hover:bg-gray-100');
+            
+            // Show corresponding content
+            document.querySelector(`[data-tab="${targetTab}"]`).classList.add('active');
+        });
+    });
+    
+    // Condition radio button styling
+    document.querySelectorAll('input[name="condition"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.querySelectorAll('.condition-choice').forEach(choice => {
+                choice.classList.remove('border-green-500', 'bg-green-50');
+                choice.classList.add('border-gray-200');
+            });
+            
+            if (this.checked) {
+                this.closest('.condition-choice').classList.add('border-green-500', 'bg-green-50');
+                this.closest('.condition-choice').classList.remove('border-gray-200');
+            }
+        });
+    });
+    
+    // Character counters
+    const nameInput = document.querySelector('input[name="name"]');
+    const descInput = document.querySelector('textarea[name="description"]');
+    
+    if (nameInput) {
+        nameInput.addEventListener('input', function() {
+            const span = this.parentElement.querySelector('span');
+            if (span) span.textContent = `(${this.value.length}/100)`;
+        });
+    }
+    
+    if (descInput) {
+        descInput.addEventListener('input', function() {
+            document.getElementById('descCharCount').textContent = `(${this.value.length}/1000)`;
+        });
+    }
+    
+    // Image management
+    document.querySelectorAll('.delete-image').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (confirm('Supprimer cette photo ?')) {
+                const imageDiv = this.closest('[data-image-id]');
+                const imageId = imageDiv.dataset.imageId;
+                
+                // Hide the image
+                imageDiv.style.display = 'none';
+                
+                // Add hidden input to mark for deletion
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'delete_images';
+                hiddenInput.value = imageId;
+                document.getElementById('editForm').appendChild(hiddenInput);
+            }
+        });
+    });
+    
+    document.querySelectorAll('.set-primary').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const imageDiv = this.closest('[data-image-id]');
+            const imageId = imageDiv.dataset.imageId;
+            
+            // Remove all existing primary badges
+            document.querySelectorAll('.absolute.top-2.left-2').forEach(badge => {
+                if (badge.textContent.trim() === 'Principale') {
+                    badge.remove();
+                }
+            });
+            
+            // Hide all set-primary buttons
+            document.querySelectorAll('.set-primary').forEach(button => {
+                button.classList.remove('hidden');
+            });
+            
+            // Hide this button and add primary badge
+            this.classList.add('hidden');
+            const badge = document.createElement('div');
+            badge.className = 'absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full';
+            badge.textContent = 'Principale';
+            imageDiv.appendChild(badge);
+            
+            // Add hidden input for primary image
+            document.querySelectorAll('input[name="primary_image"]').forEach(input => {
+                input.remove();
+            });
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'primary_image';
+            hiddenInput.value = imageId;
+            document.getElementById('editForm').appendChild(hiddenInput);
+        });
+    });
+    
+    // New image upload
+    document.getElementById('newImageUpload').addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        const preview = document.getElementById('newImagesPreview');
+        
+        if (files.length > 0) {
+            preview.classList.remove('hidden');
+            preview.innerHTML = '';
+            
+            files.forEach((file, index) => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const div = document.createElement('div');
+                        div.className = 'relative group image-preview rounded-xl overflow-hidden';
+                        div.innerHTML = `
+                            <img src="${e.target.result}" alt="Nouvelle photo" class="w-full h-32 object-cover">
+                            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <button type="button" class="remove-new w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600 transition-colors">
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            <div class="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                                Nouvelle
+                            </div>
+                        `;
+                        
+                        preview.appendChild(div);
+                        
+                        // Add remove functionality for new images
+                        div.querySelector('.remove-new').addEventListener('click', function() {
+                            div.remove();
+                            // Remove from file input (create new FileList)
+                            const dt = new DataTransfer();
+                            const input = document.getElementById('newImageUpload');
+                            const files = Array.from(input.files);
+                            files.forEach((file, i) => {
+                                if (i !== index) dt.items.add(file);
+                            });
+                            input.files = dt.files;
+                            
+                            if (preview.children.length === 0) {
+                                preview.classList.add('hidden');
+                            }
+                        });
+                        
+                        lucide.createIcons();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    });
+    
+    // Save draft functionality
+    document.getElementById('saveDraft').addEventListener('click', function() {
+        const form = document.getElementById('editForm');
+        const statusInputs = form.querySelectorAll('input[name="status"]');
+        
+        // Set status to DRAFT
+        statusInputs.forEach(input => {
+            input.checked = input.value === 'DRAFT';
+        });
+        
+        // Submit form
+        form.submit();
+    });
+    
+    // Delete product modal
+    const deleteBtn = document.getElementById('deleteProductBtn');
+    const deleteModal = document.getElementById('deleteModal');
+    const cancelDelete = document.getElementById('cancelDelete');
+    
+    deleteBtn.addEventListener('click', function() {
+        deleteModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    });
+    
+    cancelDelete.addEventListener('click', function() {
+        deleteModal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    });
+    
+    // Close modal on outside click
+    deleteModal.addEventListener('click', function(e) {
+        if (e.target === deleteModal) {
+            deleteModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+    });
+    
+    // Form validation before submit
+    document.getElementById('editForm').addEventListener('submit', function(e) {
+        const requiredFields = ['name', 'category', 'condition', 'price', 'description', 'location'];
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            const input = this.querySelector(`[name="${field}"]`);
+            if (!input || !input.value.trim()) {
+                isValid = false;
+                input?.classList.add('border-red-500');
+                
+                // Show error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'text-red-500 text-xs mt-1';
+                errorDiv.textContent = 'Ce champ est obligatoire';
+                
+                // Remove existing error messages
+                const existingError = input?.parentElement.querySelector('.text-red-500');
+                if (existingError) existingError.remove();
+                
+                input?.parentElement.appendChild(errorDiv);
+            } else {
+                input?.classList.remove('border-red-500');
+                const errorDiv = input?.parentElement.querySelector('.text-red-500');
+                if (errorDiv) errorDiv.remove();
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Veuillez remplir tous les champs obligatoires.');
+            
+            // Switch to first tab with errors
+            const firstErrorTab = document.querySelector('.tab-content .border-red-500')?.closest('.tab-content');
+            if (firstErrorTab) {
+                const tabName = firstErrorTab.dataset.tab;
+                document.querySelector(`[data-tab="${tabName}"]`).click();
+            }
+        }
+    });
+    
+    // Auto-save functionality (every 2 minutes)
+    let autoSaveInterval;
+    let hasUnsavedChanges = false;
+    
+    // Track changes
+    document.querySelectorAll('input, textarea, select').forEach(element => {
+        element.addEventListener('change', function() {
+            hasUnsavedChanges = true;
+        });
+    });
+    
+    // Auto-save function
+    function autoSave() {
+        if (hasUnsavedChanges) {
+            const formData = new FormData(document.getElementById('editForm'));
+            
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).then(response => {
+                if (response.ok) {
+                    hasUnsavedChanges = false;
+                    
+                    // Show auto-save notification
+                    const notification = document.createElement('div');
+                    notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+                    notification.innerHTML = '<i data-lucide="check" class="w-4 h-4 inline mr-2"></i>Sauvegarde automatique';
+                    document.body.appendChild(notification);
+                    
+                    lucide.createIcons();
+                    
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 3000);
+                }
+            });
+        }
+    }
+    
+    // Start auto-save
+    autoSaveInterval = setInterval(autoSave, 120000); // Every 2 minutes
+    
+    // Warn about unsaved changes
+    window.addEventListener('beforeunload', function(e) {
+        if (hasUnsavedChanges) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+    
+    // Initialize active tab styles
+    document.querySelector('.tab-button.active').classList.add('bg-green-600', 'text-white');
+    document.querySelector('.tab-button.active').classList.remove('text-gray-600');
+});
+</script>
+
+<style>
+.tab-button.active {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.tab-button:not(.active) {
+    color: #6b7280;
+}
+
+.tab-button:not(.active):hover {
+    background-color: #f3f4f6;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.condition-choice input:checked + div {
+    background-color: #f0fdf4;
+    border-color: #10b981;
+}
+</style>
+{% endblock %}

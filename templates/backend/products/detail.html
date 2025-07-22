@@ -1,0 +1,632 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - Vidé-Grenier Kamer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .product-gallery {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    }
+    .seller-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+        border: 1px solid #e5e7eb;
+    }
+    .price-badge {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+    }
+    .action-button {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        transition: all 0.3s ease;
+    }
+    .action-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 35px rgba(245, 158, 11, 0.4);
+    }
+    .feature-tag {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1e40af;
+    }
+    .zoom-overlay {
+        background: rgba(0, 0, 0, 0.9);
+        backdrop-filter: blur(10px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Breadcrumb -->
+    <div class="bg-white border-b border-gray-200">
+        <div class="container mx-auto px-4 py-4">
+            <nav class="flex items-center space-x-2 text-sm">
+                <a href="{% url 'backend:home' %}" class="text-gray-600 hover:text-green-600 transition-colors">Accueil</a>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                <a href="{% url 'backend:category' slug=product.category.slug %}" class="text-gray-600 hover:text-green-600 transition-colors">{{ product.category.name }}</a>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                <span class="text-gray-800 font-medium">{{ product.name|truncatechars:30 }}</span>
+            </nav>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Product Gallery - Left Column -->
+            <div class="lg:col-span-2">
+                <!-- Main Image -->
+                <div class="product-gallery rounded-3xl p-6 mb-6">
+                    <div class="relative">
+                        {% if product.images.first %}
+                        <img id="mainImage" src="{{ product.images.first.image.url }}" 
+                             alt="{{ product.name }}"
+                             class="w-full h-96 lg:h-[500px] object-cover rounded-2xl cursor-zoom-in shadow-lg">
+                        {% else %}
+                        <div class="w-full h-96 lg:h-[500px] bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center">
+                            <div class="text-center text-gray-400">
+                                <i data-lucide="image" class="w-20 h-20 mx-auto mb-4"></i>
+                                <p class="text-lg">Aucune image disponible</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Image Navigation -->
+                        {% if product.images.all|length > 1 %}
+                        <button id="prevImage" class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/80 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-colors flex items-center justify-center">
+                            <i data-lucide="chevron-left" class="w-6 h-6 text-gray-700"></i>
+                        </button>
+                        <button id="nextImage" class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/80 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-colors flex items-center justify-center">
+                            <i data-lucide="chevron-right" class="w-6 h-6 text-gray-700"></i>
+                        </button>
+                        {% endif %}
+                        
+                        <!-- Zoom Button -->
+                        <button id="zoomButton" class="absolute top-4 right-4 w-12 h-12 bg-white/80 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-colors flex items-center justify-center">
+                            <i data-lucide="zoom-in" class="w-6 h-6 text-gray-700"></i>
+                        </button>
+                        
+                        <!-- Badge pour produits urgents -->
+                        {% if product.is_urgent %}
+                        <div class="absolute top-4 left-4 bg-red-500 text-white px-4 py-2 rounded-full font-semibold text-sm animate-pulse">
+                            🚨 URGENT
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Thumbnail Gallery -->
+                    {% if product.images.all|length > 1 %}
+                    <div class="flex space-x-3 mt-6 overflow-x-auto pb-2">
+                        {% for image in product.images.all %}
+                        <button class="thumbnail flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 {% if forloop.first %}border-green-500{% else %}border-gray-200{% endif %} hover:border-green-400 transition-colors"
+                                data-image="{{ image.image.url }}">
+                            <img src="{{ image.image.url }}" alt="Miniature" class="w-full h-full object-cover">
+                        </button>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Product Details -->
+                <div class="bg-white rounded-3xl p-8 shadow-lg">
+                    <!-- Header -->
+                    <div class="flex items-start justify-between mb-6">
+                        <div class="flex-1">
+                            <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ product.name }}</h1>
+                            <div class="flex items-center space-x-4 text-sm text-gray-600">
+                                <span class="flex items-center space-x-1">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                    <span>{{ product.views_count }} vues</span>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Share & Favorite -->
+                        <div class="flex items-center space-x-2">
+                            {% if user.is_authenticated %}
+                            <button id="favoriteBtn" class="w-12 h-12 bg-gray-100 hover:bg-red-100 rounded-full flex items-center justify-center transition-colors group"
+                                    data-product-id="{{ product.id }}">
+                                <i data-lucide="heart" class="w-5 h-5 text-gray-600 group-hover:text-red-500 transition-colors"></i>
+                            </button>
+                            {% endif %}
+                            <button id="shareBtn" class="w-12 h-12 bg-gray-100 hover:bg-blue-100 rounded-full flex items-center justify-center transition-colors group">
+                                <i data-lucide="share-2" class="w-5 h-5 text-gray-600 group-hover:text-blue-500 transition-colors"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Price Section -->
+                    <div class="price-badge text-white p-6 rounded-2xl mb-8">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-4xl font-bold mb-2">{{ product.price|floatformat:0 }} FCFA</div>
+                                {% if product.is_negotiable %}
+                                <div class="bg-white/20 text-white px-3 py-1 rounded-full text-sm inline-block">
+                                    💬 Prix négociable
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% if product.original_price %}
+                            <div class="text-right">
+                                <div class="text-lg line-through text-green-200">{{ product.original_price|floatformat:0 }} FCFA</div>
+                                <div class="text-sm text-green-100">Économisez {{ product.original_price|sub:product.price|floatformat:0 }} FCFA</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Product Features -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                        <div class="feature-tag text-center py-3 rounded-xl">
+                            <div class="font-semibold">État</div>
+                            <div class="text-sm">{{ product.condition|default:"Bon état" }}</div>
+                        </div>
+                        <div class="feature-tag text-center py-3 rounded-xl">
+                            <div class="font-semibold">Catégorie</div>
+                            <div class="text-sm">{{ product.category.name }}</div>
+                        </div>
+                        {% if product.brand %}
+                        <div class="feature-tag text-center py-3 rounded-xl">
+                            <div class="font-semibold">Marque</div>
+                            <div class="text-sm">{{ product.brand }}</div>
+                        </div>
+                        {% endif %}
+                        {% if product.size %}
+                        <div class="feature-tag text-center py-3 rounded-xl">
+                            <div class="font-semibold">Taille</div>
+                            <div class="text-sm">{{ product.size }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Description</h3>
+                        <div class="prose prose-gray max-w-none">
+                            <p class="text-gray-700 leading-relaxed whitespace-pre-line">{{ product.description }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Tags -->
+                    {% if product.tags.all %}
+                    <div class="mb-8">
+                        <h4 class="font-semibold text-gray-900 mb-3">Mots-clés</h4>
+                        <div class="flex flex-wrap gap-2">
+                            {% for tag in product.tags.all %}
+                            <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-green-100 hover:text-green-700 transition-colors cursor-pointer">
+                                #{{ tag.name }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Safety Notice -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="shield-check" class="w-4 h-4 text-amber-600"></i>
+                            </div>
+                            <div class="text-sm">
+                                <div class="font-semibold text-amber-800 mb-1">Conseils de sécurité</div>
+                                <p class="text-amber-700">Rencontrez le vendeur dans un lieu public et vérifiez l'article avant paiement. Ne payez jamais à l'avance sans avoir vu le produit.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Sidebar -->
+            <div class="space-y-6">
+                <!-- Seller Card -->
+                <div class="seller-card rounded-3xl p-6 shadow-lg">
+                    <div class="text-center mb-6">
+                        <div class="relative inline-block mb-4">
+                            {% if product.seller.profile_picture %}
+                            <img src="{{ product.seller.profile_picture.url }}" 
+                                 alt="Vendeur"
+                                 class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg">
+                            {% else %}
+                            <div class="w-20 h-20 bg-gradient-to-br from-green-600 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-2xl border-4 border-white shadow-lg">
+                                {{ product.seller.first_name|first|upper|default:"V" }}
+                            </div>
+                            {% endif %}
+                            {% if product.seller.is_verified %}
+                            <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                <i data-lucide="check" class="w-4 h-4 text-white"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <h3 class="text-xl font-bold text-gray-900 mb-1">
+                            <a href="{% url 'backend:seller_profile' pk=product.seller.pk %}" class="hover:text-green-600 transition-colors">
+                                {{ product.seller.get_full_name|default:product.seller.username }}
+                            </a>
+                        </h3>
+                        <p class="text-gray-600 text-sm mb-4">Membre depuis {{ product.seller.date_joined|date:"M Y" }}</p>
+                        
+                        <!-- Seller Stats -->
+                        <div class="grid grid-cols-2 gap-4 text-center mb-6">
+                            <div class="bg-gray-50 rounded-xl p-3">
+                                <div class="text-2xl font-bold text-gray-900">{{ product.seller.products.count }}</div>
+                                <div class="text-xs text-gray-600">Annonces</div>
+                            </div>
+                            <div class="bg-gray-50 rounded-xl p-3">
+                                <div class="flex items-center justify-center space-x-1 mb-1">
+                                    {% for i in "12345" %}
+                                    <i data-lucide="star" class="w-3 h-3 {% if forloop.counter <= product.seller.average_rating %}text-yellow-400 fill-current{% else %}text-gray-300{% endif %}"></i>
+                                    {% endfor %}
+                                </div>
+                                <div class="text-xs text-gray-600">{{ product.seller.reviews_count }} avis</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="space-y-3">
+                        {% if user != product.seller %}
+                        <button class="action-button w-full text-white py-4 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2">
+                            <i data-lucide="message-circle" class="w-5 h-5"></i>
+                            <span>Contacter le vendeur</span>
+                        </button>
+                        
+                        {% if user.is_authenticated %}
+                        <button class="w-full border-2 border-green-600 text-green-600 py-4 rounded-xl font-semibold hover:bg-green-50 transition-colors flex items-center justify-center space-x-2">
+                            <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                            <span>Faire une offre</span>
+                        </button>
+                        {% else %}
+                        <a href="{% url 'backend:login' %}?next={% url 'backend:product_detail' slug=product.slug %}"
+                           class="block w-full border-2 border-green-600 text-green-600 py-4 rounded-xl font-semibold hover:bg-green-50 transition-colors text-center">
+                            Connectez-vous pour acheter
+                        </a>
+                        {% endif %}
+                        {% endif %}
+                        
+                        <!-- Report Button -->
+                        <button class="w-full text-gray-600 py-2 text-sm hover:text-red-600 transition-colors flex items-center justify-center space-x-2">
+                            <i data-lucide="flag" class="w-4 h-4"></i>
+                            <span>Signaler cette annonce</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-3xl p-6 shadow-lg">
+                    <h3 class="font-semibold text-gray-900 mb-4">Actions rapides</h3>
+                    <div class="space-y-3">
+                        <button class="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 transition-colors text-left">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i data-lucide="scale" class="w-5 h-5 text-blue-600"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-900">Comparer</div>
+                                <div class="text-xs text-gray-600">Ajouter à la comparaison</div>
+                            </div>
+                        </button>
+                        
+                        <button class="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 transition-colors text-left">
+                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                <i data-lucide="bookmark" class="w-5 h-5 text-purple-600"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-900">Sauvegarder</div>
+                                <div class="text-xs text-gray-600">Ajouter aux favoris</div>
+                            </div>
+                        </button>
+                        
+                        <button class="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 transition-colors text-left">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                <i data-lucide="bell" class="w-5 h-5 text-green-600"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-900">Alertes</div>
+                                <div class="text-xs text-gray-600">Produits similaires</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Delivery Info -->
+                <div class="bg-white rounded-3xl p-6 shadow-lg">
+                    <h3 class="font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                        <i data-lucide="truck" class="w-5 h-5 text-green-600"></i>
+                        <span>Livraison</span>
+                    </h3>
+                    
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Frais de livraison:</span>
+                            <span class="font-medium">2,000 FCFA</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Délai:</span>
+                            <span class="font-medium">1-3 jours</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Point de retrait:</span>
+                            <span class="font-medium text-green-600">Disponible</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-green-50 rounded-lg">
+                        <div class="text-green-800 text-xs font-medium mb-1">✅ Livraison gratuite</div>
+                        <div class="text-green-700 text-xs">Pour les achats de plus de 50,000 FCFA</div>
+                    </div>
+                </div>
+                
+                <!-- Trust & Safety -->
+                <div class="bg-white rounded-3xl p-6 shadow-lg">
+                    <h3 class="font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                        <i data-lucide="shield" class="w-5 h-5 text-blue-600"></i>
+                        <span>Sécurité</span>
+                    </h3>
+                    
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-center space-x-3">
+                            <i data-lucide="check-circle" class="w-4 h-4 text-green-500 flex-shrink-0"></i>
+                            <span class="text-gray-700">Paiement sécurisé</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i data-lucide="check-circle" class="w-4 h-4 text-green-500 flex-shrink-0"></i>
+                            <span class="text-gray-700">Protection acheteur</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i data-lucide="check-circle" class="w-4 h-4 text-green-500 flex-shrink-0"></i>
+                            <span class="text-gray-700">Support client 24/7</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i data-lucide="check-circle" class="w-4 h-4 text-green-500 flex-shrink-0"></i>
+                            <span class="text-gray-700">Retour possible 7 jours</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Similar Products Section -->
+        <div class="mt-12">
+            <div class="bg-white rounded-3xl p-8 shadow-lg">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900">Produits similaires</h2>
+                    <a href="{% url 'backend:category' slug=product.category.slug %}" 
+                       class="text-green-600 hover:text-green-700 font-medium flex items-center space-x-2">
+                        <span>Voir tout</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {% for similar_product in similar_products|slice:":4" %}
+                    <div class="group bg-gray-50 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-2">
+                        <div class="relative">
+                            {% if similar_product.images.first %}
+                            <img src="{{ similar_product.images.first.image.url }}" 
+                                 alt="{{ similar_product.name }}"
+                                 class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
+                            {% else %}
+                            <div class="w-full h-48 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                                <i data-lucide="image" class="w-12 h-12 text-gray-400"></i>
+                            </div>
+                            {% endif %}
+                            <div class="absolute top-3 right-3">
+                                <button class="w-8 h-8 bg-white/80 rounded-full flex items-center justify-center hover:bg-white transition-colors">
+                                    <i data-lucide="heart" class="w-4 h-4 text-gray-600"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-green-600 transition-colors">
+                                <a href="{% url 'backend:product_detail' slug=similar_product.slug %}">{{ similar_product.name }}</a>
+                            </h3>
+                            <div class="flex items-center justify-between">
+                                <span class="text-lg font-bold text-green-600">{{ similar_product.price|floatformat:0 }} FCFA</span>
+                                <span class="text-xs text-gray-500">{{ similar_product.location }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Zoom Modal -->
+<div id="zoomModal" class="fixed inset-0 zoom-overlay z-50 hidden flex items-center justify-center p-4">
+    <div class="relative max-w-4xl max-h-full">
+        <img id="zoomedImage" src="" alt="Zoom" class="max-w-full max-h-full object-contain rounded-lg">
+        <button id="closeZoom" class="absolute -top-4 -right-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors">
+            <i data-lucide="x" class="w-6 h-6 text-gray-700"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div id="shareModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-8 max-w-md w-full">
+        <div class="text-center mb-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Partager ce produit</h3>
+            <p class="text-gray-600">Partagez avec vos amis et votre famille</p>
+        </div>
+        
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <button class="flex flex-col items-center space-y-2 p-4 rounded-xl hover:bg-gray-50 transition-colors">
+                <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                    <i data-lucide="facebook" class="w-6 h-6 text-white"></i>
+                </div>
+                <span class="text-xs font-medium">Facebook</span>
+            </button>
+            <button class="flex flex-col items-center space-y-2 p-4 rounded-xl hover:bg-gray-50 transition-colors">
+                <div class="w-12 h-12 bg-blue-400 rounded-full flex items-center justify-center">
+                    <i data-lucide="twitter" class="w-6 h-6 text-white"></i>
+                </div>
+                <span class="text-xs font-medium">Twitter</span>
+            </button>
+            <button class="flex flex-col items-center space-y-2 p-4 rounded-xl hover:bg-gray-50 transition-colors">
+                <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                    <i data-lucide="message-circle" class="w-6 h-6 text-white"></i>
+                </div>
+                <span class="text-xs font-medium">WhatsApp</span>
+            </button>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Lien de partage</label>
+            <div class="flex items-center space-x-2">
+                <input type="text" id="shareUrl" readonly value="{{ request.build_absolute_uri }}"
+                       class="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                <button id="copyUrl" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
+                    Copier
+                </button>
+            </div>
+        </div>
+        
+        <button id="closeShare" class="w-full py-3 text-gray-600 hover:text-gray-800 transition-colors">
+            Fermer
+        </button>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+    
+    // Image gallery functionality
+    const mainImage = document.getElementById('mainImage');
+    const thumbnails = document.querySelectorAll('.thumbnail');
+    const prevBtn = document.getElementById('prevImage');
+    const nextBtn = document.getElementById('nextImage');
+    
+    let currentImageIndex = 0;
+    const images = Array.from(thumbnails).map(thumb => thumb.dataset.image);
+    
+    // Thumbnail click handlers
+    thumbnails.forEach((thumb, index) => {
+        thumb.addEventListener('click', function() {
+            setActiveImage(index);
+        });
+    });
+    
+    // Navigation buttons
+    prevBtn?.addEventListener('click', function() {
+        currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+        setActiveImage(currentImageIndex);
+    });
+    
+    nextBtn?.addEventListener('click', function() {
+        currentImageIndex = (currentImageIndex + 1) % images.length;
+        setActiveImage(currentImageIndex);
+    });
+    
+    function setActiveImage(index) {
+        if (images[index]) {
+            mainImage.src = images[index];
+            thumbnails.forEach((thumb, i) => {
+                if (i === index) {
+                    thumb.classList.add('border-green-500');
+                    thumb.classList.remove('border-gray-200');
+                } else {
+                    thumb.classList.remove('border-green-500');
+                    thumb.classList.add('border-gray-200');
+                }
+            });
+            currentImageIndex = index;
+        }
+    }
+    
+    // Image zoom functionality
+    const zoomModal = document.getElementById('zoomModal');
+    const zoomBtn = document.getElementById('zoomButton');
+    const zoomedImage = document.getElementById('zoomedImage');
+    const closeZoom = document.getElementById('closeZoom');
+    
+    zoomBtn?.addEventListener('click', function() {
+        zoomedImage.src = mainImage.src;
+        zoomModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    });
+    
+    closeZoom?.addEventListener('click', function() {
+        zoomModal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    });
+    
+    zoomModal?.addEventListener('click', function(e) {
+        if (e.target === zoomModal) {
+            zoomModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+    });
+    
+    // Share functionality
+    const shareModal = document.getElementById('shareModal');
+    const shareBtn = document.getElementById('shareBtn');
+    const closeShare = document.getElementById('closeShare');
+    const copyUrl = document.getElementById('copyUrl');
+    const shareUrl = document.getElementById('shareUrl');
+    
+    shareBtn?.addEventListener('click', function() {
+        shareModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    });
+    
+    closeShare?.addEventListener('click', function() {
+        shareModal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    });
+    
+    copyUrl?.addEventListener('click', function() {
+        shareUrl.select();
+        document.execCommand('copy');
+        copyUrl.textContent = 'Copié!';
+        setTimeout(() => {
+            copyUrl.textContent = 'Copier';
+        }, 2000);
+    });
+    
+    // Favorite functionality
+    const favoriteBtn = document.getElementById('favoriteBtn');
+    favoriteBtn?.addEventListener('click', function() {
+        const productId = this.dataset.productId;
+        const heart = this.querySelector('i');
+        
+        // Toggle visual state
+        if (heart.classList.contains('fill-current')) {
+            heart.classList.remove('fill-current', 'text-red-500');
+            heart.classList.add('text-gray-600');
+        } else {
+            heart.classList.add('fill-current', 'text-red-500');
+            heart.classList.remove('text-gray-600');
+        }
+        
+        // Here you would typically make an AJAX call to toggle favorite status
+        console.log('Toggle favorite for product:', productId);
+    });
+    
+    // Keyboard navigation for gallery
+    document.addEventListener('keydown', function(e) {
+        if (images.length > 1) {
+            if (e.key === 'ArrowLeft') {
+                currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+                setActiveImage(currentImageIndex);
+            } else if (e.key === 'ArrowRight') {
+                currentImageIndex = (currentImageIndex + 1) % images.length;
+                setActiveImage(currentImageIndex);
+            }
+        }
+        
+        if (e.key === 'Escape') {
+            if (!zoomModal.classList.contains('hidden')) {
+                zoomModal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+            if (!shareModal.classList.contains('hidden')) {
+                shareModal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,61 +1,75 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block title %}Inscription - Vidé-Grenier Kamer{% endblock %}
 {% block content %}
+
+
 <div class="max-w-lg mx-auto mt-12 bg-white rounded-xl shadow-lg p-8">
-    <h1 class="text-2xl font-bold text-vgk-green-700 mb-6 text-center">Créer un compte</h1>
-    <form method="post" novalidate>
+    <div class="flex flex-col items-center mb-6">
+        <img src="{% static 'images/logo.png' %}" alt="Vidé-Grenier Kamer Logo" class="w-16 h-16 rounded-full mb-2 shadow">
+        <h1 class="text-2xl font-bold text-vgk-green-700 mb-2 text-center">Créer un compte</h1>
+        <p class="text-gray-600 text-center text-sm mb-2">Rejoignez <span class="font-semibold text-vgk-green-600">Vidé-Grenier Kamer</span> et profitez de tous les avantages de la communauté !</p>
+        <ul class="text-xs text-gray-500 mb-4 list-disc list-inside text-left w-full">
+            <li>Publiez vos annonces et vendez facilement</li>
+            <li>Suivez vos commandes et favoris</li>
+            <li>Bénéficiez d'un support client dédié</li>
+        </ul>
+    </div>
+    <form method="post" novalidate class="space-y-6">
         {% csrf_token %}
         {% if form.non_field_errors %}
-            <div class="mb-4 text-red-600 text-sm">{{ form.non_field_errors }}</div>
+            <div class="mb-4 text-red-600 text-sm text-center">{{ form.non_field_errors }}</div>
         {% endif %}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                {{ form.first_name.label_tag }}
+                <label class="block font-semibold mb-2">{{ form.first_name.label }}</label>
                 {{ form.first_name }}
-                {% if form.first_name.errors %}<div class="text-red-500 text-xs">{{ form.first_name.errors }}</div>{% endif %}
+                {% if form.first_name.errors %}<div class="text-red-500 text-xs mt-1">{{ form.first_name.errors }}</div>{% endif %}
             </div>
             <div>
-                {{ form.last_name.label_tag }}
+                <label class="block font-semibold mb-2">{{ form.last_name.label }}</label>
                 {{ form.last_name }}
-                {% if form.last_name.errors %}<div class="text-red-500 text-xs">{{ form.last_name.errors }}</div>{% endif %}
+                {% if form.last_name.errors %}<div class="text-red-500 text-xs mt-1">{{ form.last_name.errors }}</div>{% endif %}
             </div>
         </div>
-        <div class="mb-4">
-            {{ form.email.label_tag }}
+        <div>
+            <label class="block font-semibold mb-2">{{ form.email.label }}</label>
             {{ form.email }}
-            {% if form.email.errors %}<div class="text-red-500 text-xs">{{ form.email.errors }}</div>{% endif %}
+            {% if form.email.errors %}<div class="text-red-500 text-xs mt-1">{{ form.email.errors }}</div>{% endif %}
         </div>
-        <div class="mb-4">
-            {{ form.phone.label_tag }}
+        <div>
+            <label class="block font-semibold mb-2">{{ form.phone.label }}</label>
             {{ form.phone }}
-            {% if form.phone.errors %}<div class="text-red-500 text-xs">{{ form.phone.errors }}</div>{% endif %}
+            {% if form.phone.errors %}<div class="text-red-500 text-xs mt-1">{{ form.phone.errors }}</div>{% endif %}
         </div>
-        <div class="mb-4">
-            {{ form.city.label_tag }}
+        <div>
+            <label class="block font-semibold mb-2">{{ form.city.label }}</label>
             {{ form.city }}
-            {% if form.city.errors %}<div class="text-red-500 text-xs">{{ form.city.errors }}</div>{% endif %}
+            {% if form.city.errors %}<div class="text-red-500 text-xs mt-1">{{ form.city.errors }}</div>{% endif %}
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                {{ form.password1.label_tag }}
+                <label class="block font-semibold mb-2">{{ form.password1.label }}</label>
                 {{ form.password1 }}
-                {% if form.password1.errors %}<div class="text-red-500 text-xs">{{ form.password1.errors }}</div>{% endif %}
+                {% if form.password1.errors %}<div class="text-red-500 text-xs mt-1">{{ form.password1.errors }}</div>{% endif %}
             </div>
             <div>
-                {{ form.password2.label_tag }}
+                <label class="block font-semibold mb-2">{{ form.password2.label }}</label>
                 {{ form.password2 }}
-                {% if form.password2.errors %}<div class="text-red-500 text-xs">{{ form.password2.errors }}</div>{% endif %}
+                {% if form.password2.errors %}<div class="text-red-500 text-xs mt-1">{{ form.password2.errors }}</div>{% endif %}
             </div>
         </div>
-        <div class="mb-4 flex items-center">
+        <div class="flex items-center mb-2">
             {{ form.terms_accepted }}
             <label class="ml-2 text-sm">J'accepte les <a href="/terms/" class="text-vgk-green-600 hover:underline">conditions d'utilisation</a></label>
             {% if form.terms_accepted.errors %}<div class="text-red-500 text-xs ml-2">{{ form.terms_accepted.errors }}</div>{% endif %}
         </div>
-        <button type="submit" class="w-full bg-vgk-green-600 text-white py-2 rounded-lg font-semibold hover:bg-vgk-green-700 transition">Créer mon compte</button>
+        <button type="submit" class="w-full bg-gradient-to-r from-vgk-green-600 to-vgk-orange-500 text-white py-3 rounded-lg font-semibold text-lg shadow hover:from-vgk-green-700 hover:to-vgk-orange-600 transition">Créer mon compte</button>
     </form>
-    <div class="mt-6 text-center text-sm">
-        <a href="/login/" class="text-vgk-green-600 hover:underline">Déjà inscrit ? Se connecter</a>
+    <div class="mt-8 text-center text-sm">
+        <span class="text-gray-500">Déjà inscrit ?</span>
+        <a href="/login/" class="text-vgk-green-600 hover:underline font-semibold ml-2">Se connecter</a>
     </div>
 </div>
 {% endblock %}
