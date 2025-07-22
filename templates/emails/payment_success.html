@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paiement réussi - Vidé-Grenier Kamer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #f0f9ff;
+            padding: 20px;
+        }
+        .container {
+            background-color: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .success-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .payment-info {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+            border-left: 4px solid #10b981;
+        }
+        .amount {
+            font-size: 32px;
+            font-weight: bold;
+            color: #059669;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .transaction-details {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #edf2f7;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #4a5568;
+        }
+        .detail-value {
+            color: #2d3748;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            background-color: #10b981;
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .next-steps {
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .next-steps h3 {
+            color: #1e40af;
+            margin-top: 0;
+        }
+        .step {
+            margin: 12px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        .step::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #3b82f6;
+            font-weight: bold;
+        }
+        .footer {
+            background-color: #1f2937;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .footer p {
+            margin: 5px 0;
+            opacity: 0.8;
+        }
+        .receipt-section {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+            background-color: #fafafa;
+        }
+        .receipt-title {
+            text-align: center;
+            font-weight: bold;
+            color: #374151;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+        .security-note {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .security-note p {
+            margin: 0;
+            font-size: 14px;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="success-icon">✅</div>
+            <h1>Paiement Réussi !</h1>
+            <p>Votre transaction a été traitée avec succès</p>
+        </div>
+        
+        <div class="content">
+            <p>Bonjour <strong>{{ order.buyer.first_name }} {{ order.buyer.last_name }}</strong>,</p>
+            
+            <p>Excellente nouvelle ! Votre paiement a été traité avec succès. Voici les détails de votre transaction :</p>
+            
+            <div class="payment-info">
+                <div style="text-align: center;">
+                    <div class="status-badge">Paiement confirmé</div>
+                    <div class="amount">{{ order.total_amount|floatformat:0 }} FCFA</div>
+                    <p style="margin: 0; color: #059669; font-weight: 600;">
+                        Paiement effectué via {{ order.get_payment_method_display }}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="receipt-section">
+                <div class="receipt-title">🧾 Reçu de paiement</div>
+                <div class="transaction-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Numéro de commande :</span>
+                        <span class="detail-value">#{{ order.order_number }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Date de paiement :</span>
+                        <span class="detail-value">{{ order.updated_at|date:"d F Y à H:i" }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Méthode de paiement :</span>
+                        <span class="detail-value">{{ order.get_payment_method_display }}</span>
+                    </div>
+                    {% if payment_reference %}
+                    <div class="detail-row">
+                        <span class="detail-label">Référence transaction :</span>
+                        <span class="detail-value">{{ payment_reference }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="detail-row">
+                        <span class="detail-label">Article :</span>
+                        <span class="detail-value">{{ order.product.title }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Vendeur :</span>
+                        <span class="detail-value">{{ order.product.seller.first_name }} {{ order.product.seller.last_name }}</span>
+                    </div>
+                    <div class="detail-row" style="border-top: 2px solid #059669; font-size: 18px; font-weight: bold; color: #059669;">
+                        <span class="detail-label">Montant total :</span>
+                        <span class="detail-value">{{ order.total_amount|floatformat:0 }} FCFA</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="next-steps">
+                <h3>📦 Prochaines étapes</h3>
+                <div class="step">Le vendeur a été notifié de votre paiement</div>
+                <div class="step">Votre commande sera préparée dans les 24-48h</div>
+                <div class="step">Vous recevrez une notification dès l'expédition</div>
+                <div class="step">Vous pourrez suivre la livraison en temps réel</div>
+                <div class="step">N'oubliez pas de laisser un avis après réception</div>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="{{ site_url }}/order/{{ order.id }}/" class="btn">Suivre ma commande</a>
+            </div>
+            
+            <div class="security-note">
+                <p><strong>🔒 Sécurité :</strong> 
+                Conservez ce reçu comme preuve de paiement. 
+                En cas de problème, contactez notre support avec le numéro de commande #{{ order.order_number }}.</p>
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center;">
+                <p style="color: #6b7280; font-size: 14px;">
+                    Vous avez des questions ? Notre équipe support est là pour vous aider !
+                </p>
+                <p style="margin: 5px 0;">
+                    📞 {{ support_phone }} | 📧 {{ support_email }}
+                </p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>Vidé-Grenier Kamer</strong></p>
+            <p>Merci de votre confiance !</p>
+            <p>Vendez, Achetez, Économisez – Simplicité et Sécurité</p>
+            <p>🌐 {{ site_url }}</p>
+        </div>
+    </div>
+</body>
+</html>

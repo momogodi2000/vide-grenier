@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Votre avis nous intéresse - Vidé-Grenier Kamer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fef7e0;
+            padding: 20px;
+        }
+        .container {
+            background-color: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .star-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .order-summary {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+            border-left: 4px solid #f59e0b;
+        }
+        .product-card {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .product-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 10px;
+        }
+        .order-date {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        .rating-request {
+            background-color: #f9fafb;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        .rating-stars {
+            font-size: 32px;
+            margin: 20px 0;
+            letter-spacing: 5px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 35px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 15px 10px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        }
+        .why-review {
+            background-color: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .why-review h3 {
+            color: #0369a1;
+            margin-top: 0;
+        }
+        .benefit {
+            margin: 10px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        .benefit::before {
+            content: "⭐";
+            position: absolute;
+            left: 0;
+        }
+        .footer {
+            background-color: #1f2937;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .footer p {
+            margin: 5px 0;
+            opacity: 0.8;
+        }
+        .seller-info {
+            background-color: #f3f4f6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .seller-info h4 {
+            margin: 0 0 10px 0;
+            color: #374151;
+        }
+        .quick-actions {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 30px 0;
+        }
+        .incentive-box {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border: 1px solid #a7f3d0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .incentive-box h3 {
+            color: #065f46;
+            margin-top: 0;
+        }
+        .points-badge {
+            display: inline-block;
+            background-color: #059669;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="star-icon">⭐</div>
+            <h1>Votre avis compte !</h1>
+            <p>Partagez votre expérience avec la communauté</p>
+        </div>
+        
+        <div class="content">
+            <p>Bonjour <strong>{{ order.buyer.first_name }} {{ order.buyer.last_name }}</strong>,</p>
+            
+            <p>Nous espérons que vous êtes satisfait(e) de votre récent achat sur Vidé-Grenier Kamer ! 
+            Votre avis est précieux pour nous aider à améliorer notre service et aider d'autres acheteurs.</p>
+            
+            <div class="order-summary">
+                <h3 style="margin-top: 0; color: #92400e;">📦 Votre commande livrée</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span><strong>Commande #{{ order.order_number }}</strong></span>
+                    <span style="color: #059669; font-weight: bold;">✅ Livrée</span>
+                </div>
+                <div class="order-date">Livrée le {{ order.delivered_at|date:"d F Y" }}</div>
+            </div>
+            
+            <div class="product-card">
+                <div class="product-title">{{ order.product.title }}</div>
+                <div class="seller-info">
+                    <h4>Vendu par : {{ order.product.seller.first_name }} {{ order.product.seller.last_name }}</h4>
+                    <p style="margin: 0; color: #6b7280; font-size: 14px;">
+                        État : {{ order.product.get_condition_display }} | 
+                        Prix : {{ order.total_amount|floatformat:0 }} FCFA
+                    </p>
+                </div>
+            </div>
+            
+            <div class="incentive-box">
+                <h3>🎁 Gagnez des points fidélité !</h3>
+                <p>En laissant un avis détaillé, vous gagnez :</p>
+                <div class="points-badge">+50 points fidélité</div>
+                <p style="margin: 0; font-size: 14px; color: #374151;">
+                    Utilisables pour vos prochains achats ou pour des réductions exclusives !
+                </p>
+            </div>
+            
+            <div class="rating-request">
+                <h3 style="color: #374151; margin-top: 0;">Comment évalueriez-vous cette expérience ?</h3>
+                <div class="rating-stars">⭐⭐⭐⭐⭐</div>
+                <p style="color: #6b7280; margin-bottom: 25px;">
+                    Cliquez sur le bouton ci-dessous pour laisser votre avis en quelques clics !
+                </p>
+                
+                <div class="quick-actions">
+                    <a href="{{ site_url }}/review/create/{{ order.id }}/" class="btn">⭐ Laisser un avis</a>
+                    <a href="{{ site_url }}/order/{{ order.id }}/" class="btn btn-secondary">📦 Voir ma commande</a>
+                </div>
+            </div>
+            
+            <div class="why-review">
+                <h3>🤝 Pourquoi votre avis est important ?</h3>
+                <div class="benefit">Aide d'autres acheteurs à faire le bon choix</div>
+                <div class="benefit">Encourage les vendeurs à maintenir la qualité</div>
+                <div class="benefit">Améliore l'expérience de toute la communauté</div>
+                <div class="benefit">Vous fait gagner des points fidélité</div>
+                <div class="benefit">Renforce la confiance sur la plateforme</div>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <h3 style="color: #374151;">⏰ Quelques minutes suffisent !</h3>
+                <p style="color: #6b7280;">
+                    Votre avis peut être rédigé en moins de 2 minutes et aide énormément notre communauté.
+                </p>
+                <a href="{{ site_url }}/review/create/{{ order.id }}/" class="btn" style="font-size: 18px; padding: 18px 40px;">
+                    ✍️ Écrire mon avis maintenant
+                </a>
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                <h4 style="color: #374151;">💡 Conseils pour un avis utile :</h4>
+                <ul style="color: #6b7280; padding-left: 20px;">
+                    <li>Décrivez l'état réel du produit reçu</li>
+                    <li>Commentez la communication avec le vendeur</li>
+                    <li>Mentionnez la rapidité de la livraison</li>
+                    <li>Notez la qualité de l'emballage</li>
+                    <li>Recommanderiez-vous ce vendeur ?</li>
+                </ul>
+            </div>
+            
+            <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 15px; margin: 20px 0;">
+                <p style="margin: 0; font-size: 14px; color: #991b1b;">
+                    <strong>⚠️ Problème avec votre commande ?</strong><br>
+                    Si vous n'êtes pas satisfait, contactez-nous avant de laisser un avis. 
+                    Notre équipe est là pour résoudre tout problème !
+                </p>
+                <div style="text-align: center; margin-top: 15px;">
+                    <a href="mailto:{{ support_email }}" style="color: #991b1b; font-weight: bold;">
+                        📧 Contacter le support
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>Vidé-Grenier Kamer</strong></p>
+            <p>Merci de faire partie de notre communauté !</p>
+            <p>Vendez, Achetez, Économisez – Simplicité et Sécurité</p>
+            <p>📞 {{ support_phone }} | 📧 {{ support_email }}</p>
+            <p>🌐 {{ site_url }}</p>
+        </div>
+    </div>
+</body>
+</html>

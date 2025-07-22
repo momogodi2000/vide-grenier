@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Paiement Réussi - Vidé-Grenier Kamer{% endblock %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 py-12">
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+        <i data-lucide="check-circle" class="w-16 h-16 text-green-600 mx-auto mb-4"></i>
+        <h1 class="text-2xl font-bold mb-2">Paiement réussi !</h1>
+        <p class="text-gray-600 mb-4 animate-fade-in">Merci pour votre achat.<br>Votre paiement a été validé avec succès.</p>
+        <div class="mb-6 animate-bounce-in">
+            <span class="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">Transaction confirmée</span>
+        </div>
+        <div class="mb-4 animate-fade-in">
+            Un reçu a été envoyé à votre adresse email.<br>
+            <span class="text-gray-500 text-xs">Pour toute question, contactez <a href="mailto:support@videgrenier-kamer.com" class="text-blue-600 hover:underline">le support</a>.</span>
+        </div>
+        <a href="/dashboard/" class="inline-block mt-4 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-300 font-semibold shadow-lg transform hover:scale-105 animate-pop">Retour au tableau de bord</a>
+    </div>
+</div>
+{% endblock %}
+<style>
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 1s ease;
+}
+@keyframes bounce-in {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.animate-bounce-in {
+  animation: bounce-in 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+}
+@keyframes pop {
+  0% { transform: scale(0.9); opacity: 0; }
+  80% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.animate-pop {
+  animation: pop 0.5s cubic-bezier(.68,-0.55,.27,1.55);
+}
+</style>

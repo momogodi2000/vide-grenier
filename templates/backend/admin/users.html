@@ -1,65 +1,11 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Utilisateurs - Administration - Vidé-Grenier Kamer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <style>
-        :root {
-            --vgk-green-600: #16a34a;
-            --vgk-green-700: #15803d;
-            --vgk-orange-500: #f97316;
-        }
-        
-        .admin-gradient {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .stats-card {
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-            transition: all 0.3s ease;
-        }
-        
-        .stats-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-        }
-        
-        .user-row:hover {
-            background-color: #f8fafc;
-            transform: scale(1.01);
-        }
-        
-        .badge-admin {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        }
-        
-        .badge-staff {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        }
-        
-        .badge-client {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        }
-        
-        .trust-score-high {
-            color: #16a34a;
-        }
-        
-        .trust-score-medium {
-            color: #f59e0b;
-        }
-        
-        .trust-score-low {
-            color: #ef4444;
-        }
-    </style>
-</head>
-<body class="bg-gray-50 font-inter antialiased">
-    <!-- Navigation -->
-    <nav class="admin-gradient shadow-lg">
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Utilisateurs - Admin{% endblock %}
+
+{% block content %}
+    <!-- Top Navigation -->
+    <nav class="bg-gradient-to-r from-green-600 to-orange-500 shadow-lg sticky top-0 z-40">
         <div class="container mx-auto px-4">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center space-x-4">
@@ -119,7 +65,7 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 p-8">
+        <main class="flex-1 p-8 bg-gray-50">
             <!-- Header -->
             <div class="mb-8">
                 <div class="flex items-center justify-between">
@@ -130,7 +76,7 @@
                     <div class="flex items-center space-x-4">
                         <button class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
                             <i data-lucide="user-plus" class="w-4 h-4 inline mr-2"></i>
-                            Nouvel Utilisateur
+                            Ajouter Utilisateur
                         </button>
                         <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                             <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>
@@ -142,94 +88,109 @@
 
             <!-- Stats Cards -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="stats-card rounded-xl p-6 shadow-lg">
+                <div class="bg-white rounded-xl p-6 shadow-lg">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-600 text-sm font-medium">Total Utilisateurs</p>
-                            <p class="text-3xl font-bold text-gray-900">2,847</p>
-                            <p class="text-green-600 text-sm font-medium">+12% ce mois</p>
+                            <p class="text-sm font-medium text-gray-600">Total Utilisateurs</p>
+                            <p class="text-3xl font-bold text-gray-900">{{ total_users|default:1247 }}</p>
                         </div>
-                        <div class="bg-blue-100 p-3 rounded-full">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                             <i data-lucide="users" class="w-6 h-6 text-blue-600"></i>
                         </div>
                     </div>
-                </div>
-
-                <div class="stats-card rounded-xl p-6 shadow-lg">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-600 text-sm font-medium">Actifs ce mois</p>
-                            <p class="text-3xl font-bold text-gray-900">1,923</p>
-                            <p class="text-green-600 text-sm font-medium">+8% ce mois</p>
-                        </div>
-                        <div class="bg-green-100 p-3 rounded-full">
-                            <i data-lucide="user-check" class="w-6 h-6 text-green-600"></i>
-                        </div>
+                    <div class="mt-4">
+                        <span class="text-green-600 text-sm font-medium">↗ +12.5%</span>
+                        <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
                     </div>
                 </div>
 
-                <div class="stats-card rounded-xl p-6 shadow-lg">
+                <div class="bg-white rounded-xl p-6 shadow-lg">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-600 text-sm font-medium">Nouveaux aujourd'hui</p>
-                            <p class="text-3xl font-bold text-gray-900">47</p>
-                            <p class="text-orange-600 text-sm font-medium">-3% vs hier</p>
+                            <p class="text-sm font-medium text-gray-600">Nouveaux ce mois</p>
+                            <p class="text-3xl font-bold text-gray-900">{{ new_users_month|default:86 }}</p>
                         </div>
-                        <div class="bg-orange-100 p-3 rounded-full">
-                            <i data-lucide="user-plus" class="w-6 h-6 text-orange-600"></i>
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="user-plus" class="w-6 h-6 text-green-600"></i>
                         </div>
+                    </div>
+                    <div class="mt-4">
+                        <span class="text-green-600 text-sm font-medium">↗ +8.2%</span>
+                        <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
                     </div>
                 </div>
 
-                <div class="stats-card rounded-xl p-6 shadow-lg">
+                <div class="bg-white rounded-xl p-6 shadow-lg">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-600 text-sm font-medium">Score Confiance Moyen</p>
-                            <p class="text-3xl font-bold text-gray-900">8.4</p>
-                            <p class="text-green-600 text-sm font-medium">+0.2 ce mois</p>
+                            <p class="text-sm font-medium text-gray-600">Vendeurs Actifs</p>
+                            <p class="text-3xl font-bold text-gray-900">{{ active_sellers|default:342 }}</p>
                         </div>
-                        <div class="bg-purple-100 p-3 rounded-full">
-                            <i data-lucide="shield-check" class="w-6 h-6 text-purple-600"></i>
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="store" class="w-6 h-6 text-purple-600"></i>
                         </div>
+                    </div>
+                    <div class="mt-4">
+                        <span class="text-green-600 text-sm font-medium">↗ +15.1%</span>
+                        <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Administrateurs</p>
+                            <p class="text-3xl font-bold text-gray-900">{{ admin_count|default:5 }}</p>
+                        </div>
+                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="shield" class="w-6 h-6 text-red-600"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <span class="text-gray-600 text-sm font-medium">Accès complet</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Filters and Search -->
-            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
-                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-                        <div class="relative">
-                            <input type="text" placeholder="Rechercher un utilisateur..." 
-                                   class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-gray-400"></i>
-                        </div>
-                        
-                        <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                            <option value="">Tous les types</option>
-                            <option value="CLIENT">Clients</option>
-                            <option value="ADMIN">Administrateurs</option>
-                            <option value="STAFF">Staff</option>
-                        </select>
-                        
-                        <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                            <option value="">Toutes les villes</option>
-                            <option value="DOUALA">Douala</option>
-                            <option value="YAOUNDE">Yaoundé</option>
-                            <option value="BAFOUSSAM">Bafoussam</option>
-                            <option value="GAROUA">Garoua</option>
-                            <option value="BAMENDA">Bamenda</option>
-                        </select>
+            <!-- Filters -->
+            <div class="bg-white rounded-xl p-6 shadow-lg mb-8">
+                <div class="flex flex-wrap items-center gap-4">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+                        <input type="text" placeholder="Rechercher un utilisateur..." 
+                               class="border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
                     </div>
                     
-                    <div class="flex space-x-2">
-                        <button class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
-                            <i data-lucide="filter" class="w-4 h-4"></i>
-                        </button>
-                        <button class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
-                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                        </button>
-                    </div>
+                    <select class="border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                        <option value="">Tous les types</option>
+                        <option value="CLIENT">Clients</option>
+                        <option value="ADMIN">Administrateurs</option>
+                        <option value="STAFF">Staff</option>
+                    </select>
+                    
+                    <select class="border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                        <option value="">Toutes les villes</option>
+                        <option value="YDE">Yaoundé</option>
+                        <option value="DLA">Douala</option>
+                        <option value="BDA">Bamenda</option>
+                        <option value="BFA">Bafoussam</option>
+                        <option value="GRA">Garoua</option>
+                    </select>
+                    
+                    <select class="border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                        <option value="">Tous les statuts</option>
+                        <option value="active">Actifs</option>
+                        <option value="inactive">Inactifs</option>
+                        <option value="suspended">Suspendus</option>
+                    </select>
+                    
+                    <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        Filtrer
+                    </button>
+                    
+                    <button class="text-gray-600 hover:text-gray-800 px-4 py-2 transition-colors">
+                        Réinitialiser
+                    </button>
                 </div>
             </div>
 
@@ -240,6 +201,9 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <input type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Utilisateur
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -249,247 +213,343 @@
                                     Ville
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Score Confiance
+                                    Inscription
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Points Fidélité
+                                    Activité
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Statut
-                                </th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Inscrit le
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Actions
                                 </th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <tr class="user-row transition-all duration-200">
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <!-- Sample Users -->
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <input type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
-                                        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                            AC
+                                        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold mr-4">
+                                            AS
                                         </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">Alice Camara</div>
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900">Alice Simo</div>
                                             <div class="text-sm text-gray-500">alice.douala@gmail.com</div>
+                                            <div class="text-sm text-gray-500">+237 694 123 456</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="badge-client px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full text-white">
-                                        CLIENT
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <i data-lucide="user" class="w-3 h-3 mr-1"></i>
+                                        Client
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <i data-lucide="map-pin" class="w-4 h-4 text-gray-400 mr-2"></i>
-                                        Douala
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="trust-score-high font-semibold">9.2</div>
-                                        <div class="ml-2 flex">
-                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
-                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
-                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
-                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
-                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <i data-lucide="coins" class="w-4 h-4 text-orange-500 mr-2"></i>
-                                        <span class="text-sm font-medium text-gray-900">1,245</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center space-x-2">
-                                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                                        <span class="text-sm text-green-700 font-medium">Actif</span>
-                                        <i data-lucide="check-circle" class="w-4 h-4 text-green-500" title="Vérifié"></i>
-                                        <i data-lucide="smartphone" class="w-4 h-4 text-blue-500" title="Téléphone vérifié"></i>
+                                        <span class="text-sm text-gray-900">Douala</span>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    15 Mars 2024
+                                    15 Juin 2024
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                                        <span class="text-sm text-gray-500">Il y a 2h</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></span>
+                                        Actif
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <div class="flex space-x-2">
-                                        <button class="text-blue-600 hover:text-blue-900 transition-colors">
+                                    <div class="flex items-center space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 p-1">
                                             <i data-lucide="eye" class="w-4 h-4"></i>
                                         </button>
-                                        <button class="text-green-600 hover:text-green-900 transition-colors">
+                                        <button class="text-yellow-600 hover:text-yellow-900 p-1">
                                             <i data-lucide="edit" class="w-4 h-4"></i>
                                         </button>
-                                        <button class="text-red-600 hover:text-red-900 transition-colors">
+                                        <button class="text-red-600 hover:text-red-900 p-1">
                                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                                         </button>
                                     </div>
                                 </td>
                             </tr>
 
-                            <tr class="user-row transition-all duration-200">
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <input type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
-                                        <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                        <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold mr-4">
                                             BM
                                         </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">Bob Mvondo</div>
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900">Bob Mendomo</div>
                                             <div class="text-sm text-gray-500">bob.yaounde@gmail.com</div>
+                                            <div class="text-sm text-gray-500">+237 695 234 567</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="badge-staff px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full text-white">
-                                        STAFF
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        <i data-lucide="shield" class="w-3 h-3 mr-1"></i>
+                                        Admin
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <i data-lucide="map-pin" class="w-4 h-4 text-gray-400 mr-2"></i>
-                                        Yaoundé
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="trust-score-medium font-semibold">7.8</div>
-                                        <div class="ml-2 flex">
-                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
-                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
-                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
-                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
-                                            <i data-lucide="star" class="w-4 h-4 text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <i data-lucide="coins" class="w-4 h-4 text-orange-500 mr-2"></i>
-                                        <span class="text-sm font-medium text-gray-900">890</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center space-x-2">
-                                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                                        <span class="text-sm text-green-700 font-medium">Actif</span>
-                                        <i data-lucide="check-circle" class="w-4 h-4 text-green-500" title="Vérifié"></i>
-                                        <i data-lucide="smartphone" class="w-4 h-4 text-blue-500" title="Téléphone vérifié"></i>
+                                        <span class="text-sm text-gray-900">Yaoundé</span>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    8 Février 2024
+                                    10 Mars 2024
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                                        <span class="text-sm text-gray-500">En ligne</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></span>
+                                        Actif
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <div class="flex space-x-2">
-                                        <button class="text-blue-600 hover:text-blue-900 transition-colors">
+                                    <div class="flex items-center space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 p-1">
                                             <i data-lucide="eye" class="w-4 h-4"></i>
                                         </button>
-                                        <button class="text-green-600 hover:text-green-900 transition-colors">
+                                        <button class="text-yellow-600 hover:text-yellow-900 p-1">
                                             <i data-lucide="edit" class="w-4 h-4"></i>
                                         </button>
-                                        <button class="text-red-600 hover:text-red-900 transition-colors">
+                                        <button class="text-gray-400 p-1 cursor-not-allowed">
                                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                                         </button>
                                     </div>
                                 </td>
                             </tr>
 
-                            <tr class="user-row transition-all duration-200">
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <input type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
-                                        <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                        <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-semibold mr-4">
                                             CT
                                         </div>
-                                        <div class="ml-4">
+                                        <div>
                                             <div class="text-sm font-medium text-gray-900">Claire Tchoumba</div>
                                             <div class="text-sm text-gray-500">claire.bafoussam@gmail.com</div>
+                                            <div class="text-sm text-gray-500">+237 695 789 012</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="badge-admin px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full text-white">
-                                        ADMIN
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <i data-lucide="user" class="w-3 h-3 mr-1"></i>
+                                        Client
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <i data-lucide="map-pin" class="w-4 h-4 text-gray-400 mr-2"></i>
-                                        Bafoussam
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="trust-score-high font-semibold">9.8</div>
-                                        <div class="ml-2 flex">
-                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
-                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
-                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
-                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
-                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <i data-lucide="coins" class="w-4 h-4 text-orange-500 mr-2"></i>
-                                        <span class="text-sm font-medium text-gray-900">2,150</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center space-x-2">
-                                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                                        <span class="text-sm text-green-700 font-medium">Actif</span>
-                                        <i data-lucide="check-circle" class="w-4 h-4 text-green-500" title="Vérifié"></i>
-                                        <i data-lucide="smartphone" class="w-4 h-4 text-blue-500" title="Téléphone vérifié"></i>
-                                        <i data-lucide="shield" class="w-4 h-4 text-purple-500" title="Admin"></i>
+                                        <span class="text-sm text-gray-900">Bafoussam</span>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    1 Janvier 2024
+                                    8 Juillet 2024
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="w-2 h-2 bg-yellow-400 rounded-full mr-2"></div>
+                                        <span class="text-sm text-gray-500">Il y a 1j</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        <span class="w-1.5 h-1.5 bg-yellow-400 rounded-full mr-1.5"></span>
+                                        Suspendu
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <div class="flex space-x-2">
-                                        <button class="text-blue-600 hover:text-blue-900 transition-colors">
+                                    <div class="flex items-center space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 p-1">
                                             <i data-lucide="eye" class="w-4 h-4"></i>
                                         </button>
-                                        <button class="text-green-600 hover:text-green-900 transition-colors">
-                                            <i data-lucide="edit" class="w-4 h-4"></i>
+                                        <button class="text-green-600 hover:text-green-900 p-1" title="Réactiver">
+                                            <i data-lucide="unlock" class="w-4 h-4"></i>
                                         </button>
-                                        <button class="text-red-600 hover:text-red-900 transition-colors">
+                                        <button class="text-red-600 hover:text-red-900 p-1">
                                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                                         </button>
                                     </div>
                                 </td>
                             </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-                            <tr class="user-row transition-all duration-200">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                            DN
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">David Nkomo</div>
-                                            <div class="text-sm text-gray-500">david.garoua@gmail.com</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="badge-client px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full text-white">
-                                        CLIENT
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    <div class="flex items-center">
-                                        <i data-lucide="map-pin" class="w-4 h-4 text-gray-400 mr-2"></i>
-                                        Garoua
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
+                <!-- Pagination -->
+                <div class="bg-white px-6 py-4 flex items-center justify-between border-t border-gray-200">
+                    <div class="flex-1 flex justify-between sm:hidden">
+                        <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Précédent
+                        </a>
+                        <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Suivant
+                        </a>
+                    </div>
+                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-gray-700">
+                                Affichage de <span class="font-medium">1</span> à <span class="font-medium">10</span> sur <span class="font-medium">1247</span> résultats
+                            </p>
+                        </div>
+                        <div>
+                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                                </a>
+                                <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">1</a>
+                                <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-green-50 text-sm font-medium text-green-600">2</a>
+                                <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">3</a>
+                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                                <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">125</a>
+                                <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                                </a>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bulk Actions -->
+            <div class="mt-6 flex items-center space-x-4">
+                <select class="border border-gray-300 rounded-lg px-4 py-2 text-sm">
+                    <option value="">Actions groupées</option>
+                    <option value="activate">Activer sélectionnés</option>
+                    <option value="suspend">Suspendre sélectionnés</option>
+                    <option value="delete">Supprimer sélectionnés</option>
+                    <option value="export">Exporter sélectionnés</option>
+                </select>
+                <button class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm">
+                    Appliquer
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- User Detail Modal -->
+    <div id="userModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-screen overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-gray-900">Détails de l'utilisateur</h3>
+                        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                            <i data-lucide="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                                AS
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-900">Alice Simo</h4>
+                                <p class="text-gray-600">Membre depuis le 15 Juin 2024</p>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <p class="text-sm text-gray-900">alice.douala@gmail.com</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+                                <p class="text-sm text-gray-900">+237 694 123 456</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Ville</label>
+                                <p class="text-sm text-gray-900">Douala</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                                <p class="text-sm text-gray-900">Client</p>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t pt-6">
+                            <h5 class="font-medium text-gray-900 mb-4">Statistiques</h5>
+                            <div class="grid grid-cols-3 gap-4">
+                                <div class="text-center">
+                                    <p class="text-2xl font-bold text-green-600">12</p>
+                                    <p class="text-sm text-gray-600">Produits vendus</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-2xl font-bold text-blue-600">8</p>
+                                    <p class="text-sm text-gray-600">Achats</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-2xl font-bold text-purple-600">4.8</p>
+                                    <p class="text-sm text-gray-600">Note moyenne</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 flex space-x-4">
+                        <button class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                            Modifier
+                        </button>
+                        <button class="flex-1 bg-yellow-600 text-white py-2 px-4 rounded-lg hover:bg-yellow-700 transition-colors">
+                            Suspendre
+                        </button>
+                        <button class="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors">
+                            Supprimer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>
+        lucide.createIcons();
+        
+        function openModal() {
+            document.getElementById('userModal').classList.remove('hidden');
+        }
+        
+        function closeModal() {
+            document.getElementById('userModal').classList.add('hidden');
+        }
+        
+        // Add click handlers for view buttons
+        document.querySelectorAll('[data-lucide="eye"]').forEach(btn => {
+            btn.closest('button').addEventListener('click', openModal);
+        });
+    </script>
+
+{% endblock %}

@@ -1,63 +1,11 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Produits - Administration - Vidé-Grenier Kamer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <style>
-        :root {
-            --vgk-green-600: #16a34a;
-            --vgk-green-700: #15803d;
-            --vgk-orange-500: #f97316;
-        }
-        
-        .admin-gradient {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .product-card {
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-            transition: all 0.3s ease;
-        }
-        
-        .product-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-        }
-        
-        .status-active {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        }
-        
-        .status-draft {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        }
-        
-        .status-sold {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        }
-        
-        .status-suspended {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        }
-        
-        .product-image {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 12px;
-        }
-        
-        .price-tag {
-            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
-        }
-    </style>
-</head>
-<body class="bg-gray-50 font-inter antialiased">
-    <!-- Navigation -->
-    <nav class="admin-gradient shadow-lg">
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Produits - Admin{% endblock %}
+
+{% block content %}
+    <!-- Top Navigation -->
+    <nav class="bg-gradient-to-r from-green-600 to-orange-500 shadow-lg sticky top-0 z-40">
         <div class="container mx-auto px-4">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center space-x-4">
@@ -117,7 +65,7 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 p-8">
+        <main class="flex-1 p-8 bg-gray-50">
             <!-- Header -->
             <div class="mb-8">
                 <div class="flex items-center justify-between">
@@ -128,76 +76,728 @@
                     <div class="flex items-center space-x-4">
                         <button class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
                             <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
-                            Nouveau Produit
+                            Ajouter Produit
                         </button>
                         <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                            <i data-lucide="upload" class="w-4 h-4 inline mr-2"></i>
-                            Import CSV
+                            <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>
+                            Exporter
                         </button>
                         <button class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-                            <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>
-                            Export
+                            <i data-lucide="eye" class="w-4 h-4 inline mr-2"></i>
+                            Modération
                         </button>
                     </div>
                 </div>
             </div>
 
             <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-                <div class="product-card rounded-xl p-6 shadow-lg">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl p-6 shadow-lg">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-600 text-sm font-medium">Total Produits</p>
-                            <p class="text-3xl font-bold text-gray-900">8,547</p>
-                            <p class="text-green-600 text-sm font-medium">+156 cette semaine</p>
+                            <p class="text-sm font-medium text-gray-600">Total Produits</p>
+                            <p class="text-3xl font-bold text-gray-900">{{ total_products|default:3456 }}</p>
                         </div>
-                        <div class="bg-blue-100 p-3 rounded-full">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                             <i data-lucide="package" class="w-6 h-6 text-blue-600"></i>
                         </div>
                     </div>
-                </div>
-
-                <div class="product-card rounded-xl p-6 shadow-lg">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-600 text-sm font-medium">Actifs</p>
-                            <p class="text-3xl font-bold text-green-600">6,823</p>
-                            <p class="text-green-600 text-sm font-medium">79.8% du total</p>
-                        </div>
-                        <div class="bg-green-100 p-3 rounded-full">
-                            <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
-                        </div>
+                    <div class="mt-4">
+                        <span class="text-green-600 text-sm font-medium">↗ +8.3%</span>
+                        <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
                     </div>
                 </div>
 
-                <div class="product-card rounded-xl p-6 shadow-lg">
+                <div class="bg-white rounded-xl p-6 shadow-lg">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-600 text-sm font-medium">En Attente</p>
-                            <p class="text-3xl font-bold text-yellow-600">1,247</p>
-                            <p class="text-yellow-600 text-sm font-medium">14.6% du total</p>
+                            <p class="text-sm font-medium text-gray-600">En modération</p>
+                            <p class="text-3xl font-bold text-gray-900">{{ pending_products|default:42 }}</p>
                         </div>
-                        <div class="bg-yellow-100 p-3 rounded-full">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                             <i data-lucide="clock" class="w-6 h-6 text-yellow-600"></i>
                         </div>
                     </div>
+                    <div class="mt-4">
+                        <span class="text-yellow-600 text-sm font-medium">Nécessite validation</span>
+                    </div>
                 </div>
 
-                <div class="product-card rounded-xl p-6 shadow-lg">
+                <div class="bg-white rounded-xl p-6 shadow-lg">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-600 text-sm font-medium">Vendus</p>
-                            <p class="text-3xl font-bold text-blue-600">3,892</p>
-                            <p class="text-blue-600 text-sm font-medium">+89 aujourd'hui</p>
+                            <p class="text-sm font-medium text-gray-600">Vendus ce mois</p>
+                            <p class="text-3xl font-bold text-gray-900">{{ sold_month|default:156 }}</p>
                         </div>
-                        <div class="bg-blue-100 p-3 rounded-full">
-                            <i data-lucide="shopping-bag" class="w-6 h-6 text-blue-600"></i>
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <span class="text-green-600 text-sm font-medium">↗ +23.1%</span>
+                        <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Stock Admin</p>
+                            <p class="text-3xl font-bold text-gray-900">{{ admin_stock|default:89 }}</p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="warehouse" class="w-6 h-6 text-purple-600"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <span class="text-purple-600 text-sm font-medium">Gestion directe</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="bg-white rounded-xl p-6 shadow-lg mb-8">
+                <div class="flex flex-wrap items-center gap-4 mb-4">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+                        <input type="text" placeholder="Rechercher un produit..." 
+                               class="border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                    </div>
+                    
+                    <select class="border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                        <option value="">Toutes les catégories</option>
+                        <option value="electronics">Électronique</option>
+                        <option value="clothing">Vêtements</option>
+                        <option value="home">Maison & Jardin</option>
+                        <option value="books">Livres</option>
+                        <option value="sports">Sports</option>
+                    </select>
+                    
+                    <select class="border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                        <option value="">Tous les statuts</option>
+                        <option value="AVAILABLE">Disponible</option>
+                        <option value="SOLD">Vendu</option>
+                        <option value="PENDING">En attente</option>
+                        <option value="REJECTED">Rejeté</option>
+                    </select>
+                    
+                    <select class="border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                        <option value="">Toutes les villes</option>
+                        <option value="YDE">Yaoundé</option>
+                        <option value="DLA">Douala</option>
+                        <option value="BDA">Bamenda</option>
+                        <option value="BFA">Bafoussam</option>
+                        <option value="GRA">Garoua</option>
+                    </select>
+                    
+                    <div class="flex items-center space-x-2">
+                        <input type="number" placeholder="Prix min" 
+                               class="border-0 bg-gray-50 rounded-lg px-4 py-2 w-24 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                        <span class="text-gray-400">-</span>
+                        <input type="number" placeholder="Prix max" 
+                               class="border-0 bg-gray-50 rounded-lg px-4 py-2 w-24 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                            Filtrer
+                        </button>
+                        <button class="text-gray-600 hover:text-gray-800 px-4 py-2 transition-colors">
+                            Réinitialiser
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-600">Affichage:</span>
+                        <button id="gridView" class="p-2 rounded-lg bg-green-100 text-green-600">
+                            <i data-lucide="grid" class="w-4 h-4"></i>
+                        </button>
+                        <button id="listView" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100">
+                            <i data-lucide="list" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div id="productsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Product Card 4 -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop" 
+                             alt="Vélo VTT" class="w-full h-48 object-cover">
+                        <div class="absolute top-3 left-3">
+                            <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                Disponible
+                            </span>
+                        </div>
+                        <div class="absolute top-3 right-3">
+                            <button class="bg-white/90 p-2 rounded-full hover:bg-white transition-colors">
+                                <i data-lucide="more-vertical" class="w-4 h-4 text-gray-600"></i>
+                            </button>
+                        </div>
+                        <div class="absolute bottom-3 left-3">
+                            <span class="bg-black/50 text-white text-xs px-2 py-1 rounded">
+                                🚴 Sports
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4">
+                        <div class="flex items-start justify-between mb-2">
+                            <h3 class="font-semibold text-gray-900 line-clamp-2">VTT Giant Talon 1 - Comme neuf</h3>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2 mb-3">
+                            <div class="w-6 h-6 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                                D
+                            </div>
+                            <span class="text-sm text-gray-600">David Nkomo</span>
+                            <span class="text-xs text-gray-400">•</span>
+                            <span class="text-xs text-gray-400">Garoua</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <p class="text-2xl font-bold text-green-600">125,000</p>
+                                <p class="text-xs text-gray-500">FCFA</p>
+                            </div>
+                            <div class="text-right text-xs text-gray-500">
+                                <p>Publié il y a 4h</p>
+                                <p>67 vues</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2">
+                            <button class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                <i data-lucide="eye" class="w-4 h-4 inline mr-1"></i>
+                                Voir
+                            </button>
+                            <button class="bg-yellow-100 text-yellow-600 p-2 rounded-lg hover:bg-yellow-200 transition-colors">
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                            </button>
+                            <button class="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition-colors">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products List View (hidden by default) -->
+            <div id="productsList" class="hidden bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <input type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Produit
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Vendeur
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Prix
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Statut
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Date
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <input type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <img class="h-10 w-10 rounded-lg object-cover mr-4" 
+                                             src="https://images.unsplash.com/photo-1583394838336-acd977736f90?w=100&h=100&fit=crop" 
+                                             alt="iPhone 12 Pro">
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900">iPhone 12 Pro 128GB</div>
+                                            <div class="text-sm text-gray-500">📱 Électronique</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold mr-2">
+                                            A
+                                        </div>
+                                        <span class="text-sm text-gray-900">Alice Simo</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">450,000 FCFA</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        Disponible
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    22 Juillet 2025
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex items-center space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 p-1">
+                                            <i data-lucide="eye" class="w-4 h-4"></i>
+                                        </button>
+                                        <button class="text-yellow-600 hover:text-yellow-900 p-1">
+                                            <i data-lucide="edit" class="w-4 h-4"></i>
+                                        </button>
+                                        <button class="text-red-600 hover:text-red-900 p-1">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="mt-8 flex items-center justify-between">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Précédent
+                    </a>
+                    <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Suivant
+                    </a>
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Affichage de <span class="font-medium">1</span> à <span class="font-medium">12</span> sur <span class="font-medium">3456</span> produits
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                            </a>
+                            <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">1</a>
+                            <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-green-50 text-sm font-medium text-green-600">2</a>
+                            <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">3</a>
+                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                            <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">288</a>
+                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bulk Actions -->
+            <div class="mt-6 flex items-center space-x-4">
+                <select class="border border-gray-300 rounded-lg px-4 py-2 text-sm">
+                    <option value="">Actions groupées</option>
+                    <option value="approve">Approuver sélectionnés</option>
+                    <option value="reject">Rejeter sélectionnés</option>
+                    <option value="delete">Supprimer sélectionnés</option>
+                    <option value="export">Exporter sélectionnés</option>
+                </select>
+                <button class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm">
+                    Appliquer
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Product Detail Modal -->
+    <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-screen overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-gray-900">Détails du produit</h3>
+                        <button onclick="closeProductModal()" class="text-gray-400 hover:text-gray-600">
+                            <i data-lucide="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?w=500&h=400&fit=crop" 
+                                 alt="iPhone 12 Pro" class="w-full h-80 object-cover rounded-lg">
+                            <div class="grid grid-cols-4 gap-2 mt-4">
+                                <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?w=100&h=100&fit=crop" 
+                                     class="w-full h-16 object-cover rounded-lg border-2 border-green-500">
+                                <img src="https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=100&h=100&fit=crop" 
+                                     class="w-full h-16 object-cover rounded-lg border border-gray-200">
+                                <img src="https://images.unsplash.com/photo-1580910051074-3eb694886505?w=100&h=100&fit=crop" 
+                                     class="w-full h-16 object-cover rounded-lg border border-gray-200">
+                                <img src="https://images.unsplash.com/photo-1556656793-08538906a9f8?w=100&h=100&fit=crop" 
+                                     class="w-full h-16 object-cover rounded-lg border border-gray-200">
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <h4 class="text-2xl font-bold text-gray-900 mb-2">iPhone 12 Pro 128GB - Excellent état</h4>
+                                <p class="text-3xl font-bold text-green-600">450,000 FCFA</p>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Vendeur</label>
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                                            A
+                                        </div>
+                                        <span class="text-sm text-gray-900">Alice Simo</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Ville</label>
+                                    <p class="text-sm text-gray-900">Douala</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
+                                    <p class="text-sm text-gray-900">📱 Électronique</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">État</label>
+                                    <p class="text-sm text-gray-900">Excellent</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Publié le</label>
+                                    <p class="text-sm text-gray-900">22 Juillet 2025</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Vues</label>
+                                    <p class="text-sm text-gray-900">156 vues</p>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                <p class="text-sm text-gray-600 leading-relaxed">
+                                    iPhone 12 Pro en excellent état, très peu utilisé. Acheté il y a 6 mois, 
+                                    toujours sous garantie. Écran parfait, aucune rayure. Batterie à 98% de santé. 
+                                    Vendu avec chargeur, câble et boîte d'origine.
+                                </p>
+                            </div>
+                            
+                            <div class="border-t pt-6">
+                                <h5 class="font-medium text-gray-900 mb-4">Statistiques</h5>
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div class="text-center">
+                                        <p class="text-2xl font-bold text-blue-600">156</p>
+                                        <p class="text-sm text-gray-600">Vues</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="text-2xl font-bold text-green-600">12</p>
+                                        <p class="text-sm text-gray-600">Intéressés</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="text-2xl font-bold text-purple-600">3</p>
+                                        <p class="text-sm text-gray-600">Messages</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 flex space-x-4">
+                        <button class="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                            <i data-lucide="check" class="w-4 h-4 inline mr-2"></i>
+                            Approuver
+                        </button>
+                        <button class="flex-1 bg-yellow-600 text-white py-3 px-4 rounded-lg hover:bg-yellow-700 transition-colors">
+                            <i data-lucide="edit" class="w-4 h-4 inline mr-2"></i>
+                            Modifier
+                        </button>
+                        <button class="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors">
+                            <i data-lucide="trash-2" class="w-4 h-4 inline mr-2"></i>
+                            Supprimer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>
+        lucide.createIcons();
+        
+        // View toggle functionality
+        const gridViewBtn = document.getElementById('gridView');
+        const listViewBtn = document.getElementById('listView');
+        const productsGrid = document.getElementById('productsGrid');
+        const productsList = document.getElementById('productsList');
+        
+        gridViewBtn.addEventListener('click', () => {
+            productsGrid.classList.remove('hidden');
+            productsList.classList.add('hidden');
+            gridViewBtn.classList.add('bg-green-100', 'text-green-600');
+            gridViewBtn.classList.remove('text-gray-400', 'hover:bg-gray-100');
+            listViewBtn.classList.remove('bg-green-100', 'text-green-600');
+            listViewBtn.classList.add('text-gray-400', 'hover:bg-gray-100');
+        });
+        
+        listViewBtn.addEventListener('click', () => {
+            productsList.classList.remove('hidden');
+            productsGrid.classList.add('hidden');
+            listViewBtn.classList.add('bg-green-100', 'text-green-600');
+            listViewBtn.classList.remove('text-gray-400', 'hover:bg-gray-100');
+            gridViewBtn.classList.remove('bg-green-100', 'text-green-600');
+            gridViewBtn.classList.add('text-gray-400', 'hover:bg-gray-100');
+        });
+        
+        function openProductModal() {
+            document.getElementById('productModal').classList.remove('hidden');
+        }
+        
+        function closeProductModal() {
+            document.getElementById('productModal').classList.add('hidden');
+        }
+        
+        // Add click handlers for view buttons
+        document.querySelectorAll('[data-lucide="eye"]').forEach(btn => {
+            btn.closest('button').addEventListener('click', openProductModal);
+        });
+    </script>
+
+{% endblock %} Card 1 -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?w=300&h=200&fit=crop" 
+                             alt="iPhone 12 Pro" class="w-full h-48 object-cover">
+                        <div class="absolute top-3 left-3">
+                            <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                Disponible
+                            </span>
+                        </div>
+                        <div class="absolute top-3 right-3">
+                            <button class="bg-white/90 p-2 rounded-full hover:bg-white transition-colors">
+                                <i data-lucide="more-vertical" class="w-4 h-4 text-gray-600"></i>
+                            </button>
+                        </div>
+                        <div class="absolute bottom-3 left-3">
+                            <span class="bg-black/50 text-white text-xs px-2 py-1 rounded">
+                                📱 Électronique
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4">
+                        <div class="flex items-start justify-between mb-2">
+                            <h3 class="font-semibold text-gray-900 line-clamp-2">iPhone 12 Pro 128GB - Excellent état</h3>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2 mb-3">
+                            <div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                                A
+                            </div>
+                            <span class="text-sm text-gray-600">Alice Simo</span>
+                            <span class="text-xs text-gray-400">•</span>
+                            <span class="text-xs text-gray-400">Douala</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <p class="text-2xl font-bold text-green-600">450,000</p>
+                                <p class="text-xs text-gray-500">FCFA</p>
+                            </div>
+                            <div class="text-right text-xs text-gray-500">
+                                <p>Publié il y a 2h</p>
+                                <p>156 vues</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2">
+                            <button class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                <i data-lucide="eye" class="w-4 h-4 inline mr-1"></i>
+                                Voir
+                            </button>
+                            <button class="bg-yellow-100 text-yellow-600 p-2 rounded-lg hover:bg-yellow-200 transition-colors">
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                            </button>
+                            <button class="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition-colors">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <div class="product-card rounded-xl p-6 shadow-lg">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-600 text-sm font-medium">Suspendus</p>
-                            <p class="text-3
+                <!-- Product Card 2 -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=300&h=200&fit=crop" 
+                             alt="Canapé 3 places" class="w-full h-48 object-cover">
+                        <div class="absolute top-3 left-3">
+                            <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                En attente
+                            </span>
+                        </div>
+                        <div class="absolute top-3 right-3">
+                            <button class="bg-white/90 p-2 rounded-full hover:bg-white transition-colors">
+                                <i data-lucide="more-vertical" class="w-4 h-4 text-gray-600"></i>
+                            </button>
+                        </div>
+                        <div class="absolute bottom-3 left-3">
+                            <span class="bg-black/50 text-white text-xs px-2 py-1 rounded">
+                                🏠 Maison
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4">
+                        <div class="flex items-start justify-between mb-2">
+                            <h3 class="font-semibold text-gray-900 line-clamp-2">Canapé 3 places en cuir véritable</h3>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2 mb-3">
+                            <div class="w-6 h-6 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                                B
+                            </div>
+                            <span class="text-sm text-gray-600">Bob Mendomo</span>
+                            <span class="text-xs text-gray-400">•</span>
+                            <span class="text-xs text-gray-400">Yaoundé</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <p class="text-2xl font-bold text-green-600">85,000</p>
+                                <p class="text-xs text-gray-500">FCFA</p>
+                            </div>
+                            <div class="text-right text-xs text-gray-500">
+                                <p>Publié il y a 1j</p>
+                                <p>89 vues</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2">
+                            <button class="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg hover:bg-green-700 transition-colors text-sm">
+                                <i data-lucide="check" class="w-4 h-4 inline mr-1"></i>
+                                Approuver
+                            </button>
+                            <button class="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition-colors">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Card 3 -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1503602642458-232111445657?w=300&h=200&fit=crop" 
+                             alt="Livre de cuisine" class="w-full h-48 object-cover">
+                        <div class="absolute top-3 left-3">
+                            <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                Vendu
+                            </span>
+                        </div>
+                        <div class="absolute top-3 right-3">
+                            <button class="bg-white/90 p-2 rounded-full hover:bg-white transition-colors">
+                                <i data-lucide="more-vertical" class="w-4 h-4 text-gray-600"></i>
+                            </button>
+                        </div>
+                        <div class="absolute bottom-3 left-3">
+                            <span class="bg-black/50 text-white text-xs px-2 py-1 rounded">
+                                📚 Livres
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4">
+                        <div class="flex items-start justify-between mb-2">
+                            <h3 class="font-semibold text-gray-900 line-clamp-2">Collection de livres de cuisine française</h3>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2 mb-3">
+                            <div class="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                                C
+                            </div>
+                            <span class="text-sm text-gray-600">Claire Tchoumba</span>
+                            <span class="text-xs text-gray-400">•</span>
+                            <span class="text-xs text-gray-400">Bafoussam</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <p class="text-2xl font-bold text-green-600">15,000</p>
+                                <p class="text-xs text-gray-500">FCFA</p>
+                            </div>
+                            <div class="text-right text-xs text-gray-500">
+                                <p>Vendu il y a 3j</p>
+                                <p>234 vues</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2">
+                            <button class="flex-1 bg-gray-100 text-gray-600 py-2 px-3 rounded-lg cursor-not-allowed text-sm">
+                                <i data-lucide="check-circle" class="w-4 h-4 inline mr-1"></i>
+                                Vendu
+                            </button>
+                            <button class="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-200 transition-colors">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Card 4 -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?w=300&h=200&fit=crop" 
+                             alt="Vélo de montagne" class="w-full h-48 object-cover">
+                        <div class="absolute top-3 left-3">
+                            <span class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                Rejeté
+                            </span>
+                        </div>
+                        <div class="absolute top-3 right-3">
+                            <button class="bg-white/90 p-2 rounded-full hover:bg-white transition-colors">
+                                <i data-lucide="more-vertical" class="w-4 h-4 text-gray-600"></i>
+                            </button>
+                        </div>
+                        <div class="absolute bottom-3 left-3">
+                            <span class="bg-black/50 text-white text-xs px-2 py-1 rounded">
+                                🚴 Sport
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4">
+                        <div class="flex items-start justify-between mb-2">
+                            <h3 class="font-semibold text-gray-900 line-clamp-2">Vélo de montagne Trek 5000 - Bon état</h3>
+                        </div>
+                        <!-- ...other product details here... -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suggestion for dynamic rendering: -->
+            {#
+            {% for product in products %}
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                <!-- ...product card content using product fields... -->
+            </div>
+            {% endfor %}
+            #}
+            <!-- End products grid -->
+        </main>
+    </div>
+
+    <!-- ...existing modal and scripts... -->
+{% endblock %}

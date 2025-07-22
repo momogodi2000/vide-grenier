@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmation de commande - Vidé-Grenier Kamer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #f8fafc;
+            padding: 20px;
+        }
+        .container {
+            background-color: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .order-info {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+            border-left: 4px solid #667eea;
+        }
+        .order-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        .product-details {
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .product-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+        .price {
+            font-size: 20px;
+            font-weight: bold;
+            color: #38a169;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #edf2f7;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .footer {
+            background-color: #2d3748;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .footer p {
+            margin: 5px 0;
+            opacity: 0.8;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            background-color: #fbbf24;
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .next-steps {
+            background-color: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .next-steps h3 {
+            color: #065f46;
+            margin-top: 0;
+        }
+        .step {
+            margin: 10px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        .step::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #059669;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 Commande Confirmée !</h1>
+            <p>Merci pour votre achat sur Vidé-Grenier Kamer</p>
+        </div>
+        
+        <div class="content">
+            <p>Bonjour <strong>{{ order.buyer.first_name }} {{ order.buyer.last_name }}</strong>,</p>
+            
+            <p>Nous avons bien reçu votre commande et celle-ci est confirmée. Voici le détail de votre achat :</p>
+            
+            <div class="order-info">
+                <div class="order-number">Commande #{{ order.order_number }}</div>
+                <div class="info-row">
+                    <span>Date de commande :</span>
+                    <span>{{ order.created_at|date:"d F Y à H:i" }}</span>
+                </div>
+                <div class="info-row">
+                    <span>Statut :</span>
+                    <span class="status-badge">{{ order.get_status_display }}</span>
+                </div>
+                <div class="info-row">
+                    <span>Mode de paiement :</span>
+                    <span>{{ order.get_payment_method_display }}</span>
+                </div>
+            </div>
+            
+            <div class="product-details">
+                <div class="product-title">{{ order.product.title }}</div>
+                <p><strong>Vendeur :</strong> {{ order.product.seller.first_name }} {{ order.product.seller.last_name }}</p>
+                <p><strong>Condition :</strong> {{ order.product.get_condition_display }}</p>
+                {% if order.product.description %}
+                <p><strong>Description :</strong> {{ order.product.description|truncatewords:20 }}</p>
+                {% endif %}
+                <div class="price">{{ order.total_amount|floatformat:0 }} FCFA</div>
+            </div>
+            
+            <div class="next-steps">
+                <h3>📋 Prochaines étapes</h3>
+                {% if order.payment_method == 'COD' %}
+                <div class="step">Vous serez contacté sous 24h pour organiser la livraison</div>
+                <div class="step">Préparez le montant exact : {{ order.total_amount|floatformat:0 }} FCFA</div>
+                <div class="step">Le paiement se fera à la réception du produit</div>
+                {% else %}
+                <div class="step">Votre paiement sera traité dans les prochaines minutes</div>
+                <div class="step">Vous recevrez une confirmation de paiement par SMS</div>
+                <div class="step">Le vendeur sera notifié pour préparer votre commande</div>
+                {% endif %}
+                <div class="step">Vous pouvez suivre votre commande depuis votre espace client</div>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="{{ site_url }}/order/{{ order.id }}/" class="btn">Suivre ma commande</a>
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                <p><strong>Informations de livraison :</strong></p>
+                <p>{{ order.delivery_address }}</p>
+                {% if order.delivery_phone %}
+                <p><strong>Téléphone de livraison :</strong> {{ order.delivery_phone }}</p>
+                {% endif %}
+            </div>
+            
+            <div style="margin-top: 25px; padding: 15px; background-color: #fef3c7; border-radius: 6px;">
+                <p style="margin: 0; font-size: 14px; color: #92400e;">
+                    <strong>💡 Conseil :</strong> Gardez ce numéro de commande précieusement. 
+                    Il vous sera demandé pour toute question concernant votre achat.
+                </p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>Vidé-Grenier Kamer</strong></p>
+            <p>Vendez, Achetez, Économisez – Simplicité et Sécurité</p>
+            <p>📞 {{ support_phone }} | 📧 {{ support_email }}</p>
+            <p>🌐 {{ site_url }}</p>
+        </div>
+    </div>
+</body>
+</html>
