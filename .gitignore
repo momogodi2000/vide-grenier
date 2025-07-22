@@ -10,6 +10,7 @@ env/
 venv/
 ENV/
 vide_grenier_env/
+venv
 
 # Django
 *.log
