@@ -17,10 +17,10 @@
         <div class="flex items-center space-x-2">
             {% if user.is_authenticated %}
                 <a href="/profile/" class="bg-white text-vgk-green-600 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition">Mon Compte</a>
-                <a href="/logout/" class="text-white/80 hover:text-yellow-300 px-3 py-2">Déconnexion</a>
+                <a href="/auth/logout/" class="text-white/80 hover:text-yellow-300 px-3 py-2">Déconnexion</a>
             {% else %}
-                <a href="/login/" class="bg-yellow-300 text-vgk-green-700 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-400 transition">Connexion</a>
-                <a href="/register/" class="text-white/80 hover:text-yellow-300 px-3 py-2">Inscription</a>
+                <a href="/auth/login/" class="bg-yellow-300 text-vgk-green-700 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-400 transition">Connexion</a>
+                <a href="/auth/register/" class="text-white/80 hover:text-yellow-300 px-3 py-2">Inscription</a>
             {% endif %}
         </div>
         <!-- Mobile menu button -->
@@ -38,10 +38,10 @@
             <li><a href="/contact/" class="block py-2 hover:text-yellow-300 transition">Contact</a></li>
             {% if user.is_authenticated %}
                 <a href="/profile/" class="block py-2 bg-white text-vgk-green-600 rounded-lg font-semibold hover:bg-gray-100 transition">Mon Compte</a>
-                <a href="/logout/" class="block py-2 text-white/80 hover:text-yellow-300">Déconnexion</a>
+                <a href="/auth/logout/" class="block py-2 text-white/80 hover:text-yellow-300">Déconnexion</a>
             {% else %}
-                <a href="/login/" class="block py-2 bg-yellow-300 text-vgk-green-700 rounded-lg font-semibold hover:bg-yellow-400 transition">Connexion</a>
-                <a href="/register/" class="block py-2 text-white/80 hover:text-yellow-300">Inscription</a>
+                <a href="/auth/login/" class="block py-2 bg-yellow-300 text-vgk-green-700 rounded-lg font-semibold hover:bg-yellow-400 transition">Connexion</a>
+                <a href="/auth/register/" class="block py-2 text-white/80 hover:text-yellow-300">Inscription</a>
             {% endif %}
         </ul>
     </div>

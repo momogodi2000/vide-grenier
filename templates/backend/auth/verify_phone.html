@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Vérification Téléphone - Vidé-Grenier Kamer{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto mt-12 bg-white rounded-xl shadow-lg p-8">
+    <h1 class="text-2xl font-bold text-vgk-green-700 mb-6 text-center">Vérification du numéro de téléphone</h1>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="mb-4">
+            <label for="code" class="block font-semibold mb-2">Code de vérification reçu par SMS</label>
+            <input type="text" name="code" id="code" maxlength="6" class="form-control w-full" placeholder="Entrez le code" required>
+            {% if error %}<div class="text-red-500 text-xs mt-2">{{ error }}</div>{% endif %}
+        </div>
+        <button type="submit" class="w-full bg-vgk-green-600 text-white py-2 rounded-lg font-semibold hover:bg-vgk-green-700 transition">Vérifier</button>
+    </form>
+    <div class="mt-6 text-center text-sm">
+        <span>Vous n'avez pas reçu le code ?</span>
+        <a href="?resend=1" class="text-vgk-green-600 hover:underline ml-2">Renvoyer le code</a>
+    </div>
+</div>
+{% endblock %}
