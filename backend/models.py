@@ -223,6 +223,7 @@ class Order(models.Model):
         ('MTN_MONEY', 'MTN Mobile Money'),
         ('NOUPIA', 'Noupia'),
         ('CARD', 'Carte bancaire'),
+        ('CASH_ON_DELIVERY', 'Paiement à la livraison'),
     ]
     
     DELIVERY_METHODS = [
@@ -232,7 +233,8 @@ class Order(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     order_number = models.CharField(max_length=20, unique=True)
-    buyer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    # For public/anonymous orders, buyer can be null
+    buyer = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='orders', null=True, blank=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)

@@ -103,36 +103,46 @@ def send_sms_twilio(phone_number, message):
 
 def send_email_notification(to_email, subject, template_name, context=None):
     """Envoyer une notification par email avec template"""
+    import yagmail
     try:
         if context is None:
             context = {}
-        
-        # Ajouter le contexte global VGK
         context.update({
             'site_name': 'Vidé-Grenier Kamer',
             'site_url': 'https://vide-grenier-kamer.onrender.com',
             'support_email': 'support@videgrenier-kamer.com',
             'support_phone': '+237 694 63 84 12'
         })
-        
-        # Générer le contenu HTML
         html_message = render_to_string(f'emails/{template_name}.html', context)
         text_message = render_to_string(f'emails/{template_name}.txt', context)
-        
-        send_mail(
-            subject=subject,
-            message=text_message,
-            from_email=settings.EMAIL_HOST_USER,
-            recipient_list=[to_email],
-            html_message=html_message,
-            fail_silently=False
-        )
-        
-        logger.info(f"Email envoyé avec succès à {to_email}")
-        return {'success': True}
-        
+        try:
+            yag = yagmail.SMTP(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+            yag.send(
+                to=to_email,
+                subject=subject,
+                contents=[text_message, html_message]
+            )
+            logger.info(f"Email envoyé avec succès à {to_email}")
+            return {'success': True}
+        except Exception as e:
+            logger.error(f"Erreur yagmail envoi email à {to_email}: {str(e)}")
+            # Optionally, fallback to Django send_mail
+            try:
+                send_mail(
+                    subject=subject,
+                    message=text_message,
+                    from_email=settings.EMAIL_HOST_USER,
+                    recipient_list=[to_email],
+                    html_message=html_message,
+                    fail_silently=False
+                )
+                logger.info(f"Email envoyé avec succès à {to_email} via fallback")
+                return {'success': True, 'fallback': True}
+            except Exception as e2:
+                logger.error(f"Erreur fallback envoi email à {to_email}: {str(e2)}")
+                return {'success': False, 'error': str(e2)}
     except Exception as e:
-        logger.error(f"Erreur envoi email à {to_email}: {str(e)}")
+        logger.error(f"Erreur globale envoi email à {to_email}: {str(e)}")
         return {'success': False, 'error': str(e)}
 
 

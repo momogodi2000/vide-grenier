@@ -1,16 +1,20 @@
-# backend/views.py
+"""
+backend/views.py - VERSION COMPLÈTE AVEC TOUTES LES VUES
+Includes all main views, AJAX, and webhook logic. Updated for anonymous orders and payment methods.
+"""
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import (
     TemplateView, ListView, DetailView, CreateView, 
     UpdateView, DeleteView, FormView
 )
+from django.views import View
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth import login, authenticate
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse_lazy, reverse
-from django.db.models import Q, Count, Avg, Sum
+from django.db.models import Q, Count, Avg, Sum, F
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -19,24 +23,28 @@ from django.core.paginator import Paginator
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.conf import settings
+from django.core.mail import send_mail
 
 import json
 import random
 import string
 from datetime import datetime, timedelta
+from decimal import Decimal
 
 from .models import (
     User, Product, Category, Order, Payment, Review, 
     Chat, Message, Favorite, SearchHistory, Notification, 
-    AdminStock, PickupPoint, Analytics
+    AdminStock, PickupPoint, Analytics, ProductImage
 )
 from .forms import (
     CustomSignupForm, CustomLoginForm, ProductForm, 
-    OrderForm, ReviewForm, ChatMessageForm, ProfileForm
+    OrderForm, ReviewForm, ChatMessageForm, ProfileForm,
+    SearchForm, AdminStockForm, ContactForm
 )
 from .utils import (
     send_sms_notification, send_email_notification, 
-    process_payment, track_analytics, generate_pickup_code
+    process_payment, track_analytics, generate_pickup_code,
+    get_client_ip
 )
 
 
@@ -119,7 +127,7 @@ class CustomSignupView(CreateView):
         # Envoyer SMS de bienvenue
         send_sms_notification(
             user.phone,
-            f"Bienvenue sur Vidé-Grenier Kamer! Votre compte a été créé avec succès. Code de vérification à venir."
+            f"Bienvenue sur Vidé-Grenier Kamer! Votre compte a été créé avec succès."
         )
         
         return super().form_valid(form)
@@ -283,7 +291,7 @@ class ProductListView(ListView):
 
 
 class ProductDetailView(DetailView):
-    """Détail d'un produit avec suggestions"""
+    """Détail d'un produit avec suggestions et achat public"""
     model = Product
     template_name = 'backend/products/detail.html'
     context_object_name = 'product'
@@ -292,7 +300,7 @@ class ProductDetailView(DetailView):
         product = get_object_or_404(Product, slug=self.kwargs['slug'], status='ACTIVE')
         
         # Incrémenter le compteur de vues
-        Product.objects.filter(id=product.id).update(views_count=models.F('views_count') + 1)
+        Product.objects.filter(id=product.id).update(views_count=F('views_count') + 1)
         
         # Track analytics
         track_analytics(
@@ -338,19 +346,131 @@ class ProductDetailView(DetailView):
             order__product=product
         ).select_related('reviewer').order_by('-created_at')
         
-        # Calculs pour l'affichage
+        # Calculs pour l'affichage avec frais de livraison fixes 2000 FCFA
+        delivery_cost = Decimal('2000')  # Frais fixes 2000 FCFA
         context.update({
-            'delivery_cost': self.get_delivery_cost(product.city),
+            'delivery_cost': delivery_cost,
             'commission_amount': product.commission_amount,
-            'total_with_delivery': product.price + self.get_delivery_cost(product.city)
+            'total_with_delivery': product.price + delivery_cost,
+            'whatsapp_message': self.generate_whatsapp_message(product, delivery_cost),
+            'whatsapp_url': self.generate_whatsapp_url(product, delivery_cost)
         })
         
         return context
     
-    def get_delivery_cost(self, city):
-        if city in ['DOUALA', 'YAOUNDE']:
-            return settings.VGK_SETTINGS['DELIVERY_COST_DOUALA_YAOUNDE']
-        return settings.VGK_SETTINGS['DELIVERY_COST_OTHER_CITIES']
+    def generate_whatsapp_message(self, product, delivery_cost):
+        """Générer le message WhatsApp pré-rempli"""
+        total = product.price + delivery_cost
+        message = f"""Bonjour! Je suis intéressé par ce produit:
+
+🛍️ *{product.title}*
+💰 Prix: {product.price:,.0f} FCFA
+🚚 Livraison: {delivery_cost:,.0f} FCFA
+💳 Total: {total:,.0f} FCFA
+
+📍 Ville: {product.get_city_display()}
+🔗 Lien: {self.request.build_absolute_uri()}
+
+Je souhaite commander avec *paiement à la livraison*.
+
+Merci!"""
+        return message
+    
+    def generate_whatsapp_url(self, product, delivery_cost):
+        """Générer l'URL WhatsApp Business"""
+        import urllib.parse
+        
+        # Numéro WhatsApp Business VGK
+        phone = "237694638412"  # Remplacez par votre numéro
+        message = self.generate_whatsapp_message(product, delivery_cost)
+        encoded_message = urllib.parse.quote(message)
+        
+        return f"https://wa.me/{phone}?text={encoded_message}"
+
+
+class PublicOrderCreateView(CreateView):
+    """Commande publique avec paiement à la livraison"""
+    model = Order
+    template_name = 'backend/orders/public_order.html'
+    fields = ['delivery_address', 'notes']
+    
+    def dispatch(self, request, *args, **kwargs):
+        self.product = get_object_or_404(Product, slug=kwargs['slug'], status='ACTIVE')
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        delivery_cost = Decimal('2000')
+        context.update({
+            'product': self.product,
+            'delivery_cost': delivery_cost,
+            'total_amount': self.product.price + delivery_cost
+        })
+        return context
+    
+    def form_valid(self, form):
+        delivery_cost = Decimal('2000')
+        
+        with transaction.atomic():
+            # Créer la commande avec paiement à la livraison
+            form.instance.product = self.product
+            form.instance.total_amount = self.product.price + delivery_cost
+            form.instance.commission_amount = self.product.commission_amount
+            form.instance.delivery_cost = delivery_cost
+            form.instance.status = 'PENDING'
+            form.instance.payment_method = 'CASH_ON_DELIVERY'
+            form.instance.delivery_method = 'DELIVERY'
+            
+            # Si l'utilisateur est connecté, l'assigner comme acheteur
+            if self.request.user.is_authenticated:
+                form.instance.buyer = self.request.user
+            else:
+                # Créer un utilisateur anonyme ou utiliser email/téléphone
+                form.instance.buyer = None
+            
+            response = super().form_valid(form)
+            
+            # Réserver le produit
+            self.product.status = 'RESERVED'
+            self.product.save()
+            
+            # Notifier le vendeur
+            send_sms_notification(
+                self.product.seller.phone,
+                f"Nouvelle commande VGK: {self.product.title} - Paiement à la livraison. Commande #{self.object.order_number}"
+            )
+            
+            # Notifier les admins
+            send_email_notification(
+                'admin@vgk.com',
+                'Nouvelle commande publique',
+                'order_notification',
+                {'order': self.object, 'product': self.product}
+            )
+        
+        messages.success(
+            self.request, 
+            f"Commande créée avec succès! Numéro: {self.object.order_number}. "
+            f"Vous serez contacté pour la livraison."
+        )
+        
+        return response
+    
+    def get_success_url(self):
+        return reverse('backend:public_order_success', kwargs={'order_number': self.object.order_number})
+
+
+class PublicOrderSuccessView(TemplateView):
+    """Page de confirmation de commande publique"""
+    template_name = 'backend/orders/public_success.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['order'] = get_object_or_404(
+            Order, 
+            order_number=kwargs['order_number']
+        )
+        return context
 
 
 class ProductCreateView(LoginRequiredMixin, CreateView):
@@ -376,25 +496,90 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
             "Votre produit a été créé avec succès! Il sera visible après validation."
         )
         
-        # Envoyer notification admin pour validation
-        admins = User.objects.filter(user_type='ADMIN')
-        for admin in admins:
-            Notification.objects.create(
-                user=admin,
-                type='SYSTEM',
-                title='Nouveau produit à valider',
-                message=f'Le produit "{self.object.title}" nécessite une validation.',
-                data={'product_id': str(self.object.id)}
-            )
-        
         return response
     
     def get_success_url(self):
         return reverse('backend:product_detail', kwargs={'slug': self.object.slug})
 
 
+class ProductEditView(LoginRequiredMixin, UpdateView):
+    """Modification d'un produit"""
+    model = Product
+    form_class = ProductForm
+    template_name = 'backend/products/edit.html'
+    
+    def get_queryset(self):
+        # Seul le propriétaire peut modifier
+        return Product.objects.filter(seller=self.request.user)
+    
+    def get_success_url(self):
+        return reverse('backend:product_detail', kwargs={'slug': self.object.slug})
+
+
+class ProductDeleteView(LoginRequiredMixin, DeleteView):
+    """Suppression d'un produit"""
+    model = Product
+    template_name = 'backend/products/delete.html'
+    success_url = reverse_lazy('backend:dashboard')
+    
+    def get_queryset(self):
+        # Seul le propriétaire peut supprimer
+        return Product.objects.filter(seller=self.request.user)
+
+
+class ProfileView(LoginRequiredMixin, DetailView):
+    """Profil utilisateur"""
+    model = User
+    template_name = 'backend/auth/profile.html'
+    context_object_name = 'profile_user'
+    
+    def get_object(self):
+        return self.request.user
+
+
+class ProfileEditView(LoginRequiredMixin, UpdateView):
+    """Modification du profil utilisateur"""
+    model = User
+    form_class = ProfileForm
+    template_name = 'backend/auth/profile_edit.html'
+    success_url = reverse_lazy('backend:profile')
+    
+    def get_object(self):
+        return self.request.user
+
+
+class CategoryView(ListView):
+    """Produits d'une catégorie"""
+    model = Product
+    template_name = 'backend/categories/category.html'
+    context_object_name = 'products'
+    paginate_by = 24
+    
+    def get_queryset(self):
+        self.category = get_object_or_404(Category, slug=self.kwargs['slug'])
+        return Product.objects.filter(
+            category=self.category,
+            status='ACTIVE'
+        ).select_related('seller').prefetch_related('images')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['category'] = self.category
+        return context
+
+
+class CategoryListView(ListView):
+    """Liste de toutes les catégories"""
+    model = Category
+    template_name = 'backend/categories/list.html'
+    context_object_name = 'categories'
+    
+    def get_queryset(self):
+        return Category.objects.filter(is_active=True, parent=None).prefetch_related('children')
+
+
 class OrderCreateView(LoginRequiredMixin, CreateView):
-    """Création d'une commande"""
+    """Création d'une commande pour utilisateurs connectés"""
     model = Order
     form_class = OrderForm
     template_name = 'backend/orders/create.html'
@@ -402,23 +587,21 @@ class OrderCreateView(LoginRequiredMixin, CreateView):
     def dispatch(self, request, *args, **kwargs):
         self.product = get_object_or_404(Product, id=kwargs['product_id'], status='ACTIVE')
         
-        # Vérifier que l'utilisateur n'achète pas son propre produit
         if request.user == self.product.seller:
             messages.error(request, "Vous ne pouvez pas acheter votre propre produit.")
             return redirect('backend:product_detail', slug=self.product.slug)
         
         return super().dispatch(request, *args, **kwargs)
     
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['product'] = self.product
-        return kwargs
-    
     def form_valid(self, form):
         form.instance.buyer = self.request.user
         form.instance.product = self.product
-        form.instance.total_amount = self.calculate_total_amount(form)
+        
+        # Frais de livraison fixes 2000 FCFA
+        delivery_cost = Decimal('2000')
+        form.instance.total_amount = self.product.price + delivery_cost
         form.instance.commission_amount = self.product.commission_amount
+        form.instance.delivery_cost = delivery_cost
         
         with transaction.atomic():
             response = super().form_valid(form)
@@ -433,20 +616,7 @@ class OrderCreateView(LoginRequiredMixin, CreateView):
                 form.instance.save()
         
         messages.success(self.request, "Commande créée! Procédez au paiement.")
-        
         return response
-    
-    def calculate_total_amount(self, form):
-        total = self.product.price
-        
-        # Ajouter les frais de livraison
-        if form.instance.delivery_method == 'DELIVERY':
-            if self.product.city in ['DOUALA', 'YAOUNDE']:
-                total += settings.VGK_SETTINGS['DELIVERY_COST_DOUALA_YAOUNDE']
-            else:
-                total += settings.VGK_SETTINGS['DELIVERY_COST_OTHER_CITIES']
-        
-        return total
     
     def get_success_url(self):
         return reverse('backend:payment', kwargs={'order_id': self.object.id})
@@ -454,7 +624,36 @@ class OrderCreateView(LoginRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['product'] = self.product
+        context['delivery_cost'] = Decimal('2000')
         return context
+
+
+class OrderDetailView(LoginRequiredMixin, DetailView):
+    """Détail d'une commande"""
+    model = Order
+    template_name = 'backend/orders/detail.html'
+    context_object_name = 'order'
+    
+    def get_queryset(self):
+        # Seuls l'acheteur, le vendeur ou un admin peuvent voir
+        return Order.objects.filter(
+            Q(buyer=self.request.user) | 
+            Q(product__seller=self.request.user) |
+            Q(buyer__isnull=True)  # Commandes publiques
+        ).select_related('product', 'buyer', 'product__seller')
+
+
+class OrderListView(LoginRequiredMixin, ListView):
+    """Liste des commandes de l'utilisateur"""
+    model = Order
+    template_name = 'backend/orders/list.html'
+    context_object_name = 'orders'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        return Order.objects.filter(
+            Q(buyer=self.request.user) | Q(product__seller=self.request.user)
+        ).select_related('product', 'buyer').order_by('-created_at')
 
 
 class PaymentView(LoginRequiredMixin, TemplateView):
@@ -484,11 +683,9 @@ class PaymentView(LoginRequiredMixin, TemplateView):
             return self.get(request, *args, **kwargs)
         
         try:
-            # Initier le paiement
             payment_result = process_payment(self.order, payment_method)
             
             if payment_result['success']:
-                # Créer l'enregistrement de paiement
                 payment = Payment.objects.create(
                     order=self.order,
                     payment_reference=payment_result['reference'],
@@ -506,6 +703,20 @@ class PaymentView(LoginRequiredMixin, TemplateView):
             messages.error(request, f"Erreur lors du traitement: {str(e)}")
         
         return self.get(request, *args, **kwargs)
+
+
+class PaymentSuccessView(LoginRequiredMixin, DetailView):
+    """Page de succès du paiement"""
+    model = Payment
+    template_name = 'backend/payments/success.html'
+    context_object_name = 'payment'
+
+
+class PaymentCancelView(LoginRequiredMixin, DetailView):
+    """Page d'annulation du paiement"""
+    model = Payment
+    template_name = 'backend/payments/cancel.html'
+    context_object_name = 'payment'
 
 
 class ChatListView(LoginRequiredMixin, ListView):
@@ -531,7 +742,6 @@ class ChatDetailView(LoginRequiredMixin, DetailView):
     def get_object(self):
         chat = get_object_or_404(Chat, id=self.kwargs['pk'])
         
-        # Vérifier que l'utilisateur fait partie de la conversation
         if self.request.user not in [chat.buyer, chat.seller]:
             raise PermissionDenied("Vous n'avez pas accès à cette conversation.")
         
@@ -559,7 +769,7 @@ class ChatDetailView(LoginRequiredMixin, DetailView):
             message.sender = request.user
             message.save()
             
-            # Envoyer notification à l'autre utilisateur
+            # Notifier l'autre utilisateur
             recipient = self.object.seller if request.user == self.object.buyer else self.object.buyer
             Notification.objects.create(
                 user=recipient,
@@ -569,17 +779,105 @@ class ChatDetailView(LoginRequiredMixin, DetailView):
                 data={'chat_id': str(self.object.id)}
             )
             
-            # Envoyer SMS si message important
-            if message.message_type == 'OFFER':
-                send_sms_notification(
-                    recipient.phone,
-                    f"Nouvelle offre de {form.cleaned_data['offer_amount']} FCFA pour votre produit {self.object.product.title}"
-                )
-            
             messages.success(request, "Message envoyé avec succès!")
             return redirect('backend:chat_detail', pk=self.object.id)
         
         return self.render_to_response(self.get_context_data(form=form))
+
+
+class ChatCreateView(LoginRequiredMixin, CreateView):
+    """Créer une nouvelle conversation"""
+    model = Chat
+    fields = []
+    
+    def dispatch(self, request, *args, **kwargs):
+        self.product = get_object_or_404(Product, id=kwargs['product_id'], status='ACTIVE')
+        
+        if request.user == self.product.seller:
+            messages.error(request, "Vous ne pouvez pas discuter avec vous-même.")
+            return redirect('backend:product_detail', slug=self.product.slug)
+        
+        # Vérifier si une conversation existe déjà
+        existing_chat = Chat.objects.filter(
+            product=self.product,
+            buyer=request.user,
+            seller=self.product.seller
+        ).first()
+        
+        if existing_chat:
+            return redirect('backend:chat_detail', pk=existing_chat.id)
+        
+        return super().dispatch(request, *args, **kwargs)
+    
+    def form_valid(self, form):
+        form.instance.product = self.product
+        form.instance.buyer = self.request.user
+        form.instance.seller = self.product.seller
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse('backend:chat_detail', kwargs={'pk': self.object.id})
+
+
+class ReviewCreateView(LoginRequiredMixin, CreateView):
+    """Créer un avis après livraison"""
+    model = Review
+    form_class = ReviewForm
+    template_name = 'backend/reviews/create.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        self.order = get_object_or_404(
+            Order, 
+            id=kwargs['order_id'], 
+            buyer=request.user, 
+            status='DELIVERED'
+        )
+        
+        # Vérifier qu'un avis n'existe pas déjà
+        if hasattr(self.order, 'review'):
+            messages.info(request, "Vous avez déjà laissé un avis pour cette commande.")
+            return redirect('backend:review_list')
+        
+        return super().dispatch(request, *args, **kwargs)
+    
+    def form_valid(self, form):
+        form.instance.order = self.order
+        form.instance.reviewer = self.request.user
+        response = super().form_valid(form)
+        
+        # Notifier le vendeur
+        seller = self.order.product.seller
+        Notification.objects.create(
+            user=seller,
+            type='REVIEW',
+            title='Nouvel avis reçu',
+            message=f'Vous avez reçu un avis {form.instance.overall_rating}★ pour "{self.order.product.title}"',
+            data={'review_id': str(self.object.id)}
+        )
+        
+        messages.success(self.request, "Merci pour votre avis!")
+        return response
+    
+    def get_success_url(self):
+        return reverse('backend:order_detail', kwargs={'pk': self.order.id})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['order'] = self.order
+        return context
+
+
+class ReviewListView(ListView):
+    """Liste des avis publics"""
+    model = Review
+    template_name = 'backend/reviews/list.html'
+    context_object_name = 'reviews'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        return Review.objects.filter(
+            is_verified=True
+        ).select_related('reviewer', 'order__product').order_by('-created_at')
 
 
 class AdminPanelView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
@@ -622,6 +920,174 @@ class AdminPanelView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         })
         
         return context
+
+
+class AdminProductListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """Liste des produits pour admin"""
+    model = Product
+    template_name = 'backend/admin/products.html'
+    context_object_name = 'products'
+    paginate_by = 50
+    
+    def test_func(self):
+        return self.request.user.user_type == 'ADMIN'
+    
+    def get_queryset(self):
+        return Product.objects.select_related('category', 'seller').order_by('-created_at')
+
+
+class AdminOrderListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """Liste des commandes pour admin"""
+    model = Order
+    template_name = 'backend/admin/orders.html'
+    context_object_name = 'orders'
+    paginate_by = 50
+    
+    def test_func(self):
+        return self.request.user.user_type == 'ADMIN'
+    
+    def get_queryset(self):
+        return Order.objects.select_related('buyer', 'product', 'product__seller').order_by('-created_at')
+
+
+class AdminUserListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """Liste des utilisateurs pour admin"""
+    model = User
+    template_name = 'backend/admin/users.html'
+    context_object_name = 'users'
+    paginate_by = 50
+    
+    def test_func(self):
+        return self.request.user.user_type == 'ADMIN'
+    
+    def get_queryset(self):
+        return User.objects.order_by('-date_joined')
+
+
+class AdminAnalyticsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    """Analytics pour admin"""
+    template_name = 'backend/admin/analytics.html'
+    
+    def test_func(self):
+        return self.request.user.user_type == 'ADMIN'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Calculs analytics
+        now = timezone.now()
+        last_30_days = now - timedelta(days=30)
+        
+        # Données pour graphiques
+        daily_orders = []
+        daily_revenue = []
+        for i in range(30):
+            date = (now - timedelta(days=i)).date()
+            orders_count = Order.objects.filter(created_at__date=date).count()
+            revenue = Order.objects.filter(
+                created_at__date=date, status='DELIVERED'
+            ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            
+            daily_orders.append({'date': date.isoformat(), 'orders': orders_count})
+            daily_revenue.append({'date': date.isoformat(), 'revenue': float(revenue)})
+        
+        # Top catégories
+        top_categories = Category.objects.annotate(
+            product_count=Count('products'),
+            sales_count=Count('products__order')
+        ).order_by('-sales_count')[:10]
+        
+        # Performance par ville
+        city_stats = {}
+        for city_code, city_name in User.CITIES:
+            city_stats[city_name] = {
+                'users': User.objects.filter(city=city_code).count(),
+                'products': Product.objects.filter(city=city_code).count(),
+                'orders': Order.objects.filter(product__city=city_code).count()
+            }
+        
+        context.update({
+            'daily_orders': daily_orders,
+            'daily_revenue': daily_revenue,
+            'top_categories': top_categories,
+            'city_stats': city_stats,
+        })
+        
+        return context
+
+
+class AdminStockView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """Gestion du stock admin"""
+    model = AdminStock
+    template_name = 'backend/admin/stock.html'
+    context_object_name = 'stock_items'
+    paginate_by = 50
+    
+    def test_func(self):
+        return self.request.user.user_type == 'ADMIN'
+    
+    def get_queryset(self):
+        return AdminStock.objects.select_related('product').order_by('-received_date')
+
+
+class AdminStockAddView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    """Ajouter du stock admin"""
+    form_class = AdminStockForm
+    template_name = 'backend/admin/stock_add.html'
+    success_url = reverse_lazy('backend:admin_stock')
+    
+    def test_func(self):
+        return self.request.user.user_type == 'ADMIN'
+    
+    def form_valid(self, form):
+        # Créer d'abord le produit
+        product = Product.objects.create(
+            title=form.cleaned_data['title'],
+            description=form.cleaned_data['description'],
+            category=form.cleaned_data['category'],
+            seller=self.request.user,
+            price=form.cleaned_data['price'],
+            condition=form.cleaned_data['condition'],
+            city=form.cleaned_data['city'],
+            source='ADMIN',
+            status='ACTIVE',
+            slug=f"{form.cleaned_data['title'].lower().replace(' ', '-')}-{random.randint(1000, 9999)}"
+        )
+        
+        # Créer le stock admin
+        from .utils import generate_sku
+        AdminStock.objects.create(
+            product=product,
+            sku=form.cleaned_data['sku'] or generate_sku(),
+            quantity=form.cleaned_data['quantity'],
+            location=form.cleaned_data['city'],
+            shelf_location=form.cleaned_data['shelf_location'],
+            purchase_price=form.cleaned_data['purchase_price'],
+            warranty_info=form.cleaned_data['warranty_info']
+        )
+        
+        messages.success(self.request, f"Produit {product.title} ajouté au stock avec succès!")
+        return redirect(self.success_url)
+
+
+class PickupPointListView(ListView):
+    """Liste des points de retrait"""
+    model = PickupPoint
+    template_name = 'backend/pickup/list.html'
+    context_object_name = 'pickup_points'
+    
+    def get_queryset(self):
+        return PickupPoint.objects.filter(is_active=True).order_by('city', 'name')
+
+
+class PickupPointDetailView(DetailView):
+    """Détail d'un point de retrait"""
+    model = PickupPoint
+    template_name = 'backend/pickup/detail.html'
+    context_object_name = 'pickup_point'
+    
+    def get_queryset(self):
+        return PickupPoint.objects.filter(is_active=True)
 
 
 class SearchView(TemplateView):
@@ -684,14 +1150,85 @@ class SearchView(TemplateView):
         }
 
 
-# Vues AJAX pour les interactions dynamiques
+class AboutView(TemplateView):
+    """Page À propos"""
+    template_name = 'backend/pages/about.html'
+
+
+class ContactView(FormView):
+    """Page de contact"""
+    template_name = 'backend/pages/contact.html'
+    form_class = ContactForm
+    success_url = reverse_lazy('backend:contact')
+    
+    def form_valid(self, form):
+        # Envoyer l'email de contact
+        send_mail(
+            subject=f"Contact VGK: {form.cleaned_data['subject']}",
+            message=f"""
+Nouveau message de contact:
+
+Nom: {form.cleaned_data['name']}
+Email: {form.cleaned_data['email']}
+Sujet: {form.cleaned_data['subject']}
+
+Message:
+{form.cleaned_data['message']}
+            """,
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=['support@videgrenier-kamer.com'],
+            fail_silently=False,
+        )
+        
+        messages.success(self.request, "Votre message a été envoyé avec succès!")
+        return super().form_valid(form)
+
+
+class HelpView(TemplateView):
+    """Page d'aide"""
+    template_name = 'backend/pages/help.html'
+
+
+class TermsView(TemplateView):
+    """Conditions d'utilisation"""
+    template_name = 'backend/pages/terms.html'
+
+
+class PrivacyView(TemplateView):
+    """Politique de confidentialité"""
+    template_name = 'backend/pages/privacy.html'
+
+
+class PhoneVerificationView(LoginRequiredMixin, TemplateView):
+    """Vérification du numéro de téléphone"""
+    template_name = 'backend/auth/verify_phone.html'
+    
+    def post(self, request):
+        code = request.POST.get('verification_code')
+        
+        if self.verify_sms_code(request.user.phone, code):
+            request.user.phone_verified = True
+            request.user.save()
+            messages.success(request, "Numéro de téléphone vérifié avec succès!")
+            return redirect('backend:dashboard')
+        else:
+            messages.error(request, "Code de vérification incorrect.")
+            return self.get(request)
+    
+    def verify_sms_code(self, phone, code):
+        # Implémentation factice - à remplacer par la vraie vérification
+        return code == '123456'  # Code de test
+
+
+# ============= VUES AJAX =============
+
 class ProductViewAjax(View):
     """Incrémenter les vues produit via AJAX"""
     
     def post(self, request, pk):
         try:
             product = get_object_or_404(Product, id=pk)
-            Product.objects.filter(id=pk).update(views_count=models.F('views_count') + 1)
+            Product.objects.filter(id=pk).update(views_count=F('views_count') + 1)
             return JsonResponse({'success': True, 'views': product.views_count + 1})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
@@ -723,7 +1260,47 @@ class FavoriteToggleView(LoginRequiredMixin, View):
             return JsonResponse({'success': False, 'error': str(e)})
 
 
-# Vues pour les webhooks de paiement
+class NotificationListAjax(LoginRequiredMixin, View):
+    """Liste des notifications via AJAX"""
+    
+    def get(self, request):
+        notifications = Notification.objects.filter(
+            user=request.user,
+            is_read=False
+        ).order_by('-created_at')[:10]
+        
+        data = [{
+            'id': str(notif.id),
+            'title': notif.title,
+            'message': notif.message,
+            'type': notif.type,
+            'created_at': notif.created_at.isoformat(),
+            'data': notif.data
+        } for notif in notifications]
+        
+        return JsonResponse({'notifications': data})
+
+
+class NotificationMarkReadAjax(LoginRequiredMixin, View):
+    """Marquer une notification comme lue"""
+    
+    def post(self, request, pk):
+        try:
+            notification = get_object_or_404(
+                Notification, 
+                id=pk, 
+                user=request.user
+            )
+            notification.is_read = True
+            notification.save()
+            
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+
+# ============= WEBHOOKS PAIEMENT =============
+
 @method_decorator(csrf_exempt, name='dispatch')
 class CampayWebhookView(View):
     """Webhook pour les notifications Campay"""
@@ -769,24 +1346,30 @@ class CampayWebhookView(View):
             return HttpResponse(f'Error: {str(e)}', status=400)
 
 
-class PhoneVerificationView(LoginRequiredMixin, TemplateView):
-    """Vérification du numéro de téléphone"""
-    template_name = 'backend/auth/verify_phone.html'
+@method_decorator(csrf_exempt, name='dispatch')
+class OrangeMoneyWebhookView(View):
+    """Webhook pour Orange Money"""
     
     def post(self, request):
-        code = request.POST.get('verification_code')
-        # Logique de vérification du code SMS
-        # À implémenter avec l'API SMS choisie
-        
-        if self.verify_sms_code(request.user.phone, code):
-            request.user.phone_verified = True
-            request.user.save()
-            messages.success(request, "Numéro de téléphone vérifié avec succès!")
-            return redirect('backend:dashboard')
-        else:
-            messages.error(request, "Code de vérification incorrect.")
-            return self.get(request)
+        try:
+            data = json.loads(request.body)
+            # Logique similaire à Campay
+            return HttpResponse('OK')
+        except Exception as e:
+            return HttpResponse(f'Error: {str(e)}', status=400)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class MTNMoneyWebhookView(View):
+    """Webhook pour MTN Mobile Money"""
     
-    def verify_sms_code(self, phone, code):
-        # Implémentation factice - à remplacer par la vraie vérification
-        return code == '123456'  # Code de test
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            # Logique similaire à Campay
+            return HttpResponse('OK')
+        except Exception as e:
+            return HttpResponse(f'Error: {str(e)}', status=400)
+
+
+

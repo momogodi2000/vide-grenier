@@ -58,7 +58,7 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS('✅ Tous les utilisateurs de test ont été créés avec succès!')
         )
-        self.display_created_users()
+        # self.display_created_users()  # Removed: method does not exist. If you want to display users, implement or use another method.
     
     def clear_existing_test_users(self):
         """Supprimer les utilisateurs de test existants"""

@@ -170,14 +170,13 @@ class CustomLoginForm(AuthenticationForm):
 class ProductForm(forms.ModelForm):
     """Formulaire de création/modification de produit"""
     
-    images = forms.ImageField(
+    images = forms.FileField(
         widget=forms.ClearableFileInput(attrs={
-            'multiple': True,
             'class': 'form-control',
             'accept': 'image/*'
         }),
         required=False,
-        help_text='Vous pouvez sélectionner jusqu\'à 5 images (max 5MB chacune)'
+        help_text="Vous pouvez sélectionner jusqu'à 5 images (max 5MB chacune)"
     )
     
     class Meta:
@@ -316,13 +315,13 @@ class ReviewForm(forms.ModelForm):
     
     images = forms.ImageField(
         widget=forms.ClearableFileInput(attrs={
-            'multiple': True,
             'class': 'form-control',
             'accept': 'image/*'
         }),
         required=False,
         help_text='Photos du produit reçu (optionnel)'
     )
+    # To support multiple images, handle request.FILES.getlist('images') in your view.
     
     class Meta:
         model = Review
