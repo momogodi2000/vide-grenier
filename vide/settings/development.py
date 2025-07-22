@@ -32,6 +32,6 @@ LOGGING['loggers']['django']['level'] = 'DEBUG'
 
 # Debug toolbar pour le développement
 if DEBUG:
-    INSTALLED_APPS += ['debug_toolbar']
-    MIDDLEWARE = ['debug_toolbar.middleware.DebugToolbarMiddleware', 'allauth.account.middleware.AccountMiddleware'] + MIDDLEWARE
+    # INSTALLED_APPS += ['debug_toolbar']
+    # MIDDLEWARE = ['debug_toolbar.middleware.DebugToolbarMiddleware', 'allauth.account.middleware.AccountMiddleware'] + MIDDLEWARE
     INTERNAL_IPS = ['127.0.0.1']

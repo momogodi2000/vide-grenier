@@ -145,7 +145,7 @@
                 </div>
                 
                 <form class="space-y-6">
-                    <div class="grid md:grid-cols-2 gap-6">
+                    <div class="grid md:grid-cols-2 gap-6" id="contactForm" onsubmit="return sendToWhatsApp(event)">
                         <div>
                             <label class="block font-semibold text-gray-700 mb-2">Prénom *</label>
                             <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vgk-green-500 focus:border-transparent transition-all duration-200" placeholder="Votre prénom">
@@ -175,49 +175,81 @@
                             <option>Suggestion d'amélioration</option>
                             <option>Partenariat</option>
                             <option>Autre</option>
+                <form id="contactForm" class="space-y-6" onsubmit="return sendToWhatsApp(event)">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-2" for="prenom">Prénom *</label>
+                            <input type="text" id="prenom" name="prenom" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vgk-green-500 focus:border-transparent transition-all duration-200" placeholder="Votre prénom">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-2" for="nom">Nom *</label>
+                            <input type="text" id="nom" name="nom" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vgk-green-500 focus:border-transparent transition-all duration-200" placeholder="Votre nom">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-2" for="email">Email *</label>
+                        <input type="email" id="email" name="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vgk-green-500 focus:border-transparent transition-all duration-200" placeholder="votre@email.com">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-2" for="telephone">Téléphone *</label>
+                        <input type="tel" id="telephone" name="telephone" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vgk-green-500 focus:border-transparent transition-all duration-200" placeholder="+237 6XX XX XX XX">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-2" for="sujet">Sujet *</label>
+                        <select id="sujet" name="sujet" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vgk-green-500 focus:border-transparent transition-all duration-200">
+                            <option value="Support technique">Support technique</option>
+                            <option value="Question sur une commande">Question sur une commande</option>
+                            <option value="Problème de paiement">Problème de paiement</option>
+                            <option value="Suggestion d'amélioration">Suggestion d'amélioration</option>
+                            <option value="Partenariat">Partenariat</option>
+                            <option value="Autre">Autre</option>
                         </select>
                     </div>
-                    
                     <div>
-                        <label class="block font-semibold text-gray-700 mb-2">Message *</label>
-                        <textarea rows="5" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vgk-green-500 focus:border-transparent transition-all duration-200" placeholder="Décrivez votre demande en détail..."></textarea>
+                        <label class="block font-semibold text-gray-700 mb-2" for="message">Message *</label>
+                        <textarea id="message" name="message" rows="5" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vgk-green-500 focus:border-transparent transition-all duration-200" placeholder="Décrivez votre demande en détail..."></textarea>
                     </div>
-                    
                     <button type="submit" class="w-full bg-gradient-to-r from-vgk-green-600 to-vgk-orange-500 text-white py-4 rounded-lg font-semibold text-lg shadow-lg hover:from-vgk-green-700 hover:to-vgk-orange-600 transform hover:scale-105 transition-all duration-200">
                         <i data-lucide="send" class="w-5 h-5 inline mr-2"></i>
-                        Envoyer le message
+                        Envoyer le message WhatsApp
                     </button>
                 </form>
-            </div>
-        </div>
+                <script>
+function sendToWhatsApp(event) {
+    event.preventDefault();
+    // Get form values and trim
+    const prenom = document.getElementById('prenom').value.trim();
+    const nom = document.getElementById('nom').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const telephone = document.getElementById('telephone').value.trim();
+    const sujet = document.getElementById('sujet').value.trim();
+    const message = document.getElementById('message').value.trim();
+    const date = new Date().toLocaleString();
+    const whatsappNumber = '237694638412'; // Numéro officiel
 
-        <!-- Section FAQ -->
-        <div class="mt-16 bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl p-8 shadow-lg">
-            <div class="text-center mb-10">
-                <h3 class="text-3xl font-bold text-gray-800 mb-4">Questions Fréquentes</h3>
-                <p class="text-gray-600">Trouvez rapidement des réponses aux questions les plus courantes</p>
-            </div>
-            
-            <div class="grid md:grid-cols-2 gap-8">
-                <div class="space-y-6">
-                    <div class="bg-white rounded-lg p-6 shadow hover:shadow-md transition-shadow duration-200">
-                        <h4 class="font-bold text-vgk-green-700 mb-2">Comment fonctionne le paiement ?</h4>
-                        <p class="text-gray-600">Nous acceptons Orange Money, MTN Mobile Money et les cartes bancaires via notre système sécurisé.</p>
-                    </div>
-                    <div class="bg-white rounded-lg p-6 shadow hover:shadow-md transition-shadow duration-200">
-                        <h4 class="font-bold text-vgk-green-700 mb-2">Où récupérer mes achats ?</h4>
-                        <p class="text-gray-600">Nous avons des points de retrait à Douala et Yaoundé. Livraison à domicile aussi disponible.</p>
-                    </div>
-                </div>
-                <div class="space-y-6">
-                    <div class="bg-white rounded-lg p-6 shadow hover:shadow-md transition-shadow duration-200">
-                        <h4 class="font-bold text-vgk-green-700 mb-2">Comment vendre sur la plateforme ?</h4>
-                        <p class="text-gray-600">Créez un compte, ajoutez vos produits avec photos et descriptions. C'est simple et gratuit !</p>
-                    </div>
-                    <div class="bg-white rounded-lg p-6 shadow hover:shadow-md transition-shadow duration-200">
-                        <h4 class="font-bold text-vgk-green-700 mb-2">Garantie et retours ?</h4>
-                        <p class="text-gray-600">Garantie de satisfaction 7 jours. Politique de retour flexible pour votre tranquillité.</p>
-                    </div>
+    // Validation
+    if (!prenom || !nom || !email || !telephone || !sujet || !message) {
+        alert('Veuillez remplir tous les champs obligatoires.');
+        return false;
+    }
+
+    // Format WhatsApp message
+    let text =
+        'Contact depuis le site VGK:%0A' +
+        '--------------------%0A' +
+        '👤 Nom: ' + encodeURIComponent(prenom + ' ' + nom) + '%0A' +
+        '📧 Email: ' + encodeURIComponent(email) + '%0A' +
+        '📱 Téléphone: ' + encodeURIComponent(telephone) + '%0A' +
+        '📝 Sujet: ' + encodeURIComponent(sujet) + '%0A' +
+        '💬 Message: ' + encodeURIComponent(message) + '%0A' +
+        '📅 Date: ' + encodeURIComponent(date);
+
+    let url = `https://wa.me/${whatsappNumber}?text=${text}`;
+    window.open(url, '_blank');
+    document.getElementById('contactForm').reset();
+    return false;
+}
+                </script>
                 </div>
             </div>
         </div>

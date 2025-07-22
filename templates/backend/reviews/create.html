@@ -1,0 +1,472 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Créer un Avis - Vidé-Grenier Kamer{% endblock %}
+
+{% block extra_head %}
+<style>
+    .rating-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .star-rating {
+        display: flex;
+        gap: 5px;
+    }
+    
+    .star {
+        width: 30px;
+        height: 30px;
+        cursor: pointer;
+        color: #d1d5db;
+        transition: color 0.2s;
+    }
+    
+    .star:hover,
+    .star.active {
+        color: #fbbf24;
+    }
+    
+    .image-preview {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+    
+    .preview-item {
+        position: relative;
+        width: 100px;
+        height: 100px;
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .preview-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .remove-image {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12">
+    <div class="container mx-auto px-4">
+        
+        <!-- Header Section -->
+        <div class="max-w-4xl mx-auto mb-8">
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold text-gray-800 mb-4">
+                    <i data-lucide="star" class="w-10 h-10 inline-block text-yellow-500 mr-3"></i>
+                    Partager votre Avis
+                </h1>
+                <p class="text-xl text-gray-600">Votre opinion compte pour améliorer l'expérience de tous</p>
+            </div>
+            
+            <!-- Breadcrumb -->
+            <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-6">
+                <a href="{% url 'backend:home' %}" class="hover:text-green-600">Accueil</a>
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                <a href="{% url 'backend:review_list' %}" class="hover:text-green-600">Avis</a>
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                <span class="text-gray-800">Créer un avis</span>
+            </nav>
+        </div>
+
+        <!-- Main Form -->
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
+                
+                <!-- Form Header -->
+                <div class="bg-gradient-to-r from-green-600 to-blue-600 p-8 text-white">
+                    <div class="flex items-center space-x-4">
+                        {% if order.product.main_image %}
+                        <img src="{{ order.product.main_image.image.url }}" 
+                             alt="{{ order.product.title }}" 
+                             class="w-20 h-20 rounded-lg object-cover border-2 border-white">
+                        {% else %}
+                        <div class="w-20 h-20 bg-white/20 rounded-lg flex items-center justify-center">
+                            <i data-lucide="package" class="w-10 h-10"></i>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <h2 class="text-2xl font-bold">{{ order.product.title }}</h2>
+                            <p class="text-green-100">Commande #{{ order.order_number }}</p>
+                            <p class="text-green-100">Livré le {{ order.delivered_at|date:"d/m/Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Content -->
+                <form method="post" enctype="multipart/form-data" class="p-8" id="reviewForm">
+                    {% csrf_token %}
+                    
+                    <!-- Évaluations détaillées -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        
+                        <!-- Qualité du produit -->
+                        <div class="rating-section">
+                            <label class="block text-lg font-semibold text-gray-800 mb-4">
+                                <i data-lucide="package-check" class="w-5 h-5 inline-block mr-2 text-green-600"></i>
+                                Qualité du produit
+                            </label>
+                            <div class="rating-group">
+                                <div class="star-rating" data-field="product_quality">
+                                    <i data-lucide="star" class="star" data-value="1"></i>
+                                    <i data-lucide="star" class="star" data-value="2"></i>
+                                    <i data-lucide="star" class="star" data-value="3"></i>
+                                    <i data-lucide="star" class="star" data-value="4"></i>
+                                    <i data-lucide="star" class="star" data-value="5"></i>
+                                </div>
+                                <span class="rating-text text-gray-600">Pas encore noté</span>
+                            </div>
+                            <input type="hidden" name="product_quality" id="product_quality" required>
+                        </div>
+
+                        <!-- Communication vendeur -->
+                        <div class="rating-section">
+                            <label class="block text-lg font-semibold text-gray-800 mb-4">
+                                <i data-lucide="message-circle" class="w-5 h-5 inline-block mr-2 text-blue-600"></i>
+                                Communication vendeur
+                            </label>
+                            <div class="rating-group">
+                                <div class="star-rating" data-field="seller_communication">
+                                    <i data-lucide="star" class="star" data-value="1"></i>
+                                    <i data-lucide="star" class="star" data-value="2"></i>
+                                    <i data-lucide="star" class="star" data-value="3"></i>
+                                    <i data-lucide="star" class="star" data-value="4"></i>
+                                    <i data-lucide="star" class="star" data-value="5"></i>
+                                </div>
+                                <span class="rating-text text-gray-600">Pas encore noté</span>
+                            </div>
+                            <input type="hidden" name="seller_communication" id="seller_communication" required>
+                        </div>
+
+                        <!-- Rapidité de livraison -->
+                        <div class="rating-section">
+                            <label class="block text-lg font-semibold text-gray-800 mb-4">
+                                <i data-lucide="truck" class="w-5 h-5 inline-block mr-2 text-purple-600"></i>
+                                Rapidité de livraison
+                            </label>
+                            <div class="rating-group">
+                                <div class="star-rating" data-field="delivery_speed">
+                                    <i data-lucide="star" class="star" data-value="1"></i>
+                                    <i data-lucide="star" class="star" data-value="2"></i>
+                                    <i data-lucide="star" class="star" data-value="3"></i>
+                                    <i data-lucide="star" class="star" data-value="4"></i>
+                                    <i data-lucide="star" class="star" data-value="5"></i>
+                                </div>
+                                <span class="rating-text text-gray-600">Pas encore noté</span>
+                            </div>
+                            <input type="hidden" name="delivery_speed" id="delivery_speed" required>
+                        </div>
+
+                        <!-- Qualité emballage -->
+                        <div class="rating-section">
+                            <label class="block text-lg font-semibold text-gray-800 mb-4">
+                                <i data-lucide="gift" class="w-5 h-5 inline-block mr-2 text-orange-600"></i>
+                                Qualité emballage
+                            </label>
+                            <div class="rating-group">
+                                <div class="star-rating" data-field="packaging">
+                                    <i data-lucide="star" class="star" data-value="1"></i>
+                                    <i data-lucide="star" class="star" data-value="2"></i>
+                                    <i data-lucide="star" class="star" data-value="3"></i>
+                                    <i data-lucide="star" class="star" data-value="4"></i>
+                                    <i data-lucide="star" class="star" data-value="5"></i>
+                                </div>
+                                <span class="rating-text text-gray-600">Pas encore noté</span>
+                            </div>
+                            <input type="hidden" name="packaging" id="packaging" required>
+                        </div>
+                    </div>
+
+                    <!-- Note globale -->
+                    <div class="mb-8 p-6 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl border border-yellow-200">
+                        <label class="block text-xl font-bold text-gray-800 mb-4 text-center">
+                            <i data-lucide="award" class="w-6 h-6 inline-block mr-2 text-yellow-600"></i>
+                            Note globale de votre expérience
+                        </label>
+                        <div class="flex justify-center mb-4">
+                            <div class="star-rating" data-field="overall_rating">
+                                <i data-lucide="star" class="star text-4xl" data-value="1"></i>
+                                <i data-lucide="star" class="star text-4xl" data-value="2"></i>
+                                <i data-lucide="star" class="star text-4xl" data-value="3"></i>
+                                <i data-lucide="star" class="star text-4xl" data-value="4"></i>
+                                <i data-lucide="star" class="star text-4xl" data-value="5"></i>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <span id="overall-rating-text" class="text-lg font-medium text-gray-600">Cliquez sur les étoiles pour noter</span>
+                        </div>
+                        <input type="hidden" name="overall_rating" id="overall_rating" required>
+                    </div>
+
+                    <!-- Commentaire détaillé -->
+                    <div class="mb-8">
+                        <label for="comment" class="block text-lg font-semibold text-gray-800 mb-4">
+                            <i data-lucide="edit-3" class="w-5 h-5 inline-block mr-2 text-green-600"></i>
+                            Votre avis détaillé
+                        </label>
+                        <textarea name="comment" id="comment" rows="6" 
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                                  placeholder="Partagez votre expérience en détail... Qu'avez-vous apprécié ? Que pourrait-on améliorer ? Recommanderiez-vous ce vendeur ?"
+                                  required minlength="20"></textarea>
+                        <div class="flex justify-between mt-2">
+                            <span class="text-sm text-gray-500">Minimum 20 caractères requis</span>
+                            <span id="char-count" class="text-sm text-gray-500">0/500</span>
+                        </div>
+                    </div>
+
+                    <!-- Photos du produit reçu -->
+                    <div class="mb-8">
+                        <label class="block text-lg font-semibold text-gray-800 mb-4">
+                            <i data-lucide="camera" class="w-5 h-5 inline-block mr-2 text-blue-600"></i>
+                            Photos du produit reçu (optionnel)
+                        </label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-500 transition-colors">
+                            <div class="mb-4">
+                                <i data-lucide="upload" class="w-12 h-12 mx-auto text-gray-400 mb-2"></i>
+                                <p class="text-gray-600">Glissez vos images ici ou cliquez pour sélectionner</p>
+                                <p class="text-sm text-gray-500 mt-1">PNG, JPG jusqu'à 5MB chacune (max 5 photos)</p>
+                            </div>
+                            <input type="file" name="images" id="images" multiple accept="image/*" 
+                                   class="hidden" onchange="handleImageUpload(event)">
+                            <button type="button" onclick="document.getElementById('images').click()" 
+                                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                Choisir des photos
+                            </button>
+                        </div>
+                        <div id="image-preview" class="image-preview mt-4"></div>
+                    </div>
+
+                    <!-- Conseils pour un bon avis -->
+                    <div class="mb-8 p-6 bg-blue-50 rounded-2xl border border-blue-200">
+                        <h3 class="text-lg font-semibold text-blue-800 mb-3">
+                            <i data-lucide="lightbulb" class="w-5 h-5 inline-block mr-2"></i>
+                            Conseils pour un avis utile
+                        </h3>
+                        <ul class="text-blue-700 space-y-2">
+                            <li class="flex items-start">
+                                <i data-lucide="check" class="w-4 h-4 mr-2 mt-1 text-blue-600"></i>
+                                Décrivez précisément l'état du produit reçu
+                            </li>
+                            <li class="flex items-start">
+                                <i data-lucide="check" class="w-4 h-4 mr-2 mt-1 text-blue-600"></i>
+                                Mentionnez la qualité de la communication avec le vendeur
+                            </li>
+                            <li class="flex items-start">
+                                <i data-lucide="check" class="w-4 h-4 mr-2 mt-1 text-blue-600"></i>
+                                Partagez votre expérience de livraison/retrait
+                            </li>
+                            <li class="flex items-start">
+                                <i data-lucide="check" class="w-4 h-4 mr-2 mt-1 text-blue-600"></i>
+                                Soyez constructif et respectueux dans vos commentaires
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Boutons d'action -->
+                    <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                        <a href="{% url 'backend:review_list' %}" 
+                           class="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors flex items-center">
+                            <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                            Annuler
+                        </a>
+                        
+                        <button type="submit" 
+                                class="px-8 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-xl hover:from-green-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center font-semibold">
+                            <i data-lucide="send" class="w-5 h-5 mr-2"></i>
+                            Publier mon avis
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion des étoiles
+    const ratingGroups = document.querySelectorAll('.star-rating');
+    const ratingTexts = {
+        1: 'Très décevant',
+        2: 'Décevant', 
+        3: 'Correct',
+        4: 'Bien',
+        5: 'Excellent'
+    };
+
+    ratingGroups.forEach(group => {
+        const stars = group.querySelectorAll('.star');
+        const field = group.dataset.field;
+        const hiddenInput = document.getElementById(field);
+        const ratingText = group.parentElement.querySelector('.rating-text');
+
+        stars.forEach((star, index) => {
+            star.addEventListener('click', () => {
+                const value = parseInt(star.dataset.value);
+                hiddenInput.value = value;
+                
+                // Mettre à jour l'affichage des étoiles
+                stars.forEach((s, i) => {
+                    if (i < value) {
+                        s.classList.add('active');
+                    } else {
+                        s.classList.remove('active');
+                    }
+                });
+                
+                // Mettre à jour le texte
+                if (ratingText) {
+                    ratingText.textContent = ratingTexts[value];
+                }
+
+                // Cas spécial pour la note globale
+                if (field === 'overall_rating') {
+                    document.getElementById('overall-rating-text').textContent = 
+                        `${value}/5 étoiles - ${ratingTexts[value]}`;
+                }
+            });
+
+            star.addEventListener('mouseenter', () => {
+                const value = parseInt(star.dataset.value);
+                stars.forEach((s, i) => {
+                    if (i < value) {
+                        s.style.color = '#fbbf24';
+                    } else {
+                        s.style.color = '#d1d5db';
+                    }
+                });
+            });
+        });
+
+        group.addEventListener('mouseleave', () => {
+            const currentValue = parseInt(hiddenInput.value) || 0;
+            stars.forEach((s, i) => {
+                if (i < currentValue) {
+                    s.style.color = '#fbbf24';
+                } else {
+                    s.style.color = '#d1d5db';
+                }
+            });
+        });
+    });
+
+    // Compteur de caractères pour le commentaire
+    const commentField = document.getElementById('comment');
+    const charCount = document.getElementById('char-count');
+    
+    commentField.addEventListener('input', function() {
+        const length = this.value.length;
+        charCount.textContent = `${length}/500`;
+        
+        if (length < 20) {
+            charCount.style.color = '#ef4444';
+        } else if (length > 450) {
+            charCount.style.color = '#f59e0b';
+        } else {
+            charCount.style.color = '#10b981';
+        }
+    });
+});
+
+// Gestion de l'upload d'images
+function handleImageUpload(event) {
+    const files = Array.from(event.target.files);
+    const preview = document.getElementById('image-preview');
+    
+    // Limiter à 5 images
+    if (files.length > 5) {
+        alert('Vous ne pouvez télécharger que 5 images maximum');
+        return;
+    }
+    
+    // Vider l'aperçu précédent
+    preview.innerHTML = '';
+    
+    files.forEach((file, index) => {
+        if (file.size > 5 * 1024 * 1024) {
+            alert(`L'image ${file.name} est trop voluminouse (max 5MB)`);
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const div = document.createElement('div');
+            div.className = 'preview-item';
+            div.innerHTML = `
+                <img src="${e.target.result}" alt="Preview ${index + 1}">
+                <button type="button" class="remove-image" onclick="removeImage(this)">×</button>
+            `;
+            preview.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+function removeImage(button) {
+    button.parentElement.remove();
+    
+    // Mettre à jour la liste des fichiers
+    const input = document.getElementById('images');
+    const dt = new DataTransfer();
+    
+    // Reconstruire la liste des fichiers sans celui supprimé
+    const currentFiles = Array.from(input.files);
+    const index = Array.from(button.parentElement.parentElement.children).indexOf(button.parentElement);
+    
+    currentFiles.forEach((file, i) => {
+        if (i !== index) {
+            dt.items.add(file);
+        }
+    });
+    
+    input.files = dt.files;
+}
+
+// Validation du formulaire
+document.getElementById('reviewForm').addEventListener('submit', function(e) {
+    const requiredRatings = ['product_quality', 'seller_communication', 'delivery_speed', 'packaging', 'overall_rating'];
+    const comment = document.getElementById('comment');
+    
+    // Vérifier que toutes les notes sont remplies
+    for (let field of requiredRatings) {
+        if (!document.getElementById(field).value) {
+            e.preventDefault();
+            alert(`Veuillez noter "${document.querySelector(`label[for="${field}"], .star-rating[data-field="${field}"]`).closest('.rating-section').querySelector('label').textContent.trim()}"`);
+            return;
+        }
+    }
+    
+    // Vérifier la longueur du commentaire
+    if (comment.value.length < 20) {
+        e.preventDefault();
+        alert('Votre commentaire doit contenir au moins 20 caractères');
+        comment.focus();
+        return;
+    }
+});
+</script>
+{% endblock %}

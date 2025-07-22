@@ -4,6 +4,8 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
+
+from decimal import Decimal
 from PIL import Image
 import uuid
 import os
@@ -164,7 +166,6 @@ class Product(models.Model):
     def commission_amount(self):
         if self.source == 'CLIENT':
             from django.conf import settings
-            from decimal import Decimal
             commission_rate = Decimal(str(settings.VGK_SETTINGS.get('COMMISSION_RATE', 0.08)))
             return self.price * commission_rate
         return Decimal('0')

@@ -1,15 +1,543 @@
 {% extends 'base.html' %}
-{% block title %}Détail de l'avis - Vidé-Grenier Kamer{% endblock %}
+{% load static %}
+
+{% block title %}Détail de l'Avis - Vidé-Grenier Kamer{% endblock %}
+
+{% block extra_head %}
+<style>
+    .rating-breakdown {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    }
+    
+    .star-display {
+        color: #fbbf24;
+        filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+    }
+    
+    .review-image {
+        transition: transform 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .review-image:hover {
+        transform: scale(1.05);
+    }
+    
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.9);
+    }
+    
+    .modal-content {
+        margin: auto;
+        display: block;
+        width: 80%;
+        max-width: 700px;
+        max-height: 80%;
+        object-fit: contain;
+    }
+    
+    .close {
+        position: absolute;
+        top: 15px;
+        right: 35px;
+        color: #f1f1f1;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .helpful-btn {
+        transition: all 0.3s ease;
+    }
+    
+    .helpful-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="max-w-xl mx-auto py-12">
-    <div class="bg-white rounded-xl shadow p-8">
-        <h1 class="text-2xl font-bold text-vgk-green-700 mb-4">Avis de {{ review.user_name }}</h1>
-        <div class="mb-2 text-gray-600">Commentaire : {{ review.comment }}</div>
-        <div class="mb-2 text-yellow-500 font-bold">Note : {{ review.rating }}/5</div>
-        <div class="mb-2 text-xs text-gray-400">Publié le : {{ review.created_at|date:"d/m/Y H:i" }}</div>
-        <div class="mt-6">
-            <a href="{% url 'backend:review_list' %}" class="text-vgk-green-600 hover:underline">← Retour à la liste</a>
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12">
+    <div class="container mx-auto px-4">
+        
+        <!-- Breadcrumb -->
+        <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-8 max-w-6xl mx-auto">
+            <a href="{% url 'backend:home' %}" class="hover:text-green-600 transition-colors">Accueil</a>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <a href="{% url 'backend:review_list' %}" class="hover:text-green-600 transition-colors">Tous les avis</a>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <span class="text-gray-800">Détail de l'avis</span>
+        </nav>
+
+        <div class="max-w-6xl mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- Contenu principal de l'avis -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
+                        
+                        <!-- En-tête de l'avis -->
+                        <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-white">
+                            <div class="flex items-start space-x-6">
+                                <!-- Avatar utilisateur -->
+                                <div class="flex-shrink-0">
+                                    {% if review.reviewer.profile_picture %}
+                                    <img src="{{ review.reviewer.profile_picture.url }}" 
+                                         alt="{{ review.reviewer.get_full_name }}" 
+                                         class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg">
+                                    {% else %}
+                                    <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center border-4 border-white">
+                                        <i data-lucide="user" class="w-10 h-10"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Informations utilisateur et note -->
+                                <div class="flex-1">
+                                    <h1 class="text-2xl font-bold mb-2">{{ review.reviewer.get_full_name }}</h1>
+                                    <div class="flex items-center space-x-4 mb-4">
+                                        <div class="flex items-center space-x-1">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= review.overall_rating %}
+                                                <i data-lucide="star" class="w-6 h-6 star-display fill-current"></i>
+                                                {% else %}
+                                                <i data-lucide="star" class="w-6 h-6 text-white/30"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        <span class="text-2xl font-bold">{{ review.overall_rating }}/5</span>
+                                    </div>
+                                    <div class="flex items-center space-x-4 text-blue-100">
+                                        <span class="flex items-center">
+                                            <i data-lucide="calendar" class="w-4 h-4 mr-1"></i>
+                                            {{ review.created_at|date:"d F Y" }}
+                                        </span>
+                                        <span class="flex items-center">
+                                            <i data-lucide="map-pin" class="w-4 h-4 mr-1"></i>
+                                            {{ review.reviewer.city }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Corps de l'avis -->
+                        <div class="p-8">
+                            
+                            <!-- Évaluations détaillées -->
+                            <div class="mb-8">
+                                <h3 class="text-xl font-semibold text-gray-800 mb-6">
+                                    <i data-lucide="bar-chart-3" class="w-5 h-5 inline-block mr-2 text-blue-600"></i>
+                                    Évaluations détaillées
+                                </h3>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- Qualité du produit -->
+                                    <div class="rating-breakdown rounded-2xl p-6">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <span class="text-gray-700 font-medium">
+                                                <i data-lucide="package-check" class="w-4 h-4 inline-block mr-2 text-green-600"></i>
+                                                Qualité du produit
+                                            </span>
+                                            <span class="font-bold text-lg">{{ review.product_quality }}/5</span>
+                                        </div>
+                                        <div class="flex items-center space-x-1">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= review.product_quality %}
+                                                <i data-lucide="star" class="w-4 h-4 star-display fill-current"></i>
+                                                {% else %}
+                                                <i data-lucide="star" class="w-4 h-4 text-gray-300"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Communication vendeur -->
+                                    <div class="rating-breakdown rounded-2xl p-6">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <span class="text-gray-700 font-medium">
+                                                <i data-lucide="message-circle" class="w-4 h-4 inline-block mr-2 text-blue-600"></i>
+                                                Communication vendeur
+                                            </span>
+                                            <span class="font-bold text-lg">{{ review.seller_communication }}/5</span>
+                                        </div>
+                                        <div class="flex items-center space-x-1">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= review.seller_communication %}
+                                                <i data-lucide="star" class="w-4 h-4 star-display fill-current"></i>
+                                                {% else %}
+                                                <i data-lucide="star" class="w-4 h-4 text-gray-300"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Rapidité de livraison -->
+                                    <div class="rating-breakdown rounded-2xl p-6">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <span class="text-gray-700 font-medium">
+                                                <i data-lucide="truck" class="w-4 h-4 inline-block mr-2 text-purple-600"></i>
+                                                Rapidité de livraison
+                                            </span>
+                                            <span class="font-bold text-lg">{{ review.delivery_speed }}/5</span>
+                                        </div>
+                                        <div class="flex items-center space-x-1">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= review.delivery_speed %}
+                                                <i data-lucide="star" class="w-4 h-4 star-display fill-current"></i>
+                                                {% else %}
+                                                <i data-lucide="star" class="w-4 h-4 text-gray-300"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Qualité emballage -->
+                                    <div class="rating-breakdown rounded-2xl p-6">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <span class="text-gray-700 font-medium">
+                                                <i data-lucide="gift" class="w-4 h-4 inline-block mr-2 text-orange-600"></i>
+                                                Qualité emballage
+                                            </span>
+                                            <span class="font-bold text-lg">{{ review.packaging }}/5</span>
+                                        </div>
+                                        <div class="flex items-center space-x-1">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= review.packaging %}
+                                                <i data-lucide="star" class="w-4 h-4 star-display fill-current"></i>
+                                                {% else %}
+                                                <i data-lucide="star" class="w-4 h-4 text-gray-300"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Commentaire détaillé -->
+                            <div class="mb-8">
+                                <h3 class="text-xl font-semibold text-gray-800 mb-4">
+                                    <i data-lucide="message-square" class="w-5 h-5 inline-block mr-2 text-green-600"></i>
+                                    Commentaire détaillé
+                                </h3>
+                                <div class="bg-gray-50 rounded-2xl p-6 border-l-4 border-blue-500">
+                                    <p class="text-gray-700 leading-relaxed text-lg">{{ review.comment }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Photos de l'avis -->
+                            {% if review.images.exists %}
+                            <div class="mb-8">
+                                <h3 class="text-xl font-semibold text-gray-800 mb-4">
+                                    <i data-lucide="camera" class="w-5 h-5 inline-block mr-2 text-purple-600"></i>
+                                    Photos partagées ({{ review.images.count }})
+                                </h3>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    {% for image in review.images.all %}
+                                    <div class="relative group">
+                                        <img src="{{ image.image.url }}" 
+                                             alt="Photo d'avis" 
+                                             class="review-image w-full h-32 object-cover rounded-xl shadow-md hover:shadow-lg transition-all duration-300"
+                                             onclick="openImageModal('{{ image.image.url }}')">
+                                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-xl transition-all duration-300 flex items-center justify-center">
+                                            <i data-lucide="zoom-in" class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"></i>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Actions utilisateur -->
+                            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                                <div class="flex items-center space-x-4">
+                                    {% if user.is_authenticated %}
+                                    <button onclick="toggleHelpful({{ review.id }})" 
+                                            class="helpful-btn flex items-center space-x-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all duration-300">
+                                        <i data-lucide="thumbs-up" class="w-4 h-4"></i>
+                                        <span>Utile ({{ review.helpful_count }})</span>
+                                    </button>
+                                    {% endif %}
+                                    
+                                    <button onclick="shareReview()" 
+                                            class="flex items-center space-x-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all duration-300">
+                                        <i data-lucide="share" class="w-4 h-4"></i>
+                                        <span>Partager</span>
+                                    </button>
+                                </div>
+                                
+                                <div class="text-sm text-gray-500">
+                                    Avis vérifié • Achat confirmé
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar avec informations produit -->
+                <div class="lg:col-span-1">
+                    
+                    <!-- Informations produit -->
+                    <div class="bg-white rounded-3xl shadow-2xl overflow-hidden mb-8">
+                        <div class="bg-gradient-to-r from-green-600 to-teal-600 p-6 text-white">
+                            <h3 class="text-xl font-bold">
+                                <i data-lucide="package" class="w-5 h-5 inline-block mr-2"></i>
+                                Produit évalué
+                            </h3>
+                        </div>
+                        
+                        <div class="p-6">
+                            {% if review.order.product.main_image %}
+                            <img src="{{ review.order.product.main_image.image.url }}" 
+                                 alt="{{ review.order.product.title }}" 
+                                 class="w-full h-48 object-cover rounded-xl mb-4 shadow-md">
+                            {% else %}
+                            <div class="w-full h-48 bg-gray-200 rounded-xl mb-4 flex items-center justify-center">
+                                <i data-lucide="image" class="w-12 h-12 text-gray-400"></i>
+                            </div>
+                            {% endif %}
+                            
+                            <h4 class="text-lg font-semibold text-gray-800 mb-2">{{ review.order.product.title }}</h4>
+                            <p class="text-gray-600 mb-4">{{ review.order.product.description|truncatewords:15 }}</p>
+                            
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-500">Prix</span>
+                                    <span class="font-bold text-green-600">{{ review.order.product.price|floatformat:0 }} FCFA</span>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-500">Condition</span>
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                                        {{ review.order.product.get_condition_display }}
+                                    </span>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-500">Vendeur</span>
+                                    <span class="font-medium">{{ review.order.product.seller.get_full_name }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <a href="{% url 'backend:product_detail' slug=review.order.product.slug %}" 
+                                   class="w-full px-4 py-2 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg hover:from-green-700 hover:to-teal-700 transition-all duration-300 flex items-center justify-center">
+                                    <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
+                                    Voir le produit
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informations commande -->
+                    <div class="bg-white rounded-3xl shadow-2xl overflow-hidden mb-8">
+                        <div class="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white">
+                            <h3 class="text-xl font-bold">
+                                <i data-lucide="shopping-bag" class="w-5 h-5 inline-block mr-2"></i>
+                                Détails commande
+                            </h3>
+                        </div>
+                        
+                        <div class="p-6 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-500">Numéro</span>
+                                <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{{ review.order.order_number }}</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-500">Date commande</span>
+                                <span class="font-medium">{{ review.order.created_at|date:"d/m/Y" }}</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-500">Date livraison</span>
+                                <span class="font-medium text-green-600">{{ review.order.delivered_at|date:"d/m/Y" }}</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-500">Montant total</span>
+                                <span class="font-bold text-lg">{{ review.order.total_amount|floatformat:0 }} FCFA</span>
+                            </div>
+                            
+                            <div class="pt-4 border-t border-gray-200">
+                                <a href="{% url 'backend:order_detail' pk=review.order.id %}" 
+                                   class="w-full px-4 py-2 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50 transition-colors flex items-center justify-center">
+                                    <i data-lucide="file-text" class="w-4 h-4 mr-2"></i>
+                                    Voir la commande
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Avis similaires -->
+                    <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
+                        <div class="bg-gradient-to-r from-orange-600 to-red-600 p-6 text-white">
+                            <h3 class="text-xl font-bold">
+                                <i data-lucide="users" class="w-5 h-5 inline-block mr-2"></i>
+                                Autres avis
+                            </h3>
+                        </div>
+                        
+                        <div class="p-6">
+                            {% for other_review in similar_reviews %}
+                            <div class="mb-6 last:mb-0 pb-6 last:pb-0 border-b last:border-b-0 border-gray-200">
+                                <div class="flex items-center space-x-3 mb-3">
+                                    {% if other_review.reviewer.profile_picture %}
+                                    <img src="{{ other_review.reviewer.profile_picture.url }}" 
+                                         alt="{{ other_review.reviewer.get_full_name }}" 
+                                         class="w-10 h-10 rounded-full object-cover">
+                                    {% else %}
+                                    <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                                        <i data-lucide="user" class="w-5 h-5 text-gray-400"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div>
+                                        <p class="font-medium text-gray-800">{{ other_review.reviewer.get_full_name }}</p>
+                                        <div class="flex items-center space-x-1">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= other_review.overall_rating %}
+                                                <i data-lucide="star" class="w-3 h-3 star-display fill-current"></i>
+                                                {% else %}
+                                                <i data-lucide="star" class="w-3 h-3 text-gray-300"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-gray-600 text-sm">{{ other_review.comment|truncatewords:20 }}</p>
+                                <a href="{% url 'backend:review_detail' pk=other_review.id %}" 
+                                   class="text-orange-600 hover:text-orange-700 text-sm font-medium mt-2 inline-block">
+                                    Lire la suite →
+                                </a>
+                            </div>
+                            {% empty %}
+                            <p class="text-gray-500 text-center py-4">Aucun autre avis disponible pour le moment.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="mt-12 flex items-center justify-between">
+                <a href="{% url 'backend:review_list' %}" 
+                   class="flex items-center space-x-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span>Retour aux avis</span>
+                </a>
+                
+                <div class="flex items-center space-x-4">
+                    {% if prev_review %}
+                    <a href="{% url 'backend:review_detail' pk=prev_review.id %}" 
+                       class="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        <span>Précédent</span>
+                    </a>
+                    {% endif %}
+                    
+                    {% if next_review %}
+                    <a href="{% url 'backend:review_detail' pk=next_review.id %}" 
+                       class="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        <span>Suivant</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<!-- Modal pour agrandir les images -->
+<div id="imageModal" class="modal">
+    <span class="close" onclick="closeImageModal()">&times;</span>
+    <img class="modal-content" id="modalImage">
+</div>
+
+<!-- Scripts -->
+<script>
+function openImageModal(imageSrc) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    modal.style.display = 'block';
+    modalImg.src = imageSrc;
+}
+
+function closeImageModal() {
+    document.getElementById('imageModal').style.display = 'none';
+}
+
+// Fermer le modal en cliquant à l'extérieur
+window.onclick = function(event) {
+    const modal = document.getElementById('imageModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function toggleHelpful(reviewId) {
+    fetch(`/ajax/review/${reviewId}/helpful/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const button = document.querySelector('.helpful-btn span');
+            button.textContent = `Utile (${data.helpful_count})`;
+            
+            // Animation de feedback
+            const btnElement = document.querySelector('.helpful-btn');
+            btnElement.classList.add('bg-green-200');
+            setTimeout(() => {
+                btnElement.classList.remove('bg-green-200');
+            }, 300);
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+    });
+}
+
+function shareReview() {
+    if (navigator.share) {
+        navigator.share({
+            title: 'Avis sur Vidé-Grenier Kamer',
+            text: `Découvrez cet avis {{ review.overall_rating }}/5 étoiles sur {{ review.order.product.title }}`,
+            url: window.location.href
+        });
+    } else {
+        // Fallback pour les navigateurs qui ne supportent pas l'API Web Share
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            alert('Lien copié dans le presse-papiers !');
+        });
+    }
+}
+
+// Animation d'entrée
+document.addEventListener('DOMContentLoaded', function() {
+    const elements = document.querySelectorAll('.rating-breakdown, .review-image');
+    elements.forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            el.style.transition = 'all 0.5s ease';
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
 {% endblock %}

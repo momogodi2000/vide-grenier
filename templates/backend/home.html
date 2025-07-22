@@ -8,7 +8,22 @@
 {% block extra_css %}
 <style>
     .hero-gradient {
-        background: linear-gradient(135deg, #00823A 0%, #FF6B35 100%);
+        background: linear-gradient(135deg, rgba(0, 130, 58, 0.9) 0%, rgba(255, 107, 53, 0.9) 100%);
+    }
+    
+    .hero-bg {
+        background: url('{% static "images/hero.jpg" %}') center/cover no-repeat;
+        position: relative;
+    }
+    
+    .hero-bg::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(0, 130, 58, 0.85) 0%, rgba(255, 107, 53, 0.85) 100%);
     }
     
     .floating-card {
@@ -41,134 +56,410 @@
     .stats-counter {
         font-variant-numeric: tabular-nums;
     }
+    
+    .animate-fade-in-up {
+        animation: fadeInUp 1s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .feature-card {
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .benefit-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    @media (max-width: 768px) {
+        .hero-bg {
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+        
+        .floating-card {
+            display: none;
+        }
+        
+        .grid-mobile-stack {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        
+        .text-mobile-center {
+            text-align: center;
+        }
+        
+        .space-mobile-4 > * + * {
+            margin-top: 1rem;
+        }
+        
+        .stats-mobile {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Hero Section avec 3D -->
-<section class="hero-gradient relative overflow-hidden min-h-screen flex items-center">
-    <!-- Arrière-plan 3D -->
-    <div id="hero-3d-bg" class="absolute inset-0 parallax-bg"></div>
-    
-    <!-- Particules flottantes -->
-    <div class="absolute inset-0 overflow-hidden pointer-events-none">
-        <div class="floating-card absolute top-20 left-10 w-16 h-16 bg-white/10 rounded-lg backdrop-blur-sm"></div>
-        <div class="floating-card absolute top-40 right-20 w-12 h-12 bg-white/10 rounded-full backdrop-blur-sm"></div>
-        <div class="floating-card absolute bottom-32 left-1/4 w-8 h-8 bg-white/10 rounded-lg backdrop-blur-sm"></div>
-        <div class="floating-card absolute bottom-20 right-1/3 w-20 h-20 bg-white/10 rounded-xl backdrop-blur-sm"></div>
+<!-- Hero Section avec Image Background -->
+<section class="hero-bg relative overflow-hidden min-h-screen flex items-center">
+    <div class="relative z-10 w-full">
+        <!-- Particules flottantes (cachées sur mobile) -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
+            <div class="floating-card absolute top-20 left-10 w-16 h-16 bg-white/10 rounded-lg backdrop-blur-sm"></div>
+            <div class="floating-card absolute top-40 right-20 w-12 h-12 bg-white/10 rounded-full backdrop-blur-sm"></div>
+            <div class="floating-card absolute bottom-32 left-1/4 w-8 h-8 bg-white/10 rounded-lg backdrop-blur-sm"></div>
+            <div class="floating-card absolute bottom-20 right-1/3 w-20 h-20 bg-white/10 rounded-xl backdrop-blur-sm"></div>
+        </div>
+        
+        <div class="container mx-auto px-4 py-8 md:py-0">
+            <div class="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center grid-mobile-stack">
+                <!-- Contenu principal -->
+                <div class="text-white space-y-6 md:space-y-8 animate-fade-in-up text-mobile-center">
+                    <div class="space-y-4">
+                        <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                            Vendez, Achetez,
+                            <span class="text-yellow-300 animate-pulse">Économisez</span>
+                        </h1>
+                        
+                        <p class="text-lg sm:text-xl md:text-2xl text-white/90 leading-relaxed">
+                            La première marketplace camerounaise de seconde main.
+                            <strong>Simplicité et Sécurité</strong> garanties.
+                        </p>
+                        
+                        <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start space-y-2 sm:space-y-0 sm:space-x-4 text-sm sm:text-lg">
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="map-pin" class="w-4 h-4 sm:w-5 sm:h-5 text-yellow-300"></i>
+                                <span>Douala • Yaoundé</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="shield-check" class="w-4 h-4 sm:w-5 sm:h-5 text-yellow-300"></i>
+                                <span>100% Sécurisé</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- CTA Buttons -->
+                    <div class="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:space-x-4 lg:space-x-6 space-mobile-4">
+                        <a href="{% url 'backend:product_list' %}" 
+                           class="bg-white text-green-600 px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:scale-105 transform transition-all duration-300 shadow-xl glow-effect flex items-center justify-center space-x-2">
+                            <i data-lucide="search" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                            <span>Découvrir les produits</span>
+                        </a>
+                        
+                        {% if not user.is_authenticated %}
+                        <a href="{% url 'backend:register' %}" 
+                           class="border-2 border-white text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:bg-white hover:text-green-600 transform transition-all duration-300 flex items-center justify-center space-x-2">
+                            <i data-lucide="user-plus" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                            <span>Rejoindre VGK</span>
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Statistiques en temps réel -->
+                    <div class="grid grid-cols-3 gap-4 sm:gap-6 pt-6 sm:pt-8 stats-mobile">
+                        <div class="text-center">
+                            <div class="text-2xl sm:text-3xl font-bold stats-counter" data-target="{{ stats.total_products }}">0</div>
+                            <div class="text-white/80 text-xs sm:text-sm">Produits actifs</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl sm:text-3xl font-bold stats-counter" data-target="{{ stats.total_users }}">0</div>
+                            <div class="text-white/80 text-xs sm:text-sm">Utilisateurs</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl sm:text-3xl font-bold stats-counter" data-target="{{ stats.total_orders }}">0</div>
+                            <div class="text-white/80 text-xs sm:text-sm">Ventes réussies</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modèle 3D interactif (masqué sur mobile) -->
+                <div class="relative hidden lg:block">
+                    <div id="hero-3d-model" class="w-full h-96 lg:h-[500px] rounded-2xl bg-white/10 backdrop-blur-sm"></div>
+                    
+                    <!-- Cards flottantes avec produits -->
+                    <div class="absolute -top-8 -left-8 floating-card">
+                        <div class="bg-white rounded-xl p-4 shadow-xl w-48">
+                            <img src="{% static 'images/femme.jpeg' %}" alt="Veste femme" class="w-full h-24 object-cover rounded-lg mb-2">
+                            <h4 class="font-semibold text-gray-800">Veste femme</h4>
+                            <p class="text-green-600 font-bold">5,000 FCFA</p>
+                        </div>
+                    </div>
+                    
+                    <div class="absolute -bottom-8 -right-8 floating-card">
+                        <div class="bg-white rounded-xl p-4 shadow-xl w-48">
+                            <img src="{% static 'images/homme.jpeg' %}" alt="Veste homme" class="w-full h-24 object-cover rounded-lg mb-2">
+                            <h4 class="font-semibold text-gray-800">Veste homme</h4>
+                            <p class="text-green-600 font-bold">10,000 FCFA</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Scroll indicator -->
+        <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white animate-bounce">
+            <i data-lucide="chevron-down" class="w-6 h-6 sm:w-8 sm:h-8"></i>
+        </div>
     </div>
-    
+</section>
+
+<!-- Avantages de l'Application Mobile -->
+<section class="py-16 sm:py-20 benefit-gradient relative overflow-hidden">
+    <div class="absolute inset-0 bg-black/20"></div>
     <div class="container mx-auto px-4 relative z-10">
-        <div class="grid lg:grid-cols-2 gap-12 items-center">
-            <!-- Contenu principal -->
-            <div class="text-white space-y-8 animate-fade-in-up">
-                <div class="space-y-4">
-                    <h1 class="text-4xl md:text-6xl font-bold leading-tight">
-                        Vendez, Achetez,
-                        <span class="text-yellow-300 animate-pulse">Économisez</span>
-                    </h1>
-                    
-                    <p class="text-xl md:text-2xl text-white/90 leading-relaxed">
-                        La première marketplace camerounaise de seconde main.
-                        <strong>Simplicité et Sécurité</strong> garanties.
-                    </p>
-                    
-                    <div class="flex items-center space-x-4 text-lg">
-                        <div class="flex items-center space-x-2">
-                            <i data-lucide="map-pin" class="w-5 h-5 text-yellow-300"></i>
-                            <span>Douala • Yaoundé</span>
+        <div class="text-center mb-12 sm:mb-16">
+            <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">Téléchargez l'App VGK</h2>
+            <p class="text-lg sm:text-xl text-white/90">Une expérience mobile optimisée pour vos achats</p>
+        </div>
+        
+        <div class="grid md:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <!-- Fonctionnalités de l'app -->
+            <div class="space-y-6">
+                <div class="feature-card rounded-2xl p-6 text-white">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center">
+                            <i data-lucide="zap" class="w-6 h-6 text-white"></i>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <i data-lucide="shield-check" class="w-5 h-5 text-yellow-300"></i>
-                            <span>100% Sécurisé</span>
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">Navigation Ultra-Rapide</h3>
+                            <p class="text-white/80">Interface optimisée pour mobile avec chargement instantané des pages</p>
                         </div>
                     </div>
                 </div>
                 
-                <!-- CTA Buttons -->
-                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6">
-                    <a href="{% url 'backend:product_list' %}" 
-                       class="bg-white text-green-600 px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transform transition-all duration-300 shadow-xl glow-effect flex items-center justify-center space-x-2">
-                        <i data-lucide="search" class="w-6 h-6"></i>
-                        <span>Découvrir les produits</span>
-                    </a>
-                    
-                    {% if not user.is_authenticated %}
-                    <a href="{% url 'backend:register' %}" 
-                       class="border-2 border-white text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-green-600 transform transition-all duration-300 flex items-center justify-center space-x-2">
-                        <i data-lucide="user-plus" class="w-6 h-6"></i>
-                        <span>Rejoindre VGK</span>
-                    </a>
-                    {% endif %}
+                <div class="feature-card rounded-2xl p-6 text-white">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-xl flex items-center justify-center">
+                            <i data-lucide="bell" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">Notifications Push</h3>
+                            <p class="text-white/80">Recevez des alertes pour vos produits favoris et messages instantanément</p>
+                        </div>
+                    </div>
                 </div>
                 
-                <!-- Statistiques en temps réel -->
-                <div class="grid grid-cols-3 gap-6 pt-8">
-                    <div class="text-center">
-                        <div class="text-3xl font-bold stats-counter" data-target="{{ stats.total_products }}">0</div>
-                        <div class="text-white/80 text-sm">Produits actifs</div>
+                <div class="feature-card rounded-2xl p-6 text-white">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center">
+                            <i data-lucide="camera" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">Photos Haute Qualité</h3>
+                            <p class="text-white/80">Prenez et uploadez des photos directement avec compression automatique</p>
+                        </div>
                     </div>
-                    <div class="text-center">
-                        <div class="text-3xl font-bold stats-counter" data-target="{{ stats.total_users }}">0</div>
-                        <div class="text-white/80 text-sm">Utilisateurs</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-3xl font-bold stats-counter" data-target="{{ stats.total_orders }}">0</div>
-                        <div class="text-white/80 text-sm">Ventes réussies</div>
+                </div>
+                
+                <div class="feature-card rounded-2xl p-6 text-white">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-red-400 to-yellow-500 rounded-xl flex items-center justify-center">
+                            <i data-lucide="wifi-off" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">Mode Hors Ligne</h3>
+                            <p class="text-white/80">Consultez vos favoris et messages même sans connexion internet</p>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Modèle 3D interactif -->
-            <div class="relative">
-                <div id="hero-3d-model" class="w-full h-96 lg:h-[500px] rounded-2xl bg-white/10 backdrop-blur-sm"></div>
-                
-                <!-- Cards flottantes avec produits -->
-                <div class="absolute -top-8 -left-8 floating-card">
-                    <div class="bg-white rounded-xl p-4 shadow-xl w-48">
-                        <img src="{% static 'images/femme.jpeg' %}" alt="iPhone" class="w-full h-24 object-cover rounded-lg mb-2">
-                        <h4 class="font-semibold text-gray-800">Veste femme</h4>
-                        <p class="text-green-600 font-bold">5,000 FCFA</p>
+            <!-- Mockup de l'application -->
+            <div class="flex justify-center">
+                <div class="relative">
+                    <div class="w-64 h-96 sm:w-80 sm:h-[480px] bg-gradient-to-br from-gray-800 to-black rounded-3xl p-6 shadow-2xl">
+                        <div class="w-full h-full bg-gradient-to-br from-green-500 to-orange-500 rounded-2xl p-4 relative overflow-hidden">
+                            <!-- Interface de l'app -->
+                            <div class="text-white space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="font-bold text-lg">VGK App</h3>
+                                    <div class="flex space-x-1">
+                                        <div class="w-2 h-2 bg-white rounded-full"></div>
+                                        <div class="w-2 h-2 bg-white rounded-full"></div>
+                                        <div class="w-2 h-2 bg-white rounded-full"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white/20 rounded-lg p-3">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <div class="w-8 h-8 bg-white/30 rounded-full"></div>
+                                        <div class="flex-1">
+                                            <div class="h-2 bg-white/30 rounded mb-1"></div>
+                                            <div class="h-2 bg-white/20 rounded w-2/3"></div>
+                                        </div>
+                                    </div>
+                                    <div class="h-16 bg-white/30 rounded"></div>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="bg-white/20 rounded-lg p-2 h-20"></div>
+                                    <div class="bg-white/20 rounded-lg p-2 h-20"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="absolute -bottom-8 -right-8 floating-card">
-                    <div class="bg-white rounded-xl p-4 shadow-xl w-48">
-                        <img src="{% static 'images/homme.jpeg' %}" alt="MacBook" class="w-full h-24 object-cover rounded-lg mb-2">
-                        <h4 class="font-semibold text-gray-800">Veste homme</h4>
-                        <p class="text-green-600 font-bold">10,000 FCFA</p>
+                    
+                    <!-- Boutons de téléchargement flottants -->
+                    <div class="absolute -bottom-4 -left-4">
+                        <button class="bg-black text-white px-4 py-2 rounded-lg flex items-center space-x-2 shadow-lg">
+                            <i data-lucide="smartphone" class="w-4 h-4"></i>
+                            <span class="text-sm">App Store</span>
+                        </button>
+                    </div>
+                    
+                    <div class="absolute -bottom-4 -right-4">
+                        <button class="bg-black text-white px-4 py-2 rounded-lg flex items-center space-x-2 shadow-lg">
+                            <i data-lucide="play" class="w-4 h-4"></i>
+                            <span class="text-sm">Google Play</span>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Scroll indicator -->
-    <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white animate-bounce">
-        <i data-lucide="chevron-down" class="w-8 h-8"></i>
+</section>
+
+<!-- Avantages de Créer un Compte -->
+<section class="py-16 sm:py-20 bg-gradient-to-br from-green-50 to-blue-50">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-12 sm:mb-16">
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Créez votre compte VGK</h2>
+            <p class="text-lg sm:text-xl text-gray-600">Débloquez tous les avantages de notre plateforme</p>
+        </div>
+        
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            <!-- Avantage 1 -->
+            <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
+                <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="star" class="w-8 h-8 text-white"></i>
+                </div>
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Programme de Fidélité</h3>
+                <p class="text-gray-600 mb-4">Gagnez des points VGK à chaque achat et bénéficiez de réductions exclusives</p>
+                <ul class="text-sm text-gray-500 space-y-2">
+                    <li>• 1 point = 1 FCFA dépensé</li>
+                    <li>• Réductions jusqu'à 20%</li>
+                    <li>• Statuts VIP avec avantages</li>
+                </ul>
+            </div>
+            
+            <!-- Avantage 2 -->
+            <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="heart" class="w-8 h-8 text-white"></i>
+                </div>
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Liste de Favoris</h3>
+                <p class="text-gray-600 mb-4">Sauvegardez vos produits préférés et recevez des alertes de prix</p>
+                <ul class="text-sm text-gray-500 space-y-2">
+                    <li>• Favoris illimités</li>
+                    <li>• Alertes baisse de prix</li>
+                    <li>• Partage avec amis</li>
+                </ul>
+            </div>
+            
+            <!-- Avantage 3 -->
+            <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
+                <div class="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="shield" class="w-8 h-8 text-white"></i>
+                </div>
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Protection Acheteur</h3>
+                <p class="text-gray-600 mb-4">Vos achats sont protégés avec notre garantie satisfait ou remboursé</p>
+                <ul class="text-sm text-gray-500 space-y-2">
+                    <li>• Garantie 7 jours</li>
+                    <li>• Remboursement intégral</li>
+                    <li>• Support prioritaire</li>
+                </ul>
+            </div>
+            
+            <!-- Avantage 4 -->
+            <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
+                <div class="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="message-circle" class="w-8 h-8 text-white"></i>
+                </div>
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Chat Vendeur</h3>
+                <p class="text-gray-600 mb-4">Communiquez directement avec les vendeurs pour négocier et poser vos questions</p>
+                <ul class="text-sm text-gray-500 space-y-2">
+                    <li>• Messages instantanés</li>
+                    <li>• Partage de photos</li>
+                    <li>• Historique conservé</li>
+                </ul>
+            </div>
+            
+            <!-- Avantage 5 -->
+            <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
+                <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="truck" class="w-8 h-8 text-white"></i>
+                </div>
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Livraison Gratuite</h3>
+                <p class="text-gray-600 mb-4">Bénéficiez de la livraison gratuite sur vos achats fréquents</p>
+                <ul class="text-sm text-gray-500 space-y-2">
+                    <li>• Livraison gratuite dès 10k FCFA</li>
+                    <li>• Points de retrait sécurisés</li>
+                    <li>• Suivi en temps réel</li>
+                </ul>
+            </div>
+            
+            <!-- Avantage 6 -->
+            <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
+                <div class="w-16 h-16 bg-gradient-to-br from-pink-500 to-rose-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="users" class="w-8 h-8 text-white"></i>
+                </div>
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Parrainage Récompensé</h3>
+                <p class="text-gray-600 mb-4">Invitez vos amis et recevez des bonus pour chaque nouveau membre</p>
+                <ul class="text-sm text-gray-500 space-y-2">
+                    <li>• 2000 FCFA par parrain</li>
+                    <li>• Bonus pour votre filleul</li>
+                    <li>• Récompenses cumulatives</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- CTA pour créer un compte -->
+        <div class="text-center mt-12">
+            <a href="{% url 'backend:register' %}" 
+               class="bg-gradient-to-r from-green-600 to-blue-600 text-white px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transform transition-all duration-300 shadow-xl inline-flex items-center space-x-3">
+                <i data-lucide="user-plus" class="w-6 h-6"></i>
+                <span>Créer mon compte gratuitement</span>
+            </a>
+            <p class="text-gray-500 text-sm mt-4">Inscription rapide en moins de 2 minutes</p>
+        </div>
     </div>
 </section>
 
 <!-- Catégories principales -->
-<section class="py-20 bg-white">
+<section class="py-16 sm:py-20 bg-white">
     <div class="container mx-auto px-4">
-        <div class="text-center mb-16">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Explorez nos catégories</h2>
-            <p class="text-xl text-gray-600">Trouvez exactement ce que vous cherchez</p>
+        <div class="text-center mb-12 sm:mb-16">
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Explorez nos catégories</h2>
+            <p class="text-lg sm:text-xl text-gray-600">Trouvez exactement ce que vous cherchez</p>
         </div>
         
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
             {% for category in main_categories %}
             <a href="{% url 'backend:category' slug=category.slug %}" 
-               class="group bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-200 hover:border-green-300 hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300">
+               class="group bg-gradient-to-br from-gray-50 to-white p-4 sm:p-6 rounded-2xl border border-gray-200 hover:border-green-300 hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300">
                 <div class="text-center">
-                    <div class="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <div class="text-2xl sm:text-4xl mb-2 sm:mb-4 group-hover:scale-110 transition-transform duration-300">
                         {{ category.icon }}
                     </div>
-                    <h3 class="font-semibold text-gray-800 group-hover:text-green-600 transition-colors">
+                    <h3 class="font-semibold text-gray-800 group-hover:text-green-600 transition-colors text-sm sm:text-base">
                         {{ category.name }}
                     </h3>
-                    <p class="text-sm text-gray-500 mt-1">
+                    <p class="text-xs sm:text-sm text-gray-500 mt-1">
                         {{ category.products.count }} produits
                     </p>
                 </div>
@@ -179,12 +470,12 @@
 </section>
 
 <!-- Produits en vedette -->
-<section class="py-20 bg-gray-50">
+<section class="py-16 sm:py-20 bg-gray-50">
     <div class="container mx-auto px-4">
-        <div class="flex justify-between items-center mb-12">
-            <div>
-                <h2 class="text-4xl font-bold text-gray-800 mb-4">Produits en vedette</h2>
-                <p class="text-xl text-gray-600">Sélectionnés pour vous</p>
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-8 sm:mb-12 space-y-4 sm:space-y-0">
+            <div class="text-center sm:text-left">
+                <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Produits en vedette</h2>
+                <p class="text-lg sm:text-xl text-gray-600">Sélectionnés pour vous</p>
             </div>
             <a href="{% url 'backend:product_list' %}" 
                class="bg-green-600 text-white px-6 py-3 rounded-full hover:bg-green-700 transition-colors font-medium flex items-center space-x-2">
@@ -193,17 +484,17 @@
             </a>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {% for product in featured_products %}
             <div class="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300 group">
                 <div class="relative">
                     {% if product.main_image %}
                     <img src="{{ product.main_image.image.url }}" 
                          alt="{{ product.title }}" 
-                         class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
+                         class="w-full h-40 sm:h-48 object-cover group-hover:scale-105 transition-transform duration-300">
                     {% else %}
-                    <div class="w-full h-48 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                        <i data-lucide="image" class="w-12 h-12 text-gray-400"></i>
+                    <div class="w-full h-40 sm:h-48 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                        <i data-lucide="image" class="w-8 h-8 sm:w-12 sm:h-12 text-gray-400"></i>
                     </div>
                     {% endif %}
                     
@@ -219,42 +510,42 @@
                 </div>
                 
                 <div class="p-4">
-                    <h3 class="font-semibold text-gray-800 mb-2 line-clamp-2">
+                    <h3 class="font-semibold text-gray-800 mb-2 line-clamp-2 text-sm sm:text-base">
                         {{ product.title }}
                     </h3>
                     
                     <div class="flex items-center justify-between mb-3">
-                        <div class="text-2xl font-bold text-green-600">
+                        <div class="text-xl sm:text-2xl font-bold text-green-600">
                             {{ product.price|floatformat:0 }} FCFA
                         </div>
-                        <div class="flex items-center space-x-1 text-sm text-gray-500">
-                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                        <div class="flex items-center space-x-1 text-xs sm:text-sm text-gray-500">
+                            <i data-lucide="map-pin" class="w-3 h-3 sm:w-4 sm:h-4"></i>
                             <span>{{ product.get_city_display }}</span>
                         </div>
                     </div>
                     
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center space-x-2">
                             {% if product.seller.profile_picture %}
                             <img src="{{ product.seller.profile_picture.url }}" 
                                  alt="{{ product.seller.get_full_name }}" 
-                                 class="w-6 h-6 rounded-full">
+                                 class="w-5 h-5 sm:w-6 sm:h-6 rounded-full">
                             {% else %}
-                            <div class="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center text-xs">
+                            <div class="w-5 h-5 sm:w-6 sm:h-6 bg-gray-300 rounded-full flex items-center justify-center text-xs">
                                 {{ product.seller.first_name|first|upper }}
                             </div>
                             {% endif %}
-                            <span class="text-sm text-gray-600">{{ product.seller.get_full_name }}</span>
+                            <span class="text-xs sm:text-sm text-gray-600 truncate">{{ product.seller.get_full_name }}</span>
                         </div>
                         
-                        <div class="flex items-center space-x-1 text-sm text-gray-500">
-                            <i data-lucide="eye" class="w-4 h-4"></i>
+                        <div class="flex items-center space-x-1 text-xs sm:text-sm text-gray-500">
+                            <i data-lucide="eye" class="w-3 h-3 sm:w-4 sm:h-4"></i>
                             <span>{{ product.views_count }}</span>
                         </div>
                     </div>
                     
                     <a href="{% url 'backend:product_detail' slug=product.slug %}" 
-                       class="block w-full bg-green-600 text-white text-center py-2 rounded-lg mt-4 hover:bg-green-700 transition-colors font-medium">
+                       class="block w-full bg-green-600 text-white text-center py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm sm:text-base">
                         Voir le produit
                     </a>
                 </div>
@@ -265,21 +556,21 @@
 </section>
 
 <!-- Comment ça marche -->
-<section class="py-20 bg-white">
+<section class="py-16 sm:py-20 bg-white">
     <div class="container mx-auto px-4">
-        <div class="text-center mb-16">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Comment ça marche ?</h2>
-            <p class="text-xl text-gray-600">Simple, rapide et sécurisé</p>
+        <div class="text-center mb-12 sm:mb-16">
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Comment ça marche ?</h2>
+            <p class="text-lg sm:text-xl text-gray-600">Simple, rapide et sécurisé</p>
         </div>
         
-        <div class="grid md:grid-cols-3 gap-8">
+        <div class="grid sm:grid-cols-3 gap-6 sm:gap-8">
             <!-- Étape 1 -->
             <div class="text-center group">
-                <div class="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <i data-lucide="search" class="w-10 h-10 text-white"></i>
+                <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <i data-lucide="search" class="w-8 h-8 sm:w-10 sm:h-10 text-white"></i>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-800 mb-4">1. Trouvez</h3>
-                <p class="text-gray-600 leading-relaxed">
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">1. Trouvez</h3>
+                <p class="text-gray-600 leading-relaxed text-sm sm:text-base">
                     Parcourez des milliers de produits de seconde main à Douala et Yaoundé. 
                     Filtrez par catégorie, prix et localisation.
                 </p>
@@ -287,11 +578,11 @@
             
             <!-- Étape 2 -->
             <div class="text-center group">
-                <div class="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <i data-lucide="credit-card" class="w-10 h-10 text-white"></i>
+                <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <i data-lucide="credit-card" class="w-8 h-8 sm:w-10 sm:h-10 text-white"></i>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-800 mb-4">2. Payez</h3>
-                <p class="text-gray-600 leading-relaxed">
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">2. Payez</h3>
+                <p class="text-gray-600 leading-relaxed text-sm sm:text-base">
                     Payez en toute sécurité avec Mobile Money (Orange, MTN) ou Campay. 
                     Vos fonds sont protégés jusqu'à réception.
                 </p>
@@ -299,11 +590,11 @@
             
             <!-- Étape 3 -->
             <div class="text-center group">
-                <div class="w-20 h-20 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <i data-lucide="package" class="w-10 h-10 text-white"></i>
+                <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <i data-lucide="package" class="w-8 h-8 sm:w-10 sm:h-10 text-white"></i>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-800 mb-4">3. Récupérez</h3>
-                <p class="text-gray-600 leading-relaxed">
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">3. Récupérez</h3>
+                <p class="text-gray-600 leading-relaxed text-sm sm:text-base">
                     Récupérez votre achat dans nos points de retrait sécurisés ou 
                     optez pour la livraison à domicile.
                 </p>
@@ -311,42 +602,42 @@
         </div>
         
         <!-- Points de retrait -->
-        <div class="mt-16 bg-gradient-to-r from-green-50 to-orange-50 rounded-2xl p-8">
-            <div class="grid md:grid-cols-2 gap-8 items-center">
+        <div class="mt-12 sm:mt-16 bg-gradient-to-r from-green-50 to-orange-50 rounded-2xl p-6 sm:p-8">
+            <div class="grid md:grid-cols-2 gap-6 sm:gap-8 items-center">
                 <div>
-                    <h3 class="text-3xl font-bold text-gray-800 mb-4">Points de retrait sécurisés</h3>
-                    <p class="text-gray-600 mb-6">
+                    <h3 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-4">Points de retrait sécurisés</h3>
+                    <p class="text-gray-600 mb-6 text-sm sm:text-base">
                         Récupérez vos achats dans nos points stratégiques à Douala et Yaoundé. 
                         Stockage gratuit pendant 7 jours.
                     </p>
                     
                     <div class="space-y-4">
                         <div class="flex items-start space-x-3">
-                            <div class="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center mt-1">
-                                <i data-lucide="check" class="w-4 h-4 text-white"></i>
+                            <div class="w-5 h-5 sm:w-6 sm:h-6 bg-green-600 rounded-full flex items-center justify-center mt-1">
+                                <i data-lucide="check" class="w-3 h-3 sm:w-4 sm:h-4 text-white"></i>
                             </div>
                             <div>
-                                <h4 class="font-semibold text-gray-800">Douala - Akwa</h4>
-                                <p class="text-gray-600 text-sm">123 Avenue Ahidjo, face Crédit Lyonnais</p>
-                                <p class="text-green-600 text-sm font-medium">Lun-Ven 7h30-18h30, Sam 8h-16h</p>
+                                <h4 class="font-semibold text-gray-800 text-sm sm:text-base">Douala - Akwa</h4>
+                                <p class="text-gray-600 text-xs sm:text-sm">123 Avenue Ahidjo, face Crédit Lyonnais</p>
+                                <p class="text-green-600 text-xs sm:text-sm font-medium">Lun-Ven 7h30-18h30, Sam 8h-16h</p>
                             </div>
                         </div>
                         
                         <div class="flex items-start space-x-3">
-                            <div class="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center mt-1">
-                                <i data-lucide="check" class="w-4 h-4 text-white"></i>
+                            <div class="w-5 h-5 sm:w-6 sm:h-6 bg-green-600 rounded-full flex items-center justify-center mt-1">
+                                <i data-lucide="check" class="w-3 h-3 sm:w-4 sm:h-4 text-white"></i>
                             </div>
                             <div>
-                                <h4 class="font-semibold text-gray-800">Yaoundé - Centre-ville</h4>
-                                <p class="text-gray-600 text-sm">456 Avenue Kennedy, près Hilton</p>
-                                <p class="text-green-600 text-sm font-medium">Lun-Ven 7h30-18h30, Sam 8h-16h</p>
+                                <h4 class="font-semibold text-gray-800 text-sm sm:text-base">Yaoundé - Centre-ville</h4>
+                                <p class="text-gray-600 text-xs sm:text-sm">456 Avenue Kennedy, près Hilton</p>
+                                <p class="text-green-600 text-xs sm:text-sm font-medium">Lun-Ven 7h30-18h30, Sam 8h-16h</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="relative">
-                    <div id="pickup-map-3d" class="w-full h-64 rounded-xl bg-gradient-to-br from-green-100 to-orange-100"></div>
+                    <div id="pickup-map-3d" class="w-full h-48 sm:h-64 rounded-xl bg-gradient-to-br from-green-100 to-orange-100"></div>
                 </div>
             </div>
         </div>
@@ -354,26 +645,26 @@
 </section>
 
 <!-- Témoignages -->
-<section class="py-20 bg-gray-50">
+<section class="py-16 sm:py-20 bg-gray-50">
     <div class="container mx-auto px-4">
-        <div class="text-center mb-16">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Ce que disent nos utilisateurs</h2>
-            <p class="text-xl text-gray-600">Plus de 5,000 clients satisfaits</p>
+        <div class="text-center mb-12 sm:mb-16">
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Ce que disent nos utilisateurs</h2>
+            <p class="text-lg sm:text-xl text-gray-600">Plus de 5,000 clients satisfaits</p>
         </div>
         
-        <div class="grid md:grid-cols-3 gap-8">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {% for testimonial in testimonials %}
             <div class="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <div class="flex items-center mb-4">
                     <div class="flex text-yellow-500 mr-2">
                         {% for i in "12345" %}
-                        <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                        <i data-lucide="star" class="w-4 h-4 sm:w-5 sm:h-5 fill-current"></i>
                         {% endfor %}
                     </div>
                     <span class="text-gray-600 text-sm">{{ testimonial.overall_rating }}/5</span>
                 </div>
                 
-                <p class="text-gray-700 mb-4 italic">
+                <p class="text-gray-700 mb-4 italic text-sm sm:text-base">
                     "{{ testimonial.comment|truncatewords:20 }}"
                 </p>
                 
@@ -381,18 +672,18 @@
                     {% if testimonial.reviewer.profile_picture %}
                     <img src="{{ testimonial.reviewer.profile_picture.url }}" 
                          alt="{{ testimonial.reviewer.get_full_name }}" 
-                         class="w-10 h-10 rounded-full object-cover">
+                         class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover">
                     {% else %}
-                    <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-orange-500 rounded-full flex items-center justify-center text-white font-bold">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-500 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
                         {{ testimonial.reviewer.first_name|first|upper }}
                     </div>
                     {% endif %}
                     
                     <div>
-                        <div class="font-semibold text-gray-800">
+                        <div class="font-semibold text-gray-800 text-sm sm:text-base">
                             {{ testimonial.reviewer.get_full_name }}
                         </div>
-                        <div class="text-sm text-gray-500">
+                        <div class="text-xs sm:text-sm text-gray-500">
                             {{ testimonial.order.product.get_city_display }}
                         </div>
                     </div>
@@ -404,96 +695,98 @@
 </section>
 
 <!-- Avantages VGK -->
-<section class="py-20 bg-white">
+<section class="py-16 sm:py-20 bg-white">
     <div class="container mx-auto px-4">
-        <div class="text-center mb-16">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Pourquoi choisir VGK ?</h2>
-            <p class="text-xl text-gray-600">Les avantages qui font la différence</p>
+        <div class="text-center mb-12 sm:mb-16">
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Pourquoi choisir VGK ?</h2>
+            <p class="text-lg sm:text-xl text-gray-600">Les avantages qui font la différence</p>
         </div>
         
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             <div class="text-center group">
-                <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-colors">
-                    <i data-lucide="shield-check" class="w-8 h-8 text-green-600"></i>
+                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-colors">
+                    <i data-lucide="shield-check" class="w-6 h-6 sm:w-8 sm:h-8 text-green-600"></i>
                 </div>
-                <h3 class="text-xl font-bold text-gray-800 mb-2">100% Sécurisé</h3>
-                <p class="text-gray-600">Système d'escrow et paiements protégés</p>
+                <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-2">100% Sécurisé</h3>
+                <p class="text-gray-600 text-sm sm:text-base">Système d'escrow et paiements protégés</p>
             </div>
             
             <div class="text-center group">
-                <div class="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-200 transition-colors">
-                    <i data-lucide="smartphone" class="w-8 h-8 text-orange-600"></i>
+                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-200 transition-colors">
+                    <i data-lucide="smartphone" class="w-6 h-6 sm:w-8 sm:h-8 text-orange-600"></i>
                 </div>
-                <h3 class="text-xl font-bold text-gray-800 mb-2">Mobile Money</h3>
-                <p class="text-gray-600">Orange, MTN, Campay intégrés</p>
+                <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-2">Mobile Money</h3>
+                <p class="text-gray-600 text-sm sm:text-base">Orange, MTN, Campay intégrés</p>
             </div>
             
             <div class="text-center group">
-                <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
-                    <i data-lucide="map-pin" class="w-8 h-8 text-blue-600"></i>
+                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
+                    <i data-lucide="map-pin" class="w-6 h-6 sm:w-8 sm:h-8 text-blue-600"></i>
                 </div>
-                <h3 class="text-xl font-bold text-gray-800 mb-2">Points de retrait</h3>
-                <p class="text-gray-600">Douala et Yaoundé accessibles</p>
+                <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-2">Points de retrait</h3>
+                <p class="text-gray-600 text-sm sm:text-base">Douala et Yaoundé accessibles</p>
             </div>
             
             <div class="text-center group">
-                <div class="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-200 transition-colors">
-                    <i data-lucide="headphones" class="w-8 h-8 text-purple-600"></i>
+                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-200 transition-colors">
+                    <i data-lucide="headphones" class="w-6 h-6 sm:w-8 sm:h-8 text-purple-600"></i>
                 </div>
-                <h3 class="text-xl font-bold text-gray-800 mb-2">Support 24/7</h3>
-                <p class="text-gray-600">Assistance WhatsApp et physique</p>
+                <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-2">Support 24/7</h3>
+                <p class="text-gray-600 text-sm sm:text-base">Assistance WhatsApp et physique</p>
             </div>
         </div>
     </div>
 </section>
 
 <!-- Call to Action Final -->
-<section class="py-20 hero-gradient">
-    <div class="container mx-auto px-4 text-center">
-        <div class="max-w-4xl mx-auto text-white">
-            <h2 class="text-4xl md:text-5xl font-bold mb-6">
-                Prêt à économiser avec VGK ?
-            </h2>
-            <p class="text-xl mb-8 text-white/90">
-                Rejoignez des milliers de Camerounais qui achètent et vendent 
-                intelligemment sur Vidé-Grenier Kamer.
-            </p>
-            
-            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
-                {% if not user.is_authenticated %}
-                <a href="{% url 'backend:register' %}" 
-                   class="bg-white text-green-600 px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transform transition-all duration-300 shadow-xl inline-flex items-center justify-center space-x-2">
-                    <i data-lucide="user-plus" class="w-6 h-6"></i>
-                    <span>Créer un compte gratuit</span>
-                </a>
-                {% endif %}
+<section class="py-16 sm:py-20 hero-bg">
+    <div class="relative z-10">
+        <div class="container mx-auto px-4 text-center">
+            <div class="max-w-4xl mx-auto text-white">
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-6">
+                    Prêt à économiser avec VGK ?
+                </h2>
+                <p class="text-lg sm:text-xl mb-8 text-white/90">
+                    Rejoignez des milliers de Camerounais qui achètent et vendent 
+                    intelligemment sur Vidé-Grenier Kamer.
+                </p>
                 
-                <a href="{% url 'backend:product_list' %}" 
-                   class="border-2 border-white text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-green-600 transform transition-all duration-300 inline-flex items-center justify-center space-x-2">
-                    <i data-lucide="shopping-bag" class="w-6 h-6"></i>
-                    <span>Commencer à acheter</span>
-                </a>
-            </div>
-            
-            <!-- App download prompts -->
-            <div class="mt-12 pt-8 border-t border-white/20">
-                <p class="text-white/80 mb-4">Téléchargez l'application mobile</p>
-                <div class="flex justify-center space-x-4">
-                    <button id="ios-download" class="bg-black text-white px-6 py-3 rounded-lg flex items-center space-x-3 hover:bg-gray-800 transition-colors">
-                        <i data-lucide="smartphone" class="w-6 h-6"></i>
-                        <div class="text-left">
-                            <div class="text-xs">Télécharger sur</div>
-                            <div class="font-semibold">App Store</div>
-                        </div>
-                    </button>
+                <div class="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 lg:space-x-6 justify-center">
+                    {% if not user.is_authenticated %}
+                    <a href="{% url 'backend:register' %}" 
+                       class="bg-white text-green-600 px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:scale-105 transform transition-all duration-300 shadow-xl inline-flex items-center justify-center space-x-2">
+                        <i data-lucide="user-plus" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                        <span>Créer un compte gratuit</span>
+                    </a>
+                    {% endif %}
                     
-                    <button id="android-download" class="bg-black text-white px-6 py-3 rounded-lg flex items-center space-x-3 hover:bg-gray-800 transition-colors">
-                        <i data-lucide="smartphone" class="w-6 h-6"></i>
-                        <div class="text-left">
-                            <div class="text-xs">Disponible sur</div>
-                            <div class="font-semibold">Google Play</div>
-                        </div>
-                    </button>
+                    <a href="{% url 'backend:product_list' %}" 
+                       class="border-2 border-white text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:bg-white hover:text-green-600 transform transition-all duration-300 inline-flex items-center justify-center space-x-2">
+                        <i data-lucide="shopping-bag" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                        <span>Commencer à acheter</span>
+                    </a>
+                </div>
+                
+                <!-- App download prompts -->
+                <div class="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-white/20">
+                    <p class="text-white/80 mb-4 text-sm sm:text-base">Téléchargez l'application mobile</p>
+                    <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                        <button id="ios-download" class="bg-black text-white px-4 sm:px-6 py-3 rounded-lg flex items-center justify-center space-x-3 hover:bg-gray-800 transition-colors">
+                            <i data-lucide="smartphone" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                            <div class="text-left">
+                                <div class="text-xs">Télécharger sur</div>
+                                <div class="font-semibold text-sm sm:text-base">App Store</div>
+                            </div>
+                        </button>
+                        
+                        <button id="android-download" class="bg-black text-white px-4 sm:px-6 py-3 rounded-lg flex items-center justify-center space-x-3 hover:bg-gray-800 transition-colors">
+                            <i data-lucide="smartphone" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                            <div class="text-left">
+                                <div class="text-xs">Disponible sur</div>
+                                <div class="font-semibold text-sm sm:text-base">Google Play</div>
+                            </div>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -542,8 +835,8 @@ document.addEventListener('DOMContentLoaded', function() {
         observer.observe(counters[0].parentElement);
     }
     
-    // Initialisation des effets 3D
-    if (window.VGK.settings.enable_3d) {
+    // Initialisation des effets 3D (seulement sur desktop)
+    if (window.innerWidth > 768 && window.VGK && window.VGK.settings && window.VGK.settings.enable_3d) {
         initHero3D();
         initPickupMap3D();
     }
@@ -551,29 +844,47 @@ document.addEventListener('DOMContentLoaded', function() {
     // Gestion des téléchargements d'applications
     document.getElementById('ios-download')?.addEventListener('click', () => {
         // Logique pour iOS - PWA install ou App Store
-        if (window.VGK.pwa.canInstall) {
+        if (window.VGK && window.VGK.pwa && window.VGK.pwa.canInstall) {
             window.VGK.pwa.install();
         } else {
             // Redirection App Store si disponible
             console.log('Redirection vers App Store');
+            // window.open('https://apps.apple.com/app/vgk', '_blank');
         }
     });
     
     document.getElementById('android-download')?.addEventListener('click', () => {
         // Logique pour Android - PWA install ou Google Play
-        if (window.VGK.pwa.canInstall) {
+        if (window.VGK && window.VGK.pwa && window.VGK.pwa.canInstall) {
             window.VGK.pwa.install();
         } else {
             // Redirection Google Play si disponible
             console.log('Redirection vers Google Play');
+            // window.open('https://play.google.com/store/apps/details?id=com.vgk.app', '_blank');
         }
+    });
+    
+    // Gestion responsive des animations
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            // Réinitialiser les animations 3D si nécessaire
+            if (window.innerWidth <= 768) {
+                // Désactiver les animations 3D sur mobile pour la performance
+                const hero3D = document.getElementById('hero-3d-model');
+                const map3D = document.getElementById('pickup-map-3d');
+                if (hero3D) hero3D.style.display = 'none';
+                if (map3D) map3D.style.display = 'block';
+            }
+        }, 250);
     });
 });
 
-// Initialisation de la scène 3D du hero
+// Initialisation de la scène 3D du hero (desktop seulement)
 function initHero3D() {
     const container = document.getElementById('hero-3d-model');
-    if (!container) return;
+    if (!container || window.innerWidth <= 768) return;
     
     // Configuration Three.js
     const scene = new THREE.Scene();
@@ -629,6 +940,8 @@ function initHero3D() {
     
     // Responsive
     window.addEventListener('resize', () => {
+        if (window.innerWidth <= 768) return;
+        
         const width = container.offsetWidth;
         const height = container.offsetHeight;
         
@@ -642,6 +955,13 @@ function initHero3D() {
 function initPickupMap3D() {
     const container = document.getElementById('pickup-map-3d');
     if (!container) return;
+    
+    // Pour mobile, on affiche juste un background dégradé
+    if (window.innerWidth <= 768) {
+        container.style.background = 'linear-gradient(135deg, #10b981 0%, #f59e0b 100%)';
+        container.innerHTML = '<div class="flex items-center justify-center h-full text-white"><i data-lucide="map" class="w-12 h-12"></i></div>';
+        return;
+    }
     
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
@@ -691,6 +1011,8 @@ function initPickupMap3D() {
     
     // Responsive
     window.addEventListener('resize', () => {
+        if (window.innerWidth <= 768) return;
+        
         const width = container.offsetWidth;
         const height = container.offsetHeight;
         
@@ -698,6 +1020,216 @@ function initPickupMap3D() {
         camera.updateProjectionMatrix();
         renderer.setSize(width, height);
     });
+}
+
+// Performance optimizations for mobile
+if (window.innerWidth <= 768) {
+    // Réduire les animations complexes sur mobile
+    document.documentElement.style.setProperty('--animation-duration', '0.2s');
+    
+    // Lazy loading pour les images
+    const images = document.querySelectorAll('img[data-src]');
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src;
+                img.classList.remove('lazy');
+                imageObserver.unobserve(img);
+            }
+        });
+    });
+    
+    images.forEach(img => imageObserver.observe(img));
+}
+
+// Touch gestures pour mobile
+if ('ontouchstart' in window) {
+    let startY = 0;
+    let endY = 0;
+    
+    document.addEventListener('touchstart', e => {
+        startY = e.changedTouches[0].screenY;
+    });
+    
+    document.addEventListener('touchend', e => {
+        endY = e.changedTouches[0].screenY;
+        handleGesture();
+    });
+    
+    function handleGesture() {
+        if (endY < startY - 50) {
+            // Swipe up - smooth scroll to next section
+            const currentSection = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+            const nextSection = currentSection?.closest('section')?.nextElementSibling;
+            if (nextSection) {
+                nextSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    }
+}
+
+// Amélioration du scroll sur mobile
+if (window.innerWidth <= 768) {
+    // Smooth scroll polyfill pour les anciens navigateurs mobile
+    document.documentElement.style.scrollBehavior = 'smooth';
+    
+    // Optimisation du scroll pour iOS Safari
+    document.body.style.webkitOverflowScrolling = 'touch';
+}
+</script>
+
+<!-- Script pour les icônes Lucide -->
+<script>
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>
+
+<!-- PWA et performance mobile -->
+<script>
+// Service Worker registration pour PWA
+if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('SW registered: ', registration);
+            })
+            .catch(registrationError => {
+                console.log('SW registration failed: ', registrationError);
+            });
+    });
+}
+
+// PWA Install prompt
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // Afficher un bouton d'installation personnalisé si souhaité
+    const installBtn = document.getElementById('pwa-install-btn');
+    if (installBtn) {
+        installBtn.style.display = 'block';
+        installBtn.addEventListener('click', () => {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                }
+                deferredPrompt = null;
+            });
+        });
+    }
+});
+
+// Préchargement des images critiques
+const criticalImages = [
+    '{% static "images/hero.jpg" %}',
+    '{% static "images/femme.jpeg" %}',
+    '{% static "images/homme.jpeg" %}'
+];
+
+criticalImages.forEach(src => {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.href = src;
+    document.head.appendChild(link);
+});
+
+// Optimisation des performances mobile
+if (window.innerWidth <= 768) {
+    // Réduction de la fréquence des animations
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (reducedMotionQuery.matches) {
+        document.documentElement.style.setProperty('--animation-duration', '0s');
+    }
+    
+    // Lazy loading pour les sections non critiques
+    const lazyLoadSections = document.querySelectorAll('section:not(:first-child)');
+    const sectionObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('loaded');
+                sectionObserver.unobserve(entry.target);
+            }
+        });
+    }, { rootMargin: '50px' });
+    
+    lazyLoadSections.forEach(section => {
+        section.classList.add('lazy-section');
+        sectionObserver.observe(section);
+    });
+}
+
+// Analytics pour mesurer les performances
+if (typeof gtag !== 'undefined') {
+    // Mesurer le temps de chargement
+    window.addEventListener('load', () => {
+        const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+        gtag('event', 'page_load_time', {
+            'custom_parameter': loadTime,
+            'event_category': 'Performance'
+        });
+    });
+    
+    // Mesurer l'engagement mobile
+    if (window.innerWidth <= 768) {
+        let scrollDepth = 0;
+        window.addEventListener('scroll', () => {
+            const currentDepth = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
+            if (currentDepth > scrollDepth && currentDepth % 25 === 0) {
+                scrollDepth = currentDepth;
+                gtag('event', 'scroll_depth', {
+                    'scroll_depth': scrollDepth,
+                    'device_type': 'mobile'
+                });
+            }
+        });
+    }
+}
+</script>
+
+<!-- Structured Data pour SEO -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Vidé-Grenier Kamer",
+    "description": "Marketplace camerounaise de seconde main - Achetez et vendez en toute sécurité",
+    "url": "{{ request.build_absolute_uri }}",
+    "applicationCategory": "MarketplaceApplication",
+    "operatingSystem": "Web, Android, iOS",
+    "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "XAF"
+    },
+    "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "1250",
+        "bestRating": "5",
+        "worstRating": "1"
+    },
+    "featureList": [
+        "Paiement Mobile Money sécurisé",
+        "Points de retrait à Douala et Yaoundé",
+        "Chat en temps réel avec vendeurs",
+        "Système d'évaluation et avis",
+        "Application mobile PWA",
+        "Support client 24/7"
+    ],
+    "screenshot": "{{ request.build_absolute_uri }}{% static 'images/app-screenshot.png' %}",
+    "publisher": {
+        "@type": "Organization",
+        "name": "Vidé-Grenier Kamer",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "{{ request.build_absolute_uri }}{% static 'images/logo.png' %}"
+        }
+    }
 }
 </script>
 {% endblock %}
