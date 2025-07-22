@@ -29,6 +29,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=15, unique=True)
     user_type = models.CharField(max_length=10, choices=USER_TYPES, default='CLIENT')
+    reset_token = models.CharField(max_length=128, blank=True, null=True, help_text="Token de réinitialisation du mot de passe")
     city = models.CharField(max_length=20, choices=CITIES, blank=True)
     address = models.TextField(blank=True)
     profile_picture = models.ImageField(upload_to='users/profiles/', blank=True, null=True)

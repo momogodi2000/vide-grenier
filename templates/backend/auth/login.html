@@ -109,7 +109,9 @@
                             Se souvenir de moi
                         </label>
                     </div>
-                    <span class="text-sm text-gray-400">Mot de passe oublié ? <span class="text-gray-500">(Contactez le support)</span></span>
+                    <a href="{% url 'backend:password_reset_request' %}" class="text-sm text-vgk-green-600 hover:text-vgk-green-700 hover:underline">
+                        Mot de passe oublié ?
+                    </a>
                 </div>
 
                 <!-- Bouton de Connexion -->

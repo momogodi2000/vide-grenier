@@ -1,3 +1,10 @@
+from django.conf.urls import handler500
+from django.shortcuts import render
+
+def custom_error_500(request):
+    return render(request, 'offline.html', status=500)
+
+handler500 = 'vide.urls.custom_error_500'
 # vide/urls.py (URL principale)
 from django.contrib import admin
 from django.urls import path, include

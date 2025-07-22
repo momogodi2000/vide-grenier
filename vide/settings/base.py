@@ -273,33 +273,58 @@ LOGGING = {
         },
     },
     'handlers': {
-        'console': {
-            'level': 'DEBUG',
+        # 'console': {
+        #     'level': 'DEBUG',
+        #     'class': 'logging.StreamHandler',
+        #     'formatter': 'verbose',
+        # },
+        # 'file': {
+        #     'level': 'INFO',
+        #     'class': 'logging.FileHandler',
+        #     'filename': LOGS_DIR / 'django.log',
+        #     'formatter': 'verbose',
+        # },
+        'error_console': {
+            'level': 'ERROR',
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'formatter': 'simple',
         },
-        'file': {
+        'request_console': {
             'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': LOGS_DIR / 'django.log',
-            'formatter': 'verbose',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
         },
     },
     'root': {
-        'handlers': ['console'],
+        'handlers': ['error_console', 'request_console'],
         'level': 'INFO',
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['error_console', 'request_console'],
             'level': 'INFO',
             'propagate': False,
         },
-        'backend': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+        'django.request': {
+            'handlers': ['request_console', 'error_console'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'django.server': {
+            'handlers': ['request_console', 'error_console'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'django.security': {
+            'handlers': ['error_console'],
+            'level': 'ERROR',
             'propagate': False,
         },
+        # 'backend': {
+        #     'handlers': ['console', 'file', 'error_console', 'request_console'],
+        #     'level': 'DEBUG',
+        #     'propagate': False,
+        # },
     },
 }
 

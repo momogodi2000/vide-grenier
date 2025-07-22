@@ -1,6 +1,8 @@
 # backend/urls.py - URLs COMPLÈTES POUR VIDÉ-GRENIER KAMER
+
 from django.urls import path
 from . import views
+from . import additional_views
 
 app_name = 'backend'
 
@@ -17,6 +19,9 @@ urlpatterns = [
     path('auth/verify-phone/', views.PhoneVerificationView.as_view(), name='verify_phone'),
     path('auth/profile/', views.ProfileView.as_view(), name='profile'),
     path('auth/profile/edit/', views.ProfileEditView.as_view(), name='profile_edit'),
+    # Password reset
+    path('auth/password-reset/', additional_views.PasswordResetRequestView.as_view(), name='password_reset_request'),
+    path('auth/password-reset/<str:token>/', additional_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     
     # ============= GESTION PRODUITS =============
     path('products/', views.ProductListView.as_view(), name='product_list'),

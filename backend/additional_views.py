@@ -1,3 +1,72 @@
+from django.utils.crypto import get_random_string
+from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
+from django.views import View
+import yagmail
+from .forms_password_reset import PasswordResetRequestForm, PasswordResetConfirmForm
+from django.conf import settings
+
+User = get_user_model()
+
+class PasswordResetRequestView(View):
+    template_name = 'backend/auth/password_reset_request.html'
+
+    def get(self, request):
+        form = PasswordResetRequestForm()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        form = PasswordResetRequestForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                messages.error(request, "Aucun utilisateur trouvé avec cette adresse email.")
+                return render(request, self.template_name, {'form': form})
+            # Generate token
+            token = get_random_string(64)
+            user.reset_token = token
+            user.save()
+            # Send email
+            yag = yagmail.SMTP(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+            reset_url = request.build_absolute_uri(reverse_lazy('backend:password_reset_confirm', args=[token]))
+            yag.send(
+                to=email,
+                subject="Réinitialisation de votre mot de passe",
+                contents=f"Bonjour,\n\nPour réinitialiser votre mot de passe, cliquez sur le lien suivant : {reset_url}\n\nSi vous n'avez pas demandé cette opération, ignorez ce message."
+            )
+            messages.success(request, "Un email de réinitialisation a été envoyé si l'adresse existe.")
+            return redirect('backend:login')
+        return render(request, self.template_name, {'form': form})
+
+class PasswordResetConfirmView(View):
+    template_name = 'backend/auth/password_reset_confirm.html'
+
+    def get(self, request, token):
+        try:
+            user = User.objects.get(reset_token=token)
+        except User.DoesNotExist:
+            messages.error(request, "Lien invalide ou expiré.")
+            return redirect('backend:password_reset_request')
+        form = PasswordResetConfirmForm()
+        return render(request, self.template_name, {'form': form, 'token': token})
+
+    def post(self, request, token):
+        try:
+            user = User.objects.get(reset_token=token)
+        except User.DoesNotExist:
+            messages.error(request, "Lien invalide ou expiré.")
+            return redirect('backend:password_reset_request')
+        form = PasswordResetConfirmForm(request.POST)
+        if form.is_valid():
+            new_password = form.cleaned_data['new_password1']
+            user.password = make_password(new_password)
+            user.reset_token = ''
+            user.save()
+            messages.success(request, "Votre mot de passe a été réinitialisé avec succès.")
+            return redirect('backend:login')
+        return render(request, self.template_name, {'form': form, 'token': token})
 """
 backend/additional_views.py - VUES SUPPLÉMENTAIRES POUR VGK
 Nettoyage: Suppression des vues dupliquées, organisation, commentaires.
