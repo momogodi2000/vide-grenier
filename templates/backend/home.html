@@ -1,0 +1,703 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Vidé-Grenier Kamer - Marketplace Camerounaise de Seconde Main{% endblock %}
+
+{% block meta_description %}Découvrez la première marketplace camerounaise dédiée aux biens de seconde main. Achetez et vendez en toute sécurité à Douala et Yaoundé.{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-gradient {
+        background: linear-gradient(135deg, #00823A 0%, #FF6B35 100%);
+    }
+    
+    .floating-card {
+        animation: float 6s ease-in-out infinite;
+    }
+    
+    .floating-card:nth-child(2) {
+        animation-delay: -2s;
+    }
+    
+    .floating-card:nth-child(3) {
+        animation-delay: -4s;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        33% { transform: translateY(-20px) rotate(1deg); }
+        66% { transform: translateY(-10px) rotate(-1deg); }
+    }
+    
+    .parallax-bg {
+        transform: translateZ(0);
+        will-change: transform;
+    }
+    
+    .glow-effect {
+        box-shadow: 0 0 20px rgba(0, 130, 58, 0.3);
+    }
+    
+    .stats-counter {
+        font-variant-numeric: tabular-nums;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section avec 3D -->
+<section class="hero-gradient relative overflow-hidden min-h-screen flex items-center">
+    <!-- Arrière-plan 3D -->
+    <div id="hero-3d-bg" class="absolute inset-0 parallax-bg"></div>
+    
+    <!-- Particules flottantes -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="floating-card absolute top-20 left-10 w-16 h-16 bg-white/10 rounded-lg backdrop-blur-sm"></div>
+        <div class="floating-card absolute top-40 right-20 w-12 h-12 bg-white/10 rounded-full backdrop-blur-sm"></div>
+        <div class="floating-card absolute bottom-32 left-1/4 w-8 h-8 bg-white/10 rounded-lg backdrop-blur-sm"></div>
+        <div class="floating-card absolute bottom-20 right-1/3 w-20 h-20 bg-white/10 rounded-xl backdrop-blur-sm"></div>
+    </div>
+    
+    <div class="container mx-auto px-4 relative z-10">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+            <!-- Contenu principal -->
+            <div class="text-white space-y-8 animate-fade-in-up">
+                <div class="space-y-4">
+                    <h1 class="text-4xl md:text-6xl font-bold leading-tight">
+                        Vendez, Achetez,
+                        <span class="text-yellow-300 animate-pulse">Économisez</span>
+                    </h1>
+                    
+                    <p class="text-xl md:text-2xl text-white/90 leading-relaxed">
+                        La première marketplace camerounaise de seconde main.
+                        <strong>Simplicité et Sécurité</strong> garanties.
+                    </p>
+                    
+                    <div class="flex items-center space-x-4 text-lg">
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="map-pin" class="w-5 h-5 text-yellow-300"></i>
+                            <span>Douala • Yaoundé</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="shield-check" class="w-5 h-5 text-yellow-300"></i>
+                            <span>100% Sécurisé</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- CTA Buttons -->
+                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6">
+                    <a href="{% url 'backend:product_list' %}" 
+                       class="bg-white text-green-600 px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transform transition-all duration-300 shadow-xl glow-effect flex items-center justify-center space-x-2">
+                        <i data-lucide="search" class="w-6 h-6"></i>
+                        <span>Découvrir les produits</span>
+                    </a>
+                    
+                    {% if not user.is_authenticated %}
+                    <a href="{% url 'backend:register' %}" 
+                       class="border-2 border-white text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-green-600 transform transition-all duration-300 flex items-center justify-center space-x-2">
+                        <i data-lucide="user-plus" class="w-6 h-6"></i>
+                        <span>Rejoindre VGK</span>
+                    </a>
+                    {% endif %}
+                </div>
+                
+                <!-- Statistiques en temps réel -->
+                <div class="grid grid-cols-3 gap-6 pt-8">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold stats-counter" data-target="{{ stats.total_products }}">0</div>
+                        <div class="text-white/80 text-sm">Produits actifs</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold stats-counter" data-target="{{ stats.total_users }}">0</div>
+                        <div class="text-white/80 text-sm">Utilisateurs</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold stats-counter" data-target="{{ stats.total_orders }}">0</div>
+                        <div class="text-white/80 text-sm">Ventes réussies</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modèle 3D interactif -->
+            <div class="relative">
+                <div id="hero-3d-model" class="w-full h-96 lg:h-[500px] rounded-2xl bg-white/10 backdrop-blur-sm"></div>
+                
+                <!-- Cards flottantes avec produits -->
+                <div class="absolute -top-8 -left-8 floating-card">
+                    <div class="bg-white rounded-xl p-4 shadow-xl w-48">
+                        <img src="{% static 'images/demo/phone.jpg' %}" alt="iPhone" class="w-full h-24 object-cover rounded-lg mb-2">
+                        <h4 class="font-semibold text-gray-800">iPhone 12 Pro</h4>
+                        <p class="text-green-600 font-bold">450,000 FCFA</p>
+                    </div>
+                </div>
+                
+                <div class="absolute -bottom-8 -right-8 floating-card">
+                    <div class="bg-white rounded-xl p-4 shadow-xl w-48">
+                        <img src="{% static 'images/demo/laptop.jpg' %}" alt="MacBook" class="w-full h-24 object-cover rounded-lg mb-2">
+                        <h4 class="font-semibold text-gray-800">MacBook Air M1</h4>
+                        <p class="text-green-600 font-bold">850,000 FCFA</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scroll indicator -->
+    <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white animate-bounce">
+        <i data-lucide="chevron-down" class="w-8 h-8"></i>
+    </div>
+</section>
+
+<!-- Catégories principales -->
+<section class="py-20 bg-white">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Explorez nos catégories</h2>
+            <p class="text-xl text-gray-600">Trouvez exactement ce que vous cherchez</p>
+        </div>
+        
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            {% for category in main_categories %}
+            <a href="{% url 'backend:category' slug=category.slug %}" 
+               class="group bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-200 hover:border-green-300 hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300">
+                <div class="text-center">
+                    <div class="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                        {{ category.icon }}
+                    </div>
+                    <h3 class="font-semibold text-gray-800 group-hover:text-green-600 transition-colors">
+                        {{ category.name }}
+                    </h3>
+                    <p class="text-sm text-gray-500 mt-1">
+                        {{ category.products.count }} produits
+                    </p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Produits en vedette -->
+<section class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center mb-12">
+            <div>
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">Produits en vedette</h2>
+                <p class="text-xl text-gray-600">Sélectionnés pour vous</p>
+            </div>
+            <a href="{% url 'backend:product_list' %}" 
+               class="bg-green-600 text-white px-6 py-3 rounded-full hover:bg-green-700 transition-colors font-medium flex items-center space-x-2">
+                <span>Voir tout</span>
+                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </a>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for product in featured_products %}
+            <div class="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300 group">
+                <div class="relative">
+                    {% if product.main_image %}
+                    <img src="{{ product.main_image.image.url }}" 
+                         alt="{{ product.title }}" 
+                         class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
+                    {% else %}
+                    <div class="w-full h-48 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                        <i data-lucide="image" class="w-12 h-12 text-gray-400"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="absolute top-3 left-3">
+                        <span class="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+                            {{ product.get_condition_display }}
+                        </span>
+                    </div>
+                    
+                    <button class="absolute top-3 right-3 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors">
+                        <i data-lucide="heart" class="w-4 h-4 text-gray-600"></i>
+                    </button>
+                </div>
+                
+                <div class="p-4">
+                    <h3 class="font-semibold text-gray-800 mb-2 line-clamp-2">
+                        {{ product.title }}
+                    </h3>
+                    
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="text-2xl font-bold text-green-600">
+                            {{ product.price|floatformat:0 }} FCFA
+                        </div>
+                        <div class="flex items-center space-x-1 text-sm text-gray-500">
+                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                            <span>{{ product.get_city_display }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            {% if product.seller.profile_picture %}
+                            <img src="{{ product.seller.profile_picture.url }}" 
+                                 alt="{{ product.seller.get_full_name }}" 
+                                 class="w-6 h-6 rounded-full">
+                            {% else %}
+                            <div class="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center text-xs">
+                                {{ product.seller.first_name|first|upper }}
+                            </div>
+                            {% endif %}
+                            <span class="text-sm text-gray-600">{{ product.seller.get_full_name }}</span>
+                        </div>
+                        
+                        <div class="flex items-center space-x-1 text-sm text-gray-500">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                            <span>{{ product.views_count }}</span>
+                        </div>
+                    </div>
+                    
+                    <a href="{% url 'backend:product_detail' slug=product.slug %}" 
+                       class="block w-full bg-green-600 text-white text-center py-2 rounded-lg mt-4 hover:bg-green-700 transition-colors font-medium">
+                        Voir le produit
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Comment ça marche -->
+<section class="py-20 bg-white">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Comment ça marche ?</h2>
+            <p class="text-xl text-gray-600">Simple, rapide et sécurisé</p>
+        </div>
+        
+        <div class="grid md:grid-cols-3 gap-8">
+            <!-- Étape 1 -->
+            <div class="text-center group">
+                <div class="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <i data-lucide="search" class="w-10 h-10 text-white"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">1. Trouvez</h3>
+                <p class="text-gray-600 leading-relaxed">
+                    Parcourez des milliers de produits de seconde main à Douala et Yaoundé. 
+                    Filtrez par catégorie, prix et localisation.
+                </p>
+            </div>
+            
+            <!-- Étape 2 -->
+            <div class="text-center group">
+                <div class="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <i data-lucide="credit-card" class="w-10 h-10 text-white"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">2. Payez</h3>
+                <p class="text-gray-600 leading-relaxed">
+                    Payez en toute sécurité avec Mobile Money (Orange, MTN) ou Campay. 
+                    Vos fonds sont protégés jusqu'à réception.
+                </p>
+            </div>
+            
+            <!-- Étape 3 -->
+            <div class="text-center group">
+                <div class="w-20 h-20 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <i data-lucide="package" class="w-10 h-10 text-white"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">3. Récupérez</h3>
+                <p class="text-gray-600 leading-relaxed">
+                    Récupérez votre achat dans nos points de retrait sécurisés ou 
+                    optez pour la livraison à domicile.
+                </p>
+            </div>
+        </div>
+        
+        <!-- Points de retrait -->
+        <div class="mt-16 bg-gradient-to-r from-green-50 to-orange-50 rounded-2xl p-8">
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div>
+                    <h3 class="text-3xl font-bold text-gray-800 mb-4">Points de retrait sécurisés</h3>
+                    <p class="text-gray-600 mb-6">
+                        Récupérez vos achats dans nos points stratégiques à Douala et Yaoundé. 
+                        Stockage gratuit pendant 7 jours.
+                    </p>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center mt-1">
+                                <i data-lucide="check" class="w-4 h-4 text-white"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-800">Douala - Akwa</h4>
+                                <p class="text-gray-600 text-sm">123 Avenue Ahidjo, face Crédit Lyonnais</p>
+                                <p class="text-green-600 text-sm font-medium">Lun-Ven 7h30-18h30, Sam 8h-16h</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start space-x-3">
+                            <div class="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center mt-1">
+                                <i data-lucide="check" class="w-4 h-4 text-white"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-800">Yaoundé - Centre-ville</h4>
+                                <p class="text-gray-600 text-sm">456 Avenue Kennedy, près Hilton</p>
+                                <p class="text-green-600 text-sm font-medium">Lun-Ven 7h30-18h30, Sam 8h-16h</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="relative">
+                    <div id="pickup-map-3d" class="w-full h-64 rounded-xl bg-gradient-to-br from-green-100 to-orange-100"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Témoignages -->
+<section class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Ce que disent nos utilisateurs</h2>
+            <p class="text-xl text-gray-600">Plus de 5,000 clients satisfaits</p>
+        </div>
+        
+        <div class="grid md:grid-cols-3 gap-8">
+            {% for testimonial in testimonials %}
+            <div class="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div class="flex items-center mb-4">
+                    <div class="flex text-yellow-500 mr-2">
+                        {% for i in "12345" %}
+                        <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                        {% endfor %}
+                    </div>
+                    <span class="text-gray-600 text-sm">{{ testimonial.overall_rating }}/5</span>
+                </div>
+                
+                <p class="text-gray-700 mb-4 italic">
+                    "{{ testimonial.comment|truncatewords:20 }}"
+                </p>
+                
+                <div class="flex items-center space-x-3">
+                    {% if testimonial.reviewer.profile_picture %}
+                    <img src="{{ testimonial.reviewer.profile_picture.url }}" 
+                         alt="{{ testimonial.reviewer.get_full_name }}" 
+                         class="w-10 h-10 rounded-full object-cover">
+                    {% else %}
+                    <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-orange-500 rounded-full flex items-center justify-center text-white font-bold">
+                        {{ testimonial.reviewer.first_name|first|upper }}
+                    </div>
+                    {% endif %}
+                    
+                    <div>
+                        <div class="font-semibold text-gray-800">
+                            {{ testimonial.reviewer.get_full_name }}
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            {{ testimonial.order.product.get_city_display }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Avantages VGK -->
+<section class="py-20 bg-white">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Pourquoi choisir VGK ?</h2>
+            <p class="text-xl text-gray-600">Les avantages qui font la différence</p>
+        </div>
+        
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div class="text-center group">
+                <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-colors">
+                    <i data-lucide="shield-check" class="w-8 h-8 text-green-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">100% Sécurisé</h3>
+                <p class="text-gray-600">Système d'escrow et paiements protégés</p>
+            </div>
+            
+            <div class="text-center group">
+                <div class="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-200 transition-colors">
+                    <i data-lucide="smartphone" class="w-8 h-8 text-orange-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Mobile Money</h3>
+                <p class="text-gray-600">Orange, MTN, Campay intégrés</p>
+            </div>
+            
+            <div class="text-center group">
+                <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
+                    <i data-lucide="map-pin" class="w-8 h-8 text-blue-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Points de retrait</h3>
+                <p class="text-gray-600">Douala et Yaoundé accessibles</p>
+            </div>
+            
+            <div class="text-center group">
+                <div class="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-200 transition-colors">
+                    <i data-lucide="headphones" class="w-8 h-8 text-purple-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Support 24/7</h3>
+                <p class="text-gray-600">Assistance WhatsApp et physique</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Final -->
+<section class="py-20 hero-gradient">
+    <div class="container mx-auto px-4 text-center">
+        <div class="max-w-4xl mx-auto text-white">
+            <h2 class="text-4xl md:text-5xl font-bold mb-6">
+                Prêt à économiser avec VGK ?
+            </h2>
+            <p class="text-xl mb-8 text-white/90">
+                Rejoignez des milliers de Camerounais qui achètent et vendent 
+                intelligemment sur Vidé-Grenier Kamer.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+                {% if not user.is_authenticated %}
+                <a href="{% url 'backend:register' %}" 
+                   class="bg-white text-green-600 px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transform transition-all duration-300 shadow-xl inline-flex items-center justify-center space-x-2">
+                    <i data-lucide="user-plus" class="w-6 h-6"></i>
+                    <span>Créer un compte gratuit</span>
+                </a>
+                {% endif %}
+                
+                <a href="{% url 'backend:product_list' %}" 
+                   class="border-2 border-white text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-green-600 transform transition-all duration-300 inline-flex items-center justify-center space-x-2">
+                    <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+                    <span>Commencer à acheter</span>
+                </a>
+            </div>
+            
+            <!-- App download prompts -->
+            <div class="mt-12 pt-8 border-t border-white/20">
+                <p class="text-white/80 mb-4">Téléchargez l'application mobile</p>
+                <div class="flex justify-center space-x-4">
+                    <button id="ios-download" class="bg-black text-white px-6 py-3 rounded-lg flex items-center space-x-3 hover:bg-gray-800 transition-colors">
+                        <i data-lucide="smartphone" class="w-6 h-6"></i>
+                        <div class="text-left">
+                            <div class="text-xs">Télécharger sur</div>
+                            <div class="font-semibold">App Store</div>
+                        </div>
+                    </button>
+                    
+                    <button id="android-download" class="bg-black text-white px-6 py-3 rounded-lg flex items-center space-x-3 hover:bg-gray-800 transition-colors">
+                        <i data-lucide="smartphone" class="w-6 h-6"></i>
+                        <div class="text-left">
+                            <div class="text-xs">Disponible sur</div>
+                            <div class="font-semibold">Google Play</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation des compteurs de statistiques
+    const counters = document.querySelectorAll('.stats-counter');
+    
+    const animateCounters = () => {
+        counters.forEach(counter => {
+            const target = parseInt(counter.getAttribute('data-target'));
+            const duration = 2000; // 2 secondes
+            const increment = target / (duration / 16); // 60 FPS
+            let current = 0;
+            
+            const updateCounter = () => {
+                if (current < target) {
+                    current += increment;
+                    counter.textContent = Math.floor(current).toLocaleString();
+                    requestAnimationFrame(updateCounter);
+                } else {
+                    counter.textContent = target.toLocaleString();
+                }
+            };
+            
+            updateCounter();
+        });
+    };
+    
+    // Observer pour déclencher l'animation au scroll
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                animateCounters();
+                observer.unobserve(entry.target);
+            }
+        });
+    });
+    
+    if (counters.length > 0) {
+        observer.observe(counters[0].parentElement);
+    }
+    
+    // Initialisation des effets 3D
+    if (window.VGK.settings.enable_3d) {
+        initHero3D();
+        initPickupMap3D();
+    }
+    
+    // Gestion des téléchargements d'applications
+    document.getElementById('ios-download')?.addEventListener('click', () => {
+        // Logique pour iOS - PWA install ou App Store
+        if (window.VGK.pwa.canInstall) {
+            window.VGK.pwa.install();
+        } else {
+            // Redirection App Store si disponible
+            console.log('Redirection vers App Store');
+        }
+    });
+    
+    document.getElementById('android-download')?.addEventListener('click', () => {
+        // Logique pour Android - PWA install ou Google Play
+        if (window.VGK.pwa.canInstall) {
+            window.VGK.pwa.install();
+        } else {
+            // Redirection Google Play si disponible
+            console.log('Redirection vers Google Play');
+        }
+    });
+});
+
+// Initialisation de la scène 3D du hero
+function initHero3D() {
+    const container = document.getElementById('hero-3d-model');
+    if (!container) return;
+    
+    // Configuration Three.js
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    
+    renderer.setSize(container.offsetWidth, container.offsetHeight);
+    renderer.setClearColor(0x000000, 0);
+    container.appendChild(renderer.domElement);
+    
+    // Création d'un smartphone 3D simple
+    const geometry = new THREE.BoxGeometry(1, 2, 0.1);
+    const material = new THREE.MeshLambertMaterial({ 
+        color: 0x1a1a1a,
+        transparent: true,
+        opacity: 0.8
+    });
+    const phone = new THREE.Mesh(geometry, material);
+    scene.add(phone);
+    
+    // Écran du téléphone
+    const screenGeometry = new THREE.PlaneGeometry(0.8, 1.6);
+    const screenMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x00823A,
+        transparent: true,
+        opacity: 0.7
+    });
+    const screen = new THREE.Mesh(screenGeometry, screenMaterial);
+    screen.position.z = 0.051;
+    phone.add(screen);
+    
+    // Éclairage
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(5, 5, 5);
+    scene.add(directionalLight);
+    
+    camera.position.z = 3;
+    
+    // Animation
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        phone.rotation.y += 0.01;
+        phone.rotation.x = Math.sin(Date.now() * 0.001) * 0.1;
+        
+        renderer.render(scene, camera);
+    }
+    
+    animate();
+    
+    // Responsive
+    window.addEventListener('resize', () => {
+        const width = container.offsetWidth;
+        const height = container.offsetHeight;
+        
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+    });
+}
+
+// Initialisation de la carte 3D des points de retrait
+function initPickupMap3D() {
+    const container = document.getElementById('pickup-map-3d');
+    if (!container) return;
+    
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    
+    renderer.setSize(container.offsetWidth, container.offsetHeight);
+    renderer.setClearColor(0x000000, 0);
+    container.appendChild(renderer.domElement);
+    
+    // Carte simple du Cameroun
+    const mapGeometry = new THREE.PlaneGeometry(4, 3);
+    const mapMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x00823A,
+        transparent: true,
+        opacity: 0.3
+    });
+    const map = new THREE.Mesh(mapGeometry, mapMaterial);
+    scene.add(map);
+    
+    // Points de retrait
+    const pointGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+    const pointMaterial = new THREE.MeshBasicMaterial({ color: 0xFF6B35 });
+    
+    // Douala
+    const doualaPoint = new THREE.Mesh(pointGeometry, pointMaterial);
+    doualaPoint.position.set(-0.5, -0.3, 0.1);
+    scene.add(doualaPoint);
+    
+    // Yaoundé
+    const yaoundePoint = new THREE.Mesh(pointGeometry, pointMaterial);
+    yaoundePoint.position.set(0.2, 0.1, 0.1);
+    scene.add(yaoundePoint);
+    
+    camera.position.z = 3;
+    
+    // Animation
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        doualaPoint.scale.setScalar(1 + Math.sin(Date.now() * 0.003) * 0.2);
+        yaoundePoint.scale.setScalar(1 + Math.sin(Date.now() * 0.003 + Math.PI) * 0.2);
+        
+        renderer.render(scene, camera);
+    }
+    
+    animate();
+    
+    // Responsive
+    window.addEventListener('resize', () => {
+        const width = container.offsetWidth;
+        const height = container.offsetHeight;
+        
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+    });
+}
+</script>
+{% endblock %}

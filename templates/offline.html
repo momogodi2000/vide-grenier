@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hors ligne - Vidé-Grenier Kamer</title>
+    <meta name="theme-color" content="#00823A">
+    
+    <!-- CSS inline pour garantir le fonctionnement hors ligne -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #00823A 0%, #FF6B35 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 1rem;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        .icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            animation: pulse 2s infinite;
+        }
+        
+        .icon svg {
+            width: 60px;
+            height: 60px;
+            fill: white;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            line-height: 1.6;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+        
+        .features {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+        
+        .features h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .feature-list {
+            list-style: none;
+            text-align: left;
+        }
+        
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+        
+        .feature-list li:before {
+            content: '✓';
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+        
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: white;
+            color: #00823A;
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(10px);
+            animation: fadeInUp 0.8s ease-out 0.8s both;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ff6b35;
+            animation: blink 1.5s infinite;
+        }
+        
+        .last-cached {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 1rem;
+            animation: fadeInUp 0.8s ease-out 1s both;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+        
+        @keyframes blink {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            p {
+                font-size: 1.1rem;
+            }
+            
+            .features {
+                padding: 1.5rem;
+            }
+            
+            .btn {
+                padding: 0.875rem 1.5rem;
+                font-size: 1rem;
+            }
+        }
+        
+        /* Styles pour l'animation de reconnexion */
+        .reconnecting {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .reconnecting.show {
+            transform: translateX(0);
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 0.5rem;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Indicateur de statut -->
+        <div class="status-indicator">
+            <span class="status-dot"></span>
+            <span>Mode hors ligne</span>
+        </div>
+        
+        <!-- Icône principale -->
+        <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+        </div>
+        
+        <!-- Contenu principal -->
+        <h1>Vous êtes hors ligne</h1>
+        
+        <p>
+            Pas de problème ! Vous pouvez continuer à utiliser Vidé-Grenier Kamer 
+            avec les fonctionnalités disponibles hors ligne.
+        </p>
+        
+        <!-- Fonctionnalités disponibles -->
+        <div class="features">
+            <h2>Disponible hors ligne :</h2>
+            <ul class="feature-list">
+                <li>Consulter les produits récemment vus</li>
+                <li>Parcourir vos favoris sauvegardés</li>
+                <li>Voir vos commandes en cours</li>
+                <li>Accéder à votre profil</li>
+                <li>Utiliser la recherche dans le cache</li>
+                <li>Préparer de nouvelles annonces</li>
+            </ul>
+        </div>
+        
+        <!-- Actions -->
+        <div class="buttons">
+            <button onclick="tryReconnect()" class="btn btn-primary">
+                <span>🔄</span>
+                Réessayer la connexion
+            </button>
+            
+            <a href="/" class="btn btn-secondary">
+                <span>🏠</span>
+                Retour à l'accueil
+            </a>
+            
+            <button onclick="showCachedContent()" class="btn btn-secondary">
+                <span>📱</span>
+                Voir le contenu mis en cache
+            </button>
+        </div>
+        
+        <div class="last-cached">
+            <span id="last-update">Dernière mise à jour : Calcul en cours...</span>
+        </div>
+    </div>
+    
+    <!-- Notification de reconnexion -->
+    <div id="reconnecting-banner" class="reconnecting">
+        <span class="loading-spinner"></span>
+        Reconnexion en cours...
+    </div>
+
+    <script>
+        // Vérifier le statut de connexion
+    {% load django_browser_reload %}
+    {% django_browser_reload_script %}
+            const isOnline = navigator.onLine;
+            const statusDot = document.querySelector('.status-dot');
+            const statusText = document.querySelector('.status-indicator span:last-child');
+            
+            if (isOnline) {
+                statusDot.style.background = '#10B981';
+                statusText.textContent = 'Connexion rétablie';
+                
+                // Rediriger vers la page d'accueil après 2 secondes
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+            } else {
+                statusDot.style.background = '#FF6B35';
+                statusText.textContent = 'Mode hors ligne';
+            }
+        }
+        
+        // Tenter de se reconnecter
+        function tryReconnect() {
+            const banner = document.getElementById('reconnecting-banner');
+            banner.classList.add('show');
+            
+            // Essayer de charger une ressource en ligne
+            fetch('/', { method: 'HEAD', cache: 'no-cache' })
+                .then(() => {
+                    // Connexion rétablie
+                    banner.classList.remove('show');
+                    showSuccessMessage();
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                })
+                .catch(() => {
+                    // Toujours hors ligne
+                    banner.classList.remove('show');
+                    showErrorMessage();
+                });
+        }
+        
+        // Afficher le contenu mis en cache
+        function showCachedContent() {
+            if ('caches' in window) {
+                caches.open('vgk-v1.0.0').then(cache => {
+                    cache.keys().then(keys => {
+                        const cachedUrls = keys.map(request => request.url);
+                        const productPages = cachedUrls.filter(url => url.includes('/products/'));
+                        
+                        if (productPages.length > 0) {
+                            // Rediriger vers la première page produit mise en cache
+                            window.location.href = productPages[0];
+                        } else {
+                            // Rediriger vers l'accueil mis en cache
+                            window.location.href = '/';
+                        }
+                    });
+                });
+            } else {
+                // Fallback si les caches ne sont pas supportés
+                window.location.href = '/';
+            }
+        }
+        
+        // Afficher message de succès
+        function showSuccessMessage() {
+            const banner = document.getElementById('reconnecting-banner');
+            banner.innerHTML = '<span style="color: #10B981;">✓</span> Connexion rétablie !';
+            banner.style.background = 'rgba(16, 185, 129, 0.9)';
+            banner.classList.add('show');
+            
+            setTimeout(() => {
+                banner.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Afficher message d'erreur
+        function showErrorMessage() {
+            const banner = document.getElementById('reconnecting-banner');
+            banner.innerHTML = '<span style="color: #EF4444;">✗</span> Toujours hors ligne';
+            banner.style.background = 'rgba(239, 68, 68, 0.9)';
+            banner.classList.add('show');
+            
+            setTimeout(() => {
+                banner.classList.remove('show');
+                // Remettre le contenu original
+                banner.innerHTML = '<span class="loading-spinner"></span>Reconnexion en cours...';
+                banner.style.background = 'rgba(16, 185, 129, 0.9)';
+            }, 3000);
+        }
+        
+        // Mettre à jour l'heure de dernière mise à jour
+        function updateLastUpdateTime() {
+            const lastUpdateElement = document.getElementById('last-update');
+            
+            // Essayer de récupérer la dernière mise à jour depuis le localStorage
+            const lastUpdate = localStorage.getItem('vgk_last_update');
+            
+            if (lastUpdate) {
+                const date = new Date(parseInt(lastUpdate));
+                const now = new Date();
+                const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+                
+                let timeText;
+                if (diffInMinutes < 1) {
+                    timeText = 'À l\'instant';
+                } else if (diffInMinutes < 60) {
+                    timeText = `Il y a ${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''}`;
+                } else if (diffInMinutes < 1440) {
+                    const hours = Math.floor(diffInMinutes / 60);
+                    timeText = `Il y a ${hours} heure${hours > 1 ? 's' : ''}`;
+                } else {
+                    const days = Math.floor(diffInMinutes / 1440);
+                    timeText = `Il y a ${days} jour${days > 1 ? 's' : ''}`;
+                }
+                
+                lastUpdateElement.textContent = `Dernière mise à jour : ${timeText}`;
+            } else {
+                lastUpdateElement.textContent = 'Dernière mise à jour : Inconnue';
+            }
+        }
+        
+        // Récupérer les données hors ligne stockées
+        function getOfflineData() {
+            const offlineData = {
+                favorites: JSON.parse(localStorage.getItem('vgk_cached_favorites') || '[]'),
+                recentProducts: JSON.parse(localStorage.getItem('vgk_recent_products') || '[]'),
+                userProfile: JSON.parse(localStorage.getItem('vgk_user_profile') || '{}'),
+                pendingActions: {
+                    favorites: JSON.parse(localStorage.getItem('vgk_pending_favorites') || '[]'),
+                    messages: JSON.parse(localStorage.getItem('vgk_pending_messages') || '[]'),
+                    analytics: JSON.parse(localStorage.getItem('vgk_pending_analytics') || '[]')
+                }
+            };
+            
+            return offlineData;
+        }
+        
+        // Afficher les statistiques hors ligne
+        function showOfflineStats() {
+            const data = getOfflineData();
+            const features = document.querySelector('.features');
+            
+            // Ajouter les statistiques
+            const statsHtml = `
+                <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.2);">
+                    <h3 style="font-size: 1.2rem; margin-bottom: 1rem;">Données disponibles :</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; text-align: center;">
+                        <div>
+                            <div style="font-size: 1.5rem; font-weight: bold;">${data.favorites.length}</div>
+                            <div style="font-size: 0.9rem; opacity: 0.8;">Favoris</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.5rem; font-weight: bold;">${data.recentProducts.length}</div>
+                            <div style="font-size: 0.9rem; opacity: 0.8;">Produits vus</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.5rem; font-weight: bold;">${data.pendingActions.favorites.length}</div>
+                            <div style="font-size: 0.9rem; opacity: 0.8;">Actions en attente</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            features.innerHTML += statsHtml;
+        }
+        
+        // Gérer les raccourcis clavier
+        function handleKeyboard(event) {
+            switch(event.key) {
+                case 'r':
+                case 'R':
+                    if (event.ctrlKey || event.metaKey) {
+                        event.preventDefault();
+                        tryReconnect();
+                    }
+                    break;
+                case 'h':
+                case 'H':
+                    event.preventDefault();
+                    window.location.href = '/';
+                    break;
+                case 'c':
+                case 'C':
+                    event.preventDefault();
+                    showCachedContent();
+                    break;
+            }
+        }
+        
+        // Vérification périodique de la connexion
+        function startConnectionCheck() {
+            setInterval(() => {
+                updateConnectionStatus();
+                
+                // Essayer de ping le serveur de manière silencieuse
+                if (navigator.onLine) {
+                    fetch('/', { 
+                        method: 'HEAD', 
+                        cache: 'no-cache',
+                        mode: 'no-cors'
+                    }).then(() => {
+                        // Connexion confirmée, rediriger
+                        window.location.href = '/';
+                    }).catch(() => {
+                        // Toujours pas de connexion serveur
+                    });
+                }
+            }, 5000); // Vérifier toutes les 5 secondes
+        }
+        
+        // Enregistrer la visite hors ligne pour analytics
+        function trackOfflineVisit() {
+            const offlineVisits = JSON.parse(localStorage.getItem('vgk_offline_visits') || '[]');
+            offlineVisits.push({
+                page: '/offline/',
+                timestamp: Date.now(),
+                userAgent: navigator.userAgent,
+                referrer: document.referrer
+            });
+            
+            // Garder seulement les 50 dernières visites
+            if (offlineVisits.length > 50) {
+                offlineVisits.splice(0, offlineVisits.length - 50);
+            }
+            
+            localStorage.setItem('vgk_offline_visits', JSON.stringify(offlineVisits));
+        }
+        
+        // Gérer la visibilité de la page
+        function handleVisibilityChange() {
+            if (!document.hidden) {
+                // La page est redevenue visible, vérifier la connexion
+                updateConnectionStatus();
+            }
+        }
+        
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            updateConnectionStatus();
+            updateLastUpdateTime();
+            showOfflineStats();
+            startConnectionCheck();
+            trackOfflineVisit();
+            
+            // Event listeners
+            window.addEventListener('online', updateConnectionStatus);
+            window.addEventListener('offline', updateConnectionStatus);
+            document.addEventListener('keydown', handleKeyboard);
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            
+            // Mettre à jour l'heure toutes les minutes
+            setInterval(updateLastUpdateTime, 60000);
+            
+            // Animation d'entrée
+            document.body.style.opacity = '0';
+            setTimeout(() => {
+                document.body.style.transition = 'opacity 0.5s ease';
+                document.body.style.opacity = '1';
+            }, 100);
+        });
+        
+        // Gestion des erreurs
+        window.addEventListener('error', function(e) {
+            console.log('Erreur sur la page offline:', e.error);
+        });
+        
+        // Support pour l'installation PWA même hors ligne
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Ajouter un bouton d'installation si pas encore installé
+            const installButton = document.createElement('button');
+            installButton.textContent = '📱 Installer l\'application';
+            installButton.className = 'btn btn-secondary';
+            installButton.style.marginTop = '1rem';
+            
+            installButton.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const result = await deferredPrompt.userChoice;
+                    
+                    if (result.outcome === 'accepted') {
+                        console.log('PWA installée depuis la page offline');
+                    }
+                    
+                    deferredPrompt = null;
+                    installButton.remove();
+                }
+            });
+            
+            document.querySelector('.buttons').appendChild(installButton);
+        });
+        
+        // Message d'aide pour les raccourcis clavier
+        const helpText = document.createElement('div');
+        helpText.innerHTML = `
+            <div style="margin-top: 2rem; font-size: 0.85rem; opacity: 0.7; text-align: center;">
+                <strong>Raccourcis :</strong> Ctrl+R (Reconnecter) • H (Accueil) • C (Cache)
+            </div>
+        `;
+        helpText.style.animation = 'fadeInUp 0.8s ease-out 1.2s both';
+        document.querySelector('.container').appendChild(helpText);
+    </script>
+</body>
+</html>

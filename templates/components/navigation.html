@@ -1,0 +1,323 @@
+{% load static %}
+
+<!-- Navigation principale -->
+<nav class="bg-white shadow-lg sticky top-0 z-40 transition-all duration-300" id="main-nav">
+    <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center h-16">
+            
+            <!-- Logo et marque -->
+            <div class="flex items-center space-x-4">
+                <a href="{% url 'backend:home' %}" class="flex items-center space-x-2 group">
+                    <div class="w-10 h-10 bg-gradient-to-br from-green-600 to-orange-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                        <span class="text-white font-bold text-xl">V</span>
+                    </div>
+                    <div class="hidden md:block">
+                        <span class="text-xl font-bold text-gray-800 group-hover:text-green-600 transition-colors">
+                            Vidé-Grenier
+                        </span>
+                        <span class="text-orange-500 font-bold text-xl">Kamer</span>
+                    </div>
+                </a>
+            </div>
+            
+            <!-- Barre de recherche centrale -->
+            <div class="hidden md:flex flex-1 max-w-lg mx-8">
+                <form action="{% url 'backend:search' %}" method="GET" class="w-full relative group">
+                    <div class="relative">
+                        <input type="text" 
+                               name="q" 
+                               placeholder="Rechercher des produits..." 
+                               class="w-full py-3 pl-12 pr-16 rounded-full border-2 border-gray-200 focus:border-green-500 focus:outline-none transition-all duration-300 bg-gray-50 focus:bg-white group-hover:border-gray-300"
+                               autocomplete="off"
+                               id="search-input">
+                        
+                        <!-- Icône de recherche -->
+                        <div class="absolute left-4 top-1/2 transform -translate-y-1/2">
+                            <i data-lucide="search" class="w-5 h-5 text-gray-400 group-focus-within:text-green-500 transition-colors"></i>
+                        </div>
+                        
+                        <!-- Bouton recherche -->
+                        <button type="submit" 
+                                class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-green-600 text-white px-4 py-1.5 rounded-full hover:bg-green-700 transition-colors">
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Suggestions de recherche -->
+                    <div id="search-suggestions" class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 hidden z-50">
+                        <div class="p-4">
+                            <div class="text-sm text-gray-500 mb-2">Suggestions populaires</div>
+                            <div class="space-y-1">
+                                <a href="#" class="block p-2 text-sm hover:bg-gray-50 rounded">iPhone</a>
+                                <a href="#" class="block p-2 text-sm hover:bg-gray-50 rounded">Ordinateur portable</a>
+                                <a href="#" class="block p-2 text-sm hover:bg-gray-50 rounded">Vêtements femme</a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Actions utilisateur -->
+            <div class="flex items-center space-x-4">
+                
+                <!-- Favoris -->
+                {% if user.is_authenticated %}
+                <a href="{% url 'backend:favorite_list' %}" 
+                   class="relative p-2 text-gray-600 hover:text-green-600 transition-colors group">
+                    <i data-lucide="heart" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
+                    {% if favorites_count > 0 %}
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                        {{ favorites_count }}
+                    </span>
+                    {% endif %}
+                </a>
+                {% endif %}
+                
+                <!-- Messages -->
+                {% if user.is_authenticated %}
+                <a href="{% url 'backend:chat_list' %}" 
+                   class="relative p-2 text-gray-600 hover:text-green-600 transition-colors group">
+                    <i data-lucide="message-circle" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
+                    {% if unread_messages_count > 0 %}
+                    <span class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-bounce">
+                        {{ unread_messages_count }}
+                    </span>
+                    {% endif %}
+                </a>
+                {% endif %}
+                
+                <!-- Notifications -->
+                {% if user.is_authenticated %}
+                <div class="relative group">
+                    <button id="notifications-btn" 
+                            class="relative p-2 text-gray-600 hover:text-green-600 transition-colors">
+                        <i data-lucide="bell" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
+                        {% if unread_notifications_count > 0 %}
+                        <span class="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                            {{ unread_notifications_count }}
+                        </span>
+                        {% endif %}
+                    </button>
+                    
+                    <!-- Dropdown notifications -->
+                    <div id="notifications-dropdown" 
+                         class="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-xl opacity-0 invisible transform translate-y-2 transition-all duration-200 z-50">
+                        <div class="p-4 border-b border-gray-100">
+                            <h3 class="font-semibold text-gray-800">Notifications</h3>
+                        </div>
+                        <div id="notifications-list" class="max-h-96 overflow-y-auto">
+                            <!-- Notifications chargées dynamiquement -->
+                        </div>
+                        <div class="p-3 border-t border-gray-100">
+                            <a href="#" class="text-sm text-green-600 hover:text-green-700 font-medium">
+                                Voir toutes les notifications
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Menu utilisateur -->
+                {% if user.is_authenticated %}
+                <div class="relative group">
+                    <button class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                        {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" 
+                             alt="Profil" 
+                             class="w-8 h-8 rounded-full object-cover border-2 border-green-200">
+                        {% else %}
+                        <div class="w-8 h-8 bg-gradient-to-br from-green-600 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold">
+                            {{ user.first_name|first|upper|default:"U" }}
+                        </div>
+                        {% endif %}
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500 group-hover:rotate-180 transition-transform duration-200"></i>
+                    </button>
+                    
+                    <!-- Dropdown menu -->
+                    <div class="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl opacity-0 invisible transform translate-y-2 transition-all duration-200 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 z-50">
+                        <!-- Info utilisateur -->
+                        <div class="p-4 border-b border-gray-100">
+                            <div class="flex items-center space-x-3">
+                                {% if user.profile_picture %}
+                                <img src="{{ user.profile_picture.url }}" 
+                                     alt="Profil" 
+                                     class="w-12 h-12 rounded-full object-cover">
+                                {% else %}
+                                <div class="w-12 h-12 bg-gradient-to-br from-green-600 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                    {{ user.first_name|first|upper|default:"U" }}
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <div class="font-semibold text-gray-800">{{ user.get_full_name|default:user.email }}</div>
+                                    <div class="text-sm text-gray-500">{{ user.email }}</div>
+                                    <div class="flex items-center space-x-1 mt-1">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-{{ user.loyalty_level|lower }}-100 text-{{ user.loyalty_level|lower }}-800">
+                                            {{ user.get_loyalty_level_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Menu items -->
+                        <div class="py-2">
+                            <a href="{% url 'backend:dashboard' %}" 
+                               class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
+                                <i data-lucide="layout-dashboard" class="w-5 h-5 text-gray-400"></i>
+                                <span>Tableau de bord</span>
+                            </a>
+                            
+                            <a href="{% url 'backend:profile' %}" 
+                               class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
+                                <i data-lucide="user" class="w-5 h-5 text-gray-400"></i>
+                                <span>Mon profil</span>
+                            </a>
+                            
+                            <a href="{% url 'backend:order_list' %}" 
+                               class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
+                                <i data-lucide="shopping-bag" class="w-5 h-5 text-gray-400"></i>
+                                <span>Mes commandes</span>
+                            </a>
+                            
+                            <a href="{% url 'backend:product_create' %}" 
+                               class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
+                                <i data-lucide="plus-circle" class="w-5 h-5 text-gray-400"></i>
+                                <span>Vendre un produit</span>
+                            </a>
+                            
+                            {% if user.user_type == 'ADMIN' %}
+                            <div class="border-t border-gray-100 my-2"></div>
+                            <a href="{% url 'backend:admin_panel' %}" 
+                               class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
+                                <i data-lucide="shield" class="w-5 h-5 text-orange-400"></i>
+                                <span>Administration</span>
+                            </a>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="border-t border-gray-100 py-2">
+                            <a href="{% url 'backend:help' %}" 
+                               class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
+                                <i data-lucide="help-circle" class="w-5 h-5 text-gray-400"></i>
+                                <span>Aide</span>
+                            </a>
+                            
+                            <a href="{% url 'backend:logout' %}" 
+                               class="flex items-center space-x-3 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors">
+                                <i data-lucide="log-out" class="w-5 h-5 text-red-400"></i>
+                                <span>Déconnexion</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Utilisateur non connecté -->
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'backend:login' %}" 
+                       class="text-gray-700 hover:text-green-600 font-medium transition-colors">
+                        Connexion
+                    </a>
+                    <a href="{% url 'backend:register' %}" 
+                       class="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition-all duration-300 hover:scale-105 shadow-lg">
+                        Inscription
+                    </a>
+                </div>
+                {% endif %}
+                
+                <!-- Bouton menu mobile -->
+                <button id="mobile-menu-btn" 
+                        class="md:hidden p-2 text-gray-600 hover:text-green-600 transition-colors">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Barre de recherche mobile -->
+        <div class="md:hidden pb-4">
+            <form action="{% url 'backend:search' %}" method="GET" class="relative">
+                <input type="text" 
+                       name="q" 
+                       placeholder="Rechercher..." 
+                       class="w-full py-3 pl-12 pr-4 rounded-full border-2 border-gray-200 focus:border-green-500 focus:outline-none bg-gray-50 focus:bg-white">
+                <div class="absolute left-4 top-1/2 transform -translate-y-1/2">
+                    <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Menu mobile -->
+    <div id="mobile-menu" 
+         class="md:hidden bg-white border-t border-gray-200 shadow-lg transform -translate-y-full opacity-0 transition-all duration-300">
+        <div class="px-4 py-6 space-y-4">
+            <!-- Catégories principales -->
+            <div class="space-y-2">
+                <h3 class="font-semibold text-gray-800 mb-3">Catégories</h3>
+                {% for category in MAIN_CATEGORIES %}
+                <a href="{% url 'backend:category' slug=category.slug %}" 
+                   class="flex items-center space-x-3 py-2 text-gray-700 hover:text-green-600 transition-colors">
+                    <span class="text-2xl">{{ category.icon }}</span>
+                    <span>{{ category.name }}</span>
+                </a>
+                {% endfor %}
+            </div>
+            
+            {% if user.is_authenticated %}
+            <div class="border-t border-gray-200 pt-4 space-y-2">
+                <a href="{% url 'backend:dashboard' %}" class="block py-2 text-gray-700 hover:text-green-600">Tableau de bord</a>
+                <a href="{% url 'backend:profile' %}" class="block py-2 text-gray-700 hover:text-green-600">Mon profil</a>
+                <a href="{% url 'backend:product_create' %}" class="block py-2 text-gray-700 hover:text-green-600">Vendre</a>
+                <a href="{% url 'backend:logout' %}" class="block py-2 text-red-600">Déconnexion</a>
+            </div>
+            {% else %}
+            <div class="border-t border-gray-200 pt-4 space-y-3">
+                <a href="{% url 'backend:login' %}" 
+                   class="block w-full text-center py-3 border border-green-600 text-green-600 rounded-full hover:bg-green-50">
+                    Connexion
+                </a>
+                <a href="{% url 'backend:register' %}" 
+                   class="block w-full text-center py-3 bg-green-600 text-white rounded-full hover:bg-green-700">
+                    Inscription
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<!-- Navigation secondaire avec catégories -->
+<div class="hidden lg:block bg-white border-b border-gray-200">
+    <div class="container mx-auto px-4">
+        <div class="flex items-center justify-between py-3">
+            <div class="flex items-center space-x-8">
+                <button class="flex items-center space-x-2 text-gray-700 hover:text-green-600 font-medium group">
+                    <i data-lucide="grid-3x3" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    <span>Toutes les catégories</span>
+                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                </button>
+                
+                {% for category in MAIN_CATEGORIES|slice:":6" %}
+                <a href="{% url 'backend:category' slug=category.slug %}" 
+                   class="flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-colors group">
+                    <span class="text-lg group-hover:scale-110 transition-transform">{{ category.icon }}</span>
+                    <span class="hidden xl:block">{{ category.name }}</span>
+                </a>
+                {% endfor %}
+            </div>
+            
+            <div class="flex items-center space-x-4 text-sm">
+                <a href="{% url 'backend:pickup_point_list' %}" 
+                   class="flex items-center space-x-2 text-gray-600 hover:text-green-600 transition-colors">
+                    <i data-lucide="map-pin" class="w-4 h-4"></i>
+                    <span>Points de retrait</span>
+                </a>
+                
+                <a href="{% url 'backend:help' %}" 
+                   class="flex items-center space-x-2 text-gray-600 hover:text-green-600 transition-colors">
+                    <i data-lucide="help-circle" class="w-4 h-4"></i>
+                    <span>Aide</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

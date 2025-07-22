@@ -18,7 +18,7 @@ def global_context(request):
         'MAIN_CATEGORIES': Category.objects.filter(
             parent=None, is_active=True
         ).order_by('order')[:6],
-        'SUPPORTED_CITIES': dict(settings.VGK_SETTINGS['SUPPORTED_CITIES'] if isinstance(settings.VGK_SETTINGS.get('SUPPORTED_CITIES'), list) else []),
+        'SUPPORTED_CITIES': {city: None for city in settings.VGK_SETTINGS['SUPPORTED_CITIES']} if isinstance(settings.VGK_SETTINGS.get('SUPPORTED_CITIES'), list) else {},
         'PICKUP_POINTS': settings.VGK_SETTINGS.get('PICKUP_POINTS', {}),
     }
     

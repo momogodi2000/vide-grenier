@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block meta_description %}Marketplace camerounaise de seconde main - Vendez, Achetez, Économisez avec Vidé-Grenier Kamer{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}marketplace, cameroun, seconde main, occasion, douala, yaounde{% endblock %}">
+    <meta name="author" content="Vidé-Grenier Kamer">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#00823A">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="VGK">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="{% block og_title %}Vidé-Grenier Kamer{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Marketplace camerounaise de seconde main{% endblock %}">
+    <meta property="og:image" content="{% load static %}{% static 'images/og-image.jpg' %}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:type" content="website">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}Vidé-Grenier Kamer{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Marketplace camerounaise de seconde main{% endblock %}">
+    
+    <title>{% block title %}Vidé-Grenier Kamer - Marketplace Camerounaise{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'images/icons/favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/icons/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/icons/favicon-16x16.png' %}">
+    
+    <!-- PWA Icons -->
+    <link rel="apple-touch-icon" href="{% static 'images/icons/icon-192x192.png' %}">
+    <link rel="manifest" href="{% url 'manifest' %}">
+    
+    <!-- Preload Critical Resources -->
+    <link rel="preload" href="{% static 'css/tailwind.min.css' %}" as="style">
+    <link rel="preload" href="{% static 'js/app.js' %}" as="script">
+    
+    <!-- CSS -->
+    {% load static %}
+    <link href="{% static 'css/tailwind.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
+    <link href="{% static 'css/animations.css' %}" rel="stylesheet">
+    
+    <!-- Custom CSS Block -->
+    {% block extra_css %}{% endblock %}
+    
+    <!-- Preconnect to External APIs -->
+    <link rel="preconnect" href="https://api.campay.net">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+
+<body class="bg-gray-50 font-inter antialiased">
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-green-600 text-white px-4 py-2 rounded-md z-50">
+        Aller au contenu principal
+    </a>
+    
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="fixed inset-0 bg-gradient-to-br from-green-600 to-orange-500 z-50 flex items-center justify-center">
+        <div class="text-center text-white">
+            <div class="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white mb-4 mx-auto"></div>
+            <h2 class="text-2xl font-bold mb-2">Vidé-Grenier Kamer</h2>
+            <p class="text-lg opacity-90">Chargement en cours...</p>
+        </div>
+    </div>
+    
+    <!-- PWA Install Banner -->
+    <div id="pwa-banner" class="hidden fixed top-0 left-0 right-0 bg-gradient-to-r from-green-600 to-green-700 text-white p-4 z-40 shadow-lg">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                    <i data-lucide="smartphone" class="w-5 h-5 text-green-600"></i>
+                </div>
+                <div>
+                    <p class="font-semibold">Installer l'app VGK</p>
+                    <p class="text-sm opacity-90">Accès rapide et notifications</p>
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <button id="pwa-install" class="bg-white text-green-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+                    Installer
+                </button>
+                <button id="pwa-dismiss" class="text-white hover:text-gray-200 p-2">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Navigation -->
+    {% include 'components/navigation.html' %}
+    
+    <!-- Notifications Toast Container -->
+    <div id="toast-container" class="fixed top-20 right-4 z-50 space-y-2"></div>
+    
+    <!-- Main Content -->
+    <main id="main-content" class="min-h-screen">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    {% include 'components/footer.html' %}
+    
+    <!-- Chat Widget -->
+    {% if user.is_authenticated %}
+        {% include 'components/chat_widget.html' %}
+    {% endif %}
+    
+    <!-- Back to Top Button -->
+    <button id="back-to-top" class="fixed bottom-6 right-6 bg-green-600 text-white p-3 rounded-full shadow-lg opacity-0 invisible transition-all duration-300 hover:bg-green-700 hover:scale-110 z-40">
+        <i data-lucide="arrow-up" class="w-6 h-6"></i>
+    </button>
+    
+    <!-- JavaScript -->
+    <script src="{% static 'js/utils.js' %}"></script>
+    <script src="{% static 'js/app.js' %}"></script>
+    <script src="{% static 'js/pwa.js' %}"></script>
+    <script src="{% static 'js/animations.js' %}"></script>
+    
+    <!-- Three.js for 3D effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="{% static 'js/three-effects.js' %}"></script>
+    
+    <!-- GSAP for advanced animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <!-- Custom JavaScript Block -->
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Initialize Lucide Icons -->
+    <script>
+        lucide.createIcons();
+    {% load django_browser_reload %}
+    {% django_browser_reload_script %}
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
+    
+    <!-- Global Site Variables -->
+    <script>
+        window.VGK = {
+            csrf_token: '{{ csrf_token }}',
+            user_authenticated: {% if user.is_authenticated %}true{% else %}false{% endif %},
+            user_id: {% if user.is_authenticated %}'{{ user.id }}'{% else %}null{% endif %},
+            urls: {
+                home: '{% url "backend:home" %}',
+                products: '{% url "backend:product_list" %}',
+                search: '{% url "backend:search" %}',
+                notifications: '{% url "backend:notification_ajax" %}',
+            },
+            settings: {
+                animate_on_scroll: true,
+                enable_3d: true,
+                enable_sound: false,
+            }
+        };
+    </script>
+</body>
+</html>
