@@ -1,99 +1,108 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="fr" class="scroll-smooth">
+<html lang="fr" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{% block meta_description %}Marketplace camerounaise de seconde main - Vendez, Achetez, Économisez avec Vidé-Grenier Kamer{% endblock %}">
-    <meta name="keywords" content="{% block meta_keywords %}marketplace, cameroun, seconde main, occasion, douala, yaounde{% endblock %}">
-    <meta name="author" content="Vidé-Grenier Kamer">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     
-    <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#00823A">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="VGK">
+    <!-- SEO Meta Tags -->
+    <title>{% block title %}Vidé-Grenier Kamer - Marketplace camerounaise{% endblock %}</title>
+    <meta name="description" content="{% block description %}Marketplace camerounaise de seconde main. Vendez et achetez facilement avec des moyens de paiement locaux.{% endblock %}">
+    <meta name="keywords" content="vidé-grenier, marketplace, Cameroun, seconde main, vente, achat">
+    <meta name="author" content="Vidé-Grenier Kamer">
     
     <!-- Open Graph -->
     <meta property="og:title" content="{% block og_title %}Vidé-Grenier Kamer{% endblock %}">
     <meta property="og:description" content="{% block og_description %}Marketplace camerounaise de seconde main{% endblock %}">
-    <meta property="og:image" content="{% load static %}{% static 'images/og-image.jpg' %}">
+    <meta property="og:image" content="{% static 'images/og-image.jpg' %}">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
     <meta property="og:type" content="website">
     
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{% block twitter_title %}Vidé-Grenier Kamer{% endblock %}">
-    <meta name="twitter:description" content="{% block twitter_description %}Marketplace camerounaise de seconde main{% endblock %}">
-    
-    <title>{% block title %}Vidé-Grenier Kamer - Marketplace Camerounaise{% endblock %}</title>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{% static 'images/icons/favicon.ico' %}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/icons/favicon-32x32.png' %}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/icons/favicon-16x16.png' %}">
-    
-    <!-- PWA Icons -->
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
     <link rel="apple-touch-icon" href="{% static 'images/icons/icon-192x192.png' %}">
     <link rel="manifest" href="{% url 'manifest' %}">
     
-    <!-- Preload Critical Resources -->
-    <link rel="preload" href="{% static 'tailwind.min.css' %}" as="style">
-    <link rel="preload" href="{% static 'js/app.js' %}" as="script">
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#16a34a">
+    <meta name="msapplication-TileColor" content="#16a34a">
     
-    <!-- CSS -->
-    {% load static %}
-    <link href="{% static 'tailwind.min.css' %}" rel="stylesheet">
-    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
-    <link href="{% static 'css/animations.css' %}" rel="stylesheet">
-    
-    <!-- Custom CSS Block -->
-    {% block extra_css %}{% endblock %}
-    
-    <!-- Preconnect to External APIs -->
-    <link rel="preconnect" href="https://api.campay.net">
+    <!-- Preconnect to External Resources -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Critical CSS - Inline for performance -->
+    <style>
+        /* Critical styles inlined for faster loading */
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .loading-fallback { display: flex; justify-content: center; align-items: center; min-height: 50vh; }
+        .loading-spinner { width: 2rem; height: 2rem; border: 2px solid #e5e7eb; border-top: 2px solid #16a34a; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+    
+    <!-- Main CSS Files -->
+    <link href="{% static 'css/tailwind.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
+    <link href="{% static 'css/animations.css' %}" rel="stylesheet">
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <!-- Custom CSS Block -->
+    {% block extra_css %}{% endblock %}
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Vidé-Grenier Kamer",
+        "url": "{{ request.build_absolute_uri }}",
+        "logo": "{% static 'images/logo.png' %}",
+        "description": "Marketplace camerounaise de seconde main",
+        "address": {
+            "@type": "PostalAddress",
+            "addressCountry": "CM",
+            "addressLocality": "Douala"
+        }
+    }
+    </script>
 </head>
 
-<body class="bg-gray-50 font-inter antialiased">
+<body class="bg-gray-50 font-inter antialiased min-h-full">
     <!-- Skip to main content for accessibility -->
-    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-green-600 text-white px-4 py-2 rounded-md z-50">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-vgk-green-600 text-white px-4 py-2 rounded-md z-50 transition-all">
         Aller au contenu principal
     </a>
     
     <!-- Loading Screen -->
-    <div id="loading-screen" class="fixed inset-0 bg-gradient-to-br from-green-600 to-orange-500 z-50 flex items-center justify-center">
-        <div class="text-center text-white">
-            <div class="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white mb-4 mx-auto"></div>
+    <div id="loading-screen" class="fixed inset-0 bg-gradient-to-br from-vgk-green-600 to-vgk-orange-500 z-50 flex items-center justify-center">
+        <div class="text-center text-white animate-fade-in">
+            <div class="loading-spinner mx-auto mb-4"></div>
             <h2 class="text-2xl font-bold mb-2">Vidé-Grenier Kamer</h2>
             <p class="text-lg opacity-90">Chargement en cours...</p>
         </div>
     </div>
     
     <!-- PWA Install Banner -->
-    <div id="pwa-banner" class="hidden fixed top-0 left-0 right-0 bg-gradient-to-r from-green-600 to-green-700 text-white p-4 z-40 shadow-lg">
+    <div id="pwa-banner" class="hidden fixed top-0 left-0 right-0 bg-gradient-to-r from-vgk-green-600 to-vgk-orange-500 text-white p-4 z-40">
         <div class="container mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                    <i data-lucide="smartphone" class="w-5 h-5 text-green-600"></i>
-                </div>
+                <i data-lucide="smartphone" class="w-6 h-6"></i>
                 <div>
-                    <p class="font-semibold">Installer l'app VGK</p>
-                    <p class="text-sm opacity-90">Accès rapide et notifications</p>
+                    <p class="font-medium">Installer l'application</p>
+                    <p class="text-sm opacity-90">Accédez rapidement à VGK depuis votre écran d'accueil</p>
                 </div>
             </div>
-            <div class="flex space-x-2">
-                <button id="pwa-install" class="bg-white text-green-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+            <div class="flex items-center space-x-2">
+                <button id="pwa-install-btn" class="bg-white text-vgk-green-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors">
                     Installer
                 </button>
-                <button id="pwa-dismiss" class="text-white hover:text-gray-200 p-2">
+                <button id="pwa-close-btn" class="text-white/80 hover:text-white transition-colors">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -101,90 +110,116 @@
     </div>
     
     <!-- Navigation -->
-    {% include 'components/navigation.html' %}
+    {% include 'components/navbar.html' %}
     
-    <!-- Notifications Toast Container -->
-    {% include 'components/notifications.html' %}
+    <!-- Flash Messages -->
+    {% if messages %}
+    <div class="messages fixed top-20 right-4 z-30 space-y-2" id="messages-container">
+        {% for message in messages %}
+        <div class="message animate-slide-in-right alert-{{ message.tags }} max-w-sm">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    {% if message.tags == 'success' %}
+                        <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
+                    {% elif message.tags == 'error' %}
+                        <i data-lucide="alert-circle" class="w-5 h-5 text-red-600"></i>
+                    {% elif message.tags == 'warning' %}
+                        <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-600"></i>
+                    {% else %}
+                        <i data-lucide="info" class="w-5 h-5 text-blue-600"></i>
+                    {% endif %}
+                    <span class="text-sm">{{ message }}</span>
+                </div>
+                <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-600 ml-2">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
     
     <!-- Main Content -->
     <main id="main-content" class="min-h-screen">
-        {% block content %}{% endblock %}
+        {% block content %}
+        <div class="loading-fallback">
+            <div class="loading-spinner"></div>
+        </div>
+        {% endblock %}
     </main>
     
     <!-- Footer -->
     {% include 'components/footer.html' %}
     
-    <!-- Chat Widget -->
-    {% if user.is_authenticated %}
-        {% include 'components/chat_widget.html' %}
-    {% endif %}
-    
     <!-- Back to Top Button -->
-    <button id="back-to-top" class="fixed bottom-6 right-6 bg-green-600 text-white p-3 rounded-full shadow-lg opacity-0 invisible transition-all duration-300 hover:bg-green-700 hover:scale-110 z-40">
-        <i data-lucide="arrow-up" class="w-6 h-6"></i>
+    <button id="back-to-top" class="fixed bottom-6 right-6 bg-vgk-green-600 text-white p-3 rounded-full shadow-lg hover:bg-vgk-green-700 transition-all transform translate-y-16 opacity-0 z-30">
+        <i data-lucide="arrow-up" class="w-5 h-5"></i>
     </button>
-
-    {% include 'components/loading.html' %}
     
-    <!-- JavaScript -->
-    <script src="{% static 'js/utils.js' %}"></script>
-    <script src="{% static 'js/app.js' %}"></script>
-    <script src="{% static 'js/pwa.js' %}"></script>
-    <script src="{% static 'js/animations.js' %}"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     
-    <!-- Three.js for 3D effects -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="{% static 'js/three-effects.js' %}"></script>
+    <!-- Main JavaScript -->
+    <script src="{% static 'js/app.js' %}" defer></script>
     
-    <!-- GSAP for advanced animations -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    
-    <!-- Custom JavaScript Block -->
     {% block extra_js %}{% endblock %}
     
     <!-- Initialize Lucide Icons -->
     <script>
-        lucide.createIcons();
-    {% load django_browser_reload %}
-    {% django_browser_reload_script %}
+        // Initialize Lucide icons when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+            
+            // Hide loading screen
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                setTimeout(() => {
+                    loadingScreen.style.opacity = '0';
+                    setTimeout(() => loadingScreen.remove(), 300);
+                }, 500);
+            }
+            
+            // Auto-hide messages after 5 seconds
+            const messages = document.querySelectorAll('.message');
+            messages.forEach(message => {
+                setTimeout(() => {
+                    message.style.opacity = '0';
+                    message.style.transform = 'translateX(100%)';
+                    setTimeout(() => message.remove(), 300);
+                }, 5000);
+            });
+            
+            // Back to top functionality
+            const backToTopBtn = document.getElementById('back-to-top');
+            window.addEventListener('scroll', () => {
+                if (window.pageYOffset > 300) {
+                    backToTopBtn.classList.remove('translate-y-16', 'opacity-0');
+                } else {
+                    backToTopBtn.classList.add('translate-y-16', 'opacity-0');
+                }
+            });
+            
+            backToTopBtn.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+    </script>
     
     <!-- Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
+            window.addEventListener('load', function() {
                 navigator.serviceWorker.register('/sw.js')
-                    .then((registration) => {
+                    .then(function(registration) {
                         console.log('SW registered: ', registration);
                     })
-                    .catch((registrationError) => {
+                    .catch(function(registrationError) {
                         console.log('SW registration failed: ', registrationError);
                     });
             });
         }
     </script>
-    
-    <!-- Global Site Variables -->
-    <script>
-        window.VGK = {
-            csrf_token: '{{ csrf_token }}',
-            user_authenticated: {% if user.is_authenticated %}true{% else %}false{% endif %},
-            user_id: {% if user.is_authenticated %}'{{ user.id }}'{% else %}null{% endif %},
-            urls: {
-                home: '{% url "backend:home" %}',
-                products: '{% url "backend:product_list" %}',
-                search: '{% url "backend:search" %}',
-                notifications: '{% url "backend:notification_ajax" %}',
-            },
-            settings: {
-                animate_on_scroll: true,
-                enable_3d: true,
-                enable_sound: false,
-            }
-        };
-    </script>
-    {% include 'components/notifications.html' %}
-    {% include 'components/footer.html' %}
-    {% include 'components/chat_widget.html' %}
-    {% include 'components/loading.html' %}
 </body>
 </html>

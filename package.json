@@ -1,0 +1,19 @@
+{
+  "name": "vide-grenier-kamer",
+  "version": "2.5.0",
+  "description": "Marketplace camerounaise de seconde main",
+  "scripts": {
+    "build-css": "tailwindcss -i ./static/css/input.css -o ./static/css/tailwind.min.css --watch",
+    "build-css-prod": "tailwindcss -i ./static/css/input.css -o ./static/css/tailwind.min.css --minify",
+    "dev": "tailwindcss -i ./static/css/input.css -o ./static/css/tailwind.min.css --watch",
+    "build": "tailwindcss -i ./static/css/input.css -o ./static/css/tailwind.min.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0",
+    "@tailwindcss/forms": "^0.5.7",
+    "@tailwindcss/typography": "^0.5.10",
+    "@tailwindcss/aspect-ratio": "^0.4.2",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32"
+  }
+}

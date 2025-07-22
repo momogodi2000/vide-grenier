@@ -157,6 +157,24 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Static files configuration optimisée
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
+
+# Configuration WhiteNoise améliorée
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Headers pour les fichiers statiques
+WHITENOISE_MAX_AGE = 31536000  # 1 an pour les fichiers avec hash
+WHITENOISE_SKIP_COMPRESS_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'zip', 'gz', 'tgz', 'bz2', 'tbz', 'xz', 'br']
+
+# Compression des fichiers CSS/JS
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = config('DEBUG', default=False, cast=bool)
+
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

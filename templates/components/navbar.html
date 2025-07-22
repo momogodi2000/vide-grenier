@@ -1,0 +1,58 @@
+<!-- Simple responsive navbar for Vide-Grenier Kamer -->
+<nav class="bg-vgk-green-600 text-white shadow-lg">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+        <a href="/" class="flex items-center space-x-2">
+            <img src="#" alt="Logo" class="h-8 w-8 rounded-full">
+            <span class="font-bold text-lg">Vidé-Grenier Kamer</span>
+        </a>
+        <ul class="hidden md:flex space-x-6 font-medium">
+            <li><a href="/" class="hover:text-yellow-300 transition">Accueil</a></li>
+            <li><a href="/categories/" class="hover:text-yellow-300 transition">Catégories</a></li>
+            <li><a href="/favorites/" class="hover:text-yellow-300 transition">Favoris</a></li>
+            <li><a href="/orders/" class="hover:text-yellow-300 transition">Commandes</a></li>
+            <li><a href="/contact/" class="hover:text-yellow-300 transition">Contact</a></li>
+        </ul>
+        <div class="flex items-center space-x-2">
+            {% if user.is_authenticated %}
+                <a href="/profile/" class="bg-white text-vgk-green-600 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition">Mon Compte</a>
+                <a href="/logout/" class="text-white/80 hover:text-yellow-300 px-3 py-2">Déconnexion</a>
+            {% else %}
+                <a href="/login/" class="bg-yellow-300 text-vgk-green-700 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-400 transition">Connexion</a>
+                <a href="/register/" class="text-white/80 hover:text-yellow-300 px-3 py-2">Inscription</a>
+            {% endif %}
+        </div>
+        <!-- Mobile menu button -->
+        <button id="navbar-toggle" class="md:hidden text-white focus:outline-none">
+            <i data-lucide="menu" class="w-7 h-7"></i>
+        </button>
+    </div>
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="md:hidden hidden px-4 pb-4">
+        <ul class="space-y-2 font-medium">
+            <li><a href="/" class="block py-2 hover:text-yellow-300 transition">Accueil</a></li>
+            <li><a href="/categories/" class="block py-2 hover:text-yellow-300 transition">Catégories</a></li>
+            <li><a href="/favorites/" class="block py-2 hover:text-yellow-300 transition">Favoris</a></li>
+            <li><a href="/orders/" class="block py-2 hover:text-yellow-300 transition">Commandes</a></li>
+            <li><a href="/contact/" class="block py-2 hover:text-yellow-300 transition">Contact</a></li>
+            {% if user.is_authenticated %}
+                <a href="/profile/" class="block py-2 bg-white text-vgk-green-600 rounded-lg font-semibold hover:bg-gray-100 transition">Mon Compte</a>
+                <a href="/logout/" class="block py-2 text-white/80 hover:text-yellow-300">Déconnexion</a>
+            {% else %}
+                <a href="/login/" class="block py-2 bg-yellow-300 text-vgk-green-700 rounded-lg font-semibold hover:bg-yellow-400 transition">Connexion</a>
+                <a href="/register/" class="block py-2 text-white/80 hover:text-yellow-300">Inscription</a>
+            {% endif %}
+        </ul>
+    </div>
+    <script>
+        // Mobile menu toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggle = document.getElementById('navbar-toggle');
+            const menu = document.getElementById('mobile-menu');
+            if (toggle && menu) {
+                toggle.addEventListener('click', function() {
+                    menu.classList.toggle('hidden');
+                });
+            }
+        });
+    </script>
+</nav>
