@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Vidé-Grenier Kamer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .dashboard-card { 
+            @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-300 hover:scale-[1.02];
+        }
+        .metric-card { 
+            @apply bg-gradient-to-br text-white rounded-xl p-6 relative overflow-hidden transform hover:scale-105 transition-all duration-300;
+        }
+        .metric-card::before { 
+            content: ''; 
+            @apply absolute -top-4 -right-4 w-24 h-24 bg-white bg-opacity-20 rounded-full;
+        }
+        .nav-link { 
+            @apply flex items-center px-4 py-3 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200;
+        }
+        .nav-link.active { 
+            @apply text-green-700 bg-green-100 font-medium;
+        }
+        .feature-card {
+            @apply bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md hover:border-green-300 transition-all duration-300 cursor-pointer;
+        }
+        .stats-ring {
+            background: conic-gradient(from 0deg, rgb(34, 197, 94) 0deg, rgb(34, 197, 94) 250deg, rgb(229, 231, 235) 250deg);
+        }
+    </style>
+</head>
+<body class="h-full">
+    <div class="min-h-full">
+        <!-- Top Navigation -->
+        <nav class="bg-white shadow-sm border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <img class="h-10 w-auto" src="https://via.placeholder.com/150x40/22c55e/ffffff?text=Vidé-Grenier+Kamer" alt="VGK">
+                    </div>
+                    
+                    <div class="flex items-center space-x-6">
+                        <!-- Search Bar -->
+                        <div class="relative">
+                            <input type="text" 
+                                   placeholder="Rechercher un produit..." 
+                                   class="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            <i data-lucide="search" class="absolute left-3 top-2.5 w-5 h-5 text-gray-400"></i>
+                        </div>
+                        
+                        <!-- Notifications -->
+                        <button class="relative p-2 text-gray-400 hover:text-gray-600">
+                            <i data-lucide="bell" class="w-6 h-6"></i>
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">2</span>
+                        </button>
+                        
+                        <!-- User Menu -->
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                U
+                            </div>
+                            <span class="text-sm font-medium text-gray-700">Utilisateur</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                    Tableau de Bord
+                </h1>
+                <p class="mt-2 text-gray-600">Vue d'ensemble de la plateforme Vidé-Grenier Kamer</p>
+            </div>
+
+            <!-- Platform Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="metric-card from-blue-500 to-blue-600">
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-blue-100 text-sm font-medium">Produits Actifs</p>
+                                <p class="text-3xl font-bold">8,923</p>
+                                <p class="text-blue-200 text-sm">+234 cette semaine</p>
+                            </div>
+                            <i data-lucide="package" class="w-8 h-8 text-blue-200"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-card from-green-500 to-green-600">
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-green-100 text-sm font-medium">Utilisateurs</p>
+                                <p class="text-3xl font-bold">12,547</p>
+                                <p class="text-green-200 text-sm">+156 ce mois</p>
+                            </div>
+                            <i data-lucide="users" class="w-8 h-8 text-green-200"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-card from-purple-500 to-purple-600">
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-purple-100 text-sm font-medium">Transactions</p>
+                                <p class="text-3xl font-bold">3,421</p>
+                                <p class="text-purple-200 text-sm">+89 aujourd'hui</p>
+                            </div>
+                            <i data-lucide="credit-card" class="w-8 h-8 text-purple-200"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-card from-orange-500 to-orange-600">
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-orange-100 text-sm font-medium">CA Total</p>
+                                <p class="text-3xl font-bold">45.2M</p>
+                                <p class="text-orange-200 text-sm">FCFA ce mois</p>
+                            </div>
+                            <i data-lucide="trending-up" class="w-8 h-8 text-orange-200"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Dashboard Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left Column -->
+                <div class="lg:col-span-2 space-y-8">
+                    <!-- Platform Overview -->
+                    <div class="dashboard-card">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-xl font-semibold text-gray-900">Aperçu de la Plateforme</h2>
+                            <select class="text-sm border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500">
+                                <option>7 derniers jours</option>
+                                <option>30 derniers jours</option>
+                                <option>3 derniers mois</option>
+                            </select>
+                        </div>
+                        
+                        <div class="h-64">
+                            <canvas id="platformChart"></canvas>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100">
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-blue-600">76%</p>
+                                <p class="text-sm text-gray-600">Taux de conversion</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-green-600">4.8</p>
+                                <p class="text-sm text-gray-600">Note moyenne</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-purple-600">89%</p>
+                                <p class="text-sm text-gray-600">Satisfaction</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Popular Categories -->
+                    <div class="dashboard-card">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-xl font-semibold text-gray-900">Catégories Populaires</h2>
+                            <a href="#" class="text-green-600 hover:text-green-800 text-sm font-medium">Voir tout</a>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="feature-card">
+                                <div class="flex items-center space-x-4">
+                                    <div class="p-3 bg-pink-100 rounded-lg">
+                                        <i data-lucide="shirt" class="w-6 h-6 text-pink-600"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-gray-900">Vêtements Femme</h3>
+                                        <p class="text-sm text-gray-600">2,847 produits</p>
+                                        <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                            <div class="bg-pink-500 h-2 rounded-full" style="width: 65%"></div>
+                                        </div>
+                                    </div>
+                                    <span class="text-lg font-bold text-green-600">65%</span>
+                                </div>
+                            </div>
+
+                            <div class="feature-card">
+                                <div class="flex items-center space-x-4">
+                                    <div class="p-3 bg-blue-100 rounded-lg">
+                                        <i data-lucide="smartphone" class="w-6 h-6 text-blue-600"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-gray-900">Électronique</h3>
+                                        <p class="text-sm text-gray-600">1,923 produits</p>
+                                        <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                            <div class="bg-blue-500 h-2 rounded-full" style="width: 45%"></div>
+                                        </div>
+                                    </div>
+                                    <span class="text-lg font-bold text-green-600">45%</span>
+                                </div>
+                            </div>
+
+                            <div class="feature-card">
+                                <div class="flex items-center space-x-4">
+                                    <div class="p-3 bg-indigo-100 rounded-lg">
+                                        <i data-lucide="user" class="w-6 h-6 text-indigo-600"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-gray-900">Vêtements Homme</h3>
+                                        <p class="text-sm text-gray-600">1,654 produits</p>
+                                        <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                            <div class="bg-indigo-500 h-2 rounded-full" style="width: 38%"></div>
+                                        </div>
+                                    </div>
+                                    <span class="text-lg font-bold text-green-600">38%</span>
+                                </div>
+                            </div>
+
+                            <div class="feature-card">
+                                <div class="flex items-center space-x-4">
+                                    <div class="p-3 bg-yellow-100 rounded-lg">
+                                        <i data-lucide="watch" class="w-6 h-6 text-yellow-600"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-gray-900">Accessoires</h3>
+                                        <p class="text-sm text-gray-600">1,234 produits</p>
+                                        <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                            <div class="bg-yellow-500 h-2 rounded-full" style="width: 28%"></div>
+                                        </div>
+                                    </div>
+                                    <span class="text-lg font-bold text-green-600">28%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="dashboard-card">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-xl font-semibold text-gray-900">Activité Récente</h2>
+                            <a href="#" class="text-green-600 hover:text-green-800 text-sm font-medium">Voir tout</a>
+                        </div>
+                        
+                        <div class="flow-root">
+                            <ul class="-mb-8">
+                                <li>
+                                    <div class="relative pb-8">
+                                        <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"></span>
+                                        <div class="relative flex space-x-3">
+                                            <div>
+                                                <span class="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center">
+                                                    <i data-lucide="user-plus" class="w-4 h-4 text-white"></i>
+                                                </span>
+                                            </div>
+                                            <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                                <div>
+                                                    <p class="text-sm text-gray-500">
+                                                        <strong class="text-gray-900">Marie Nkomo</strong> s'est inscrite sur la plateforme
+                                                    </p>
+                                                    <p class="text-xs text-gray-400">Douala, Cameroun</p>
+                                                </div>
+                                                <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                                    <time>Il y a 2min</time>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <div class="relative pb-8">
+                                        <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"></span>
+                                        <div class="relative flex space-x-3">
+                                            <div>
+                                                <span class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
+                                                    <i data-lucide="shopping-cart" class="w-4 h-4 text-white"></i>
+                                                </span>
+                                            </div>
+                                            <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                                <div>
+                                                    <p class="text-sm text-gray-500">
+                                                        Nouvelle commande pour <strong class="text-gray-900">Robe d'été</strong>
+                                                    </p>
+                                                    <p class="text-xs text-gray-400">15,000 FCFA • Point retrait Akwa</p>
+                                                </div>
+                                                <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                                    <time>Il y a 5min</time>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <div class="relative pb-8">
+                                        <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"></span>
+                                        <div class="relative flex space-x-3">
+                                            <div>
+                                                <span class="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center">
+                                                    <i data-lucide="package" class="w-4 h-4 text-white"></i>
+                                                </span>
+                                            </div>
+                                            <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                                <div>
+                                                    <p class="text-sm text-gray-500">
+                                                        <strong class="text-gray-900">iPhone 12 Reconditionné</strong> ajouté au stock admin
+                                                    </p>
+                                                    <p class="text-xs text-gray-400">Condition: Excellent • Prix: 450,000 FCFA</p>
+                                                </div>
+                                                <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                                    <time>Il y a 12min</time>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <div class="relative">
+                                        <div class="relative flex space-x-3">
+                                            <div>
+                                                <span class="h-8 w-8 rounded-full bg-orange-500 flex items-center justify-center">
+                                                    <i data-lucide="star" class="w-4 h-4 text-white"></i>
+                                                </span>
+                                            </div>
+                                            <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                                <div>
+                                                    <p class="text-sm text-gray-500">
+                                                        Nouvel avis 5 étoiles pour <strong class="text-gray-900">Veste en cuir</strong>
+                                                    </p>
+                                                    <p class="text-xs text-gray-400">"Produit conforme, très satisfait!"</p>
+                                                </div>
+                                                <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                                    <time>Il y a 25min</time>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Geographic Distribution -->
+                    <div class="dashboard-card">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-6">Répartition Géographique</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-sm font-medium text-gray-700">Douala</span>
+                                    <span class="text-sm text-gray-600">67% (8,426 utilisateurs)</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-3">
+                                    <div class="bg-gradient-to-r from-green-500 to-emerald-500 h-3 rounded-full" style="width: 67%"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-sm font-medium text-gray-700">Yaoundé</span>
+                                    <span class="text-sm text-gray-600">33% (4,121 utilisateurs)</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-3">
+                                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full" style="width: 33%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="map-pin" class="w-5 h-5 text-green-600"></i>
+                                <span class="text-sm font-medium text-gray-900">Points de retrait actifs:</span>
+                            </div>
+                            <div class="mt-2 flex space-x-4 text-sm">
+                                <span class="text-green-600">• Douala Akwa (Opérationnel)</span>
+                                <span class="text-blue-600">• Yaoundé Centre (Opérationnel)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="space-y-8">
+                    <!-- Quick Actions -->
+                    <div class="dashboard-card">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Actions Rapides</h2>
+                        <div class="space-y-3">
+                            <button class="w-full flex items-center justify-between p-4 text-left border-2 border-dashed border-green-300 rounded-lg hover:border-green-400 hover:bg-green-50 transition-all duration-200">
+                                <div class="flex items-center">
+                                    <i data-lucide="plus-circle" class="w-6 h-6 text-green-600 mr-3"></i>
+                                    <div>
+                                        <span class="font-medium text-gray-900">Publier un produit</span>
+                                        <p class="text-sm text-gray-600">Vendez facilement</p>
+                                    </div>
+                                </div>
+                                <i data-lucide="arrow-right" class="w-5 h-5 text-green-600"></i>
+                            </button>
+
+                            <button class="w-full flex items-center justify-between p-4 text-left border-2 border-dashed border-blue-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200">
+                                <div class="flex items-center">
+                                    <i data-lucide="search" class="w-6 h-6 text-blue-600 mr-3"></i>
+                                    <div>
+                                        <span class="font-medium text-gray-900">Explorer le marché</span>
+                                        <p class="text-sm text-gray-600">Trouvez des bonnes affaires</p>
+                                    </div>
+                                </div>
+                                <i data-lucide="arrow-right" class="w-5 h-5 text-blue-600"></i>
+                            </button>
+
+                            <button class="w-full flex items-center justify-between p-4 text-left border-2 border-dashed border-purple-300 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-all duration-200">
+                                <div class="flex items-center">
+                                    <i data-lucide="map-pin" class="w-6 h-6 text-purple-600 mr-3"></i>
+                                    <div>
+                                        <span class="font-medium text-gray-900">Points de retrait</span>
+                                        <p class="text-sm text-gray-600">Trouvez le plus proche</p>
+                                    </div>
+                                </div>
+                                <i data-lucide="arrow-right" class="w-5 h-5 text-purple-600"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Platform Stats -->
+                    <div class="dashboard-card">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Statistiques Plateforme</h2>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">Taux d'activité:</span>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-12 h-12 rounded-full stats-ring flex items-center justify-center">
+                                        <span class="text-sm font-bold text-gray-900">85%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+                                <div class="text-center">
+                                    <p class="text-lg font-bold text-green-600">96%</p>
+                                    <p class="text-xs text-gray-600">Uptime</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-lg font-bold text-blue-600">2.3s</p>
+                                    <p class="text-xs text-gray-600">Temps réponse</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Featured Products -->
+                    <div class="dashboard-card">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Produits à la Une</h2>
+                        <div class="space-y-4">
+                            <div class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:border-green-300 transition-colors">
+                                <img src="https://via.placeholder.com/50x50/f3f4f6/9ca3af?text=iPhone" alt="iPhone" class="w-12 h-12 rounded object-cover">
+                                <div class="flex-1">
+                                    <h3 class="font-medium text-sm text-gray-900">iPhone 12 Pro</h3>
+                                    <p class="text-xs text-gray-600">Excellent état</p>
+                                    <p class="text-green-600 font-bold text-sm">450,000 FCFA</p>
+                                </div>
+                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Populaire</span>
+                            </div>
+
+                            <div class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:border-green-300 transition-colors">
+                                <img src="https://via.placeholder.com/50x50/f3f4f6/9ca3af?text=Robe" alt="Robe" class="w-12 h-12 rounded object-cover">
+                                <div class="flex-1">
+                                    <h3 class="font-medium text-sm text-gray-900">Robe d'été</h3>
+                                    <p class="text-xs text-gray-600">Taille M</p>
+                                    <p class="text-green-600 font-bold text-sm">25,000 FCFA</p>
+                                </div>
+                                <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Nouveau</span>
+                            </div>
+
+                            <div class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:border-green-300 transition-colors">
+                                <img src="https://via.placeholder.com/50x50/f3f4f6/9ca3af?text=Sac" alt="Sac" class="w-12 h-12 rounded object-cover">
+                                <div class="flex-1">
+                                    <h3 class="font-medium text-sm text-gray-900">Sac à main cuir</h3>
+                                    <p class="text-xs text-gray-600">Cuir véritable</p>
+                                    <p class="text-green-600 font-bold text-sm">35,000 FCFA</p>
+                                </div>
+                                <span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">Tendance</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Methods -->
+                    <div class="dashboard-card">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Moyens de Paiement</h2>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-orange-500 rounded flex items-center justify-center">
+                                        <span class="text-white text-xs font-bold">OM</span>
+                                    </div>
+                                    <span class="font-medium text-gray-900">Orange Money</span>
+                                </div>
+                                <span class="text-sm text-green-600">Actif</span>
+                            </div>
+
+                            <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-yellow-500 rounded flex items-center justify-center">
+                                        <span class="text-white text-xs font-bold">MTN</span>
+                                    </div>
+                                    <span class="font-medium text-gray-900">MTN Mobile Money</span>
+                                </div>
+                                <span class="text-sm text-green-600">Actif</span>
+                            </div>
+
+                            <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
+                                        <i data-lucide="credit-card" class="w-4 h-4 text-white"></i>
+                                    </div>
+                                    <span class="font-medium text-gray-900">Campay</span>
+                                </div>
+                                <span class="text-sm text-green-600">Actif</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Support & Help -->
+                    <div class="dashboard-card bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Support & Aide</h2>
+                        <div class="space-y-3">
+                            <a href="#" class="flex items-center space-x-3 p-3 text-gray-700 hover:text-green-700 hover:bg-white rounded-lg transition-colors">
+                                <i data-lucide="help-circle" class="w-5 h-5"></i>
+                                <span class="font-medium">Centre d'aide</span>
+                            </a>
+                            <a href="#" class="flex items-center space-x-3 p-3 text-gray-700 hover:text-green-700 hover:bg-white rounded-lg transition-colors">
+                                <i data-lucide="message-circle" class="w-5 h-5"></i>
+                                <span class="font-medium">Contacter le support</span>
+                            </a>
+                            <a href="#" class="flex items-center space-x-3 p-3 text-gray-700 hover:text-green-700 hover:bg-white rounded-lg transition-colors">
+                                <i data-lucide="phone" class="w-5 h-5"></i>
+                                <span class="font-medium">+237 694 63 84 12</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Initialize Platform Chart
+        const ctx = document.getElementById('platformChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul'],
+                datasets: [
+                    {
+                        label: 'Nouveaux utilisateurs',
+                        data: [120, 150, 180, 220, 300, 280, 350],
+                        borderColor: 'rgb(34, 197, 94)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Produits publiés',
+                        data: [80, 120, 140, 180, 200, 220, 280],
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Transactions',
+                        data: [40, 65, 85, 120, 140, 160, 200],
+                        borderColor: 'rgb(147, 51, 234)',
+                        backgroundColor: 'rgba(147, 51, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    }
+                }
+            }
+        });
+
+        // Auto-refresh dashboard data
+        setInterval(() => {
+            // Update dashboard metrics
+            console.log('Refreshing general dashboard...');
+        }, 60000);
+
+        // Simulate real-time updates
+        function updateMetrics() {
+            // This would connect to WebSocket for real-time updates
+            console.log('Updating real-time metrics...');
+        }
+
+        // Initialize real-time updates
+        setTimeout(updateMetrics, 5000);
+    </script>
+</body>
+</html>

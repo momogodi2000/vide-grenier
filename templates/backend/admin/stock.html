@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion du Stock - Administration - Vidé-Grenier Kamer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        :root {
+            --vgk-green-600: #16a34a;
+            --vgk-green-700: #15803d;
+            --vgk-orange-500: #f97316;
+        }
+        
+        .admin-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .stock-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .stock-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stock-low {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border-left: 4px solid #ef4444;
+        }
+        
+        .stock-medium {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .stock-high {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-left: 4px solid #22c55e;
+        }
+        
+        .sku-badge {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+        
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+        }
+        
+        .product-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-inter antialiased">
+    <!-- Navigation -->
+    <nav class="admin-gradient shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-white font-bold text-xl">
+                        <span class="text-orange-300">Vidé</span>-Grenier Kamer
+                    </a>
+                    <span class="text-white/70 text-sm">Administration</span>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="/admin-panel/" class="text-white hover:text-orange-200 transition-colors">
+                        <i data-lucide="home" class="w-5 h-5"></i>
+                    </a>
+                    <a href="/dashboard/" class="text-white hover:text-orange-200 transition-colors">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                    </a>
+                    <a href="/auth/logout/" class="text-white hover:text-orange-200 transition-colors">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="flex">
+        <aside class="w-64 bg-white shadow-lg min-h-screen">
+            <div class="p-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-6">Administration</h2>
+                <nav class="space-y-2">
+                    <a href="/admin-panel/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i data-lucide="dashboard" class="w-5 h-5"></i>
+                        <span>Panel Principal</span>
+                    </a>
+                    <a href="/admin-panel/users/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i data-lucide="users" class="w-5 h-5"></i>
+                        <span>Utilisateurs</span>
+                    </a>
+                    <a href="/admin-panel/products/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i data-lucide="package" class="w-5 h-5"></i>
+                        <span>Produits</span>
+                    </a>
+                    <a href="/admin-panel/orders/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                        <span>Commandes</span>
+                    </a>
+                    <a href="/admin-panel/stock/" class="flex items-center space-x-3 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg">
+                        <i data-lucide="warehouse" class="w-5 h-5"></i>
+                        <span>Stock</span>
+                    </a>
+                    <a href="/admin-panel/analytics/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                        <span>Analytics</span>
+                    </a>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8">
+            <!-- Header -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">Gestion du Stock</h1>
+                        <p class="text-gray-600">Gérez l'inventaire des produits en stock physique</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                            <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
+                            Ajouter au Stock
+                        </button>
+                        <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i data-lucide="scanner" class="w-4 h-4 inline mr-2"></i>
+                            Scanner Code-barres
+                        </button>
+                        <button class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>
+                            Export Stock
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="stock-card rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Total Articles</p>
+                            <p class="text-3xl font-bold text-gray-900">1,247</p>
+                            <p class="text-green-600 text-sm font-medium">+23 cette semaine</p>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <i data-lucide="package" class="w-6 h-6 text-blue-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stock-card rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Stock Faible</p>
+                            <p class="text-3xl font-bold text-red-600">23</p>
+                            <p class="text-red-600 text-sm font-medium">≤ 5 unités</p>
+                        </div>
+                        <div class="bg-red-100 p-3 rounded-full">
+                            <i data-lucide="alert-triangle" class="w-6 h-6 text-red-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stock-card rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Valeur Stock</p>
+                            <p class="text-3xl font-bold text-gray-900">2.8M FCFA</p>
+                            <p class="text-green-600 text-sm font-medium">+15% ce mois</p>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-full">
+                            <i data-lucide="trending-up" class="w-6 h-6 text-green-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stock-card rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Mouvements Aujourd'hui</p>
+                            <p class="text-3xl font-bold text-gray-900">47</p>
+                            <p class="text-blue-600 text-sm font-medium">32 entrées, 15 sorties</p>
+                        </div>
+                        <div class="bg-orange-100 p-3 rounded-full">
+                            <i data-lucide="arrow-up-down" class="w-6 h-6 text-orange-600"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions Rapides</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <button class="flex flex-col items-center p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
+                        <i data-lucide="plus-circle" class="w-8 h-8 text-green-600 mb-2"></i>
+                        <span class="text-sm font-medium text-green-700">Réception</span>
+                    </button>
+                    <button class="flex flex-col items-center p-4 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
+                        <i data-lucide="minus-circle" class="w-8 h-8 text-red-600 mb-2"></i>
+                        <span class="text-sm font-medium text-red-700">Sortie</span>
+                    </button>
+                    <button class="flex flex-col items-center p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+                        <i data-lucide="refresh-cw" class="w-8 h-8 text-blue-600 mb-2"></i>
+                        <span class="text-sm font-medium text-blue-700">Inventaire</span>
+                    </button>
+                    <button class="flex flex-col items-center p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors">
+                        <i data-lucide="map-pin" class="w-8 h-8 text-yellow-600 mb-2"></i>
+                        <span class="text-sm font-medium text-yellow-700">Localiser</span>
+                    </button>
+                    <button class="flex flex-col items-center p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors">
+                        <i data-lucide="tag" class="w-8 h-8 text-purple-600 mb-2"></i>
+                        <span class="text-sm font-medium text-purple-700">Étiqueter</span>
+                    </button>
+                    <button class="flex flex-col items-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i data-lucide="file-text" class="w-8 h-8 text-gray-600 mb-2"></i>
+                        <span class="text-sm font-medium text-gray-700">Rapport</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                        <div class="relative">
+                            <input type="text" placeholder="Rechercher un produit..." 
+                                   class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-gray-400"></i>
+                        </div>
+                        
+                        <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Toutes les catégories</option>
+                            <option value="ELECTRONICS">Électronique</option>
+                            <option value="FASHION">Mode</option>
+                            <option value="HOME">Maison</option>
+                            <option value="BOOKS">Livres</option>
+                        </select>
+                        
+                        <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Tous les statuts</option>
+                            <option value="AVAILABLE">Disponible</option>
+                            <option value="RESERVED">Réservé</option>
+                            <option value="SOLD">Vendu</option>
+                            <option value="DAMAGED">Endommagé</option>
+                        </select>
+                        
+                        <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Tous les emplacements</option>
+                            <option value="A1">Zone A - Étagère 1</option>
+                            <option value="A2">Zone A - Étagère 2</option>
+                            <option value="B1">Zone B - Étagère 1</option>
+                            <option value="WAREHOUSE">Entrepôt</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <button class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
+                            <i data-lucide="filter" class="w-4 h-4"></i>
+                        </button>
+                        <button class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stock Items -->
+            <div class="space-y-4">
+                <!-- Stock Item 1 - Low Stock -->
+                <div class="stock-low rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100&h=100&fit=crop&crop=center" 
+                                 alt="Casque Audio" class="product-image">
+                            <div>
+                                <div class="flex items-center space-x-3 mb-2">
+                                    <h3 class="text-lg font-semibold text-gray-900">Casque Audio Sony WH-1000XM4</h3>
+                                    <span class="sku-badge text-white px-3 py-1 rounded-full text-sm font-medium">SKU: VGK-AUD-001</span>
+                                </div>
+                                <div class="flex items-center space-x-4 text-sm text-gray-600">
+                                    <span class="flex items-center">
+                                        <i data-lucide="package" class="w-4 h-4 mr-1"></i>
+                                        Électronique
+                                    </span>
+                                    <span class="flex items-center">
+                                        <i data-lucide="map-pin" class="w-4 h-4 mr-1"></i>
+                                        Zone A - Étagère 1
+                                    </span>
+                                    <span class="flex items-center">
+                                        <i data-lucide="calendar" class="w-4 h-4 mr-1"></i>
+                                        Reçu le 15/07/2025
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-6">
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-red-600">3</p>
+                                <p class="text-sm text-gray-600">Unités</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-lg font-semibold text-gray-900">285,000 FCFA</p>
+                                <p class="text-sm text-gray-600">Prix unitaire</p>
+                            </div>
+                            <div class="flex flex-col space-y-2">
+                                <span class="status-badge bg-red-100 text-red-800 rounded-full">Stock Faible</span>
+                                <span class="status-badge bg-green-100 text-green-800 rounded-full">Disponible</span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
+                                <button class="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors">
+                                    <i data-lucide="edit" class="w-4 h-4"></i>
+                                </button>
+                                <button class="p-2 text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded-lg transition-colors">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                </button>
+                                <button class="p-2 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-colors">
+                                    <i data-lucide="move" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock Item 2 - Medium Stock -->
+                <div class="stock-medium rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <img src="https://images.unsplash.com/photo-1441986300917-64674bd47e?"w=100&h=100&fit=crop&crop=center 
+                                 alt="Livre" class="product-image">
+                            <div>
+                                <div class="flex items-center space-x-3 mb-2">
+                                    <h3 class="text-lg font-semibold text-gray-900">Livre "L'Art de la Guerre" - Sun Tzu</h3>
+                                    <span class="sku-badge text-white px-3 py-1 rounded-full text-sm font-medium">SKU: VGK-LIV-048</span>
+                                </div>
+                                <div class="flex items-center space-x-4 text-sm text-gray-600">
+                                    <span class="flex items-center">
+                                        <i data-lucide="book" class="w-4 h-4 mr-1"></i>
+                                        Livres
+                                    </span>
+                                    <span class="flex items-center">
+                                        <i data-lucide="map-pin" class="w-4 h-4 mr-1"></i>
+                                        Zone B - Étagère 3
+                                    </span>
+                                    <span class="flex items-center">
+                                        <i data-lucide="calendar" class="w-4 h-4 mr-1"></i>
+                                        Reçu le 20/07/2025
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-6">
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-yellow-600">12</p>
+                                <p class="text-sm text-gray-600">Unités</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-lg font-semibold text-gray-900">8,500 FCFA</p>
+                                <p class="text-sm text-gray-600">Prix unitaire</p>
+                            </div>
+                            <div class="flex flex-col space-y-2">
+                                <span class="status-badge bg-yellow-100 text-yellow-800 rounded-full">Stock Moyen</span>
+                                <span class="status-badge bg-green-100 text-green-800 rounded-full">Disponible</span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
+                                <button class="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors">
+                                    <i data-lucide="edit" class="w-4 h-4"></i>
+                                </button>
+                                <button class="p-2 text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded-lg transition-colors">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                </button>
+                                <button class="p-2 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-colors">
+                                    <i data-lucide="move" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock Item 3 - High Stock -->
+                <div class="stock-high rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&h=100&fit=crop&crop=center" 
+                                 alt="Montre" class="product-image">
+                            <div>
+                                <div class="flex items-center space-x-3 mb-2">
+                                    <h3 class="text-lg font-semibold text-gray-900">Montre Smart Watch Series 8</h3>
+                                    <span class="sku-badge text-white px-3 py-1 rounded-full text-sm font-medium">SKU: VGK-MON-112</span>
+                                </div>
+                                <div class="flex items-center space-x-4 text-sm text-gray-600">
+                                    <span class="flex items-center">
+                                        <i data-lucide="watch" class="w-4 h-4 mr-1"></i>
+                                        Électronique
+                                    </span>
+                                    <span class="flex items-center">
+                                        <i data-lucide="map-pin" class="w-4 h-4 mr-1"></i>
+                                        Zone A - Étagère 2
+                                    </span>
+                                    <span class="flex items-center">
+                                        <i data-lucide="calendar" class="w-4 h-4 mr-1"></i>
+                                        Reçu le 18/07/2025
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-6">
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-green-600">28</p>
+                                <p class="text-sm text-gray-600">Unités</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-lg font-semibold text-gray-900">195,000 FCFA</p>
+                                <p class="text-sm text-gray-600">Prix unitaire</p>
+                            </div>
+                            <div class="flex flex-col space-y-2">
+                                <span class="status-badge bg-green-100 text-green-800 rounded-full">Stock Bon</span>
+                                <span class="status-badge bg-green-100 text-green-800 rounded-full">Disponible</span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
+                                <button class="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors">
+                                    <i data-lucide="edit" class="w-4 h-4"></i>
+                                </button>
+                                <button class="p-2 text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded-lg transition-colors">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                </button>
+                                <button class="p-2 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-colors">
+                                    <i data-lucide="move" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock Item 4 - Reserved -->
+                <div class="stock-card rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=100&h=100&fit=crop&crop=center" 
+                                 alt="Chaussures" class="product-image">
+                            <div>
+                                <div class="flex items-center space-x-3 mb-2">
+                                    <h3 class="text-lg font-semibold text-gray-900">Chaussures de Sport Nike Air Max</h3>
+                                    <span class="sku-badge text-white px-3 py-1 rounded-full text-sm font-medium">SKU: VGK-CHA-087</span>
+                                </div>
+                                <div class="flex items-center space-x-4 text-sm text-gray-600">
+                                    <span class="flex items-center">
+                                        <i data-lucide="shirt" class="w-4 h-4 mr-1"></i>
+                                        Mode
+                                    </span>
+                                    <span class="flex items-center">
+                                        <i data-lucide="map-pin" class="w-4 h-4 mr-1"></i>
+                                        Zone C - Étagère 1
+                                    </span>
+                                    <span class="flex items-center">
+                                        <i data-lucide="calendar" class="w-4 h-4 mr-1"></i>
+                                        Reçu le 22/07/2025
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-6">
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-blue-600">15</p>
+                                <p class="text-sm text-gray-600">Unités</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-lg font-semibold text-gray-900">85,000 FCFA</p>
+                                <p class="text-sm text-gray-600">Prix unitaire</p>
+                            </div>
+                            <div class="flex flex-col space-y-2">
+                                <span class="status-badge bg-blue-100 text-blue-800 rounded-full">3 Réservés</span>
+                                <span class="status-badge bg-green-100 text-green-800 rounded-full">12 Disponibles</span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
+                                <button class="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors">
+                                    <i data-lucide="edit" class="w-4 h-4"></i>
+                                </button>
+                                <button class="p-2 text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded-lg transition-colors">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                </button>
+                                <button class="p-2 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-colors">
+                                    <i data-lucide="move" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="mt-8 bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Affichage de <span class="font-medium">1</span> à <span class="font-medium">20</span> sur <span class="font-medium">1,247</span> articles
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                            </a>
+                            <a href="#" class="bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">1</a>
+                            <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">2</a>
+                            <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">3</a>
+                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                            <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">63</a>
+                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Stock Movement Modal -->
+    <div id="stock-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Mouvement de Stock</h3>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+                
+                <form class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Type de mouvement</label>
+                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="IN">Entrée en stock</option>
+                            <option value="OUT">Sortie de stock</option>
+                            <option value="MOVE">Déplacement</option>
+                            <option value="DAMAGE">Produit endommagé</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Quantité</label>
+                        <input type="number" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Raison</label>
+                        <textarea rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Motif du mouvement..."></textarea>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
+                            Annuler
+                        </button>
+                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                            Confirmer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Modal functions
+        function openModal() {
+            document.getElementById('stock-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('stock-modal').classList.add('hidden');
+        }
+
+        // Search functionality
+        document.querySelector('input[placeholder="Rechercher un produit..."]').addEventListener('input', function(e) {
+            console.log('Searching for:', e.target.value);
+        });
+
+        // Quick actions
+        document.querySelectorAll('.flex.flex-col.items-center').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const action = this.querySelector('span').textContent;
+                console.log('Quick action:', action);
+                if (action === 'Réception' || action === 'Sortie') {
+                    openModal();
+                }
+            });
+        });
+
+        // Stock item actions
+        document.querySelectorAll('button[class*="text-orange-600"]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                openModal();
+            });
+        });
+
+        // Filter functionality
+        document.querySelectorAll('select').forEach(select => {
+            select.addEventListener('change', function(e) {
+                console.log('Filter changed:', e.target.value);
+            });
+        });
+
+        // Auto-refresh stock levels every 30 seconds
+        setInterval(() => {
+            console.log('Refreshing stock levels...');
+            // Add AJAX call to refresh stock data
+        }, 30000);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'k':
+                        e.preventDefault();
+                        document.querySelector('input[placeholder="Rechercher un produit..."]').focus();
+                        break;
+                    case 'n':
+                        e.preventDefault();
+                        console.log('New stock item');
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

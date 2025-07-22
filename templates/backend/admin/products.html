@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Produits - Administration - Vidé-Grenier Kamer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        :root {
+            --vgk-green-600: #16a34a;
+            --vgk-green-700: #15803d;
+            --vgk-orange-500: #f97316;
+        }
+        
+        .admin-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .product-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-active {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        
+        .status-draft {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        
+        .status-sold {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+        
+        .status-suspended {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        
+        .product-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+        
+        .price-tag {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-inter antialiased">
+    <!-- Navigation -->
+    <nav class="admin-gradient shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-white font-bold text-xl">
+                        <span class="text-orange-300">Vidé</span>-Grenier Kamer
+                    </a>
+                    <span class="text-white/70 text-sm">Administration</span>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="/admin-panel/" class="text-white hover:text-orange-200 transition-colors">
+                        <i data-lucide="home" class="w-5 h-5"></i>
+                    </a>
+                    <a href="/dashboard/" class="text-white hover:text-orange-200 transition-colors">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                    </a>
+                    <a href="/auth/logout/" class="text-white hover:text-orange-200 transition-colors">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="flex">
+        <aside class="w-64 bg-white shadow-lg min-h-screen">
+            <div class="p-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-6">Administration</h2>
+                <nav class="space-y-2">
+                    <a href="/admin-panel/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i data-lucide="dashboard" class="w-5 h-5"></i>
+                        <span>Panel Principal</span>
+                    </a>
+                    <a href="/admin-panel/users/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i data-lucide="users" class="w-5 h-5"></i>
+                        <span>Utilisateurs</span>
+                    </a>
+                    <a href="/admin-panel/products/" class="flex items-center space-x-3 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg">
+                        <i data-lucide="package" class="w-5 h-5"></i>
+                        <span>Produits</span>
+                    </a>
+                    <a href="/admin-panel/orders/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                        <span>Commandes</span>
+                    </a>
+                    <a href="/admin-panel/stock/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i data-lucide="warehouse" class="w-5 h-5"></i>
+                        <span>Stock</span>
+                    </a>
+                    <a href="/admin-panel/analytics/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                        <span>Analytics</span>
+                    </a>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8">
+            <!-- Header -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">Gestion des Produits</h1>
+                        <p class="text-gray-600">Gérez tous les produits de la plateforme</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                            <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
+                            Nouveau Produit
+                        </button>
+                        <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i data-lucide="upload" class="w-4 h-4 inline mr-2"></i>
+                            Import CSV
+                        </button>
+                        <button class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>
+                            Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+                <div class="product-card rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Total Produits</p>
+                            <p class="text-3xl font-bold text-gray-900">8,547</p>
+                            <p class="text-green-600 text-sm font-medium">+156 cette semaine</p>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <i data-lucide="package" class="w-6 h-6 text-blue-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Actifs</p>
+                            <p class="text-3xl font-bold text-green-600">6,823</p>
+                            <p class="text-green-600 text-sm font-medium">79.8% du total</p>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-full">
+                            <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">En Attente</p>
+                            <p class="text-3xl font-bold text-yellow-600">1,247</p>
+                            <p class="text-yellow-600 text-sm font-medium">14.6% du total</p>
+                        </div>
+                        <div class="bg-yellow-100 p-3 rounded-full">
+                            <i data-lucide="clock" class="w-6 h-6 text-yellow-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Vendus</p>
+                            <p class="text-3xl font-bold text-blue-600">3,892</p>
+                            <p class="text-blue-600 text-sm font-medium">+89 aujourd'hui</p>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <i data-lucide="shopping-bag" class="w-6 h-6 text-blue-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Suspendus</p>
+                            <p class="text-3

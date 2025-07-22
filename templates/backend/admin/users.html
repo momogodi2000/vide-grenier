@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Utilisateurs - Administration - Vidé-Grenier Kamer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        :root {
+            --vgk-green-600: #16a34a;
+            --vgk-green-700: #15803d;
+            --vgk-orange-500: #f97316;
+        }
+        
+        .admin-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .user-row:hover {
+            background-color: #f8fafc;
+            transform: scale(1.01);
+        }
+        
+        .badge-admin {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        
+        .badge-staff {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        
+        .badge-client {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+        
+        .trust-score-high {
+            color: #16a34a;
+        }
+        
+        .trust-score-medium {
+            color: #f59e0b;
+        }
+        
+        .trust-score-low {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-inter antialiased">
+    <!-- Navigation -->
+    <nav class="admin-gradient shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-white font-bold text-xl">
+                        <span class="text-orange-300">Vidé</span>-Grenier Kamer
+                    </a>
+                    <span class="text-white/70 text-sm">Administration</span>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="/admin-panel/" class="text-white hover:text-orange-200 transition-colors">
+                        <i data-lucide="home" class="w-5 h-5"></i>
+                    </a>
+                    <a href="/dashboard/" class="text-white hover:text-orange-200 transition-colors">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                    </a>
+                    <a href="/auth/logout/" class="text-white hover:text-orange-200 transition-colors">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="flex">
+        <aside class="w-64 bg-white shadow-lg min-h-screen">
+            <div class="p-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-6">Administration</h2>
+                <nav class="space-y-2">
+                    <a href="/admin-panel/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i data-lucide="dashboard" class="w-5 h-5"></i>
+                        <span>Panel Principal</span>
+                    </a>
+                    <a href="/admin-panel/users/" class="flex items-center space-x-3 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg">
+                        <i data-lucide="users" class="w-5 h-5"></i>
+                        <span>Utilisateurs</span>
+                    </a>
+                    <a href="/admin-panel/products/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i data-lucide="package" class="w-5 h-5"></i>
+                        <span>Produits</span>
+                    </a>
+                    <a href="/admin-panel/orders/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                        <span>Commandes</span>
+                    </a>
+                    <a href="/admin-panel/stock/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i data-lucide="warehouse" class="w-5 h-5"></i>
+                        <span>Stock</span>
+                    </a>
+                    <a href="/admin-panel/analytics/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                        <span>Analytics</span>
+                    </a>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8">
+            <!-- Header -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">Gestion des Utilisateurs</h1>
+                        <p class="text-gray-600">Gérez tous les utilisateurs de la plateforme</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                            <i data-lucide="user-plus" class="w-4 h-4 inline mr-2"></i>
+                            Nouvel Utilisateur
+                        </button>
+                        <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>
+                            Exporter
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="stats-card rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Total Utilisateurs</p>
+                            <p class="text-3xl font-bold text-gray-900">2,847</p>
+                            <p class="text-green-600 text-sm font-medium">+12% ce mois</p>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <i data-lucide="users" class="w-6 h-6 text-blue-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-card rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Actifs ce mois</p>
+                            <p class="text-3xl font-bold text-gray-900">1,923</p>
+                            <p class="text-green-600 text-sm font-medium">+8% ce mois</p>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-full">
+                            <i data-lucide="user-check" class="w-6 h-6 text-green-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-card rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Nouveaux aujourd'hui</p>
+                            <p class="text-3xl font-bold text-gray-900">47</p>
+                            <p class="text-orange-600 text-sm font-medium">-3% vs hier</p>
+                        </div>
+                        <div class="bg-orange-100 p-3 rounded-full">
+                            <i data-lucide="user-plus" class="w-6 h-6 text-orange-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-card rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Score Confiance Moyen</p>
+                            <p class="text-3xl font-bold text-gray-900">8.4</p>
+                            <p class="text-green-600 text-sm font-medium">+0.2 ce mois</p>
+                        </div>
+                        <div class="bg-purple-100 p-3 rounded-full">
+                            <i data-lucide="shield-check" class="w-6 h-6 text-purple-600"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                        <div class="relative">
+                            <input type="text" placeholder="Rechercher un utilisateur..." 
+                                   class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-gray-400"></i>
+                        </div>
+                        
+                        <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Tous les types</option>
+                            <option value="CLIENT">Clients</option>
+                            <option value="ADMIN">Administrateurs</option>
+                            <option value="STAFF">Staff</option>
+                        </select>
+                        
+                        <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Toutes les villes</option>
+                            <option value="DOUALA">Douala</option>
+                            <option value="YAOUNDE">Yaoundé</option>
+                            <option value="BAFOUSSAM">Bafoussam</option>
+                            <option value="GAROUA">Garoua</option>
+                            <option value="BAMENDA">Bamenda</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <button class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
+                            <i data-lucide="filter" class="w-4 h-4"></i>
+                        </button>
+                        <button class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Utilisateur
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Type
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Ville
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Score Confiance
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Points Fidélité
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Statut
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Inscrit le
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr class="user-row transition-all duration-200">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                            AC
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">Alice Camara</div>
+                                            <div class="text-sm text-gray-500">alice.douala@gmail.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="badge-client px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full text-white">
+                                        CLIENT
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <div class="flex items-center">
+                                        <i data-lucide="map-pin" class="w-4 h-4 text-gray-400 mr-2"></i>
+                                        Douala
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="trust-score-high font-semibold">9.2</div>
+                                        <div class="ml-2 flex">
+                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <i data-lucide="coins" class="w-4 h-4 text-orange-500 mr-2"></i>
+                                        <span class="text-sm font-medium text-gray-900">1,245</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                        <span class="text-sm text-green-700 font-medium">Actif</span>
+                                        <i data-lucide="check-circle" class="w-4 h-4 text-green-500" title="Vérifié"></i>
+                                        <i data-lucide="smartphone" class="w-4 h-4 text-blue-500" title="Téléphone vérifié"></i>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    15 Mars 2024
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 transition-colors">
+                                            <i data-lucide="eye" class="w-4 h-4"></i>
+                                        </button>
+                                        <button class="text-green-600 hover:text-green-900 transition-colors">
+                                            <i data-lucide="edit" class="w-4 h-4"></i>
+                                        </button>
+                                        <button class="text-red-600 hover:text-red-900 transition-colors">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr class="user-row transition-all duration-200">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                            BM
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">Bob Mvondo</div>
+                                            <div class="text-sm text-gray-500">bob.yaounde@gmail.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="badge-staff px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full text-white">
+                                        STAFF
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <div class="flex items-center">
+                                        <i data-lucide="map-pin" class="w-4 h-4 text-gray-400 mr-2"></i>
+                                        Yaoundé
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="trust-score-medium font-semibold">7.8</div>
+                                        <div class="ml-2 flex">
+                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                            <i data-lucide="star" class="w-4 h-4 text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <i data-lucide="coins" class="w-4 h-4 text-orange-500 mr-2"></i>
+                                        <span class="text-sm font-medium text-gray-900">890</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                        <span class="text-sm text-green-700 font-medium">Actif</span>
+                                        <i data-lucide="check-circle" class="w-4 h-4 text-green-500" title="Vérifié"></i>
+                                        <i data-lucide="smartphone" class="w-4 h-4 text-blue-500" title="Téléphone vérifié"></i>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    8 Février 2024
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 transition-colors">
+                                            <i data-lucide="eye" class="w-4 h-4"></i>
+                                        </button>
+                                        <button class="text-green-600 hover:text-green-900 transition-colors">
+                                            <i data-lucide="edit" class="w-4 h-4"></i>
+                                        </button>
+                                        <button class="text-red-600 hover:text-red-900 transition-colors">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr class="user-row transition-all duration-200">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                            CT
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">Claire Tchoumba</div>
+                                            <div class="text-sm text-gray-500">claire.bafoussam@gmail.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="badge-admin px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full text-white">
+                                        ADMIN
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <div class="flex items-center">
+                                        <i data-lucide="map-pin" class="w-4 h-4 text-gray-400 mr-2"></i>
+                                        Bafoussam
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="trust-score-high font-semibold">9.8</div>
+                                        <div class="ml-2 flex">
+                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                            <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <i data-lucide="coins" class="w-4 h-4 text-orange-500 mr-2"></i>
+                                        <span class="text-sm font-medium text-gray-900">2,150</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                        <span class="text-sm text-green-700 font-medium">Actif</span>
+                                        <i data-lucide="check-circle" class="w-4 h-4 text-green-500" title="Vérifié"></i>
+                                        <i data-lucide="smartphone" class="w-4 h-4 text-blue-500" title="Téléphone vérifié"></i>
+                                        <i data-lucide="shield" class="w-4 h-4 text-purple-500" title="Admin"></i>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    1 Janvier 2024
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900 transition-colors">
+                                            <i data-lucide="eye" class="w-4 h-4"></i>
+                                        </button>
+                                        <button class="text-green-600 hover:text-green-900 transition-colors">
+                                            <i data-lucide="edit" class="w-4 h-4"></i>
+                                        </button>
+                                        <button class="text-red-600 hover:text-red-900 transition-colors">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr class="user-row transition-all duration-200">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                            DN
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">David Nkomo</div>
+                                            <div class="text-sm text-gray-500">david.garoua@gmail.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="badge-client px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full text-white">
+                                        CLIENT
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <div class="flex items-center">
+                                        <i data-lucide="map-pin" class="w-4 h-4 text-gray-400 mr-2"></i>
+                                        Garoua
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">

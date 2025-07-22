@@ -4,6 +4,61 @@
 
 Marketplace camerounaise de seconde main - Version 2.5
 
+## Présentation du Projet
+
+Vidé-Grenier Kamer est une marketplace moderne dédiée à l'achat et la vente de produits d'occasion au Cameroun. Elle propose une expérience complète pour les clients, les administrateurs et le staff des points de retrait, avec des fonctionnalités avancées telles que le paiement mobile, le chat en temps réel, la gestion des stocks physiques, et un système de fidélité.
+
+### Types d'utilisateurs
+- **Client** : Peut acheter, vendre, laisser des avis, discuter avec les vendeurs, gérer ses commandes et favoris.
+- **Administrateur** : Gère la plateforme, les utilisateurs, les produits, les points de retrait, les stocks administratifs et supervise les opérations.
+- **Staff Point de Retrait** : Gère les commandes et le stock physique dans les points de retrait, traite les retraits et assure le suivi logistique.
+
+### Principales fonctionnalités
+- Authentification sécurisée (2FA, vérification email/téléphone)
+- Gestion complète des produits (images multiples, conditions, statuts)
+- Paiement mobile (Campay, Orange Money, MTN)
+- Commandes et retraits physiques
+- Chat temps réel entre acheteurs et vendeurs
+- Système d'avis et évaluations
+- Notifications temps réel et alertes
+- Système de fidélité et niveaux (Bronze, Argent, Or, Platine)
+- Analytics et rapports business
+- PWA et support offline
+- Gestion des stocks administratifs
+- Recherche avancée et alertes personnalisées
+
+### Architecture technique
+- **Backend** : Django 4.2, Django REST Framework
+- **Frontend** : Django Templates, Tailwind CSS
+- **Base de données** : PostgreSQL (prod) / SQLite (dev)
+- **Cache** : Redis
+- **Temps réel** : Django Channels
+- **Déploiement** : Render, Docker
+
+### Structure du code
+Le projet est organisé en modules clairs :
+- `backend/models.py` : Modèles principaux (User, Product, Order, Review, Chat, Notification, etc.)
+- `backend/views.py` : Logique métier et API
+- `backend/templates/` : Pages HTML pour chaque dashboard et fonctionnalité
+- `backend/static/` : Fichiers statiques (CSS, JS, images)
+- `vide/settings/` : Configuration Django
+
+### Logique métier
+- Les utilisateurs sont typés (`user_type`) et disposent de rôles et permissions adaptés.
+- Les produits peuvent être créés par les clients ou ajoutés au stock admin.
+- Les commandes sont suivies du paiement à la livraison/retrait.
+- Les points de retrait sont gérés par le staff, avec inventaire et suivi des retraits.
+- Les avis et évaluations enrichissent la confiance et la transparence.
+- Les notifications et alertes assurent la réactivité de la plateforme.
+
+### Démos et Dashboards
+- **Client Dashboard** : Suivi des achats, favoris, revenus, produits récents, commandes, notifications, recommandations, fidélité.
+- **Admin Dashboard** : Gestion globale, analytics, utilisateurs, produits, stocks, points de retrait.
+- **Staff Dashboard** : Gestion des commandes à retirer, inventaire, messages, alertes, statistiques du point.
+
+### Pour aller plus loin
+Consultez la documentation, les commandes de gestion, et les exemples d'utilisateurs de test pour explorer toutes les fonctionnalités.
+
 ## 🚀 Installation et Configuration
 
 ### Prérequis
