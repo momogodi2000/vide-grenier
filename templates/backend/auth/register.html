@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load socialaccount %}
+
 
 {% block title %}Inscription - Vidé-Grenier Kamer{% endblock %}
 {% block meta_description %}Créez votre compte Vidé-Grenier Kamer et rejoignez la première marketplace camerounaise de seconde main. Inscription gratuite et sécurisée.{% endblock %}
@@ -301,14 +303,14 @@
 
                         <!-- Inscription Sociale -->
                         <div class="space-y-3">
-                            <button class="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200">
+                            <a href="{% provider_login_url 'google' %}" class="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200">
                                 <img src="{% static 'images/icons/google.png' %}" alt="Google" class="w-5 h-5 mr-3">
                                 S'inscrire avec Google
-                            </button>
-                            <button class="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200">
+                            </a>
+                            <a href="{% provider_login_url 'facebook' %}" class="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200">
                                 <img src="{% static 'images/icons/facebook.png' %}" alt="Facebook" class="w-5 h-5 mr-3">
                                 S'inscrire avec Facebook
-                            </button>
+                            </a>
                         </div>
 
                         <!-- Lien vers Connexion -->

@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Commande Publique - {{ product.title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8">
+    <div class="max-w-4xl mx-auto px-4">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Finaliser votre commande</h1>
+            <p class="text-gray-600">Paiement à la livraison disponible</p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div class="grid md:grid-cols-2 gap-0">
+                <!-- Product Summary -->
+                <div class="bg-gradient-to-br from-green-500 to-blue-600 p-8 text-white">
+                    <h2 class="text-2xl font-bold mb-6">Résumé de votre commande</h2>
+                    
+                    <!-- Product Info -->
+                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-6">
+                        <div class="flex items-start space-x-4">
+                            {% if product.images %}
+                                <img src="{{ product.images.0 }}" alt="{{ product.title }}" 
+                                     class="w-20 h-20 rounded-lg object-cover">
+                            {% else %}
+                                <div class="w-20 h-20 bg-white/20 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="package" class="w-8 h-8"></i>
+                                </div>
+                            {% endif %}
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold mb-2">{{ product.title }}</h3>
+                                <div class="space-y-1 text-sm opacity-90">
+                                    <p><i data-lucide="map-pin" class="w-4 h-4 inline mr-1"></i>{{ product.get_city_display }}</p>
+                                    <p><i data-lucide="user" class="w-4 h-4 inline mr-1"></i>{{ product.seller.get_full_name }}</p>
+                                    <p><i data-lucide="tag" class="w-4 h-4 inline mr-1"></i>{{ product.category.name }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Price Breakdown -->
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span>Prix du produit</span>
+                            <span class="text-xl font-bold">{{ product.price|floatformat:0 }} FCFA</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="flex items-center">
+                                <i data-lucide="truck" class="w-4 h-4 mr-2"></i>
+                                Frais de livraison
+                            </span>
+                            <span class="text-xl font-bold">{{ delivery_cost|floatformat:0 }} FCFA</span>
+                        </div>
+                        <hr class="border-white/30">
+                        <div class="flex justify-between items-center text-2xl font-bold">
+                            <span>Total</span>
+                            <span>{{ total_amount|floatformat:0 }} FCFA</span>
+                        </div>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div class="mt-6 p-4 bg-yellow-400/20 rounded-lg">
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="credit-card" class="w-5 h-5"></i>
+                            <span class="font-semibold">Paiement à la livraison</span>
+                        </div>
+                        <p class="text-sm mt-1 opacity-90">Vous payez uniquement à la réception de votre commande</p>
+                    </div>
+                </div>
+
+                <!-- Order Form -->
+                <div class="p-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Informations de livraison</h2>
+                    
+                    <form method="post" class="space-y-6">
+                        {% csrf_token %}
+                        
+                        <!-- Delivery Address -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i data-lucide="map-pin" class="w-4 h-4 inline mr-1"></i>
+                                Adresse de livraison
+                            </label>
+                            <textarea name="delivery_address" rows="4" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                placeholder="Exemple: Quartier Mokolo, près du marché central, après la pharmacie..."></textarea>
+                            <p class="text-xs text-gray-500 mt-1">Soyez précis pour faciliter la livraison</p>
+                        </div>
+
+                        <!-- Phone Number -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i data-lucide="phone" class="w-4 h-4 inline mr-1"></i>
+                                Numéro de téléphone
+                            </label>
+                            <input type="tel" name="phone" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                placeholder="+237 6XX XXX XXX">
+                        </div>
+
+                        <!-- Notes -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i data-lucide="message-square" class="w-4 h-4 inline mr-1"></i>
+                                Instructions spéciales (optionnel)
+                            </label>
+                            <textarea name="notes" rows="3"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                placeholder="Toute instruction particulière pour la livraison..."></textarea>
+                        </div>
+
+                        <!-- Terms Agreement -->
+                        <div class="flex items-start space-x-3">
+                            <input type="checkbox" id="terms" required
+                                class="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                            <label for="terms" class="text-sm text-gray-700">
+                                J'accepte les <a href="#" class="text-green-600 hover:text-green-700 font-medium">conditions d'utilisation</a> 
+                                et confirme que les informations fournies sont exactes.
+                            </label>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" 
+                            class="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-green-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                            <i data-lucide="shopping-cart" class="w-5 h-5 inline mr-2"></i>
+                            Confirmer la commande
+                        </button>
+                    </form>
+
+                    <!-- Trust Indicators -->
+                    <div class="mt-8 pt-6 border-t border-gray-200">
+                        <h3 class="text-sm font-semibold text-gray-900 mb-3">Pourquoi commander avec VGK ?</h3>
+                        <div class="space-y-2 text-sm text-gray-600">
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="shield-check" class="w-4 h-4 text-green-500"></i>
+                                <span>Paiement sécurisé à la livraison</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="truck" class="w-4 h-4 text-blue-500"></i>
+                                <span>Livraison rapide partout au Cameroun</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="headphones" class="w-4 h-4 text-purple-500"></i>
+                                <span>Support client disponible 24/7</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alternative Contact Methods -->
+        <div class="mt-8 text-center">
+            <p class="text-gray-600 mb-4">Vous préférez commander par WhatsApp ?</p>
+            <a href="https://wa.me/237694638412?text=Bonjour, je souhaite commander: {{ product.title }}" 
+               target="_blank"
+               class="inline-flex items-center space-x-2 bg-green-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-600 transition-colors">
+                <i data-lucide="message-circle" class="w-5 h-5"></i>
+                <span>Commander via WhatsApp</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script>
+    lucide.createIcons();
+    
+    // Auto-focus on first input
+    document.querySelector('textarea[name="delivery_address"]').focus();
+    
+    // Phone number formatting
+    const phoneInput = document.querySelector('input[name="phone"]');
+    phoneInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.startsWith('237')) {
+            value = '+' + value;
+        } else if (value.startsWith('6') && value.length <= 9) {
+            value = '+237 ' + value;
+        }
+        e.target.value = value;
+    });
+</script>
+{% endblock %}

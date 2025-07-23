@@ -121,7 +121,7 @@ class Command(BaseCommand):
             )
             
             self.stdout.write(
-                f'   ✅ Admin créé: {admin_user.email} (mot de passe: AdminVGK2025!)'
+                f'   ✅ Admin créé: {admin_user.email} (mot de passe: c)'
             )
     
     def create_test_clients(self):

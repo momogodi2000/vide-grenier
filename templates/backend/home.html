@@ -81,7 +81,153 @@
     .benefit-gradient {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
+
+    /* Enhanced Desktop Styles */
+    @media (min-width: 1024px) {
+        .hero-bg {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        
+        .desktop-hero-content {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .desktop-hero-text {
+            max-width: 600px;
+        }
+        
+        .desktop-hero-visual {
+            position: relative;
+            min-height: 600px;
+        }
+        
+        .floating-product-card {
+            position: absolute;
+            animation: float 8s ease-in-out infinite;
+            z-index: 10;
+        }
+        
+        .floating-product-card:nth-child(1) { animation-delay: 0s; }
+        .floating-product-card:nth-child(2) { animation-delay: -2s; }
+        .floating-product-card:nth-child(3) { animation-delay: -4s; }
+        
+        .stats-grid-desktop {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+        
+        .desktop-section-spacing {
+            padding: 6rem 0;
+        }
+        
+        .desktop-grid-4 {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+        }
+        
+        .desktop-grid-6 {
+            grid-template-columns: repeat(6, 1fr);
+            gap: 2rem;
+        }
+        
+        .desktop-feature-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+        
+        .desktop-benefits-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3rem;
+        }
+        
+        .desktop-testimonials-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+        
+        .desktop-how-it-works {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4rem;
+        }
+        
+        .desktop-cta-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .desktop-app-mockup {
+            max-width: 400px;
+            height: 600px;
+        }
+        
+        .desktop-pickup-section {
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+        
+        /* Enhanced hover effects for desktop */
+        .desktop-hover-lift:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+        
+        .desktop-hover-scale:hover {
+            transform: scale(1.05);
+        }
+        
+        .desktop-hover-glow:hover {
+            box-shadow: 0 0 30px rgba(0, 130, 58, 0.4);
+        }
+        
+        /* Desktop navigation enhancements */
+        .desktop-nav-spacing {
+            padding: 1.5rem 0;
+        }
+        
+        /* Desktop typography improvements */
+        .desktop-hero-title {
+            font-size: 4rem;
+            line-height: 1.1;
+        }
+        
+        .desktop-section-title {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .desktop-large-text {
+            font-size: 1.25rem;
+            line-height: 1.6;
+        }
+    }
+
+    /* Extra Large Desktop Enhancements */
+    @media (min-width: 1440px) {
+        .xl-desktop-hero-title {
+            font-size: 5rem;
+        }
+        
+        .xl-desktop-container {
+            max-width: 1600px;
+        }
+        
+        .xl-desktop-spacing {
+            padding: 8rem 0;
+        }
+        
+        .xl-desktop-grid-8 {
+            grid-template-columns: repeat(8, 1fr);
+        }
+    }
     
+    /* Mobile styles maintained */
     @media (max-width: 768px) {
         .hero-bg {
             min-height: 100vh;
@@ -111,221 +257,264 @@
             margin-top: 2rem;
         }
     }
+    
+    /* Smooth transitions for all interactive elements */
+    .transition-all {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Enhanced visual effects for desktop */
+    .desktop-gradient-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .desktop-shadow-xl {
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Hero Section avec Image Background -->
+<!-- Enhanced Hero Section -->
 <section class="hero-bg relative overflow-hidden min-h-screen flex items-center">
     <div class="relative z-10 w-full">
-        <!-- Particules flottantes (cachées sur mobile) -->
-        <div class="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
+        <!-- Enhanced floating particles for desktop -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none hidden lg:block">
             <div class="floating-card absolute top-20 left-10 w-16 h-16 bg-white/10 rounded-lg backdrop-blur-sm"></div>
             <div class="floating-card absolute top-40 right-20 w-12 h-12 bg-white/10 rounded-full backdrop-blur-sm"></div>
             <div class="floating-card absolute bottom-32 left-1/4 w-8 h-8 bg-white/10 rounded-lg backdrop-blur-sm"></div>
             <div class="floating-card absolute bottom-20 right-1/3 w-20 h-20 bg-white/10 rounded-xl backdrop-blur-sm"></div>
+            <div class="floating-card absolute top-1/2 left-16 w-6 h-6 bg-white/10 rounded-full backdrop-blur-sm"></div>
+            <div class="floating-card absolute top-1/3 right-16 w-14 h-14 bg-white/10 rounded-lg backdrop-blur-sm"></div>
         </div>
         
-        <div class="container mx-auto px-4 py-8 md:py-0">
-            <div class="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center grid-mobile-stack">
-                <!-- Contenu principal -->
-                <div class="text-white space-y-6 md:space-y-8 animate-fade-in-up text-mobile-center">
-                    <div class="space-y-4">
-                        <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+        <div class="container mx-auto px-4 py-8 md:py-0 desktop-hero-content xl-desktop-container">
+            <div class="grid lg:grid-cols-2 gap-8 lg:gap-16 xl:gap-20 items-center grid-mobile-stack">
+                <!-- Enhanced main content -->
+                <div class="text-white space-y-6 md:space-y-8 lg:space-y-10 animate-fade-in-up text-mobile-center desktop-hero-text">
+                    <div class="space-y-6">
+                        <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight desktop-hero-title xl-desktop-hero-title">
                             Vendez, Achetez,
                             <span class="text-yellow-300 animate-pulse">Économisez</span>
                         </h1>
                         
-                        <p class="text-lg sm:text-xl md:text-2xl text-white/90 leading-relaxed">
+                        <p class="text-lg sm:text-xl md:text-2xl lg:text-3xl text-white/90 leading-relaxed desktop-large-text">
                             La première marketplace camerounaise de seconde main.
                             <strong>Simplicité et Sécurité</strong> garanties.
                         </p>
                         
-                        <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start space-y-2 sm:space-y-0 sm:space-x-4 text-sm sm:text-lg">
-                            <div class="flex items-center space-x-2">
-                                <i data-lucide="map-pin" class="w-4 h-4 sm:w-5 sm:h-5 text-yellow-300"></i>
+                        <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start space-y-3 sm:space-y-0 sm:space-x-6 lg:space-x-8 text-sm sm:text-lg lg:text-xl">
+                            <div class="flex items-center space-x-3">
+                                <i data-lucide="map-pin" class="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-yellow-300"></i>
                                 <span>Douala • Yaoundé</span>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <i data-lucide="shield-check" class="w-4 h-4 sm:w-5 sm:h-5 text-yellow-300"></i>
+                            <div class="flex items-center space-x-3">
+                                <i data-lucide="shield-check" class="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-yellow-300"></i>
                                 <span>100% Sécurisé</span>
+                            </div>
+                            <div class="hidden lg:flex items-center space-x-3">
+                                <i data-lucide="users" class="w-6 h-6 text-yellow-300"></i>
+                                <span>+10,000 utilisateurs</span>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- CTA Buttons -->
-                    <div class="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:space-x-4 lg:space-x-6 space-mobile-4">
+                    <!-- Enhanced CTA Buttons -->
+                    <div class="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:space-x-4 lg:space-x-8 space-mobile-4">
                         <a href="{% url 'backend:product_list' %}" 
-                           class="bg-white text-green-600 px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:scale-105 transform transition-all duration-300 shadow-xl glow-effect flex items-center justify-center space-x-2">
-                            <i data-lucide="search" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                           class="bg-white text-green-600 px-6 sm:px-8 lg:px-10 py-3 sm:py-4 lg:py-5 rounded-full font-bold text-base sm:text-lg lg:text-xl hover:scale-105 transform transition-all duration-300 shadow-xl glow-effect desktop-hover-glow flex items-center justify-center space-x-3">
+                            <i data-lucide="search" class="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7"></i>
                             <span>Découvrir les produits</span>
                         </a>
                         
                         {% if not user.is_authenticated %}
                         <a href="{% url 'backend:register' %}" 
-                           class="border-2 border-white text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:bg-white hover:text-green-600 transform transition-all duration-300 flex items-center justify-center space-x-2">
-                            <i data-lucide="user-plus" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                           class="border-2 border-white text-white px-6 sm:px-8 lg:px-10 py-3 sm:py-4 lg:py-5 rounded-full font-bold text-base sm:text-lg lg:text-xl hover:bg-white hover:text-green-600 transform transition-all duration-300 desktop-hover-scale flex items-center justify-center space-x-3">
+                            <i data-lucide="user-plus" class="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7"></i>
                             <span>Rejoindre VGK</span>
                         </a>
                         {% endif %}
                     </div>
                     
-                    <!-- Statistiques en temps réel -->
-                    <div class="grid grid-cols-3 gap-4 sm:gap-6 pt-6 sm:pt-8 stats-mobile">
-                        <div class="text-center">
-                            <div class="text-2xl sm:text-3xl font-bold stats-counter" data-target="{{ stats.total_products }}">0</div>
-                            <div class="text-white/80 text-xs sm:text-sm">Produits actifs</div>
+                    <!-- Enhanced real-time statistics -->
+                    <div class="grid grid-cols-3 gap-4 sm:gap-6 lg:gap-8 pt-6 sm:pt-8 lg:pt-12 stats-mobile stats-grid-desktop">
+                        <div class="text-center transform hover:scale-105 transition-transform duration-300">
+                            <div class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold stats-counter" data-target="{{ stats.total_products }}">0</div>
+                            <div class="text-white/80 text-xs sm:text-sm lg:text-base">Produits actifs</div>
                         </div>
-                        <div class="text-center">
-                            <div class="text-2xl sm:text-3xl font-bold stats-counter" data-target="{{ stats.total_users }}">0</div>
-                            <div class="text-white/80 text-xs sm:text-sm">Utilisateurs</div>
+                        <div class="text-center transform hover:scale-105 transition-transform duration-300">
+                            <div class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold stats-counter" data-target="{{ stats.total_users }}">0</div>
+                            <div class="text-white/80 text-xs sm:text-sm lg:text-base">Utilisateurs</div>
                         </div>
-                        <div class="text-center">
-                            <div class="text-2xl sm:text-3xl font-bold stats-counter" data-target="{{ stats.total_orders }}">0</div>
-                            <div class="text-white/80 text-xs sm:text-sm">Ventes réussies</div>
+                        <div class="text-center transform hover:scale-105 transition-transform duration-300">
+                            <div class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold stats-counter" data-target="{{ stats.total_orders }}">0</div>
+                            <div class="text-white/80 text-xs sm:text-sm lg:text-base">Ventes réussies</div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Modèle 3D interactif (masqué sur mobile) -->
-                <div class="relative hidden lg:block">
-                    <div id="hero-3d-model" class="w-full h-96 lg:h-[500px] rounded-2xl bg-white/10 backdrop-blur-sm"></div>
+                <!-- Enhanced 3D interactive model and floating cards -->
+                <div class="relative hidden lg:block desktop-hero-visual">
+                    <div id="hero-3d-model" class="w-full h-96 lg:h-[500px] xl:h-[600px] rounded-2xl bg-white/10 backdrop-blur-sm desktop-shadow-xl"></div>
                     
-                    <!-- Cards flottantes avec produits -->
-                    <div class="absolute -top-8 -left-8 floating-card">
-                        <div class="bg-white rounded-xl p-4 shadow-xl w-48">
-                            <img src="{% static 'images/femme.jpeg' %}" alt="Veste femme" class="w-full h-24 object-cover rounded-lg mb-2">
-                            <h4 class="font-semibold text-gray-800">Veste femme</h4>
-                            <p class="text-green-600 font-bold">5,000 FCFA</p>
+                    <!-- Enhanced floating product cards -->
+                    <div class="absolute -top-8 -left-8 floating-product-card">
+                        <div class="bg-white rounded-xl p-4 lg:p-6 shadow-2xl w-48 lg:w-56 xl:w-64 desktop-hover-lift transition-all duration-300">
+                            <img src="{% static 'images/femme.jpeg' %}" alt="Veste femme" class="w-full h-24 lg:h-28 xl:h-32 object-cover rounded-lg mb-3">
+                            <h4 class="font-semibold text-gray-800 text-sm lg:text-base">Veste femme élégante</h4>
+                            <p class="text-green-600 font-bold text-lg lg:text-xl">5,000 FCFA</p>
+                            <div class="flex items-center mt-2 text-xs lg:text-sm text-gray-500">
+                                <i data-lucide="map-pin" class="w-3 h-3 lg:w-4 lg:h-4 mr-1"></i>
+                                <span>Douala</span>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="absolute -bottom-8 -right-8 floating-card">
-                        <div class="bg-white rounded-xl p-4 shadow-xl w-48">
-                            <img src="{% static 'images/homme.jpeg' %}" alt="Veste homme" class="w-full h-24 object-cover rounded-lg mb-2">
-                            <h4 class="font-semibold text-gray-800">Veste homme</h4>
-                            <p class="text-green-600 font-bold">10,000 FCFA</p>
+                    <div class="absolute -bottom-8 -right-8 floating-product-card">
+                        <div class="bg-white rounded-xl p-4 lg:p-6 shadow-2xl w-48 lg:w-56 xl:w-64 desktop-hover-lift transition-all duration-300">
+                            <img src="{% static 'images/homme.jpeg' %}" alt="Veste homme" class="w-full h-24 lg:h-28 xl:h-32 object-cover rounded-lg mb-3">
+                            <h4 class="font-semibold text-gray-800 text-sm lg:text-base">Veste homme classique</h4>
+                            <p class="text-green-600 font-bold text-lg lg:text-xl">10,000 FCFA</p>
+                            <div class="flex items-center mt-2 text-xs lg:text-sm text-gray-500">
+                                <i data-lucide="map-pin" class="w-3 h-3 lg:w-4 lg:h-4 mr-1"></i>
+                                <span>Yaoundé</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="absolute top-1/2 -left-12 floating-product-card">
+                        <div class="bg-white rounded-xl p-3 lg:p-4 shadow-2xl w-40 lg:w-44 xl:w-48 desktop-hover-lift transition-all duration-300">
+                            <div class="text-center">
+                                <i data-lucide="smartphone" class="w-8 h-8 lg:w-10 lg:h-10 text-green-600 mx-auto mb-2"></i>
+                                <h4 class="font-semibold text-gray-800 text-xs lg:text-sm">iPhone 12 Pro</h4>
+                                <p class="text-green-600 font-bold text-sm lg:text-base">350,000 FCFA</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Scroll indicator -->
+        <!-- Enhanced scroll indicator -->
         <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white animate-bounce">
-            <i data-lucide="chevron-down" class="w-6 h-6 sm:w-8 sm:h-8"></i>
+            <div class="flex flex-col items-center">
+                <span class="text-sm mb-2 hidden lg:block">Découvrir</span>
+                <i data-lucide="chevron-down" class="w-6 h-6 sm:w-8 sm:h-8"></i>
+            </div>
         </div>
     </div>
 </section>
 
-<!-- Avantages de l'Application Mobile -->
-<section class="py-16 sm:py-20 benefit-gradient relative overflow-hidden">
+<!-- Enhanced Mobile App Benefits Section -->
+<section class="py-16 sm:py-20 lg:py-24 xl:py-32 benefit-gradient relative overflow-hidden desktop-section-spacing xl-desktop-spacing">
     <div class="absolute inset-0 bg-black/20"></div>
-    <div class="container mx-auto px-4 relative z-10">
-        <div class="text-center mb-12 sm:mb-16">
-            <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">Téléchargez l'App VGK</h2>
-            <p class="text-lg sm:text-xl text-white/90">Une expérience mobile optimisée pour vos achats</p>
+    <div class="container mx-auto px-4 relative z-10 xl-desktop-container">
+        <div class="text-center mb-12 sm:mb-16 lg:mb-20">
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-4 lg:mb-6 desktop-section-title">Téléchargez l'App VGK</h2>
+            <p class="text-lg sm:text-xl lg:text-2xl text-white/90 desktop-large-text">Une expérience mobile optimisée pour vos achats</p>
         </div>
         
-        <div class="grid md:grid-cols-2 gap-8 lg:gap-12 items-center">
-            <!-- Fonctionnalités de l'app -->
-            <div class="space-y-6">
-                <div class="feature-card rounded-2xl p-6 text-white">
-                    <div class="flex items-start space-x-4">
-                        <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center">
-                            <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+        <div class="grid md:grid-cols-2 gap-8 lg:gap-12 xl:gap-16 items-center desktop-feature-grid">
+            <!-- Enhanced app features -->
+            <div class="space-y-6 lg:space-y-8">
+                <div class="feature-card rounded-2xl p-6 lg:p-8 text-white desktop-hover-lift transition-all duration-300">
+                    <div class="flex items-start space-x-4 lg:space-x-6">
+                        <div class="w-12 h-12 lg:w-16 lg:h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center">
+                            <i data-lucide="zap" class="w-6 h-6 lg:w-8 lg:h-8 text-white"></i>
                         </div>
                         <div>
-                            <h3 class="text-xl font-bold mb-2">Navigation Ultra-Rapide</h3>
-                            <p class="text-white/80">Interface optimisée pour mobile avec chargement instantané des pages</p>
+                            <h3 class="text-xl lg:text-2xl font-bold mb-2 lg:mb-3">Navigation Ultra-Rapide</h3>
+                            <p class="text-white/80 lg:text-lg">Interface optimisée pour mobile avec chargement instantané des pages</p>
                         </div>
                     </div>
                 </div>
                 
-                <div class="feature-card rounded-2xl p-6 text-white">
-                    <div class="flex items-start space-x-4">
-                        <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-xl flex items-center justify-center">
-                            <i data-lucide="bell" class="w-6 h-6 text-white"></i>
+                <div class="feature-card rounded-2xl p-6 lg:p-8 text-white desktop-hover-lift transition-all duration-300">
+                    <div class="flex items-start space-x-4 lg:space-x-6">
+                        <div class="w-12 h-12 lg:w-16 lg:h-16 bg-gradient-to-br from-green-400 to-blue-500 rounded-xl flex items-center justify-center">
+                            <i data-lucide="bell" class="w-6 h-6 lg:w-8 lg:h-8 text-white"></i>
                         </div>
                         <div>
-                            <h3 class="text-xl font-bold mb-2">Notifications Push</h3>
-                            <p class="text-white/80">Recevez des alertes pour vos produits favoris et messages instantanément</p>
+                            <h3 class="text-xl lg:text-2xl font-bold mb-2 lg:mb-3">Notifications Push</h3>
+                            <p class="text-white/80 lg:text-lg">Recevez des alertes pour vos produits favoris et messages instantanément</p>
                         </div>
                     </div>
                 </div>
                 
-                <div class="feature-card rounded-2xl p-6 text-white">
-                    <div class="flex items-start space-x-4">
-                        <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center">
-                            <i data-lucide="camera" class="w-6 h-6 text-white"></i>
+                <div class="feature-card rounded-2xl p-6 lg:p-8 text-white desktop-hover-lift transition-all duration-300">
+                    <div class="flex items-start space-x-4 lg:space-x-6">
+                        <div class="w-12 h-12 lg:w-16 lg:h-16 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center">
+                            <i data-lucide="camera" class="w-6 h-6 lg:w-8 lg:h-8 text-white"></i>
                         </div>
                         <div>
-                            <h3 class="text-xl font-bold mb-2">Photos Haute Qualité</h3>
-                            <p class="text-white/80">Prenez et uploadez des photos directement avec compression automatique</p>
+                            <h3 class="text-xl lg:text-2xl font-bold mb-2 lg:mb-3">Photos Haute Qualité</h3>
+                            <p class="text-white/80 lg:text-lg">Prenez et uploadez des photos directement avec compression automatique</p>
                         </div>
                     </div>
                 </div>
                 
-                <div class="feature-card rounded-2xl p-6 text-white">
-                    <div class="flex items-start space-x-4">
-                        <div class="w-12 h-12 bg-gradient-to-br from-red-400 to-yellow-500 rounded-xl flex items-center justify-center">
-                            <i data-lucide="wifi-off" class="w-6 h-6 text-white"></i>
+                <div class="feature-card rounded-2xl p-6 lg:p-8 text-white desktop-hover-lift transition-all duration-300">
+                    <div class="flex items-start space-x-4 lg:space-x-6">
+                        <div class="w-12 h-12 lg:w-16 lg:h-16 bg-gradient-to-br from-red-400 to-yellow-500 rounded-xl flex items-center justify-center">
+                            <i data-lucide="wifi-off" class="w-6 h-6 lg:w-8 lg:h-8 text-white"></i>
                         </div>
                         <div>
-                            <h3 class="text-xl font-bold mb-2">Mode Hors Ligne</h3>
-                            <p class="text-white/80">Consultez vos favoris et messages même sans connexion internet</p>
+                            <h3 class="text-xl lg:text-2xl font-bold mb-2 lg:mb-3">Mode Hors Ligne</h3>
+                            <p class="text-white/80 lg:text-lg">Consultez vos favoris et messages même sans connexion internet</p>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Mockup de l'application -->
+            <!-- Enhanced app mockup -->
             <div class="flex justify-center">
                 <div class="relative">
-                    <div class="w-64 h-96 sm:w-80 sm:h-[480px] bg-gradient-to-br from-gray-800 to-black rounded-3xl p-6 shadow-2xl">
-                        <div class="w-full h-full bg-gradient-to-br from-green-500 to-orange-500 rounded-2xl p-4 relative overflow-hidden">
-                            <!-- Interface de l'app -->
-                            <div class="text-white space-y-4">
+                    <div class="w-64 h-96 sm:w-80 sm:h-[480px] lg:w-96 lg:h-[600px] bg-gradient-to-br from-gray-800 to-black rounded-3xl p-6 lg:p-8 shadow-2xl desktop-app-mockup desktop-hover-scale transition-all duration-300">
+                        <div class="w-full h-full bg-gradient-to-br from-green-500 to-orange-500 rounded-2xl p-4 lg:p-6 relative overflow-hidden">
+                            <!-- Enhanced app interface -->
+                            <div class="text-white space-y-4 lg:space-y-6">
                                 <div class="flex items-center justify-between">
-                                    <h3 class="font-bold text-lg">VGK App</h3>
+                                    <h3 class="font-bold text-lg lg:text-xl">VGK App</h3>
                                     <div class="flex space-x-1">
-                                        <div class="w-2 h-2 bg-white rounded-full"></div>
-                                        <div class="w-2 h-2 bg-white rounded-full"></div>
-                                        <div class="w-2 h-2 bg-white rounded-full"></div>
+                                        <div class="w-2 h-2 lg:w-3 lg:h-3 bg-white rounded-full"></div>
+                                        <div class="w-2 h-2 lg:w-3 lg:h-3 bg-white rounded-full"></div>
+                                        <div class="w-2 h-2 lg:w-3 lg:h-3 bg-white rounded-full"></div>
                                     </div>
                                 </div>
                                 
-                                <div class="bg-white/20 rounded-lg p-3">
-                                    <div class="flex items-center space-x-2 mb-2">
-                                        <div class="w-8 h-8 bg-white/30 rounded-full"></div>
+                                <div class="bg-white/20 rounded-lg p-3 lg:p-4">
+                                    <div class="flex items-center space-x-2 lg:space-x-3 mb-2 lg:mb-3">
+                                        <div class="w-8 h-8 lg:w-10 lg:h-10 bg-white/30 rounded-full"></div>
                                         <div class="flex-1">
-                                            <div class="h-2 bg-white/30 rounded mb-1"></div>
-                                            <div class="h-2 bg-white/20 rounded w-2/3"></div>
+                                            <div class="h-2 lg:h-3 bg-white/30 rounded mb-1"></div>
+                                            <div class="h-2 lg:h-3 bg-white/20 rounded w-2/3"></div>
                                         </div>
                                     </div>
-                                    <div class="h-16 bg-white/30 rounded"></div>
+                                    <div class="h-16 lg:h-20 bg-white/30 rounded"></div>
                                 </div>
                                 
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div class="bg-white/20 rounded-lg p-2 h-20"></div>
-                                    <div class="bg-white/20 rounded-lg p-2 h-20"></div>
+                                <div class="grid grid-cols-2 gap-2 lg:gap-3">
+                                    <div class="bg-white/20 rounded-lg p-2 lg:p-3 h-20 lg:h-24"></div>
+                                    <div class="bg-white/20 rounded-lg p-2 lg:p-3 h-20 lg:h-24"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Boutons de téléchargement flottants -->
-                    <div class="absolute -bottom-4 -left-4">
-                        <button class="bg-black text-white px-4 py-2 rounded-lg flex items-center space-x-2 shadow-lg">
-                            <i data-lucide="smartphone" class="w-4 h-4"></i>
-                            <span class="text-sm">App Store</span>
+                    <!-- Enhanced floating download buttons -->
+                    <div class="absolute -bottom-6 -left-6">
+                        <button class="bg-black text-white px-4 py-2 lg:px-6 lg:py-3 rounded-lg flex items-center space-x-2 lg:space-x-3 shadow-lg desktop-hover-lift transition-all duration-300">
+                            <i data-lucide="smartphone" class="w-4 h-4 lg:w-5 lg:h-5"></i>
+                            <span class="text-sm lg:text-base">App Store</span>
                         </button>
                     </div>
                     
-                    <div class="absolute -bottom-4 -right-4">
-                        <button class="bg-black text-white px-4 py-2 rounded-lg flex items-center space-x-2 shadow-lg">
-                            <i data-lucide="play" class="w-4 h-4"></i>
-                            <span class="text-sm">Google Play</span>
+                    <div class="absolute -bottom-6 -right-6">
+                        <button class="bg-black text-white px-4 py-2 lg:px-6 lg:py-3 rounded-lg flex items-center space-x-2 lg:space-x-3 shadow-lg desktop-hover-lift transition-all duration-300">
+                            <i data-lucide="play" class="w-4 h-4 lg:w-5 lg:h-5"></i>
+                            <span class="text-sm lg:text-base">Google Play</span>
                         </button>
                     </div>
                 </div>
@@ -334,93 +523,93 @@
     </div>
 </section>
 
-<!-- Avantages de Créer un Compte -->
-<section class="py-16 sm:py-20 bg-gradient-to-br from-green-50 to-blue-50">
-    <div class="container mx-auto px-4">
-        <div class="text-center mb-12 sm:mb-16">
-            <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Créez votre compte VGK</h2>
-            <p class="text-lg sm:text-xl text-gray-600">Débloquez tous les avantages de notre plateforme</p>
+<!-- Enhanced Account Benefits Section -->
+<section class="py-16 sm:py-20 lg:py-24 xl:py-32 bg-gradient-to-br from-green-50 to-blue-50 desktop-section-spacing xl-desktop-spacing">
+    <div class="container mx-auto px-4 xl-desktop-container">
+        <div class="text-center mb-12 sm:mb-16 lg:mb-20">
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-800 mb-4 lg:mb-6 desktop-section-title">Créez votre compte VGK</h2>
+            <p class="text-lg sm:text-xl lg:text-2xl text-gray-600 desktop-large-text">Débloquez tous les avantages de notre plateforme</p>
         </div>
         
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            <!-- Avantage 1 -->
-            <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
-                <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i data-lucide="star" class="w-8 h-8 text-white"></i>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 desktop-benefits-grid">
+            <!-- Enhanced Benefit 1 -->
+            <div class="bg-white rounded-2xl p-6 sm:p-8 lg:p-10 shadow-lg hover:shadow-xl transition-all duration-300 text-center desktop-hover-lift">
+                <div class="w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 lg:mb-8 desktop-hover-scale transition-all duration-300">
+                    <i data-lucide="star" class="w-8 h-8 lg:w-10 lg:h-10 text-white"></i>
                 </div>
-                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Programme de Fidélité</h3>
-                <p class="text-gray-600 mb-4">Gagnez des points VGK à chaque achat et bénéficiez de réductions exclusives</p>
-                <ul class="text-sm text-gray-500 space-y-2">
+                <h3 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 mb-4 lg:mb-6">Programme de Fidélité</h3>
+                <p class="text-gray-600 mb-4 lg:mb-6 lg:text-lg">Gagnez des points VGK à chaque achat et bénéficiez de réductions exclusives</p>
+                <ul class="text-sm lg:text-base text-gray-500 space-y-2 lg:space-y-3">
                     <li>• 1 point = 1 FCFA dépensé</li>
                     <li>• Réductions jusqu'à 20%</li>
                     <li>• Statuts VIP avec avantages</li>
                 </ul>
             </div>
             
-            <!-- Avantage 2 -->
-            <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
-                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i data-lucide="heart" class="w-8 h-8 text-white"></i>
+            <!-- Enhanced Benefit 2 -->
+            <div class="bg-white rounded-2xl p-6 sm:p-8 lg:p-10 shadow-lg hover:shadow-xl transition-all duration-300 text-center desktop-hover-lift">
+                <div class="w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 lg:mb-8 desktop-hover-scale transition-all duration-300">
+                    <i data-lucide="heart" class="w-8 h-8 lg:w-10 lg:h-10 text-white"></i>
                 </div>
-                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Liste de Favoris</h3>
-                <p class="text-gray-600 mb-4">Sauvegardez vos produits préférés et recevez des alertes de prix</p>
-                <ul class="text-sm text-gray-500 space-y-2">
+                <h3 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 mb-4 lg:mb-6">Liste de Favoris</h3>
+                <p class="text-gray-600 mb-4 lg:mb-6 lg:text-lg">Sauvegardez vos produits préférés et recevez des alertes de prix</p>
+                <ul class="text-sm lg:text-base text-gray-500 space-y-2 lg:space-y-3">
                     <li>• Favoris illimités</li>
                     <li>• Alertes baisse de prix</li>
                     <li>• Partage avec amis</li>
                 </ul>
             </div>
             
-            <!-- Avantage 3 -->
-            <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
-                <div class="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i data-lucide="shield" class="w-8 h-8 text-white"></i>
+            <!-- Enhanced Benefit 3 -->
+            <div class="bg-white rounded-2xl p-6 sm:p-8 lg:p-10 shadow-lg hover:shadow-xl transition-all duration-300 text-center desktop-hover-lift">
+                <div class="w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6 lg:mb-8 desktop-hover-scale transition-all duration-300">
+                    <i data-lucide="shield" class="w-8 h-8 lg:w-10 lg:h-10 text-white"></i>
                 </div>
-                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Protection Acheteur</h3>
-                <p class="text-gray-600 mb-4">Vos achats sont protégés avec notre garantie satisfait ou remboursé</p>
-                <ul class="text-sm text-gray-500 space-y-2">
+                <h3 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 mb-4 lg:mb-6">Protection Acheteur</h3>
+                <p class="text-gray-600 mb-4 lg:mb-6 lg:text-lg">Vos achats sont protégés avec notre garantie satisfait ou remboursé</p>
+                <ul class="text-sm lg:text-base text-gray-500 space-y-2 lg:space-y-3">
                     <li>• Garantie 7 jours</li>
                     <li>• Remboursement intégral</li>
                     <li>• Support prioritaire</li>
                 </ul>
             </div>
             
-            <!-- Avantage 4 -->
-            <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
-                <div class="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i data-lucide="message-circle" class="w-8 h-8 text-white"></i>
+            <!-- Enhanced Benefit 4 -->
+            <div class="bg-white rounded-2xl p-6 sm:p-8 lg:p-10 shadow-lg hover:shadow-xl transition-all duration-300 text-center desktop-hover-lift">
+                <div class="w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6 lg:mb-8 desktop-hover-scale transition-all duration-300">
+                    <i data-lucide="message-circle" class="w-8 h-8 lg:w-10 lg:h-10 text-white"></i>
                 </div>
-                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Chat Vendeur</h3>
-                <p class="text-gray-600 mb-4">Communiquez directement avec les vendeurs pour négocier et poser vos questions</p>
-                <ul class="text-sm text-gray-500 space-y-2">
+                <h3 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 mb-4 lg:mb-6">Chat Vendeur</h3>
+                <p class="text-gray-600 mb-4 lg:mb-6 lg:text-lg">Communiquez directement avec les vendeurs pour négocier et poser vos questions</p>
+                <ul class="text-sm lg:text-base text-gray-500 space-y-2 lg:space-y-3">
                     <li>• Messages instantanés</li>
                     <li>• Partage de photos</li>
                     <li>• Historique conservé</li>
                 </ul>
             </div>
             
-            <!-- Avantage 5 -->
-            <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
-                <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i data-lucide="truck" class="w-8 h-8 text-white"></i>
+            <!-- Enhanced Benefit 5 -->
+            <div class="bg-white rounded-2xl p-6 sm:p-8 lg:p-10 shadow-lg hover:shadow-xl transition-all duration-300 text-center desktop-hover-lift">
+                <div class="w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 lg:mb-8 desktop-hover-scale transition-all duration-300">
+                    <i data-lucide="truck" class="w-8 h-8 lg:w-10 lg:h-10 text-white"></i>
                 </div>
-                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Livraison Gratuite</h3>
-                <p class="text-gray-600 mb-4">Bénéficiez de la livraison gratuite sur vos achats fréquents</p>
-                <ul class="text-sm text-gray-500 space-y-2">
+                <h3 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 mb-4 lg:mb-6">Livraison Gratuite</h3>
+                <p class="text-gray-600 mb-4 lg:mb-6 lg:text-lg">Bénéficiez de la livraison gratuite sur vos achats fréquents</p>
+                <ul class="text-sm lg:text-base text-gray-500 space-y-2 lg:space-y-3">
                     <li>• Livraison gratuite dès 10k FCFA</li>
                     <li>• Points de retrait sécurisés</li>
                     <li>• Suivi en temps réel</li>
                 </ul>
             </div>
             
-            <!-- Avantage 6 -->
-            <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
-                <div class="w-16 h-16 bg-gradient-to-br from-pink-500 to-rose-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i data-lucide="users" class="w-8 h-8 text-white"></i>
+            <!-- Enhanced Benefit 6 -->
+            <div class="bg-white rounded-2xl p-6 sm:p-8 lg:p-10 shadow-lg hover:shadow-xl transition-all duration-300 text-center desktop-hover-lift">
+                <div class="w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-pink-500 to-rose-600 rounded-full flex items-center justify-center mx-auto mb-6 lg:mb-8 desktop-hover-scale transition-all duration-300">
+                    <i data-lucide="users" class="w-8 h-8 lg:w-10 lg:h-10 text-white"></i>
                 </div>
-                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Parrainage Récompensé</h3>
-                <p class="text-gray-600 mb-4">Invitez vos amis et recevez des bonus pour chaque nouveau membre</p>
-                <ul class="text-sm text-gray-500 space-y-2">
+                <h3 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 mb-4 lg:mb-6">Parrainage Récompensé</h3>
+                <p class="text-gray-600 mb-4 lg:mb-6 lg:text-lg">Invitez vos amis et recevez des bonus pour chaque nouveau membre</p>
+                <ul class="text-sm lg:text-base text-gray-500 space-y-2 lg:space-y-3">
                     <li>• 2000 FCFA par parrain</li>
                     <li>• Bonus pour votre filleul</li>
                     <li>• Récompenses cumulatives</li>
@@ -428,38 +617,38 @@
             </div>
         </div>
         
-        <!-- CTA pour créer un compte -->
-        <div class="text-center mt-12">
+        <!-- Enhanced CTA for account creation -->
+        <div class="text-center mt-12 lg:mt-16 xl:mt-20">
             <a href="{% url 'backend:register' %}" 
-               class="bg-gradient-to-r from-green-600 to-blue-600 text-white px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transform transition-all duration-300 shadow-xl inline-flex items-center space-x-3">
-                <i data-lucide="user-plus" class="w-6 h-6"></i>
+               class="bg-gradient-to-r from-green-600 to-blue-600 text-white px-8 py-4 lg:px-12 lg:py-6 rounded-full font-bold text-lg lg:text-xl hover:scale-105 transform transition-all duration-300 shadow-xl inline-flex items-center space-x-3 lg:space-x-4 desktop-hover-glow">
+                <i data-lucide="user-plus" class="w-6 h-6 lg:w-8 lg:h-8"></i>
                 <span>Créer mon compte gratuitement</span>
             </a>
-            <p class="text-gray-500 text-sm mt-4">Inscription rapide en moins de 2 minutes</p>
+            <p class="text-gray-500 text-sm lg:text-base mt-4 lg:mt-6">Inscription rapide en moins de 2 minutes</p>
         </div>
     </div>
 </section>
 
-<!-- Catégories principales -->
-<section class="py-16 sm:py-20 bg-white">
-    <div class="container mx-auto px-4">
-        <div class="text-center mb-12 sm:mb-16">
-            <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Explorez nos catégories</h2>
-            <p class="text-lg sm:text-xl text-gray-600">Trouvez exactement ce que vous cherchez</p>
+<!-- Enhanced Main Categories Section -->
+<section class="py-16 sm:py-20 lg:py-24 xl:py-32 bg-white desktop-section-spacing xl-desktop-spacing">
+    <div class="container mx-auto px-4 xl-desktop-container">
+        <div class="text-center mb-12 sm:mb-16 lg:mb-20">
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-800 mb-4 lg:mb-6 desktop-section-title">Explorez nos catégories</h2>
+            <p class="text-lg sm:text-xl lg:text-2xl text-gray-600 desktop-large-text">Trouvez exactement ce que vous cherchez</p>
         </div>
         
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 xl:grid-cols-8 gap-4 sm:gap-6 lg:gap-8 desktop-grid-6 xl-desktop-grid-8">
             {% for category in main_categories %}
             <a href="{% url 'backend:category' slug=category.slug %}" 
-               class="group bg-gradient-to-br from-gray-50 to-white p-4 sm:p-6 rounded-2xl border border-gray-200 hover:border-green-300 hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300">
+               class="group bg-gradient-to-br from-gray-50 to-white p-4 sm:p-6 lg:p-8 rounded-2xl border border-gray-200 hover:border-green-300 hover:shadow-xl transform hover:-translate-y-2 lg:hover:-translate-y-4 transition-all duration-300 desktop-hover-lift">
                 <div class="text-center">
-                    <div class="text-2xl sm:text-4xl mb-2 sm:mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <div class="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl mb-2 sm:mb-4 lg:mb-6 group-hover:scale-110 transition-transform duration-300">
                         {{ category.icon }}
                     </div>
-                    <h3 class="font-semibold text-gray-800 group-hover:text-green-600 transition-colors text-sm sm:text-base">
+                    <h3 class="font-semibold text-gray-800 group-hover:text-green-600 transition-colors text-sm sm:text-base lg:text-lg xl:text-xl">
                         {{ category.name }}
                     </h3>
-                    <p class="text-xs sm:text-sm text-gray-500 mt-1">
+                    <p class="text-xs sm:text-sm lg:text-base text-gray-500 mt-1 lg:mt-2">
                         {{ category.products.count }} produits
                     </p>
                 </div>
@@ -469,83 +658,83 @@
     </div>
 </section>
 
-<!-- Produits en vedette -->
-<section class="py-16 sm:py-20 bg-gray-50">
-    <div class="container mx-auto px-4">
-        <div class="flex flex-col sm:flex-row justify-between items-center mb-8 sm:mb-12 space-y-4 sm:space-y-0">
+<!-- Enhanced Featured Products Section -->
+<section class="py-16 sm:py-20 lg:py-24 xl:py-32 bg-gray-50 desktop-section-spacing xl-desktop-spacing">
+    <div class="container mx-auto px-4 xl-desktop-container">
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-8 sm:mb-12 lg:mb-16 space-y-4 sm:space-y-0">
             <div class="text-center sm:text-left">
-                <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Produits en vedette</h2>
-                <p class="text-lg sm:text-xl text-gray-600">Sélectionnés pour vous</p>
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-800 mb-4 lg:mb-6 desktop-section-title">Produits en vedette</h2>
+                <p class="text-lg sm:text-xl lg:text-2xl text-gray-600 desktop-large-text">Sélectionnés pour vous</p>
             </div>
             <a href="{% url 'backend:product_list' %}" 
-               class="bg-green-600 text-white px-6 py-3 rounded-full hover:bg-green-700 transition-colors font-medium flex items-center space-x-2">
+               class="bg-green-600 text-white px-6 py-3 lg:px-8 lg:py-4 rounded-full hover:bg-green-700 transition-colors font-medium lg:font-bold lg:text-lg flex items-center space-x-2 lg:space-x-3 desktop-hover-scale transition-all duration-300">
                 <span>Voir tout</span>
-                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                <i data-lucide="arrow-right" class="w-5 h-5 lg:w-6 lg:h-6"></i>
             </a>
         </div>
         
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6 lg:gap-8 desktop-grid-4">
             {% for product in featured_products %}
-            <div class="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300 group">
+            <div class="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transform hover:-translate-y-2 lg:hover:-translate-y-4 transition-all duration-300 group desktop-hover-lift">
                 <div class="relative">
                     {% if product.main_image %}
                     <img src="{{ product.main_image.image.url }}" 
                          alt="{{ product.title }}" 
-                         class="w-full h-40 sm:h-48 object-cover group-hover:scale-105 transition-transform duration-300">
+                         class="w-full h-40 sm:h-48 lg:h-56 xl:h-64 object-cover group-hover:scale-105 transition-transform duration-300">
                     {% else %}
-                    <div class="w-full h-40 sm:h-48 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                        <i data-lucide="image" class="w-8 h-8 sm:w-12 sm:h-12 text-gray-400"></i>
+                    <div class="w-full h-40 sm:h-48 lg:h-56 xl:h-64 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                        <i data-lucide="image" class="w-8 h-8 sm:w-12 sm:h-12 lg:w-16 lg:h-16 text-gray-400"></i>
                     </div>
                     {% endif %}
                     
-                    <div class="absolute top-3 left-3">
-                        <span class="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+                    <div class="absolute top-3 left-3 lg:top-4 lg:left-4">
+                        <span class="bg-green-600 text-white px-2 py-1 lg:px-3 lg:py-2 rounded-full text-xs lg:text-sm font-medium">
                             {{ product.get_condition_display }}
                         </span>
                     </div>
                     
-                    <button class="absolute top-3 right-3 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors">
-                        <i data-lucide="heart" class="w-4 h-4 text-gray-600"></i>
+                    <button class="absolute top-3 right-3 lg:top-4 lg:right-4 w-8 h-8 lg:w-10 lg:h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors desktop-hover-scale">
+                        <i data-lucide="heart" class="w-4 h-4 lg:w-5 lg:h-5 text-gray-600"></i>
                     </button>
                 </div>
                 
-                <div class="p-4">
-                    <h3 class="font-semibold text-gray-800 mb-2 line-clamp-2 text-sm sm:text-base">
+                <div class="p-4 lg:p-6">
+                    <h3 class="font-semibold text-gray-800 mb-2 lg:mb-3 line-clamp-2 text-sm sm:text-base lg:text-lg">
                         {{ product.title }}
                     </h3>
                     
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="text-xl sm:text-2xl font-bold text-green-600">
+                    <div class="flex items-center justify-between mb-3 lg:mb-4">
+                        <div class="text-xl sm:text-2xl lg:text-3xl font-bold text-green-600">
                             {{ product.price|floatformat:0 }} FCFA
                         </div>
-                        <div class="flex items-center space-x-1 text-xs sm:text-sm text-gray-500">
-                            <i data-lucide="map-pin" class="w-3 h-3 sm:w-4 sm:h-4"></i>
+                        <div class="flex items-center space-x-1 text-xs sm:text-sm lg:text-base text-gray-500">
+                            <i data-lucide="map-pin" class="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5"></i>
                             <span>{{ product.get_city_display }}</span>
                         </div>
                     </div>
                     
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center space-x-2">
+                    <div class="flex items-center justify-between mb-3 lg:mb-4">
+                        <div class="flex items-center space-x-2 lg:space-x-3">
                             {% if product.seller.profile_picture %}
                             <img src="{{ product.seller.profile_picture.url }}" 
                                  alt="{{ product.seller.get_full_name }}" 
-                                 class="w-5 h-5 sm:w-6 sm:h-6 rounded-full">
+                                 class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 rounded-full">
                             {% else %}
-                            <div class="w-5 h-5 sm:w-6 sm:h-6 bg-gray-300 rounded-full flex items-center justify-center text-xs">
+                            <div class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 bg-gray-300 rounded-full flex items-center justify-center text-xs lg:text-sm">
                                 {{ product.seller.first_name|first|upper }}
                             </div>
                             {% endif %}
-                            <span class="text-xs sm:text-sm text-gray-600 truncate">{{ product.seller.get_full_name }}</span>
+                            <span class="text-xs sm:text-sm lg:text-base text-gray-600 truncate">{{ product.seller.get_full_name }}</span>
                         </div>
                         
-                        <div class="flex items-center space-x-1 text-xs sm:text-sm text-gray-500">
-                            <i data-lucide="eye" class="w-3 h-3 sm:w-4 sm:h-4"></i>
+                        <div class="flex items-center space-x-1 text-xs sm:text-sm lg:text-base text-gray-500">
+                            <i data-lucide="eye" class="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5"></i>
                             <span>{{ product.views_count }}</span>
                         </div>
                     </div>
                     
                     <a href="{% url 'backend:product_detail' slug=product.slug %}" 
-                       class="block w-full bg-green-600 text-white text-center py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm sm:text-base">
+                       class="block w-full bg-green-600 text-white text-center py-2 lg:py-3 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm sm:text-base lg:text-lg desktop-hover-scale">
                         Voir le produit
                     </a>
                 </div>
@@ -555,135 +744,135 @@
     </div>
 </section>
 
-<!-- Comment ça marche -->
-<section class="py-16 sm:py-20 bg-white">
-    <div class="container mx-auto px-4">
-        <div class="text-center mb-12 sm:mb-16">
-            <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Comment ça marche ?</h2>
-            <p class="text-lg sm:text-xl text-gray-600">Simple, rapide et sécurisé</p>
+<!-- Enhanced How It Works Section -->
+<section class="py-16 sm:py-20 lg:py-24 xl:py-32 bg-white desktop-section-spacing xl-desktop-spacing">
+    <div class="container mx-auto px-4 xl-desktop-container">
+        <div class="text-center mb-12 sm:mb-16 lg:mb-20">
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-800 mb-4 lg:mb-6 desktop-section-title">Comment ça marche ?</h2>
+            <p class="text-lg sm:text-xl lg:text-2xl text-gray-600 desktop-large-text">Simple, rapide et sécurisé</p>
         </div>
         
-        <div class="grid sm:grid-cols-3 gap-6 sm:gap-8">
-            <!-- Étape 1 -->
+        <div class="grid sm:grid-cols-3 gap-6 sm:gap-8 lg:gap-12 xl:gap-16 desktop-how-it-works">
+            <!-- Enhanced Step 1 -->
             <div class="text-center group">
-                <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <i data-lucide="search" class="w-8 h-8 sm:w-10 sm:h-10 text-white"></i>
+                <div class="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 lg:mb-8 group-hover:scale-110 transition-transform duration-300 desktop-hover-scale">
+                    <i data-lucide="search" class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 xl:w-14 xl:h-14 text-white"></i>
                 </div>
-                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">1. Trouvez</h3>
-                <p class="text-gray-600 leading-relaxed text-sm sm:text-base">
+                <h3 class="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-800 mb-4 lg:mb-6">1. Trouvez</h3>
+                <p class="text-gray-600 leading-relaxed text-sm sm:text-base lg:text-lg xl:text-xl">
                     Parcourez des milliers de produits de seconde main à Douala et Yaoundé. 
                     Filtrez par catégorie, prix et localisation.
                 </p>
             </div>
             
-            <!-- Étape 2 -->
+            <!-- Enhanced Step 2 -->
             <div class="text-center group">
-                <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <i data-lucide="credit-card" class="w-8 h-8 sm:w-10 sm:h-10 text-white"></i>
+                <div class="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6 lg:mb-8 group-hover:scale-110 transition-transform duration-300 desktop-hover-scale">
+                    <i data-lucide="credit-card" class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 xl:w-14 xl:h-14 text-white"></i>
                 </div>
-                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">2. Payez</h3>
-                <p class="text-gray-600 leading-relaxed text-sm sm:text-base">
+                <h3 class="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-800 mb-4 lg:mb-6">2. Payez</h3>
+                <p class="text-gray-600 leading-relaxed text-sm sm:text-base lg:text-lg xl:text-xl">
                     Payez en toute sécurité avec Mobile Money (Orange, MTN) ou Campay. 
                     Vos fonds sont protégés jusqu'à réception.
                 </p>
             </div>
             
-            <!-- Étape 3 -->
+            <!-- Enhanced Step 3 -->
             <div class="text-center group">
-                <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <i data-lucide="package" class="w-8 h-8 sm:w-10 sm:h-10 text-white"></i>
+                <div class="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6 lg:mb-8 group-hover:scale-110 transition-transform duration-300 desktop-hover-scale">
+                    <i data-lucide="package" class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 xl:w-14 xl:h-14 text-white"></i>
                 </div>
-                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">3. Récupérez</h3>
-                <p class="text-gray-600 leading-relaxed text-sm sm:text-base">
+                <h3 class="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-800 mb-4 lg:mb-6">3. Récupérez</h3>
+                <p class="text-gray-600 leading-relaxed text-sm sm:text-base lg:text-lg xl:text-xl">
                     Récupérez votre achat dans nos points de retrait sécurisés ou 
                     optez pour la livraison à domicile.
                 </p>
             </div>
         </div>
         
-        <!-- Points de retrait -->
-        <div class="mt-12 sm:mt-16 bg-gradient-to-r from-green-50 to-orange-50 rounded-2xl p-6 sm:p-8">
-            <div class="grid md:grid-cols-2 gap-6 sm:gap-8 items-center">
+        <!-- Enhanced pickup points section -->
+        <div class="mt-12 sm:mt-16 lg:mt-20 xl:mt-24 bg-gradient-to-r from-green-50 to-orange-50 rounded-2xl p-6 sm:p-8 lg:p-12">
+            <div class="grid md:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 xl:gap-16 items-center desktop-pickup-section">
                 <div>
-                    <h3 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-4">Points de retrait sécurisés</h3>
-                    <p class="text-gray-600 mb-6 text-sm sm:text-base">
+                    <h3 class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-800 mb-4 lg:mb-6">Points de retrait sécurisés</h3>
+                    <p class="text-gray-600 mb-6 lg:mb-8 text-sm sm:text-base lg:text-lg xl:text-xl">
                         Récupérez vos achats dans nos points stratégiques à Douala et Yaoundé. 
                         Stockage gratuit pendant 7 jours.
                     </p>
                     
-                    <div class="space-y-4">
-                        <div class="flex items-start space-x-3">
-                            <div class="w-5 h-5 sm:w-6 sm:h-6 bg-green-600 rounded-full flex items-center justify-center mt-1">
-                                <i data-lucide="check" class="w-3 h-3 sm:w-4 sm:h-4 text-white"></i>
+                    <div class="space-y-4 lg:space-y-6">
+                        <div class="flex items-start space-x-3 lg:space-x-4">
+                            <div class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 bg-green-600 rounded-full flex items-center justify-center mt-1">
+                                <i data-lucide="check" class="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white"></i>
                             </div>
                             <div>
-                                <h4 class="font-semibold text-gray-800 text-sm sm:text-base">Douala - Akwa</h4>
-                                <p class="text-gray-600 text-xs sm:text-sm">123 Avenue Ahidjo, face Crédit Lyonnais</p>
-                                <p class="text-green-600 text-xs sm:text-sm font-medium">Lun-Ven 7h30-18h30, Sam 8h-16h</p>
+                                <h4 class="font-semibold text-gray-800 text-sm sm:text-base lg:text-lg xl:text-xl">Douala - Akwa</h4>
+                                <p class="text-gray-600 text-xs sm:text-sm lg:text-base">123 Avenue Ahidjo, face Crédit Lyonnais</p>
+                                <p class="text-green-600 text-xs sm:text-sm lg:text-base font-medium">Lun-Ven 7h30-18h30, Sam 8h-16h</p>
                             </div>
                         </div>
                         
-                        <div class="flex items-start space-x-3">
-                            <div class="w-5 h-5 sm:w-6 sm:h-6 bg-green-600 rounded-full flex items-center justify-center mt-1">
-                                <i data-lucide="check" class="w-3 h-3 sm:w-4 sm:h-4 text-white"></i>
+                        <div class="flex items-start space-x-3 lg:space-x-4">
+                            <div class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 bg-green-600 rounded-full flex items-center justify-center mt-1">
+                                <i data-lucide="check" class="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white"></i>
                             </div>
                             <div>
-                                <h4 class="font-semibold text-gray-800 text-sm sm:text-base">Yaoundé - Centre-ville</h4>
-                                <p class="text-gray-600 text-xs sm:text-sm">456 Avenue Kennedy, près Hilton</p>
-                                <p class="text-green-600 text-xs sm:text-sm font-medium">Lun-Ven 7h30-18h30, Sam 8h-16h</p>
+                                <h4 class="font-semibold text-gray-800 text-sm sm:text-base lg:text-lg xl:text-xl">Yaoundé - Centre-ville</h4>
+                                <p class="text-gray-600 text-xs sm:text-sm lg:text-base">456 Avenue Kennedy, près Hilton</p>
+                                <p class="text-green-600 text-xs sm:text-sm lg:text-base font-medium">Lun-Ven 7h30-18h30, Sam 8h-16h</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="relative">
-                    <div id="pickup-map-3d" class="w-full h-48 sm:h-64 rounded-xl bg-gradient-to-br from-green-100 to-orange-100"></div>
+                    <div id="pickup-map-3d" class="w-full h-48 sm:h-64 lg:h-80 xl:h-96 rounded-xl bg-gradient-to-br from-green-100 to-orange-100 desktop-hover-scale transition-all duration-300"></div>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Témoignages -->
-<section class="py-16 sm:py-20 bg-gray-50">
-    <div class="container mx-auto px-4">
-        <div class="text-center mb-12 sm:mb-16">
-            <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Ce que disent nos utilisateurs</h2>
-            <p class="text-lg sm:text-xl text-gray-600">Plus de 5,000 clients satisfaits</p>
+<!-- Enhanced Testimonials Section -->
+<section class="py-16 sm:py-20 lg:py-24 xl:py-32 bg-gray-50 desktop-section-spacing xl-desktop-spacing">
+    <div class="container mx-auto px-4 xl-desktop-container">
+        <div class="text-center mb-12 sm:mb-16 lg:mb-20">
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-800 mb-4 lg:mb-6 desktop-section-title">Ce que disent nos utilisateurs</h2>
+            <p class="text-lg sm:text-xl lg:text-2xl text-gray-600 desktop-large-text">Plus de 5,000 clients satisfaits</p>
         </div>
         
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 desktop-testimonials-grid">
             {% for testimonial in testimonials %}
-            <div class="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div class="flex items-center mb-4">
-                    <div class="flex text-yellow-500 mr-2">
+            <div class="bg-white rounded-2xl p-6 lg:p-8 shadow-lg hover:shadow-xl transition-all duration-300 desktop-hover-lift">
+                <div class="flex items-center mb-4 lg:mb-6">
+                    <div class="flex text-yellow-500 mr-2 lg:mr-3">
                         {% for i in "12345" %}
-                        <i data-lucide="star" class="w-4 h-4 sm:w-5 sm:h-5 fill-current"></i>
+                        <i data-lucide="star" class="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 fill-current"></i>
                         {% endfor %}
                     </div>
-                    <span class="text-gray-600 text-sm">{{ testimonial.overall_rating }}/5</span>
+                    <span class="text-gray-600 text-sm lg:text-base">{{ testimonial.overall_rating }}/5</span>
                 </div>
                 
-                <p class="text-gray-700 mb-4 italic text-sm sm:text-base">
+                <p class="text-gray-700 mb-4 lg:mb-6 italic text-sm sm:text-base lg:text-lg">
                     "{{ testimonial.comment|truncatewords:20 }}"
                 </p>
                 
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-3 lg:space-x-4">
                     {% if testimonial.reviewer.profile_picture %}
                     <img src="{{ testimonial.reviewer.profile_picture.url }}" 
                          alt="{{ testimonial.reviewer.get_full_name }}" 
-                         class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover">
+                         class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full object-cover">
                     {% else %}
-                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-500 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-green-500 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm lg:text-base">
                         {{ testimonial.reviewer.first_name|first|upper }}
                     </div>
                     {% endif %}
                     
                     <div>
-                        <div class="font-semibold text-gray-800 text-sm sm:text-base">
+                        <div class="font-semibold text-gray-800 text-sm sm:text-base lg:text-lg">
                             {{ testimonial.reviewer.get_full_name }}
                         </div>
-                        <div class="text-xs sm:text-sm text-gray-500">
+                        <div class="text-xs sm:text-sm lg:text-base text-gray-500">
                             {{ testimonial.order.product.get_city_display }}
                         </div>
                     </div>
@@ -694,96 +883,96 @@
     </div>
 </section>
 
-<!-- Avantages VGK -->
-<section class="py-16 sm:py-20 bg-white">
-    <div class="container mx-auto px-4">
-        <div class="text-center mb-12 sm:mb-16">
-            <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Pourquoi choisir VGK ?</h2>
-            <p class="text-lg sm:text-xl text-gray-600">Les avantages qui font la différence</p>
+<!-- Enhanced VGK Advantages Section -->
+<section class="py-16 sm:py-20 lg:py-24 xl:py-32 bg-white desktop-section-spacing xl-desktop-spacing">
+    <div class="container mx-auto px-4 xl-desktop-container">
+        <div class="text-center mb-12 sm:mb-16 lg:mb-20">
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-800 mb-4 lg:mb-6 desktop-section-title">Pourquoi choisir VGK ?</h2>
+            <p class="text-lg sm:text-xl lg:text-2xl text-gray-600 desktop-large-text">Les avantages qui font la différence</p>
         </div>
         
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-10 xl:gap-12">
             <div class="text-center group">
-                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-colors">
-                    <i data-lucide="shield-check" class="w-6 h-6 sm:w-8 sm:h-8 text-green-600"></i>
+                <div class="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 xl:w-24 xl:h-24 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4 lg:mb-6 group-hover:bg-green-200 transition-all duration-300 desktop-hover-scale">
+                    <i data-lucide="shield-check" class="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 text-green-600"></i>
                 </div>
-                <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-2">100% Sécurisé</h3>
-                <p class="text-gray-600 text-sm sm:text-base">Système d'escrow et paiements protégés</p>
+                <h3 class="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-800 mb-2 lg:mb-4">100% Sécurisé</h3>
+                <p class="text-gray-600 text-sm sm:text-base lg:text-lg">Système d'escrow et paiements protégés</p>
             </div>
             
             <div class="text-center group">
-                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-200 transition-colors">
-                    <i data-lucide="smartphone" class="w-6 h-6 sm:w-8 sm:h-8 text-orange-600"></i>
+                <div class="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 xl:w-24 xl:h-24 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4 lg:mb-6 group-hover:bg-orange-200 transition-all duration-300 desktop-hover-scale">
+                    <i data-lucide="smartphone" class="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 text-orange-600"></i>
                 </div>
-                <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-2">Mobile Money</h3>
-                <p class="text-gray-600 text-sm sm:text-base">Orange, MTN, Campay intégrés</p>
+                <h3 class="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-800 mb-2 lg:mb-4">Mobile Money</h3>
+                <p class="text-gray-600 text-sm sm:text-base lg:text-lg">Orange, MTN, Campay intégrés</p>
             </div>
             
             <div class="text-center group">
-                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
-                    <i data-lucide="map-pin" class="w-6 h-6 sm:w-8 sm:h-8 text-blue-600"></i>
+                <div class="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 xl:w-24 xl:h-24 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4 lg:mb-6 group-hover:bg-blue-200 transition-all duration-300 desktop-hover-scale">
+                    <i data-lucide="map-pin" class="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 text-blue-600"></i>
                 </div>
-                <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-2">Points de retrait</h3>
-                <p class="text-gray-600 text-sm sm:text-base">Douala et Yaoundé accessibles</p>
+                <h3 class="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-800 mb-2 lg:mb-4">Points de retrait</h3>
+                <p class="text-gray-600 text-sm sm:text-base lg:text-lg">Douala et Yaoundé accessibles</p>
             </div>
             
             <div class="text-center group">
-                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-200 transition-colors">
-                    <i data-lucide="headphones" class="w-6 h-6 sm:w-8 sm:h-8 text-purple-600"></i>
+                <div class="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 xl:w-24 xl:h-24 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4 lg:mb-6 group-hover:bg-purple-200 transition-all duration-300 desktop-hover-scale">
+                    <i data-lucide="headphones" class="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 text-purple-600"></i>
                 </div>
-                <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-2">Support 24/7</h3>
-                <p class="text-gray-600 text-sm sm:text-base">Assistance WhatsApp et physique</p>
+                <h3 class="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-800 mb-2 lg:mb-4">Support 24/7</h3>
+                <p class="text-gray-600 text-sm sm:text-base lg:text-lg">Assistance WhatsApp et physique</p>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Call to Action Final -->
-<section class="py-16 sm:py-20 hero-bg">
+<!-- Enhanced Final Call to Action -->
+<section class="py-16 sm:py-20 lg:py-24 xl:py-32 hero-bg desktop-section-spacing xl-desktop-spacing">
     <div class="relative z-10">
-        <div class="container mx-auto px-4 text-center">
-            <div class="max-w-4xl mx-auto text-white">
-                <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-6">
+        <div class="container mx-auto px-4 text-center xl-desktop-container">
+            <div class="max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto text-white desktop-cta-content">
+                <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 lg:mb-8 xl:mb-10 desktop-hero-title xl-desktop-hero-title">
                     Prêt à économiser avec VGK ?
                 </h2>
-                <p class="text-lg sm:text-xl mb-8 text-white/90">
+                <p class="text-lg sm:text-xl lg:text-2xl xl:text-3xl mb-8 lg:mb-12 xl:mb-16 text-white/90 desktop-large-text">
                     Rejoignez des milliers de Camerounais qui achètent et vendent 
                     intelligemment sur Vidé-Grenier Kamer.
                 </p>
                 
-                <div class="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 lg:space-x-6 justify-center">
+                <div class="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 lg:space-x-8 xl:space-x-12 justify-center">
                     {% if not user.is_authenticated %}
                     <a href="{% url 'backend:register' %}" 
-                       class="bg-white text-green-600 px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:scale-105 transform transition-all duration-300 shadow-xl inline-flex items-center justify-center space-x-2">
-                        <i data-lucide="user-plus" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                       class="bg-white text-green-600 px-6 sm:px-8 lg:px-12 xl:px-16 py-3 sm:py-4 lg:py-6 xl:py-8 rounded-full font-bold text-base sm:text-lg lg:text-xl xl:text-2xl hover:scale-105 transform transition-all duration-300 shadow-xl inline-flex items-center justify-center space-x-2 lg:space-x-4 desktop-hover-glow">
+                        <i data-lucide="user-plus" class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 xl:w-10 xl:h-10"></i>
                         <span>Créer un compte gratuit</span>
                     </a>
                     {% endif %}
                     
                     <a href="{% url 'backend:product_list' %}" 
-                       class="border-2 border-white text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:bg-white hover:text-green-600 transform transition-all duration-300 inline-flex items-center justify-center space-x-2">
-                        <i data-lucide="shopping-bag" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                       class="border-2 border-white text-white px-6 sm:px-8 lg:px-12 xl:px-16 py-3 sm:py-4 lg:py-6 xl:py-8 rounded-full font-bold text-base sm:text-lg lg:text-xl xl:text-2xl hover:bg-white hover:text-green-600 transform transition-all duration-300 inline-flex items-center justify-center space-x-2 lg:space-x-4 desktop-hover-scale">
+                        <i data-lucide="shopping-bag" class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 xl:w-10 xl:h-10"></i>
                         <span>Commencer à acheter</span>
                     </a>
                 </div>
                 
-                <!-- App download prompts -->
-                <div class="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-white/20">
-                    <p class="text-white/80 mb-4 text-sm sm:text-base">Téléchargez l'application mobile</p>
-                    <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                        <button id="ios-download" class="bg-black text-white px-4 sm:px-6 py-3 rounded-lg flex items-center justify-center space-x-3 hover:bg-gray-800 transition-colors">
-                            <i data-lucide="smartphone" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                <!-- Enhanced App download prompts -->
+                <div class="mt-8 sm:mt-12 lg:mt-16 xl:mt-20 pt-6 sm:pt-8 lg:pt-12 border-t border-white/20">
+                    <p class="text-white/80 mb-4 lg:mb-6 text-sm sm:text-base lg:text-lg xl:text-xl">Téléchargez l'application mobile</p>
+                    <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 lg:space-x-8">
+                        <button id="ios-download" class="bg-black text-white px-4 sm:px-6 lg:px-8 py-3 lg:py-4 rounded-lg flex items-center justify-center space-x-3 lg:space-x-4 hover:bg-gray-800 transition-all duration-300 desktop-hover-scale">
+                            <i data-lucide="smartphone" class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8"></i>
                             <div class="text-left">
-                                <div class="text-xs">Télécharger sur</div>
-                                <div class="font-semibold text-sm sm:text-base">App Store</div>
+                                <div class="text-xs lg:text-sm">Télécharger sur</div>
+                                <div class="font-semibold text-sm sm:text-base lg:text-lg">App Store</div>
                             </div>
                         </button>
                         
-                        <button id="android-download" class="bg-black text-white px-4 sm:px-6 py-3 rounded-lg flex items-center justify-center space-x-3 hover:bg-gray-800 transition-colors">
-                            <i data-lucide="smartphone" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                        <button id="android-download" class="bg-black text-white px-4 sm:px-6 lg:px-8 py-3 lg:py-4 rounded-lg flex items-center justify-center space-x-3 lg:space-x-4 hover:bg-gray-800 transition-all duration-300 desktop-hover-scale">
+                            <i data-lucide="smartphone" class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8"></i>
                             <div class="text-left">
-                                <div class="text-xs">Disponible sur</div>
-                                <div class="font-semibold text-sm sm:text-base">Google Play</div>
+                                <div class="text-xs lg:text-sm">Disponible sur</div>
+                                <div class="font-semibold text-sm sm:text-base lg:text-lg">Google Play</div>
                             </div>
                         </button>
                     </div>
@@ -797,13 +986,13 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Animation des compteurs de statistiques
+    // Enhanced animation for statistics counters
     const counters = document.querySelectorAll('.stats-counter');
     
     const animateCounters = () => {
         counters.forEach(counter => {
             const target = parseInt(counter.getAttribute('data-target'));
-            const duration = 2000; // 2 secondes
+            const duration = 2000; // 2 seconds
             const increment = target / (duration / 16); // 60 FPS
             let current = 0;
             
@@ -821,7 +1010,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     
-    // Observer pour déclencher l'animation au scroll
+    // Enhanced intersection observer for better performance
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -829,271 +1018,670 @@ document.addEventListener('DOMContentLoaded', function() {
                 observer.unobserve(entry.target);
             }
         });
+    }, {
+        threshold: 0.5,
+        rootMargin: '0px 0px -100px 0px'
     });
     
     if (counters.length > 0) {
         observer.observe(counters[0].parentElement);
     }
     
-    // Initialisation des effets 3D (seulement sur desktop)
-    if (window.innerWidth > 768 && window.VGK && window.VGK.settings && window.VGK.settings.enable_3d) {
+    // Enhanced 3D initialization with better device detection
+    const isDesktop = window.innerWidth > 1024;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const supportsWebGL = (() => {
+        try {
+            const canvas = document.createElement('canvas');
+            return !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+        } catch (e) {
+            return false;
+        }
+    })();
+    
+    if (isDesktop && !isMobile && supportsWebGL && window.VGK && window.VGK.settings && window.VGK.settings.enable_3d) {
         initHero3D();
         initPickupMap3D();
     }
     
-    // Gestion des téléchargements d'applications
+    // Enhanced app download handling
     document.getElementById('ios-download')?.addEventListener('click', () => {
-        // Logique pour iOS - PWA install ou App Store
+        // Enhanced PWA installation logic
         if (window.VGK && window.VGK.pwa && window.VGK.pwa.canInstall) {
             window.VGK.pwa.install();
+        } else if (navigator.userAgent.match(/iPhone|iPad|iPod/)) {
+            // iOS specific handling
+            if (window.navigator.standalone !== undefined) {
+                // Running in standalone mode, show install instructions
+                showIOSInstallInstructions();
+            } else {
+                // Show add to home screen instructions
+                showAddToHomeScreen();
+            }
         } else {
-            // Redirection App Store si disponible
+            // Fallback to app store
             console.log('Redirection vers App Store');
             // window.open('https://apps.apple.com/app/vgk', '_blank');
         }
     });
     
     document.getElementById('android-download')?.addEventListener('click', () => {
-        // Logique pour Android - PWA install ou Google Play
+        // Enhanced Android PWA installation
         if (window.VGK && window.VGK.pwa && window.VGK.pwa.canInstall) {
             window.VGK.pwa.install();
+        } else if (navigator.userAgent.match(/Android/)) {
+            // Android specific handling
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                // Already installed
+                showAlreadyInstalledMessage();
+            } else {
+                // Show install instructions
+                showAndroidInstallInstructions();
+            }
         } else {
-            // Redirection Google Play si disponible
+            // Fallback to Google Play
             console.log('Redirection vers Google Play');
             // window.open('https://play.google.com/store/apps/details?id=com.vgk.app', '_blank');
         }
     });
     
-    // Gestion responsive des animations
+    // Enhanced responsive handling with debouncing
     let resizeTimer;
+    let lastWidth = window.innerWidth;
+    
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => {
-            // Réinitialiser les animations 3D si nécessaire
-            if (window.innerWidth <= 768) {
-                // Désactiver les animations 3D sur mobile pour la performance
-                const hero3D = document.getElementById('hero-3d-model');
-                const map3D = document.getElementById('pickup-map-3d');
-                if (hero3D) hero3D.style.display = 'none';
-                if (map3D) map3D.style.display = 'block';
+            const currentWidth = window.innerWidth;
+            
+            // Only reinitialize if crossing breakpoints
+            if ((lastWidth <= 1024 && currentWidth > 1024) || (lastWidth > 1024 && currentWidth <= 1024)) {
+                handleResponsiveChanges(currentWidth);
             }
+            
+            lastWidth = currentWidth;
         }, 250);
     });
-});
-
-// Initialisation de la scène 3D du hero (desktop seulement)
-function initHero3D() {
-    const container = document.getElementById('hero-3d-model');
-    if (!container || window.innerWidth <= 768) return;
     
-    // Configuration Three.js
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    
-    renderer.setSize(container.offsetWidth, container.offsetHeight);
-    renderer.setClearColor(0x000000, 0);
-    container.appendChild(renderer.domElement);
-    
-    // Création d'un smartphone 3D simple
-    const geometry = new THREE.BoxGeometry(1, 2, 0.1);
-    const material = new THREE.MeshLambertMaterial({ 
-        color: 0x1a1a1a,
-        transparent: true,
-        opacity: 0.8
-    });
-    const phone = new THREE.Mesh(geometry, material);
-    scene.add(phone);
-    
-    // Écran du téléphone
-    const screenGeometry = new THREE.PlaneGeometry(0.8, 1.6);
-    const screenMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0x00823A,
-        transparent: true,
-        opacity: 0.7
-    });
-    const screen = new THREE.Mesh(screenGeometry, screenMaterial);
-    screen.position.z = 0.051;
-    phone.add(screen);
-    
-    // Éclairage
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
-    
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(5, 5, 5);
-    scene.add(directionalLight);
-    
-    camera.position.z = 3;
-    
-    // Animation
-    function animate() {
-        requestAnimationFrame(animate);
-        
-        phone.rotation.y += 0.01;
-        phone.rotation.x = Math.sin(Date.now() * 0.001) * 0.1;
-        
-        renderer.render(scene, camera);
+    function handleResponsiveChanges(width) {
+        if (width <= 1024) {
+            // Disable 3D animations on smaller screens for performance
+            const hero3D = document.getElementById('hero-3d-model');
+            const map3D = document.getElementById('pickup-map-3d');
+            if (hero3D) hero3D.style.display = 'none';
+            if (map3D) map3D.style.display = 'block';
+            
+            // Reduce animation complexity
+            document.documentElement.style.setProperty('--animation-duration', '0.2s');
+        } else {
+            // Re-enable desktop features
+            const hero3D = document.getElementById('hero-3d-model');
+            if (hero3D) hero3D.style.display = 'block';
+            
+            // Restore full animations
+            document.documentElement.style.setProperty('--animation-duration', '0.3s');
+            
+            // Reinitialize 3D if needed
+            if (supportsWebGL && window.VGK && window.VGK.settings && window.VGK.settings.enable_3d) {
+                initHero3D();
+                initPickupMap3D();
+            }
+        }
     }
     
-    animate();
+    // Enhanced scroll performance
+    let ticking = false;
     
-    // Responsive
-    window.addEventListener('resize', () => {
-        if (window.innerWidth <= 768) return;
+    function updateScrollEffects() {
+        // Add parallax effects for desktop
+        if (window.innerWidth > 1024) {
+            const scrolled = window.pageYOffset;
+            const parallaxElements = document.querySelectorAll('.parallax-bg');
+            
+            parallaxElements.forEach(element => {
+                const speed = element.dataset.speed || 0.5;
+                const yPos = -(scrolled * speed);
+                element.style.transform = `translateY(${yPos}px)`;
+            });
+        }
         
-        const width = container.offsetWidth;
-        const height = container.offsetHeight;
-        
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-        renderer.setSize(width, height);
-    });
-}
-
-// Initialisation de la carte 3D des points de retrait
-function initPickupMap3D() {
-    const container = document.getElementById('pickup-map-3d');
-    if (!container) return;
-    
-    // Pour mobile, on affiche juste un background dégradé
-    if (window.innerWidth <= 768) {
-        container.style.background = 'linear-gradient(135deg, #10b981 0%, #f59e0b 100%)';
-        container.innerHTML = '<div class="flex items-center justify-center h-full text-white"><i data-lucide="map" class="w-12 h-12"></i></div>';
-        return;
+        ticking = false;
     }
     
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    
-    renderer.setSize(container.offsetWidth, container.offsetHeight);
-    renderer.setClearColor(0x000000, 0);
-    container.appendChild(renderer.domElement);
-    
-    // Carte simple du Cameroun
-    const mapGeometry = new THREE.PlaneGeometry(4, 3);
-    const mapMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0x00823A,
-        transparent: true,
-        opacity: 0.3
+    window.addEventListener('scroll', () => {
+        if (!ticking) {
+            requestAnimationFrame(updateScrollEffects);
+            ticking = true;
+        }
     });
-    const map = new THREE.Mesh(mapGeometry, mapMaterial);
-    scene.add(map);
     
-    // Points de retrait
-    const pointGeometry = new THREE.SphereGeometry(0.1, 16, 16);
-    const pointMaterial = new THREE.MeshBasicMaterial({ color: 0xFF6B35 });
-    
-    // Douala
-    const doualaPoint = new THREE.Mesh(pointGeometry, pointMaterial);
-    doualaPoint.position.set(-0.5, -0.3, 0.1);
-    scene.add(doualaPoint);
-    
-    // Yaoundé
-    const yaoundePoint = new THREE.Mesh(pointGeometry, pointMaterial);
-    yaoundePoint.position.set(0.2, 0.1, 0.1);
-    scene.add(yaoundePoint);
-    
-    camera.position.z = 3;
-    
-    // Animation
-    function animate() {
-        requestAnimationFrame(animate);
-        
-        doualaPoint.scale.setScalar(1 + Math.sin(Date.now() * 0.003) * 0.2);
-        yaoundePoint.scale.setScalar(1 + Math.sin(Date.now() * 0.003 + Math.PI) * 0.2);
-        
-        renderer.render(scene, camera);
-    }
-    
-    animate();
-    
-    // Responsive
-    window.addEventListener('resize', () => {
-        if (window.innerWidth <= 768) return;
-        
-        const width = container.offsetWidth;
-        const height = container.offsetHeight;
-        
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-        renderer.setSize(width, height);
-    });
-}
-
-// Performance optimizations for mobile
-if (window.innerWidth <= 768) {
-    // Réduire les animations complexes sur mobile
-    document.documentElement.style.setProperty('--animation-duration', '0.2s');
-    
-    // Lazy loading pour les images
-    const images = document.querySelectorAll('img[data-src]');
+    // Enhanced lazy loading with Intersection Observer
+    const lazyImages = document.querySelectorAll('img[data-src]');
     const imageObserver = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 const img = entry.target;
                 img.src = img.dataset.src;
                 img.classList.remove('lazy');
+                img.classList.add('loaded');
                 imageObserver.unobserve(img);
             }
         });
+    }, {
+        rootMargin: '50px 0px',
+        threshold: 0.01
     });
     
-    images.forEach(img => imageObserver.observe(img));
+    lazyImages.forEach(img => {
+        img.classList.add('lazy');
+        imageObserver.observe(img);
+    });
+});
+
+// Enhanced 3D hero initialization with better error handling
+function initHero3D() {
+    const container = document.getElementById('hero-3d-model');
+    if (!container || window.innerWidth <= 1024) return;
+    
+    try {
+        // Enhanced Three.js configuration
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ 
+            alpha: true, 
+            antialias: true,
+            powerPreference: "high-performance"
+        });
+        
+        renderer.setSize(container.offsetWidth, container.offsetHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setClearColor(0x000000, 0);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+        
+        // Enhanced smartphone 3D model
+        const phoneGroup = new THREE.Group();
+        
+        // Phone body
+        const geometry = new THREE.BoxGeometry(1, 2, 0.1);
+        const material = new THREE.MeshLambertMaterial({ 
+            color: 0x1a1a1a,
+            transparent: true,
+            opacity: 0.9
+        });
+        const phone = new THREE.Mesh(geometry, material);
+        phone.castShadow = true;
+        phoneGroup.add(phone);
+        
+        // Enhanced screen
+        const screenGeometry = new THREE.PlaneGeometry(0.8, 1.6);
+        const screenMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x00823A,
+            transparent: true,
+            opacity: 0.8
+        });
+        const screen = new THREE.Mesh(screenGeometry, screenMaterial);
+        screen.position.z = 0.051;
+        phoneGroup.add(screen);
+        
+        // Add VGK logo on screen
+        const logoGeometry = new THREE.PlaneGeometry(0.3, 0.3);
+        const logoMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xFFFFFF,
+            transparent: true,
+            opacity: 0.9
+        });
+        const logo = new THREE.Mesh(logoGeometry, logoMaterial);
+        logo.position.set(0, 0.3, 0.052);
+        phoneGroup.add(logo);
+        
+        scene.add(phoneGroup);
+        
+        // Enhanced lighting setup
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 5, 5);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
+        scene.add(directionalLight);
+        
+        const pointLight = new THREE.PointLight(0xFF6B35, 0.5, 10);
+        pointLight.position.set(-2, 2, 2);
+        scene.add(pointLight);
+        
+        camera.position.z = 3;
+        
+        // Enhanced animation with performance optimization
+        let animationId;
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            
+            // Smooth rotation
+            phoneGroup.rotation.y += 0.008;
+            phoneGroup.rotation.x = Math.sin(Date.now() * 0.001) * 0.1;
+            phoneGroup.position.y = Math.sin(Date.now() * 0.0015) * 0.1;
+            
+            // Update logo rotation opposite to phone
+            logo.rotation.z = -phoneGroup.rotation.y * 0.5;
+            
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // Enhanced responsive handling
+        const handleResize = () => {
+            if (window.innerWidth <= 1024) {
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                }
+                return;
+            }
+            
+            const width = container.offsetWidth;
+            const height = container.offsetHeight;
+            
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        };
+        
+        window.addEventListener('resize', handleResize);
+        
+        // Cleanup function
+        container.cleanup = () => {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            window.removeEventListener('resize', handleResize);
+            renderer.dispose();
+            scene.clear();
+        };
+        
+    } catch (error) {
+        console.warn('3D initialization failed:', error);
+        // Fallback to gradient background
+        container.style.background = 'linear-gradient(135deg, #10b981 0%, #f59e0b 100%)';
+        container.innerHTML = '<div class="flex items-center justify-center h-full text-white"><i data-lucide="smartphone" class="w-16 h-16"></i></div>';
+    }
 }
 
-// Touch gestures pour mobile
+// Enhanced pickup map 3D with better performance
+function initPickupMap3D() {
+    const container = document.getElementById('pickup-map-3d');
+    if (!container) return;
+    
+    // Enhanced mobile fallback
+    if (window.innerWidth <= 1024) {
+        container.style.background = 'linear-gradient(135deg, #10b981 0%, #f59e0b 100%)';
+        container.innerHTML = '<div class="flex items-center justify-center h-full text-white"><i data-lucide="map" class="w-12 h-12 lg:w-16 lg:h-16"></i></div>';
+        return;
+    }
+    
+    try {
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ 
+            alpha: true, 
+            antialias: true,
+            powerPreference: "high-performance"
+        });
+        
+        renderer.setSize(container.offsetWidth, container.offsetHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setClearColor(0x000000, 0);
+        container.appendChild(renderer.domElement);
+        
+        // Enhanced Cameroon map representation
+        const mapGeometry = new THREE.PlaneGeometry(4, 3);
+        const mapMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x00823A,
+            transparent: true,
+            opacity: 0.4
+        });
+        const map = new THREE.Mesh(mapGeometry, mapMaterial);
+        scene.add(map);
+        
+        // Enhanced pickup points with glow effect
+        const pointGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+        const pointMaterial = new THREE.MeshBasicMaterial({ color: 0xFF6B35 });
+        
+        // Douala point with enhanced animation
+        const doualaPoint = new THREE.Mesh(pointGeometry, pointMaterial);
+        doualaPoint.position.set(-0.5, -0.3, 0.1);
+        scene.add(doualaPoint);
+        
+        // Add glow effect for Douala
+        const doualaGlow = new THREE.Mesh(
+            new THREE.SphereGeometry(0.15, 16, 16),
+            new THREE.MeshBasicMaterial({ 
+                color: 0xFF6B35,
+                transparent: true,
+                opacity: 0.3
+            })
+        );
+        doualaGlow.position.copy(doualaPoint.position);
+        scene.add(doualaGlow);
+        
+        // Yaoundé point with enhanced animation
+        const yaoundePoint = new THREE.Mesh(pointGeometry, pointMaterial);
+        yaoundePoint.position.set(0.2, 0.1, 0.1);
+        scene.add(yaoundePoint);
+        
+        // Add glow effect for Yaoundé
+        const yaoundeGlow = new THREE.Mesh(
+            new THREE.SphereGeometry(0.15, 16, 16),
+            new THREE.MeshBasicMaterial({ 
+                color: 0xFF6B35,
+                transparent: true,
+                opacity: 0.3
+            })
+        );
+        yaoundeGlow.position.copy(yaoundePoint.position);
+        scene.add(yaoundeGlow);
+        
+        camera.position.z = 3;
+        
+        // Enhanced animation with performance optimization
+        let animationId;
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            
+            const time = Date.now() * 0.003;
+            
+            // Pulsing animation for points
+            const scale1 = 1 + Math.sin(time) * 0.3;
+            const scale2 = 1 + Math.sin(time + Math.PI) * 0.3;
+            
+            doualaPoint.scale.setScalar(scale1);
+            doualaGlow.scale.setScalar(scale1 * 1.2);
+            
+            yaoundePoint.scale.setScalar(scale2);
+            yaoundeGlow.scale.setScalar(scale2 * 1.2);
+            
+            // Subtle map rotation
+            map.rotation.z = Math.sin(time * 0.5) * 0.05;
+            
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // Enhanced responsive handling
+        const handleResize = () => {
+            if (window.innerWidth <= 1024) {
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                }
+                return;
+            }
+            
+            const width = container.offsetWidth;
+            const height = container.offsetHeight;
+            
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        };
+        
+        window.addEventListener('resize', handleResize);
+        
+        // Cleanup function
+        container.cleanup = () => {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            window.removeEventListener('resize', handleResize);
+            renderer.dispose();
+            scene.clear();
+        };
+        
+    } catch (error) {
+        console.warn('3D map initialization failed:', error);
+        // Enhanced fallback
+        container.style.background = 'linear-gradient(135deg, #10b981 0%, #f59e0b 100%)';
+        container.innerHTML = `
+            <div class="flex items-center justify-center h-full text-white">
+                <div class="text-center">
+                    <i data-lucide="map" class="w-12 h-12 lg:w-16 lg:h-16 mx-auto mb-2"></i>
+                    <p class="text-sm lg:text-base">Points de retrait disponibles</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Enhanced touch gestures for mobile with better performance
 if ('ontouchstart' in window) {
     let startY = 0;
     let endY = 0;
+    let startTime = 0;
+    let isScrolling = false;
     
     document.addEventListener('touchstart', e => {
         startY = e.changedTouches[0].screenY;
-    });
+        startTime = Date.now();
+        isScrolling = false;
+    }, { passive: true });
+    
+    document.addEventListener('touchmove', e => {
+        if (!isScrolling) {
+            isScrolling = true;
+        }
+    }, { passive: true });
     
     document.addEventListener('touchend', e => {
+        if (!isScrolling) return;
+        
         endY = e.changedTouches[0].screenY;
-        handleGesture();
-    });
+        const timeDiff = Date.now() - startTime;
+        const distance = Math.abs(endY - startY);
+        
+        // Only trigger if it's a quick swipe
+        if (timeDiff < 300 && distance > 50) {
+            handleGesture();
+        }
+    }, { passive: true });
     
     function handleGesture() {
-        if (endY < startY - 50) {
+        const swipeDistance = endY - startY;
+        
+        if (swipeDistance < -50) {
             // Swipe up - smooth scroll to next section
             const currentSection = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
             const nextSection = currentSection?.closest('section')?.nextElementSibling;
             if (nextSection) {
-                nextSection.scrollIntoView({ behavior: 'smooth' });
+                nextSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        } else if (swipeDistance > 50) {
+            // Swipe down - smooth scroll to previous section
+            const currentSection = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+            const prevSection = currentSection?.closest('section')?.previousElementSibling;
+            if (prevSection) {
+                prevSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         }
     }
 }
 
-// Amélioration du scroll sur mobile
-if (window.innerWidth <= 768) {
-    // Smooth scroll polyfill pour les anciens navigateurs mobile
-    document.documentElement.style.scrollBehavior = 'smooth';
+// Enhanced scroll optimization for mobile devices
+if (window.innerWidth <= 1024) {
+    // Smooth scroll polyfill for older mobile browsers
+    if (!('scrollBehavior' in document.documentElement.style)) {
+        // Load smooth scroll polyfill if needed
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/gh/iamdustan/smoothscroll@master/src/smoothscroll.js';
+        document.head.appendChild(script);
+    }
     
-    // Optimisation du scroll pour iOS Safari
+    // Enhanced scroll performance for iOS Safari
     document.body.style.webkitOverflowScrolling = 'touch';
+    
+    // Reduce motion for better performance on older devices
+    const isOldDevice = /iPhone [1-6]|iPad [1-4]|Android [1-4]/i.test(navigator.userAgent);
+    if (isOldDevice) {
+        document.documentElement.style.setProperty('--animation-duration', '0.1s');
+        document.documentElement.classList.add('reduce-motion');
+    }
+}
+
+// Enhanced performance monitoring and optimization
+const performanceObserver = new PerformanceObserver((list) => {
+    const entries = list.getEntries();
+    entries.forEach((entry) => {
+        if (entry.entryType === 'measure') {
+            console.log(`Performance: ${entry.name} took ${entry.duration}ms`);
+        }
+        
+        // Optimize based on performance metrics
+        if (entry.entryType === 'navigation' && entry.duration > 3000) {
+            // Page load is slow, disable some animations
+            document.documentElement.classList.add('slow-connection');
+            document.documentElement.style.setProperty('--animation-duration', '0.1s');
+        }
+    });
+});
+
+// Enhanced error handling and fallbacks
+window.addEventListener('error', (e) => {
+    console.warn('JavaScript error occurred:', e.error);
+    
+    // Disable 3D features if there are WebGL errors
+    if (e.error && e.error.message && e.error.message.includes('WebGL')) {
+        const hero3D = document.getElementById('hero-3d-model');
+        const map3D = document.getElementById('pickup-map-3d');
+        
+        if (hero3D) {
+            hero3D.style.background = 'linear-gradient(135deg, #10b981 0%, #f59e0b 100%)';
+            hero3D.innerHTML = '<div class="flex items-center justify-center h-full text-white"><i data-lucide="smartphone" class="w-16 h-16"></i></div>';
+        }
+        
+        if (map3D) {
+            map3D.style.background = 'linear-gradient(135deg, #10b981 0%, #f59e0b 100%)';
+            map3D.innerHTML = '<div class="flex items-center justify-center h-full text-white"><i data-lucide="map" class="w-12 h-12"></i></div>';
+        }
+    }
+});
+
+// Enhanced PWA functionality
+function showIOSInstallInstructions() {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-6 max-w-sm mx-auto text-center">
+            <h3 class="text-xl font-bold mb-4">Installer VGK App</h3>
+            <div class="space-y-3 text-left text-sm">
+                <div class="flex items-center space-x-3">
+                    <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">1</div>
+                    <span>Appuyez sur le bouton de partage</span>
+                    <i data-lucide="share" class="w-4 h-4"></i>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">2</div>
+                    <span>Sélectionnez "Ajouter à l'écran d'accueil"</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">3</div>
+                    <span>Confirmez l'installation</span>
+                </div>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" 
+                    class="mt-6 bg-green-600 text-white px-6 py-2 rounded-lg font-medium">
+                Compris
+            </button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function showAndroidInstallInstructions() {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-6 max-w-sm mx-auto text-center">
+            <h3 class="text-xl font-bold mb-4">Installer VGK App</h3>
+            <div class="space-y-3 text-left text-sm">
+                <div class="flex items-center space-x-3">
+                    <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">1</div>
+                    <span>Appuyez sur le menu du navigateur</span>
+                    <i data-lucide="more-vertical" class="w-4 h-4"></i>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">2</div>
+                    <span>Sélectionnez "Installer l'application"</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">3</div>
+                    <span>Confirmez l'installation</span>
+                </div>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" 
+                    class="mt-6 bg-green-600 text-white px-6 py-2 rounded-lg font-medium">
+                Compris
+            </button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function showAlreadyInstalledMessage() {
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    toast.textContent = 'L\'application VGK est déjà installée !';
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
 }
 </script>
 
-<!-- Script pour les icônes Lucide -->
+<!-- Enhanced Lucide Icons Script -->
 <script>
-if (typeof lucide !== 'undefined') {
-    lucide.createIcons();
+// Enhanced icon loading with fallback
+function loadLucideIcons() {
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    } else {
+        // Fallback for when Lucide fails to load
+        console.warn('Lucide icons failed to load');
+        // You could load a fallback icon library here
+    }
+}
+
+// Load icons when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadLucideIcons);
+} else {
+    loadLucideIcons();
 }
 </script>
 
-<!-- PWA et performance mobile -->
+<!-- Enhanced PWA and Performance Script -->
 <script>
-// Service Worker registration pour PWA
+// Enhanced Service Worker registration with better error handling
 if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
             .then(registration => {
                 console.log('SW registered: ', registration);
+                
+                // Check for updates
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // Show update notification
+                            showUpdateNotification();
+                        }
+                    });
+                });
             })
             .catch(registrationError => {
                 console.log('SW registration failed: ', registrationError);
@@ -1101,52 +1689,125 @@ if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
     });
 }
 
-// PWA Install prompt
+// Enhanced PWA Install prompt with better UX
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
     
-    // Afficher un bouton d'installation personnalisé si souhaité
-    const installBtn = document.getElementById('pwa-install-btn');
-    if (installBtn) {
-        installBtn.style.display = 'block';
-        installBtn.addEventListener('click', () => {
+    // Show custom install prompt after user interaction
+    setTimeout(() => {
+        if (deferredPrompt && !window.matchMedia('(display-mode: standalone)').matches) {
+            showCustomInstallPrompt();
+        }
+    }, 5000); // Show after 5 seconds
+});
+
+function showCustomInstallPrompt() {
+    const installBanner = document.createElement('div');
+    installBanner.className = 'fixed bottom-4 left-4 right-4 bg-green-600 text-white p-4 rounded-lg shadow-lg z-50 flex items-center justify-between';
+    installBanner.innerHTML = `
+        <div class="flex items-center space-x-3">
+            <i data-lucide="smartphone" class="w-6 h-6"></i>
+            <div>
+                <div class="font-semibold">Installer VGK App</div>
+                <div class="text-sm opacity-90">Accès rapide depuis votre écran d'accueil</div>
+            </div>
+        </div>
+        <div class="flex space-x-2">
+            <button id="install-app" class="bg-white text-green-600 px-4 py-2 rounded font-medium text-sm">
+                Installer
+            </button>
+            <button id="dismiss-install" class="text-white/80 hover:text-white px-2 py-2">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(installBanner);
+    
+    // Recreate icons for the new elements
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+    
+    document.getElementById('install-app').addEventListener('click', () => {
+        if (deferredPrompt) {
             deferredPrompt.prompt();
             deferredPrompt.userChoice.then((choiceResult) => {
                 if (choiceResult.outcome === 'accepted') {
                     console.log('User accepted the install prompt');
                 }
                 deferredPrompt = null;
+                installBanner.remove();
             });
-        });
-    }
-});
+        }
+    });
+    
+    document.getElementById('dismiss-install').addEventListener('click', () => {
+        installBanner.remove();
+        // Don't show again for this session
+        sessionStorage.setItem('installPromptDismissed', 'true');
+    });
+}
 
-// Préchargement des images critiques
+function showUpdateNotification() {
+    const updateBanner = document.createElement('div');
+    updateBanner.className = 'fixed top-4 left-4 right-4 bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50 flex items-center justify-between';
+    updateBanner.innerHTML = `
+        <div class="flex items-center space-x-3">
+            <i data-lucide="download" class="w-6 h-6"></i>
+            <div>
+                <div class="font-semibold">Mise à jour disponible</div>
+                <div class="text-sm opacity-90">Une nouvelle version de VGK est disponible</div>
+            </div>
+        </div>
+        <button id="update-app" class="bg-white text-blue-600 px-4 py-2 rounded font-medium text-sm">
+            Mettre à jour
+        </button>
+    `;
+    
+    document.body.appendChild(updateBanner);
+    
+    // Recreate icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+    
+    document.getElementById('update-app').addEventListener('click', () => {
+        window.location.reload();
+    });
+}
+
+// Enhanced image preloading with priority
 const criticalImages = [
     '{% static "images/hero.jpg" %}',
     '{% static "images/femme.jpeg" %}',
     '{% static "images/homme.jpeg" %}'
 ];
 
-criticalImages.forEach(src => {
+// Preload critical images with enhanced loading
+criticalImages.forEach((src, index) => {
     const link = document.createElement('link');
     link.rel = 'preload';
     link.as = 'image';
     link.href = src;
+    if (index === 0) {
+        link.fetchPriority = 'high';
+    }
     document.head.appendChild(link);
 });
 
-// Optimisation des performances mobile
-if (window.innerWidth <= 768) {
-    // Réduction de la fréquence des animations
+// Enhanced performance optimization for mobile
+if (window.innerWidth <= 1024) {
+    // Reduce motion preferences
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     if (reducedMotionQuery.matches) {
         document.documentElement.style.setProperty('--animation-duration', '0s');
+        document.documentElement.classList.add('reduce-motion');
     }
     
-    // Lazy loading pour les sections non critiques
+    // Enhanced lazy loading for sections
     const lazyLoadSections = document.querySelectorAll('section:not(:first-child)');
     const sectionObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -1155,56 +1816,138 @@ if (window.innerWidth <= 768) {
                 sectionObserver.unobserve(entry.target);
             }
         });
-    }, { rootMargin: '50px' });
+    }, { 
+        rootMargin: '100px',
+        threshold: 0.1
+    });
     
     lazyLoadSections.forEach(section => {
         section.classList.add('lazy-section');
         sectionObserver.observe(section);
     });
+    
+    // Connection-aware loading
+    if ('connection' in navigator) {
+        const connection = navigator.connection;
+        if (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g') {
+            document.documentElement.classList.add('slow-connection');
+            // Disable heavy animations and 3D
+            document.documentElement.style.setProperty('--animation-duration', '0.1s');
+        }
+    }
 }
 
-// Analytics pour mesurer les performances
+// Enhanced analytics with performance tracking
 if (typeof gtag !== 'undefined') {
-    // Mesurer le temps de chargement
+    // Measure enhanced performance metrics
     window.addEventListener('load', () => {
         const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
-        gtag('event', 'page_load_time', {
-            'custom_parameter': loadTime,
-            'event_category': 'Performance'
+        const domContentLoadedTime = performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart;
+        
+        gtag('event', 'page_performance', {
+            'load_time': loadTime,
+            'dom_ready_time': domContentLoadedTime,
+            'device_type': window.innerWidth <= 768 ? 'mobile' : 'desktop',
+            'connection_type': navigator.connection ? navigator.connection.effectiveType : 'unknown'
         });
+        
+        // Track Core Web Vitals
+        if ('web-vitals' in window) {
+            getCLS(metric => gtag('event', 'web_vitals', { metric_name: 'CLS', value: metric.value }));
+            getFID(metric => gtag('event', 'web_vitals', { metric_name: 'FID', value: metric.value }));
+            getLCP(metric => gtag('event', 'web_vitals', { metric_name: 'LCP', value: metric.value }));
+        }
     });
     
-    // Mesurer l'engagement mobile
-    if (window.innerWidth <= 768) {
+    // Enhanced mobile engagement tracking
+    if (window.innerWidth <= 1024) {
         let scrollDepth = 0;
-        window.addEventListener('scroll', () => {
+        let maxScrollDepth = 0;
+        
+        const scrollTracker = throttle(() => {
             const currentDepth = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
-            if (currentDepth > scrollDepth && currentDepth % 25 === 0) {
-                scrollDepth = currentDepth;
-                gtag('event', 'scroll_depth', {
-                    'scroll_depth': scrollDepth,
-                    'device_type': 'mobile'
+            if (currentDepth > maxScrollDepth) {
+                maxScrollDepth = currentDepth;
+                if (currentDepth % 25 === 0 && currentDepth > scrollDepth) {
+                    scrollDepth = currentDepth;
+                    gtag('event', 'scroll_depth', {
+                        'scroll_depth': scrollDepth,
+                        'device_type': 'mobile',
+                        'page_section': getCurrentSection()
+                    });
+                }
+            }
+        }, 250);
+        
+        window.addEventListener('scroll', scrollTracker, { passive: true });
+        
+        // Track touch interactions
+        let touchStartTime;
+        document.addEventListener('touchstart', () => {
+            touchStartTime = Date.now();
+        }, { passive: true });
+        
+        document.addEventListener('touchend', (e) => {
+            const touchDuration = Date.now() - touchStartTime;
+            if (touchDuration > 100) { // Ignore accidental touches
+                gtag('event', 'touch_interaction', {
+                    'duration': touchDuration,
+                    'element_type': e.target.tagName.toLowerCase()
                 });
             }
-        });
+        }, { passive: true });
     }
+}
+
+// Utility functions
+function throttle(func, limit) {
+    let inThrottle;
+    return function() {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    }
+}
+
+function getCurrentSection() {
+    const sections = document.querySelectorAll('section');
+    const scrollPosition = window.scrollY + window.innerHeight / 2;
+    
+    for (let section of sections) {
+        const sectionTop = section.offsetTop;
+        const sectionBottom = sectionTop + section.offsetHeight;
+        
+        if (scrollPosition >= sectionTop && scrollPosition <= sectionBottom) {
+            return section.id || section.className.split(' ')[0] || 'unknown';
+        }
+    }
+    return 'unknown';
 }
 </script>
 
-<!-- Structured Data pour SEO -->
+<!-- Enhanced Structured Data for SEO -->
 <script type="application/ld+json">
 {
     "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": "Vidé-Grenier Kamer",
+    "alternateName": "VGK",
     "description": "Marketplace camerounaise de seconde main - Achetez et vendez en toute sécurité",
     "url": "{{ request.build_absolute_uri }}",
     "applicationCategory": "MarketplaceApplication",
     "operatingSystem": "Web, Android, iOS",
+    "browserRequirements": "HTML5, CSS3, JavaScript",
+    "softwareVersion": "1.0",
+    "releaseNotes": "Version initiale avec support PWA et paiements mobiles",
     "offers": {
         "@type": "Offer",
         "price": "0",
-        "priceCurrency": "XAF"
+        "priceCurrency": "XAF",
+        "availability": "https://schema.org/InStock"
     },
     "aggregateRating": {
         "@type": "AggregateRating",
@@ -1214,22 +1957,107 @@ if (typeof gtag !== 'undefined') {
         "worstRating": "1"
     },
     "featureList": [
-        "Paiement Mobile Money sécurisé",
-        "Points de retrait à Douala et Yaoundé",
-        "Chat en temps réel avec vendeurs",
-        "Système d'évaluation et avis",
-        "Application mobile PWA",
-        "Support client 24/7"
+        "Paiement Mobile Money sécurisé (Orange Money, MTN Money, Campay)",
+        "Points de retrait sécurisés à Douala et Yaoundé",
+        "Chat en temps réel avec les vendeurs",
+        "Système d'évaluation et d'avis clients",
+        "Application mobile PWA avec mode hors ligne",
+        "Support client 24/7 via WhatsApp",
+        "Système d'escrow pour transactions sécurisées",
+        "Interface 3D interactive et animations modernes"
     ],
-    "screenshot": "{{ request.build_absolute_uri }}{% static 'images/app-screenshot.png' %}",
+    "screenshot": [
+        "{{ request.build_absolute_uri }}{% static 'images/screenshots/desktop-home.png' %}",
+        "{{ request.build_absolute_uri }}{% static 'images/screenshots/mobile-home.png' %}",
+        "{{ request.build_absolute_uri }}{% static 'images/screenshots/mobile-products.png' %}"
+    ],
     "publisher": {
         "@type": "Organization",
         "name": "Vidé-Grenier Kamer",
         "logo": {
             "@type": "ImageObject",
-            "url": "{{ request.build_absolute_uri }}{% static 'images/logo.png' %}"
+            "url": "{{ request.build_absolute_uri }}{% static 'images/logo.png' %}",
+            "width": "512",
+            "height": "512"
+        },
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+237-XXX-XXX-XXX",
+            "contactType": "Customer Service",
+            "availableLanguage": ["French", "English"]
+        },
+        "address": {
+            "@type": "PostalAddress",
+            "addressCountry": "CM",
+            "addressRegion": "Centre",
+            "addressLocality": "Yaoundé"
         }
+    },
+    "mainEntity": {
+        "@type": "WebSite",
+        "@id": "{{ request.build_absolute_uri }}",
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": "{{ request.build_absolute_uri }}/products/?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+        }
+    },
+    "serviceArea": {
+        "@type": "GeoCircle",
+        "geoMidpoint": {
+            "@type": "GeoCoordinates",
+            "latitude": "3.848",
+            "longitude": "11.502"
+        },
+        "geoRadius": "200000"
     }
+}
+</script>
+
+<!-- Additional Microdata for Better SEO -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "Vidé-Grenier Kamer",
+    "image": "{{ request.build_absolute_uri }}{% static 'images/logo.png' %}",
+    "description": "La première marketplace camerounaise dédiée aux biens de seconde main",
+    "address": [
+        {
+            "@type": "PostalAddress",
+            "streetAddress": "123 Avenue Ahidjo, face Crédit Lyonnais",
+            "addressLocality": "Douala",
+            "addressRegion": "Littoral",
+            "addressCountry": "CM"
+        },
+        {
+            "@type": "PostalAddress",
+            "streetAddress": "456 Avenue Kennedy, près Hilton",
+            "addressLocality": "Yaoundé",
+            "addressRegion": "Centre",
+            "addressCountry": "CM"
+        }
+    ],
+    "geo": [
+        {
+            "@type": "GeoCoordinates",
+            "latitude": "4.0511",
+            "longitude": "9.7679"
+        },
+        {
+            "@type": "GeoCoordinates",
+            "latitude": "3.848",
+            "longitude": "11.502"
+        }
+    ],
+    "openingHours": [
+        "Mo-Fr 07:30-18:30",
+        "Sa 08:00-16:00"
+    ],
+    "telephone": "+237-XXX-XXX-XXX",
+    "priceRange": "$",
+    "paymentAccepted": ["Mobile Money", "Orange Money", "MTN Money", "Campay"],
+    "currenciesAccepted": "XAF"
 }
 </script>
 {% endblock %}

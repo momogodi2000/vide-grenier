@@ -1,7 +1,13 @@
 # vide/settings/base.py
 import os
 from pathlib import Path
+
 from decouple import config
+# Social providers config
+try:
+    from .social_providers import SOCIALACCOUNT_PROVIDERS
+except ImportError:
+    SOCIALACCOUNT_PROVIDERS = {}
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -190,6 +196,7 @@ AUTHENTICATION_BACKENDS = [
 SITE_ID = 1
 
 # Allauth settings
+# Allauth settings
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
@@ -197,6 +204,9 @@ ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_SESSION_REMEMBER = True
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
+
+# Social providers (Google, Facebook)
+SOCIALACCOUNT_PROVIDERS = SOCIALACCOUNT_PROVIDERS
 
 # REST Framework
 REST_FRAMEWORK = {
@@ -249,9 +259,9 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
 
 # Session Configuration
-SESSION_COOKIE_AGE = 86400  # 24 hours
-SESSION_SAVE_EVERY_REQUEST = True
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 1500  # 25 minutes
+SESSION_SAVE_EVERY_REQUEST = False  # Only true inactivity counts
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Expire session when browser closes
 
 # Logging
 

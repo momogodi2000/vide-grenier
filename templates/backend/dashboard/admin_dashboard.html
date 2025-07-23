@@ -7,12 +7,37 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    // Auto-logout after 25 minutes (1500 seconds) of inactivity
+    (function() {
+        let logoutTimer;
+        const LOGOUT_TIME = 1500 * 1000; // 25 minutes in ms
+        function resetTimer() {
+            clearTimeout(logoutTimer);
+            logoutTimer = setTimeout(logoutUser, LOGOUT_TIME);
+        }
+        function logoutUser() {
+            // Clear all localStorage
+            localStorage.clear();
+            // Optionally clear sessionStorage too
+            sessionStorage.clear();
+            // Redirect to login page with next param
+            window.location.href = '/accounts/login/?next=' + encodeURIComponent(window.location.pathname);
+        }
+        // Listen for user activity
+        ['click','mousemove','keydown','scroll','touchstart'].forEach(evt => {
+            window.addEventListener(evt, resetTimer, true);
+        });
+        resetTimer();
+    })();
+    </script>
     <style>
         .stats-card { @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow; }
         .metric-card { @apply bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl p-6 relative overflow-hidden; }
         .metric-card::before { content: ''; @apply absolute top-0 right-0 w-20 h-20 bg-white bg-opacity-10 rounded-full transform translate-x-6 -translate-y-6; }
         .sidebar-link { @apply flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-green-50 hover:text-green-700 transition-colors; }
         .sidebar-link.active { @apply bg-green-100 text-green-700 font-medium; }
+        .notification-badge { @apply absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center; }
     </style>
 </head>
 <body class="h-full">
@@ -23,16 +48,27 @@
                 <div class="flex justify-between h-16">
                     <div class="flex items-center">
                         <div class="flex-shrink-0 flex items-center">
-                            <img class="h-8 w-auto" src="https://via.placeholder.com/120x40/22c55e/ffffff?text=VGK" alt="VGK">
+                            <div class="h-8 w-auto bg-green-600 text-white px-3 py-1 rounded-md font-bold">VGK</div>
                             <span class="ml-3 text-xl font-bold text-gray-900">Admin Panel</span>
                         </div>
                     </div>
                     
                     <div class="flex items-center space-x-4">
+                        <!-- Time & Date -->
+                        <div class="text-sm text-gray-600">
+                            <div id="current-time"></div>
+                        </div>
+                        
                         <!-- Notifications -->
                         <button class="p-2 text-gray-400 hover:text-gray-500 relative">
                             <i data-lucide="bell" class="w-6 h-6"></i>
-                            <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400"></span>
+                            <span class="notification-badge">3</span>
+                        </button>
+                        
+                        <!-- Messages -->
+                        <button class="p-2 text-gray-400 hover:text-gray-500 relative">
+                            <i data-lucide="message-circle" class="w-6 h-6"></i>
+                            <span class="notification-badge">12</span>
                         </button>
                         
                         <!-- Profile Dropdown -->
@@ -41,7 +77,7 @@
                                 <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white font-semibold">
                                     A
                                 </div>
-                                <span class="text-sm font-medium text-gray-700">Admin</span>
+                                <span class="text-sm font-medium text-gray-700">Admin VGK</span>
                                 <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
                             </button>
                         </div>
@@ -54,42 +90,66 @@
             <!-- Sidebar -->
             <div class="hidden md:flex md:w-64 md:flex-col">
                 <div class="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto bg-white border-r border-gray-200">
-                    <div class="flex-grow flex flex-col">
-                        <nav class="flex-1 px-4 space-y-1">
-                            <a href="#" class="sidebar-link active">
-                                <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i>
-                                Dashboard
-                            </a>
-                            <a href="#" class="sidebar-link">
-                                <i data-lucide="users" class="w-5 h-5 mr-3"></i>
-                                Utilisateurs
-                            </a>
-                            <a href="#" class="sidebar-link">
-                                <i data-lucide="package" class="w-5 h-5 mr-3"></i>
-                                Produits
-                            </a>
-                            <a href="#" class="sidebar-link">
-                                <i data-lucide="shopping-cart" class="w-5 h-5 mr-3"></i>
-                                Commandes
-                            </a>
-                            <a href="#" class="sidebar-link">
-                                <i data-lucide="credit-card" class="w-5 h-5 mr-3"></i>
-                                Paiements
-                            </a>
-                            <a href="#" class="sidebar-link">
-                                <i data-lucide="map-pin" class="w-5 h-5 mr-3"></i>
-                                Points de retrait
-                            </a>
-                            <a href="#" class="sidebar-link">
-                                <i data-lucide="bar-chart" class="w-5 h-5 mr-3"></i>
-                                Analytics
-                            </a>
-                            <a href="#" class="sidebar-link">
-                                <i data-lucide="settings" class="w-5 h-5 mr-3"></i>
-                                Configuration
-                            </a>
-                        </nav>
-                    </div>
+                   <!-- filepath: e:\project\vide-grenier\vide\templates\backend\dashboard\admin_dashboard.html -->
+<div class="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto bg-white border-r border-gray-200">
+    <nav class="flex-1 px-2 space-y-2">
+        <a href="{% url 'backend:dashboard' %}" class="sidebar-link{% if request.resolver_match.url_name == 'dashboard' %} active{% endif %}">
+            <i data-lucide="layout-dashboard" class="w-5 h-5 mr-2"></i> Dashboard
+        </a>
+        <a href="{% url 'backend:admin_user_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_user_list' %} active{% endif %}">
+            <i data-lucide="users" class="w-5 h-5 mr-2"></i> Utilisateurs
+        </a>
+        <a href="{% url 'backend:admin_product_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_product_list' %} active{% endif %}">
+            <i data-lucide="package" class="w-5 h-5 mr-2"></i> Produits
+        </a>
+        <a href="{% url 'backend:admin_order_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_order_list' %} active{% endif %}">
+            <i data-lucide="shopping-cart" class="w-5 h-5 mr-2"></i> Commandes
+        </a>
+        <a href="{% url 'backend:admin_payment_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_payment_list' %} active{% endif %}">
+            <i data-lucide="credit-card" class="w-5 h-5 mr-2"></i> Paiements
+        </a>
+        <a href="{% url 'backend:admin_loyalty_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_loyalty_list' %} active{% endif %}">
+            <i data-lucide="star" class="w-5 h-5 mr-2"></i> Fidélité
+        </a>
+        <a href="{% url 'backend:admin_promotion_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_promotion_list' %} active{% endif %}">
+            <i data-lucide="percent" class="w-5 h-5 mr-2"></i> Promotions
+        </a>
+        <a href="{% url 'backend:category_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'category_list' %} active{% endif %}">
+            <i data-lucide="layers" class="w-5 h-5 mr-2"></i> Catégories
+        </a>
+        <a href="{% url 'backend:admin_stock' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_stock' %} active{% endif %}">
+            <i data-lucide="warehouse" class="w-5 h-5 mr-2"></i> Stock
+        </a>
+        <a href="{% url 'backend:admin_stock_add' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_stock_add' %} active{% endif %}">
+            <i data-lucide="plus-square" class="w-5 h-5 mr-2"></i> Ajouter Stock
+        </a>
+        <a href="{% url 'backend:pickup_point_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'pickup_point_list' %} active{% endif %}">
+            <i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Points de Retrait
+        </a>
+        <a href="{% url 'backend:admin_analytics' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_analytics' %} active{% endif %}">
+            <i data-lucide="bar-chart-3" class="w-5 h-5 mr-2"></i> Analytics
+        </a>
+        <a href="{% url 'backend:review_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'review_list' %} active{% endif %}">
+            <i data-lucide="star-half" class="w-5 h-5 mr-2"></i> Avis & Évaluations
+        </a>
+        <a href="{% url 'backend:chat_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'chat_list' %} active{% endif %}">
+            <i data-lucide="message-circle" class="w-5 h-5 mr-2"></i> Chat Support
+        </a>
+        <a href="{% url 'backend:favorite_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'favorite_list' %} active{% endif %}">
+            <i data-lucide="heart" class="w-5 h-5 mr-2"></i> Favoris
+        </a>
+        <a href="{% url 'backend:wishlist' %}" class="sidebar-link{% if request.resolver_match.url_name == 'wishlist' %} active{% endif %}">
+            <i data-lucide="gift" class="w-5 h-5 mr-2"></i> Wishlist
+        </a>
+        <a href="{% url 'backend:admin_newsletter_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_newsletter_list' %} active{% endif %}">
+            <i data-lucide="mail" class="w-5 h-5 mr-2"></i> Newsletter
+        </a>
+        <a href="{% url 'backend:admin_notification_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_notification_list' %} active{% endif %}">
+            <i data-lucide="bell" class="w-5 h-5 mr-2"></i> Notifications
+        </a>
+        <a href="{% url 'backend:admin_panel' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_panel' %} active{% endif %}">
+            <i data-lucide="settings" class="w-5 h-5 mr-2"></i> Configuration
+        </a>
                 </div>
             </div>
 
@@ -99,13 +159,25 @@
                     <div class="py-6">
                         <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
                             <!-- Header -->
-                            <div class="mb-8">
-                                <h1 class="text-2xl font-bold text-gray-900">Dashboard Administrateur</h1>
-                                <p class="mt-1 text-sm text-gray-600">Vue d'ensemble de la plateforme Vidé-Grenier Kamer</p>
+                            <div class="mb-8 flex justify-between items-center">
+                                <div>
+                                    <h1 class="text-2xl font-bold text-gray-900">Dashboard Administrateur</h1>
+                                    <p class="mt-1 text-sm text-gray-600">Vue d'ensemble de la plateforme Vidé-Grenier Kamer - Marketplace Camerounaise</p>
+                                </div>
+                                <div class="flex space-x-3">
+                                    <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                                        <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+                                        Exporter Rapport
+                                    </button>
+                                    <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center">
+                                        <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
+                                        Actualiser
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- Métriques principales -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
                                 <div class="metric-card">
                                     <div class="flex items-center justify-between">
                                         <div>
@@ -142,11 +214,77 @@
                                 <div class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl p-6 relative overflow-hidden">
                                     <div class="flex items-center justify-between">
                                         <div>
-                                            <p class="text-orange-100 text-sm font-medium">Chiffre d'Affaires</p>
+                                            <p class="text-orange-100 text-sm font-medium">CA Mensuel</p>
                                             <p class="text-3xl font-bold">2.4M</p>
                                             <p class="text-orange-200 text-sm">FCFA ce mois</p>
                                         </div>
                                         <i data-lucide="trending-up" class="w-8 h-8 text-orange-200"></i>
+                                    </div>
+                                </div>
+
+                                <div class="bg-gradient-to-br from-pink-500 to-pink-600 text-white rounded-xl p-6 relative overflow-hidden">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-pink-100 text-sm font-medium">Commission 10%</p>
+                                            <p class="text-3xl font-bold">240K</p>
+                                            <p class="text-pink-200 text-sm">FCFA ce mois</p>
+                                        </div>
+                                        <i data-lucide="percent" class="w-8 h-8 text-pink-200"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- KPI Supplémentaires -->
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                                <div class="stats-card">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-gray-600 text-sm">Paiements Mobile</p>
+                                            <p class="text-2xl font-bold text-gray-900">2,156</p>
+                                            <p class="text-green-600 text-sm">MTN/Orange Money</p>
+                                        </div>
+                                        <div class="p-3 bg-green-100 rounded-full">
+                                            <i data-lucide="smartphone" class="w-6 h-6 text-green-600"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="stats-card">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-gray-600 text-sm">Stock Admin</p>
+                                            <p class="text-2xl font-bold text-gray-900">342</p>
+                                            <p class="text-red-600 text-sm">5 en rupture</p>
+                                        </div>
+                                        <div class="p-3 bg-red-100 rounded-full">
+                                            <i data-lucide="package-check" class="w-6 h-6 text-red-600"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="stats-card">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-gray-600 text-sm">Points Retrait</p>
+                                            <p class="text-2xl font-bold text-gray-900">8</p>
+                                            <p class="text-blue-600 text-sm">Douala/Yaoundé</p>
+                                        </div>
+                                        <div class="p-3 bg-blue-100 rounded-full">
+                                            <i data-lucide="map-pin" class="w-6 h-6 text-blue-600"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="stats-card">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-gray-600 text-sm">Taux Satisfaction</p>
+                                            <p class="text-2xl font-bold text-gray-900">4.7/5</p>
+                                            <p class="text-green-600 text-sm">3,456 avis</p>
+                                        </div>
+                                        <div class="p-3 bg-yellow-100 rounded-full">
+                                            <i data-lucide="star" class="w-6 h-6 text-yellow-600"></i>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -156,17 +294,30 @@
                                 <!-- Graphique des ventes -->
                                 <div class="stats-card">
                                     <div class="flex items-center justify-between mb-4">
-                                        <h3 class="text-lg font-semibold text-gray-900">Évolution des Ventes</h3>
+                                        <h3 class="text-lg font-semibold text-gray-900">Évolution des Ventes (FCFA)</h3>
                                         <select class="text-sm border-gray-300 rounded-md">
                                             <option>7 derniers jours</option>
                                             <option>30 derniers jours</option>
                                             <option>3 derniers mois</option>
                                         </select>
                                     </div>
-                                    <canvas id="salesChart" width="400" height="200"></canvas>
+                                    <div class="h-64">
+                                        <canvas id="salesChart"></canvas>
+                                    </div>
                                 </div>
 
-                                <!-- Répartition par catégories -->
+                                <!-- Types de paiement -->
+                                <div class="stats-card">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Répartition Paiements</h3>
+                                    <div class="h-64">
+                                        <canvas id="paymentChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Analyse détaillée -->
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                                <!-- Top catégories -->
                                 <div class="stats-card">
                                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Catégories</h3>
                                     <div class="space-y-4">
@@ -197,6 +348,86 @@
                                                 <span class="text-sm font-medium">Accessoires</span>
                                             </div>
                                             <span class="text-sm text-gray-600">1,234 produits</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center">
+                                                <div class="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
+                                                <span class="text-sm font-medium">Mobilier</span>
+                                            </div>
+                                            <span class="text-sm text-gray-600">987 produits</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Système de fidélité -->
+                                <div class="stats-card">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Fidélité Clients</h3>
+                                    <div class="space-y-4">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center">
+                                                <div class="w-4 h-4 bg-gray-400 rounded mr-3"></div>
+                                                <span class="text-sm font-medium">Bronze</span>
+                                            </div>
+                                            <span class="text-sm text-gray-600">7,234 clients</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center">
+                                                <div class="w-4 h-4 bg-gray-300 rounded mr-3"></div>
+                                                <span class="text-sm font-medium">Argent</span>
+                                            </div>
+                                            <span class="text-sm text-gray-600">3,567 clients</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center">
+                                                <div class="w-4 h-4 bg-yellow-400 rounded mr-3"></div>
+                                                <span class="text-sm font-medium">Or</span>
+                                            </div>
+                                            <span class="text-sm text-gray-600">1,456 clients</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center">
+                                                <div class="w-4 h-4 bg-purple-500 rounded mr-3"></div>
+                                                <span class="text-sm font-medium">Platine</span>
+                                            </div>
+                                            <span class="text-sm text-gray-600">290 clients</span>
+                                        </div>
+                                        <div class="mt-4 p-3 bg-green-50 rounded-lg">
+                                            <p class="text-sm text-green-800">Rétention: <strong>87%</strong></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Performance par ville -->
+                                <div class="stats-card">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance par Ville</h3>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <div class="flex justify-between items-center mb-1">
+                                                <span class="text-sm font-medium text-gray-700">Douala</span>
+                                                <span class="text-sm text-gray-600">67% (8,247 users)</span>
+                                            </div>
+                                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                                <div class="bg-green-500 h-2 rounded-full" style="width: 67%"></div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between items-center mb-1">
+                                                <span class="text-sm font-medium text-gray-700">Yaoundé</span>
+                                                <span class="text-sm text-gray-600">33% (4,300 users)</span>
+                                            </div>
+                                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                                <div class="bg-blue-500 h-2 rounded-full" style="width: 33%"></div>
+                                            </div>
+                                        </div>
+                                        <div class="mt-4 grid grid-cols-2 gap-4">
+                                            <div class="text-center p-2 bg-green-50 rounded">
+                                                <p class="text-xs text-green-600">CA Douala</p>
+                                                <p class="font-bold text-green-800">1.6M FCFA</p>
+                                            </div>
+                                            <div class="text-center p-2 bg-blue-50 rounded">
+                                                <p class="text-xs text-blue-600">CA Yaoundé</p>
+                                                <p class="font-bold text-blue-800">800K FCFA</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -229,6 +460,13 @@
                                             </div>
                                             <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
                                         </button>
+                                        <button class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-orange-300 transition-colors">
+                                            <div class="flex items-center">
+                                                <i data-lucide="megaphone" class="w-5 h-5 text-orange-600 mr-3"></i>
+                                                <span class="text-sm font-medium">Campagne Promo</span>
+                                            </div>
+                                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                                        </button>
                                     </div>
                                 </div>
 
@@ -246,40 +484,200 @@
                                         <div class="flex items-start p-3 bg-yellow-50 rounded-lg">
                                             <i data-lucide="clock" class="w-5 h-5 text-yellow-500 mr-3 mt-0.5"></i>
                                             <div>
-                                                <p class="text-sm font-medium text-yellow-800">Commandes en attente</p>
-                                                <p class="text-xs text-yellow-600">12 paiements à valider</p>
+                                                <p class="text-sm font-medium text-yellow-800">Paiements en attente</p>
+                                                <p class="text-xs text-yellow-600">12 paiements MTN à valider</p>
                                             </div>
                                         </div>
                                         <div class="flex items-start p-3 bg-blue-50 rounded-lg">
-                                            <i data-lucide="info" class="w-5 h-5 text-blue-500 mr-3 mt-0.5"></i>
+                                            <i data-lucide="message-circle" class="w-5 h-5 text-blue-500 mr-3 mt-0.5"></i>
                                             <div>
-                                                <p class="text-sm font-medium text-blue-800">Maintenance</p>
-                                                <p class="text-xs text-blue-600">Mise à jour prévue ce soir</p>
+                                                <p class="text-sm font-medium text-blue-800">Support Chat</p>
+                                                <p class="text-xs text-blue-600">8 conversations en attente</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start p-3 bg-purple-50 rounded-lg">
+                                            <i data-lucide="truck" class="w-5 h-5 text-purple-500 mr-3 mt-0.5"></i>
+                                            <div>
+                                                <p class="text-sm font-medium text-purple-800">Livraisons</p>
+                                                <p class="text-xs text-purple-600">23 commandes à traiter</p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Performance par ville -->
+                                <!-- Commandes récentes à traiter -->
                                 <div class="stats-card">
-                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance par Ville</h3>
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Commandes Urgentes</h3>
+                                    <div class="space-y-3">
+                                        <div class="border-l-4 border-red-500 pl-3">
+                                            <p class="text-sm font-medium text-gray-900">CMD-2025-0156</p>
+                                            <p class="text-xs text-gray-600">iPhone 12 - 450,000 FCFA</p>
+                                            <p class="text-xs text-red-600">Paiement expirant dans 2h</p>
+                                        </div>
+                                        <div class="border-l-4 border-yellow-500 pl-3">
+                                            <p class="text-sm font-medium text-gray-900">CMD-2025-0155</p>
+                                            <p class="text-xs text-gray-600">Robe d'été - 15,000 FCFA</p>
+                                            <p class="text-xs text-yellow-600">En attente de retrait</p>
+                                        </div>
+                                        <div class="border-l-4 border-blue-500 pl-3">
+                                            <p class="text-sm font-medium text-gray-900">CMD-2025-0154</p>
+                                            <p class="text-xs text-gray-600">Chaussures Nike - 25,000 FCFA</p>
+                                            <p class="text-xs text-blue-600">Retrait point Douala</p>
+                                        </div>
+                                        <button class="w-full mt-3 text-center py-2 text-sm text-green-600 hover:bg-green-50 rounded">
+                                            Voir toutes les commandes
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Statistiques avancées -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                                <!-- Performance mensuelle -->
+                                <div class="stats-card">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance Mensuelle</h3>
                                     <div class="space-y-4">
-                                        <div>
-                                            <div class="flex justify-between items-center mb-1">
-                                                <span class="text-sm font-medium text-gray-700">Douala</span>
-                                                <span class="text-sm text-gray-600">67%</span>
+                                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                            <span class="text-sm font-medium">Nouveaux utilisateurs</span>
+                                            <span class="text-sm font-bold text-green-600">+1,234 (12%)</span>
+                                        </div>
+                                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                            <span class="text-sm font-medium">Taux de conversion</span>
+                                            <span class="text-sm font-bold text-blue-600">23.5% (+2.1%)</span>
+                                        </div>
+                                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                            <span class="text-sm font-medium">Panier moyen</span>
+                                            <span class="text-sm font-bold text-purple-600">35,000 FCFA (+5%)</span>
+                                        </div>
+                                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                            <span class="text-sm font-medium">Retours clients</span>
+                                            <span class="text-sm font-bold text-red-600">2.1% (-0.3%)</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Top vendeurs -->
+                                <div class="stats-card">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Vendeurs du Mois</h3>
+                                    <div class="space-y-4">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white text-sm font-bold">1</div>
+                                                <div class="ml-3">
+                                                    <p class="text-sm font-medium">Marie Boutique</p>
+                                                    <p class="text-xs text-gray-600">Douala - Vêtements</p>
+                                                </div>
                                             </div>
-                                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                                <div class="bg-green-500 h-2 rounded-full" style="width: 67%"></div>
+                                            <span class="text-sm font-bold">340,000 FCFA</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-sm font-bold">2</div>
+                                                <div class="ml-3">
+                                                    <p class="text-sm font-medium">Tech Occasion</p>
+                                                    <p class="text-xs text-gray-600">Yaoundé - Électronique</p>
+                                                </div>
+                                            </div>
+                                            <span class="text-sm font-bold">280,000 FCFA</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">3</div>
+                                                <div class="ml-3">
+                                                    <p class="text-sm font-medium">Style Homme</p>
+                                                    <p class="text-xs text-gray-600">Douala - Mode</p>
+                                                </div>
+                                            </div>
+                                            <span class="text-sm font-bold">195,000 FCFA</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Analyse des points de retrait -->
+                            <div class="stats-card mb-8">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-6">État des Points de Retrait</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <div class="border rounded-lg p-4">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <h4 class="font-medium text-gray-900">Douala - Akwa</h4>
+                                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Actif</span>
+                                        </div>
+                                        <div class="space-y-2 text-sm">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Commandes en attente:</span>
+                                                <span class="font-medium">12</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Staff:</span>
+                                                <span class="font-medium">3 actifs</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Capacité:</span>
+                                                <span class="font-medium">85%</span>
                                             </div>
                                         </div>
-                                        <div>
-                                            <div class="flex justify-between items-center mb-1">
-                                                <span class="text-sm font-medium text-gray-700">Yaoundé</span>
-                                                <span class="text-sm text-gray-600">33%</span>
+                                    </div>
+
+                                    <div class="border rounded-lg p-4">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <h4 class="font-medium text-gray-900">Yaoundé - Centre</h4>
+                                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Actif</span>
+                                        </div>
+                                        <div class="space-y-2 text-sm">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Commandes en attente:</span>
+                                                <span class="font-medium">8</span>
                                             </div>
-                                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                                <div class="bg-blue-500 h-2 rounded-full" style="width: 33%"></div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Staff:</span>
+                                                <span class="font-medium">2 actifs</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Capacité:</span>
+                                                <span class="font-medium">67%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="border rounded-lg p-4">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <h4 class="font-medium text-gray-900">Douala - Bonabéri</h4>
+                                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">Limité</span>
+                                        </div>
+                                        <div class="space-y-2 text-sm">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Commandes en attente:</span>
+                                                <span class="font-medium">3</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Staff:</span>
+                                                <span class="font-medium">1 actif</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Capacité:</span>
+                                                <span class="font-medium">90%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="border rounded-lg p-4">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <h4 class="font-medium text-gray-900">Yaoundé - Mfoundi</h4>
+                                            <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">Surchargé</span>
+                                        </div>
+                                        <div class="space-y-2 text-sm">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Commandes en attente:</span>
+                                                <span class="font-medium text-red-600">28</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Staff:</span>
+                                                <span class="font-medium">2 actifs</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Capacité:</span>
+                                                <span class="font-medium text-red-600">120%</span>
                                             </div>
                                         </div>
                                     </div>
@@ -305,7 +703,7 @@
                                                     </div>
                                                     <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
                                                         <div>
-                                                            <p class="text-sm text-gray-500">Nouvel utilisateur inscrit: <strong>Marie Nkomo</strong></p>
+                                                            <p class="text-sm text-gray-500">Nouvel utilisateur inscrit: <strong>Marie Nkomo</strong> - Douala</p>
                                                         </div>
                                                         <div class="text-right text-sm whitespace-nowrap text-gray-500">
                                                             <time>Il y a 2m</time>
@@ -325,7 +723,7 @@
                                                     </div>
                                                     <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
                                                         <div>
-                                                            <p class="text-sm text-gray-500">Nouvelle commande: <strong>Robe d'été</strong> - 15,000 FCFA</p>
+                                                            <p class="text-sm text-gray-500">Commande paiement MTN: <strong>Robe d'été</strong> - 15,000 FCFA</p>
                                                         </div>
                                                         <div class="text-right text-sm whitespace-nowrap text-gray-500">
                                                             <time>Il y a 5m</time>
@@ -335,7 +733,8 @@
                                             </div>
                                         </li>
                                         <li>
-                                            <div class="relative">
+                                            <div class="relative pb-8">
+                                                <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"></span>
                                                 <div class="relative flex space-x-3">
                                                     <div>
                                                         <span class="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center">
@@ -344,10 +743,49 @@
                                                     </div>
                                                     <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
                                                         <div>
-                                                            <p class="text-sm text-gray-500">Produit ajouté au stock admin: <strong>iPhone 12 Reconditionné</strong></p>
+                                                            <p class="text-sm text-gray-500">Stock admin ajouté: <strong>iPhone 12 Reconditionné</strong> - 5 unités</p>
                                                         </div>
                                                         <div class="text-right text-sm whitespace-nowrap text-gray-500">
                                                             <time>Il y a 12m</time>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="relative pb-8">
+                                                <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"></span>
+                                                <div class="relative flex space-x-3">
+                                                    <div>
+                                                        <span class="h-8 w-8 rounded-full bg-orange-500 flex items-center justify-center">
+                                                            <i data-lucide="star" class="w-4 h-4 text-white"></i>
+                                                        </span>
+                                                    </div>
+                                                    <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                                        <div>
+                                                            <p class="text-sm text-gray-500">Nouvel avis 5 étoiles de <strong>Paul Kwedi</strong> sur iPhone 11</p>
+                                                        </div>
+                                                        <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                                            <time>Il y a 18m</time>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="relative">
+                                                <div class="relative flex space-x-3">
+                                                    <div>
+                                                        <span class="h-8 w-8 rounded-full bg-yellow-500 flex items-center justify-center">
+                                                            <i data-lucide="gift" class="w-4 h-4 text-white"></i>
+                                                        </span>
+                                                    </div>
+                                                    <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                                        <div>
+                                                            <p class="text-sm text-gray-500">Client <strong>Emma Talla</strong> a atteint le niveau <strong>Or</strong></p>
+                                                        </div>
+                                                        <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                                            <time>Il y a 25m</time>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -367,29 +805,113 @@
         // Initialize Lucide icons
         lucide.createIcons();
 
-        // Initialize Charts
-        const ctx = document.getElementById('salesChart').getContext('2d');
-        new Chart(ctx, {
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('fr-FR', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            document.getElementById('current-time').textContent = timeString;
+        }
+        
+        updateTime();
+        setInterval(updateTime, 60000); // Update every minute
+
+        // Initialize Sales Chart
+        const salesCtx = document.getElementById('salesChart').getContext('2d');
+        new Chart(salesCtx, {
             type: 'line',
             data: {
                 labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
-                datasets: [{
-                    label: 'Ventes (FCFA)',
-                    data: [120000, 190000, 300000, 500000, 200000, 300000, 450000],
-                    borderColor: 'rgb(34, 197, 94)',
-                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                    tension: 0.4
-                }]
+                datasets: [
+                    {
+                        label: 'Ventes Clients (FCFA)',
+                        data: [120000, 190000, 300000, 500000, 200000, 300000, 450000],
+                        borderColor: 'rgb(34, 197, 94)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Ventes Admin (FCFA)',
+                        data: [80000, 120000, 150000, 200000, 180000, 220000, 280000],
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' FCFA';
+                            }
+                        }
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
-                                return value.toLocaleString() + ' FCFA';
+                                return (value / 1000) + 'K FCFA';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Initialize Payment Chart
+        const paymentCtx = document.getElementById('paymentChart').getContext('2d');
+        new Chart(paymentCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['MTN Money', 'Orange Money', 'Campay', 'Espèces'],
+                datasets: [{
+                    data: [45, 30, 20, 5],
+                    backgroundColor: [
+                        '#FBBF24',
+                        '#FB923C',
+                        '#8B5CF6',
+                        '#10B981'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.parsed + '%';
                             }
                         }
                     }
@@ -399,9 +921,27 @@
 
         // Auto-refresh data every 30 seconds
         setInterval(() => {
-            // Update metrics here
-            console.log('Refreshing dashboard data...');
+            console.log('Actualisation des données du dashboard...');
+            // Here you would normally fetch fresh data from your API
+            // and update the charts and metrics
         }, 30000);
+
+        // Simulate real-time updates
+        function simulateRealTimeUpdate() {
+            // Add some random variation to demonstrate live updates
+            const elements = document.querySelectorAll('.text-3xl.font-bold');
+            elements.forEach(el => {
+                if (el.textContent.includes(',')) {
+                    const currentValue = parseInt(el.textContent.replace(/,/g, ''));
+                    const variation = Math.floor(Math.random() * 10) - 5;
+                    const newValue = Math.max(0, currentValue + variation);
+                    el.textContent = newValue.toLocaleString();
+                }
+            });
+        }
+
+        // Update every 5 minutes for demo
+        setInterval(simulateRealTimeUpdate, 300000);
     </script>
 </body>
 </html>
