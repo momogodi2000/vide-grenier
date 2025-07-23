@@ -168,7 +168,59 @@ urlpatterns += [
     path('search/saved/', additional_views.SavedSearchesView.as_view(), name='saved_searches'),
 ]
 
-# ============= ABONNEMENT À LA NEWSLETTER =============
+# ============= ADMINISTRATION AVANCÉE =============
+from .admin import (
+    AdminPaymentListView,
+    AdminLoyaltyListView,
+    AdminPromotionListView,
+    AdminNotificationListView,
+)
+from .views_newsletter import (
+    AdminNewsletterListView,
+    AdminNewsletterDeleteView,
+    AdminNewsletterSendView,
+    AdminNewsletterScheduleView,  # New view for scheduling
+    newsletter_subscribe
+)
+
+# Admin Panel Routes
 urlpatterns += [
-    path('api/newsletter/subscribe/', newsletter_subscribe, name='newsletter_subscribe'),
+    # Payment Management
+    path('admin-panel/payments/', 
+         AdminPaymentListView.as_view(), 
+         name='admin_payment_list'),
+    
+    # Loyalty Program Management
+    path('admin-panel/loyalty/', 
+         AdminLoyaltyListView.as_view(), 
+         name='admin_loyalty_list'),
+    
+    # Promotions Management
+    path('admin-panel/promotions/', 
+         AdminPromotionListView.as_view(), 
+         name='admin_promotion_list'),
+    
+    # Newsletter Management
+    path('admin-panel/newsletter/', 
+         AdminNewsletterListView.as_view(), 
+         name='admin_newsletter_list'),
+    path('admin-panel/newsletter/delete/<uuid:pk>/', 
+         AdminNewsletterDeleteView.as_view(), 
+         name='admin_newsletter_delete'),
+    path('admin-panel/newsletter/send/', 
+         AdminNewsletterSendView.as_view(), 
+         name='admin_newsletter_send'),
+    path('admin-panel/newsletter/schedule/', 
+         AdminNewsletterScheduleView.as_view(), 
+         name='admin_newsletter_schedule'),
+    
+    # Notifications Management
+    path('admin-panel/notifications/', 
+         AdminNotificationListView.as_view(), 
+         name='admin_notification_list'),
+    
+    # Newsletter Subscription (Public)
+    path('api/newsletter/subscribe/', 
+         newsletter_subscribe, 
+         name='newsletter_subscribe'),
 ]
