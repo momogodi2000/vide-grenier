@@ -1,1207 +1,594 @@
-<!DOCTYPE html>
-<html lang="fr" class="h-full bg-gray-50">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Administrateur - Vidé-Grenier Kamer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .stats-card { 
-            @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-300; 
-        }
-        
-        .metric-card { 
-            @apply bg-gradient-to-br text-white rounded-xl p-6 relative overflow-hidden transform hover:scale-105 transition-transform duration-300; 
-        }
-        
-        .metric-card::before { 
-            content: ''; 
-            @apply absolute top-0 right-0 w-20 h-20 bg-white bg-opacity-10 rounded-full transform translate-x-6 -translate-y-6; 
-        }
-        
-        .sidebar-link { 
-            @apply flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-green-50 hover:text-green-700 transition-colors duration-200; 
-        }
-        
-        .sidebar-link.active { 
-            @apply bg-green-100 text-green-700 font-medium; 
-        }
-        
-        .notification-badge { 
-            @apply absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center; 
-        }
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+{% load humanize %}
 
-        .mobile-sidebar {
-            transform: translateX(-100%);
-            transition: transform 0.3s ease-in-out;
-        }
-        
-        .mobile-sidebar.open {
-            transform: translateX(0);
-        }
+{% block title %}Dashboard Administrateur - Vidé-Grenier Kamer{% endblock %}
 
-        @media (max-width: 768px) {
-            .metric-card {
-                @apply p-4;
-            }
-            .stats-card {
-                @apply p-4;
-            }
-        }
+{% block content %}
+<!-- Header -->
+<div class="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center">
+    <div class="mb-4 sm:mb-0">
+        <h1 class="text-2xl font-bold text-gray-900">Dashboard Administrateur</h1>
+        <p class="mt-1 text-sm text-gray-600">Vue d'ensemble de la plateforme Vidé-Grenier Kamer - Marketplace Camerounaise</p>
+    </div>
+    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+        <button onclick="exportReport()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center">
+            <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+            Exporter Rapport
+        </button>
+        <button onclick="refreshDashboard()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center">
+            <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
+            Actualiser
+        </button>
+    </div>
+</div>
 
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        
-        .spin {
-            animation: spin 1s linear infinite;
-        }
-    </style>
-</head>
-<body class="h-full">
-    <div class="min-h-full">
-        <!-- Mobile menu overlay -->
-        <div id="mobile-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden"></div>
-
-        <!-- Navigation Header -->
-        <nav class="bg-white shadow-sm border-b border-gray-200">
-            <div class="mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
-                    <div class="flex items-center">
-                        <!-- Mobile menu button -->
-                        <button id="mobile-menu-btn" class="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 lg:hidden">
-                            <i data-lucide="menu" class="w-6 h-6"></i>
-                        </button>
-                        
-                        <div class="flex-shrink-0 flex items-center ml-2 lg:ml-0">
-                            <div class="h-8 w-auto bg-green-600 text-white px-3 py-1 rounded-md font-bold">VGK</div>
-                            <span class="ml-3 text-xl font-bold text-gray-900 hidden sm:block">Admin Panel</span>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center space-x-4">
-                        <!-- Time & Date -->
-                        <div class="text-sm text-gray-600 hidden sm:block">
-                            <div id="current-time"></div>
-                        </div>
-                        
-                        <!-- Notifications -->
-                        <button class="p-2 text-gray-400 hover:text-gray-500 relative">
-                            <i data-lucide="bell" class="w-6 h-6"></i>
-                            <span class="notification-badge">3</span>
-                        </button>
-                        
-                        <!-- Messages -->
-                        <button class="p-2 text-gray-400 hover:text-gray-500 relative">
-                            <i data-lucide="message-circle" class="w-6 h-6"></i>
-                            <span class="notification-badge">12</span>
-                        </button>
-                        
-                        <!-- Profile Dropdown -->
-                        <div class="relative">
-                            <button class="flex items-center space-x-3 p-2">
-                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                    A
-                                </div>
-                                <span class="text-sm font-medium text-gray-700 hidden sm:block">Admin VGK</span>
-                                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 hidden sm:block"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+<!-- Métriques principales -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+    <div class="metric-card from-green-500 to-emerald-600">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-green-100 text-sm font-medium">Utilisateurs Totaux</p>
+                <p class="text-3xl font-bold">{{ stats.total_users|intcomma }}</p>
+                <p class="text-green-200 text-sm">{{ stats.new_users_this_month }}% ce mois</p>
             </div>
-        </nav>
+            <i data-lucide="users" class="w-8 h-8 text-green-200"></i>
+        </div>
+    </div>
 
-        <div class="flex">
-            <!-- Mobile Sidebar -->
-            <div id="mobile-sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg mobile-sidebar lg:hidden">
-                <div class="flex flex-col h-full pt-5 pb-4 overflow-y-auto">
-                    <div class="flex items-center justify-between px-4 mb-6">
-                        <div class="flex items-center">
-                            <div class="h-8 w-auto bg-green-600 text-white px-3 py-1 rounded-md font-bold">VGK</div>
-                            <span class="ml-3 text-lg font-bold text-gray-900">Admin</span>
-                        </div>
-                        <button id="mobile-close-btn" class="p-2 rounded-md text-gray-400 hover:text-gray-500">
-                            <i data-lucide="x" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                    <nav class="flex-1 px-2 space-y-1" id="mobile-nav-links">
-                        <!-- Links will be populated by JavaScript -->
-                    </nav>
-                </div>
+    <div class="metric-card from-blue-500 to-blue-600">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-blue-100 text-sm font-medium">Produits Actifs</p>
+                <p class="text-3xl font-bold">{{ stats.active_products|intcomma }}</p>
+                <p class="text-blue-200 text-sm">{{ stats.admin_stock_products }} admin stock</p>
             </div>
+            <i data-lucide="package" class="w-8 h-8 text-blue-200"></i>
+        </div>
+    </div>
 
-            <!-- Desktop Sidebar -->
-            <div class="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:top-16">
-                <div class="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto bg-white border-r border-gray-200">
-                    <nav class="flex-1 px-2 space-y-1" id="desktop-nav-links">
-                        <!-- Links will be populated by JavaScript -->
-                    </nav>
-                </div>
+    <div class="metric-card from-purple-500 to-purple-600">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-purple-100 text-sm font-medium">Commandes Aujourd'hui</p>
+                <p class="text-3xl font-bold">{{ stats.today_orders }}</p>
+                <p class="text-purple-200 text-sm">{{ stats.pending_orders }} en attente</p>
             </div>
+            <i data-lucide="shopping-cart" class="w-8 h-8 text-purple-200"></i>
+        </div>
+    </div>
 
-            <!-- Main Content -->
-            <div class="flex-1 lg:ml-64">
-                <main class="flex-1 relative overflow-y-auto focus:outline-none">
-                    <div class="py-6">
-                        <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-                            <!-- Header -->
-                            <div class="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center">
-                                <div class="mb-4 sm:mb-0">
-                                    <h1 class="text-2xl font-bold text-gray-900">Dashboard Administrateur</h1>
-                                    <p class="mt-1 text-sm text-gray-600">Vue d'ensemble de la plateforme Vidé-Grenier Kamer - Marketplace Camerounaise</p>
-                                </div>
-                                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                                    <button onclick="exportReport()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center">
-                                        <i data-lucide="download" class="w-4 h-4 mr-2"></i>
-                                        Exporter Rapport
-                                    </button>
-                                    <button onclick="refreshDashboard()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center">
-                                        <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
-                                        Actualiser
-                                    </button>
-                                </div>
-                            </div>
+    <div class="metric-card from-orange-500 to-orange-600">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-orange-100 text-sm font-medium">CA Mensuel</p>
+                <p class="text-3xl font-bold">{{ stats.monthly_revenue|floatformat:0|intcomma }}</p>
+                <p class="text-orange-200 text-sm">FCFA ce mois</p>
+            </div>
+            <i data-lucide="trending-up" class="w-8 h-8 text-orange-200"></i>
+        </div>
+    </div>
 
-                            <!-- Métriques principales -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-                                <div class="metric-card from-green-500 to-emerald-600">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="text-green-100 text-sm font-medium">Utilisateurs Totaux</p>
-                                            <p class="text-3xl font-bold">12,547</p>
-                                            <p class="text-green-200 text-sm">+12% ce mois</p>
-                                        </div>
-                                        <i data-lucide="users" class="w-8 h-8 text-green-200"></i>
-                                    </div>
-                                </div>
+    <div class="metric-card from-pink-500 to-pink-600">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-pink-100 text-sm font-medium">Commission 10%</p>
+                <p class="text-3xl font-bold">{{ stats.monthly_commission|floatformat:0|intcomma }}</p>
+                <p class="text-pink-200 text-sm">FCFA ce mois</p>
+            </div>
+            <i data-lucide="percent" class="w-8 h-8 text-pink-200"></i>
+        </div>
+    </div>
+</div>
 
-                                <div class="metric-card from-blue-500 to-blue-600">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="text-blue-100 text-sm font-medium">Produits Actifs</p>
-                                            <p class="text-3xl font-bold">8,923</p>
-                                            <p class="text-blue-200 text-sm">+7% ce mois</p>
-                                        </div>
-                                        <i data-lucide="package" class="w-8 h-8 text-blue-200"></i>
-                                    </div>
-                                </div>
-
-                                <div class="metric-card from-purple-500 to-purple-600">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="text-purple-100 text-sm font-medium">Commandes Aujourd'hui</p>
-                                            <p class="text-3xl font-bold">156</p>
-                                            <p class="text-purple-200 text-sm">+23% vs hier</p>
-                                        </div>
-                                        <i data-lucide="shopping-cart" class="w-8 h-8 text-purple-200"></i>
-                                    </div>
-                                </div>
-
-                                <div class="metric-card from-orange-500 to-orange-600">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="text-orange-100 text-sm font-medium">CA Mensuel</p>
-                                            <p class="text-3xl font-bold">2.4M</p>
-                                            <p class="text-orange-200 text-sm">FCFA ce mois</p>
-                                        </div>
-                                        <i data-lucide="trending-up" class="w-8 h-8 text-orange-200"></i>
-                                    </div>
-                                </div>
-
-                                <div class="metric-card from-pink-500 to-pink-600">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="text-pink-100 text-sm font-medium">Commission 10%</p>
-                                            <p class="text-3xl font-bold">240K</p>
-                                            <p class="text-pink-200 text-sm">FCFA ce mois</p>
-                                        </div>
-                                        <i data-lucide="percent" class="w-8 h-8 text-pink-200"></i>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- KPI Supplémentaires -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                                <div class="stats-card">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="text-gray-600 text-sm">Paiements Mobile</p>
-                                            <p class="text-2xl font-bold text-gray-900">2,156</p>
-                                            <p class="text-green-600 text-sm">MTN/Orange Money</p>
-                                        </div>
-                                        <div class="p-3 bg-green-100 rounded-full">
-                                            <i data-lucide="smartphone" class="w-6 h-6 text-green-600"></i>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="stats-card">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="text-gray-600 text-sm">Stock Admin</p>
-                                            <p class="text-2xl font-bold text-gray-900">342</p>
-                                            <p class="text-red-600 text-sm">5 en rupture</p>
-                                        </div>
-                                        <div class="p-3 bg-red-100 rounded-full">
-                                            <i data-lucide="package-check" class="w-6 h-6 text-red-600"></i>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="stats-card">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="text-gray-600 text-sm">Points Retrait</p>
-                                            <p class="text-2xl font-bold text-gray-900">8</p>
-                                            <p class="text-blue-600 text-sm">Douala/Yaoundé</p>
-                                        </div>
-                                        <div class="p-3 bg-blue-100 rounded-full">
-                                            <i data-lucide="map-pin" class="w-6 h-6 text-blue-600"></i>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="stats-card">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="text-gray-600 text-sm">Taux Satisfaction</p>
-                                            <p class="text-2xl font-bold text-gray-900">4.7/5</p>
-                                            <p class="text-green-600 text-sm">3,456 avis</p>
-                                        </div>
-                                        <div class="p-3 bg-yellow-100 rounded-full">
-                                            <i data-lucide="star" class="w-6 h-6 text-yellow-600"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Graphiques et analyses -->
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                                <!-- Graphique des ventes -->
-                                <div class="stats-card">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <h3 class="text-lg font-semibold text-gray-900">Évolution des Ventes (FCFA)</h3>
-                                        <select class="text-sm border-gray-300 rounded-md">
-                                            <option>7 derniers jours</option>
-                                            <option>30 derniers jours</option>
-                                            <option>3 derniers mois</option>
-                                        </select>
-                                    </div>
-                                    <div class="h-64">
-                                        <canvas id="salesChart"></canvas>
-                                    </div>
-                                </div>
-
-                                <!-- Types de paiement -->
-                                <div class="stats-card">
-                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Répartition Paiements</h3>
-                                    <div class="h-64">
-                                        <canvas id="paymentChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Analyses détaillées -->
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                                <!-- Top catégories -->
-                                <div class="stats-card">
-                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Catégories</h3>
-                                    <div class="space-y-4">
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center">
-                                                <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                                                <span class="text-sm font-medium">Vêtements Femme</span>
-                                            </div>
-                                            <span class="text-sm text-gray-600">2,847 produits</span>
-                                        </div>
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center">
-                                                <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                                                <span class="text-sm font-medium">Électronique</span>
-                                            </div>
-                                            <span class="text-sm text-gray-600">1,923 produits</span>
-                                        </div>
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center">
-                                                <div class="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
-                                                <span class="text-sm font-medium">Vêtements Homme</span>
-                                            </div>
-                                            <span class="text-sm text-gray-600">1,654 produits</span>
-                                        </div>
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center">
-                                                <div class="w-3 h-3 bg-orange-500 rounded-full mr-3"></div>
-                                                <span class="text-sm font-medium">Accessoires</span>
-                                            </div>
-                                            <span class="text-sm text-gray-600">1,234 produits</span>
-                                        </div>
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center">
-                                                <div class="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
-                                                <span class="text-sm font-medium">Mobilier</span>
-                                            </div>
-                                            <span class="text-sm text-gray-600">987 produits</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Système de fidélité -->
-                                <div class="stats-card">
-                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Fidélité Clients</h3>
-                                    <div class="space-y-4">
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center">
-                                                <div class="w-4 h-4 bg-gray-400 rounded mr-3"></div>
-                                                <span class="text-sm font-medium">Bronze</span>
-                                            </div>
-                                            <span class="text-sm text-gray-600">7,234 clients</span>
-                                        </div>
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center">
-                                                <div class="w-4 h-4 bg-gray-300 rounded mr-3"></div>
-                                                <span class="text-sm font-medium">Argent</span>
-                                            </div>
-                                            <span class="text-sm text-gray-600">3,567 clients</span>
-                                        </div>
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center">
-                                                <div class="w-4 h-4 bg-yellow-400 rounded mr-3"></div>
-                                                <span class="text-sm font-medium">Or</span>
-                                            </div>
-                                            <span class="text-sm text-gray-600">1,456 clients</span>
-                                        </div>
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center">
-                                                <div class="w-4 h-4 bg-purple-500 rounded mr-3"></div>
-                                                <span class="text-sm font-medium">Platine</span>
-                                            </div>
-                                            <span class="text-sm text-gray-600">290 clients</span>
-                                        </div>
-                                        <div class="mt-4 p-3 bg-green-50 rounded-lg">
-                                            <p class="text-sm text-green-800">Rétention: <strong>87%</strong></p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Performance par ville -->
-                                <div class="stats-card">
-                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance par Ville</h3>
-                                    <div class="space-y-4">
-                                        <div>
-                                            <div class="flex justify-between items-center mb-1">
-                                                <span class="text-sm font-medium text-gray-700">Douala</span>
-                                                <span class="text-sm text-gray-600">67% (8,247 users)</span>
-                                            </div>
-                                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                                <div class="bg-green-500 h-2 rounded-full" style="width: 67%"></div>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div class="flex justify-between items-center mb-1">
-                                                <span class="text-sm font-medium text-gray-700">Yaoundé</span>
-                                                <span class="text-sm text-gray-600">33% (4,300 users)</span>
-                                            </div>
-                                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                                <div class="bg-blue-500 h-2 rounded-full" style="width: 33%"></div>
-                                            </div>
-                                        </div>
-                                        <div class="mt-4 grid grid-cols-2 gap-4">
-                                            <div class="text-center p-2 bg-green-50 rounded">
-                                                <p class="text-xs text-green-600">CA Douala</p>
-                                                <p class="font-bold text-green-800">1.6M FCFA</p>
-                                            </div>
-                                            <div class="text-center p-2 bg-blue-50 rounded">
-                                                <p class="text-xs text-blue-600">CA Yaoundé</p>
-                                                <p class="font-bold text-blue-800">800K FCFA</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Actions rapides et alertes -->
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                                <!-- Actions rapides -->
-                                <div class="stats-card">
-                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions Rapides</h3>
-                                    <div class="space-y-3">
-                                        <button onclick="navigateTo('/backend/admin_stock_add/')" class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-green-300 transition-colors">
-                                            <div class="flex items-center">
-                                                <i data-lucide="plus-circle" class="w-5 h-5 text-green-600 mr-3"></i>
-                                                <span class="text-sm font-medium">Ajouter Stock Admin</span>
-                                            </div>
-                                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
-                                        </button>
-                                        <button onclick="navigateTo('/backend/admin_user_list/')" class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
-                                            <div class="flex items-center">
-                                                <i data-lucide="user-plus" class="w-5 h-5 text-blue-600 mr-3"></i>
-                                                <span class="text-sm font-medium">Créer Utilisateur Staff</span>
-                                            </div>
-                                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
-                                        </button>
-                                        <button onclick="navigateTo('/backend/pickup_point_list/')" class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-purple-300 transition-colors">
-                                            <div class="flex items-center">
-                                                <i data-lucide="map-pin" class="w-5 h-5 text-purple-600 mr-3"></i>
-                                                <span class="text-sm font-medium">Nouveau Point Retrait</span>
-                                            </div>
-                                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
-                                        </button>
-                                        <button onclick="navigateTo('/backend/admin_promotion_list/')" class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-orange-300 transition-colors">
-                                            <div class="flex items-center">
-                                                <i data-lucide="megaphone" class="w-5 h-5 text-orange-600 mr-3"></i>
-                                                <span class="text-sm font-medium">Campagne Promo</span>
-                                            </div>
-                                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Alertes système -->
-                                <div class="stats-card">
-                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Alertes Système</h3>
-                                    <div class="space-y-3">
-                                        <div class="flex items-start p-3 bg-red-50 rounded-lg">
-                                            <i data-lucide="alert-triangle" class="w-5 h-5 text-red-500 mr-3 mt-0.5"></i>
-                                            <div>
-                                                <p class="text-sm font-medium text-red-800">Stock faible</p>
-                                                <p class="text-xs text-red-600">5 produits admin en rupture</p>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-start p-3 bg-yellow-50 rounded-lg">
-                                            <i data-lucide="clock" class="w-5 h-5 text-yellow-500 mr-3 mt-0.5"></i>
-                                            <div>
-                                                <p class="text-sm font-medium text-yellow-800">Paiements en attente</p>
-                                                <p class="text-xs text-yellow-600">12 paiements MTN à valider</p>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-start p-3 bg-blue-50 rounded-lg">
-                                            <i data-lucide="message-circle" class="w-5 h-5 text-blue-500 mr-3 mt-0.5"></i>
-                                            <div>
-                                                <p class="text-sm font-medium text-blue-800">Support Chat</p>
-                                                <p class="text-xs text-blue-600">8 conversations en attente</p>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-start p-3 bg-purple-50 rounded-lg">
-                                            <i data-lucide="truck" class="w-5 h-5 text-purple-500 mr-3 mt-0.5"></i>
-                                            <div>
-                                                <p class="text-sm font-medium text-purple-800">Livraisons</p>
-                                                <p class="text-xs text-purple-600">23 commandes à traiter</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Commandes récentes à traiter -->
-                                <div class="stats-card">
-                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Commandes Urgentes</h3>
-                                    <div class="space-y-3">
-                                        <div class="border-l-4 border-red-500 pl-3">
-                                            <p class="text-sm font-medium text-gray-900">CMD-2025-0156</p>
-                                            <p class="text-xs text-gray-600">iPhone 12 - 450,000 FCFA</p>
-                                            <p class="text-xs text-red-600">Paiement expirant dans 2h</p>
-                                        </div>
-                                        <div class="border-l-4 border-yellow-500 pl-3">
-                                            <p class="text-sm font-medium text-gray-900">CMD-2025-0155</p>
-                                            <p class="text-xs text-gray-600">Robe d'été - 15,000 FCFA</p>
-                                            <p class="text-xs text-yellow-600">En attente de retrait</p>
-                                        </div>
-                                        <div class="border-l-4 border-blue-500 pl-3">
-                                            <p class="text-sm font-medium text-gray-900">CMD-2025-0154</p>
-                                            <p class="text-xs text-gray-600">Chaussures Nike - 25,000 FCFA</p>
-                                            <p class="text-xs text-blue-600">Retrait point Douala</p>
-                                        </div>
-                                        <button onclick="navigateTo('/backend/admin_order_list/')" class="w-full mt-3 text-center py-2 text-sm text-green-600 hover:bg-green-50 rounded">
-                                            Voir toutes les commandes
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Statistiques avancées -->
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                                <!-- Performance mensuelle -->
-                                <div class="stats-card">
-                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance Mensuelle</h3>
-                                    <div class="space-y-4">
-                                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
-                                            <span class="text-sm font-medium">Nouveaux utilisateurs</span>
-                                            <span class="text-sm font-bold text-green-600">+1,234 (12%)</span>
-                                        </div>
-                                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
-                                            <span class="text-sm font-medium">Taux de conversion</span>
-                                            <span class="text-sm font-bold text-blue-600">23.5% (+2.1%)</span>
-                                        </div>
-                                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
-                                            <span class="text-sm font-medium">Panier moyen</span>
-                                            <span class="text-sm font-bold text-purple-600">35,000 FCFA (+5%)</span>
-                                        </div>
-                                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
-                                            <span class="text-sm font-medium">Retours clients</span>
-                                            <span class="text-sm font-bold text-red-600">2.1% (-0.3%)</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Top vendeurs -->
-                                <div class="stats-card">
-                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Vendeurs du Mois</h3>
-                                    <div class="space-y-4">
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center">
-                                                <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white text-sm font-bold">1</div>
-                                                <div class="ml-3">
-                                                    <p class="text-sm font-medium">Marie Boutique</p>
-                                                    <p class="text-xs text-gray-600">Douala - Vêtements</p>
-                                                </div>
-                                            </div>
-                                            <span class="text-sm font-bold">340,000 FCFA</span>
-                                        </div>
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center">
-                                                <div class="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-sm font-bold">2</div>
-                                                <div class="ml-3">
-                                                    <p class="text-sm font-medium">Tech Occasion</p>
-                                                    <p class="text-xs text-gray-600">Yaoundé - Électronique</p>
-                                                </div>
-                                            </div>
-                                            <span class="text-sm font-bold">280,000 FCFA</span>
-                                        </div>
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center">
-                                                <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">3</div>
-                                                <div class="ml-3">
-                                                    <p class="text-sm font-medium">Style Homme</p>
-                                                    <p class="text-xs text-gray-600">Douala - Mode</p>
-                                                </div>
-                                            </div>
-                                            <span class="text-sm font-bold">195,000 FCFA</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Analyse des points de retrait -->
-                            <div class="stats-card mb-8">
-                                <h3 class="text-lg font-semibold text-gray-900 mb-6">État des Points de Retrait</h3>
-                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    <div class="border rounded-lg p-4">
-                                        <div class="flex items-center justify-between mb-3">
-                                            <h4 class="font-medium text-gray-900">Douala - Akwa</h4>
-                                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Actif</span>
-                                        </div>
-                                        <div class="space-y-2 text-sm">
-                                            <div class="flex justify-between">
-                                                <span class="text-gray-600">Commandes en attente:</span>
-                                                <span class="font-medium">12</span>
-                                            </div>
-                                            <div class="flex justify-between">
-                                                <span class="text-gray-600">Staff:</span>
-                                                <span class="font-medium">3 actifs</span>
-                                            </div>
-                                            <div class="flex justify-between">
-                                                <span class="text-gray-600">Capacité:</span>
-                                                <span class="font-medium">85%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="border rounded-lg p-4">
-                                        <div class="flex items-center justify-between mb-3">
-                                            <h4 class="font-medium text-gray-900">Yaoundé - Centre</h4>
-                                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Actif</span>
-                                        </div>
-                                        <div class="space-y-2 text-sm">
-                                            <div class="flex justify-between">
-                                                <span class="text-gray-600">Commandes en attente:</span>
-                                                <span class="font-medium">8</span>
-                                            </div>
-                                            <div class="flex justify-between">
-                                                <span class="text-gray-600">Staff:</span>
-                                                <span class="font-medium">2 actifs</span>
-                                            </div>
-                                            <div class="flex justify-between">
-                                                <span class="text-gray-600">Capacité:</span>
-                                                <span class="font-medium">67%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="border rounded-lg p-4">
-                                        <div class="flex items-center justify-between mb-3">
-                                            <h4 class="font-medium text-gray-900">Douala - Bonabéri</h4>
-                                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">Limité</span>
-                                        </div>
-                                        <div class="space-y-2 text-sm">
-                                            <div class="flex justify-between">
-                                                <span class="text-gray-600">Commandes en attente:</span>
-                                                <span class="font-medium">3</span>
-                                            </div>
-                                            <div class="flex justify-between">
-                                                <span class="text-gray-600">Staff:</span>
-                                                <span class="font-medium">1 actif</span>
-                                            </div>
-                                            <div class="flex justify-between">
-                                                <span class="text-gray-600">Capacité:</span>
-                                                <span class="font-medium">90%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="border rounded-lg p-4">
-                                        <div class="flex items-center justify-between mb-3">
-                                            <h4 class="font-medium text-gray-900">Yaoundé - Mfoundi</h4>
-                                            <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">Surchargé</span>
-                                        </div>
-                                        <div class="space-y-2 text-sm">
-                                            <div class="flex justify-between">
-                                                <span class="text-gray-600">Commandes en attente:</span>
-                                                <span class="font-medium text-red-600">28</span>
-                                            </div>
-                                            <div class="flex justify-between">
-                                                <span class="text-gray-600">Staff:</span>
-                                                <span class="font-medium">2 actifs</span>
-                                            </div>
-                                            <div class="flex justify-between">
-                                                <span class="text-gray-600">Capacité:</span>
-                                                <span class="font-medium text-red-600">120%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Dernières activités -->
-                            <div class="stats-card">
-                                <div class="flex items-center justify-between mb-6">
-                                    <h3 class="text-lg font-semibold text-gray-900">Activités Récentes</h3>
-                                    <button onclick="navigateTo('/backend/admin_analytics/')" class="text-sm text-green-600 hover:text-green-800">Voir tout</button>
-                                </div>
-                                <div class="flow-root">
-                                    <ul class="-mb-8">
-                                        <li>
-                                            <div class="relative pb-8">
-                                                <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"></span>
-                                                <div class="relative flex space-x-3">
-                                                    <div>
-                                                        <span class="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center">
-                                                            <i data-lucide="user-plus" class="w-4 h-4 text-white"></i>
-                                                        </span>
-                                                    </div>
-                                                    <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                                                        <div>
-                                                            <p class="text-sm text-gray-500">Nouvel utilisateur inscrit: <strong>Marie Nkomo</strong> - Douala</p>
-                                                        </div>
-                                                        <div class="text-right text-sm whitespace-nowrap text-gray-500">
-                                                            <time>Il y a 2m</time>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <div class="relative pb-8">
-                                                <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"></span>
-                                                <div class="relative flex space-x-3">
-                                                    <div>
-                                                        <span class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
-                                                            <i data-lucide="shopping-cart" class="w-4 h-4 text-white"></i>
-                                                        </span>
-                                                    </div>
-                                                    <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                                                        <div>
-                                                            <p class="text-sm text-gray-500">Commande paiement MTN: <strong>Robe d'été</strong> - 15,000 FCFA</p>
-                                                        </div>
-                                                        <div class="text-right text-sm whitespace-nowrap text-gray-500">
-                                                            <time>Il y a 5m</time>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <div class="relative pb-8">
-                                                <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"></span>
-                                                <div class="relative flex space-x-3">
-                                                    <div>
-                                                        <span class="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center">
-                                                            <i data-lucide="package" class="w-4 h-4 text-white"></i>
-                                                        </span>
-                                                    </div>
-                                                    <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                                                        <div>
-                                                            <p class="text-sm text-gray-500">Stock admin ajouté: <strong>iPhone 12 Reconditionné</strong> - 5 unités</p>
-                                                        </div>
-                                                        <div class="text-right text-sm whitespace-nowrap text-gray-500">
-                                                            <time>Il y a 12m</time>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <div class="relative pb-8">
-                                                <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"></span>
-                                                <div class="relative flex space-x-3">
-                                                    <div>
-                                                        <span class="h-8 w-8 rounded-full bg-orange-500 flex items-center justify-center">
-                                                            <i data-lucide="star" class="w-4 h-4 text-white"></i>
-                                                        </span>
-                                                    </div>
-                                                    <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                                                        <div>
-                                                            <p class="text-sm text-gray-500">Nouvel avis 5 étoiles de <strong>Paul Kwedi</strong> sur iPhone 11</p>
-                                                        </div>
-                                                        <div class="text-right text-sm whitespace-nowrap text-gray-500">
-                                                            <time>Il y a 18m</time>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <div class="relative">
-                                                <div class="relative flex space-x-3">
-                                                    <div>
-                                                        <span class="h-8 w-8 rounded-full bg-yellow-500 flex items-center justify-center">
-                                                            <i data-lucide="gift" class="w-4 h-4 text-white"></i>
-                                                        </span>
-                                                    </div>
-                                                    <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                                                        <div>
-                                                            <p class="text-sm text-gray-500">Client <strong>Emma Talla</strong> a atteint le niveau <strong>Or</strong></p>
-                                                        </div>
-                                                        <div class="text-right text-sm whitespace-nowrap text-gray-500">
-                                                            <time>Il y a 25m</time>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </main>
+<!-- KPI Supplémentaires -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm">Paiements Mobile</p>
+                <p class="text-2xl font-bold text-gray-900">{{ stats.mobile_payments|intcomma }}</p>
+                <p class="text-green-600 text-sm">MTN/Orange Money</p>
+            </div>
+            <div class="p-3 bg-green-100 rounded-full">
+                <i data-lucide="smartphone" class="w-6 h-6 text-green-600"></i>
             </div>
         </div>
     </div>
 
-    <script>
-        // Configuration des liens de navigation
-        const navigationLinks = [
-            { url: '/backend/dashboard/', icon: 'layout-dashboard', label: 'Dashboard', id: 'dashboard' },
-            { url: '/backend/admin_user_list/', icon: 'users', label: 'Utilisateurs', id: 'admin_user_list' },
-            { url: '/backend/admin_product_list/', icon: 'package', label: 'Produits', id: 'admin_product_list' },
-            { url: '/backend/admin_order_list/', icon: 'shopping-cart', label: 'Commandes', id: 'admin_order_list' },
-            { url: '/backend/admin_payment_list/', icon: 'credit-card', label: 'Paiements', id: 'admin_payment_list' },
-            { url: '/backend/admin_loyalty_list/', icon: 'star', label: 'Fidélité', id: 'admin_loyalty_list' },
-            { url: '/backend/admin_promotion_list/', icon: 'percent', label: 'Promotions', id: 'admin_promotion_list' },
-            { url: '/backend/category_list/', icon: 'layers', label: 'Catégories', id: 'category_list' },
-            { url: '/backend/admin_stock/', icon: 'warehouse', label: 'Stock', id: 'admin_stock' },
-            { url: '/backend/admin_stock_add/', icon: 'plus-square', label: 'Ajouter Stock', id: 'admin_stock_add' },
-            { url: '/backend/pickup_point_list/', icon: 'map-pin', label: 'Points de Retrait', id: 'pickup_point_list' },
-            { url: '/backend/admin_analytics/', icon: 'bar-chart-3', label: 'Analytics', id: 'admin_analytics' },
-            { url: '/backend/review_list/', icon: 'star-half', label: 'Avis & Évaluations', id: 'review_list' },
-            { url: '/backend/chat_list/', icon: 'message-circle', label: 'Chat Support', id: 'chat_list' },
-            { url: '/backend/favorite_list/', icon: 'heart', label: 'Favoris', id: 'favorite_list' },
-            { url: '/backend/wishlist/', icon: 'gift', label: 'Wishlist', id: 'wishlist' },
-            { url: '/backend/admin_newsletter_list/', icon: 'mail', label: 'Newsletter', id: 'admin_newsletter_list' },
-            { url: '/backend/admin_notification_list/', icon: 'bell', label: 'Notifications', id: 'admin_notification_list' },
-            { url: '/backend/admin_panel/', icon: 'settings', label: 'Configuration', id: 'admin_panel' }
-        ];
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm">Stock Admin</p>
+                <p class="text-2xl font-bold text-gray-900">{{ stats.admin_stock_total }}</p>
+                <p class="text-red-600 text-sm">{{ stats.low_stock_count }} en rupture</p>
+            </div>
+            <div class="p-3 bg-red-100 rounded-full">
+                <i data-lucide="package-check" class="w-6 h-6 text-red-600"></i>
+            </div>
+        </div>
+    </div>
 
-        // Auto-logout après inactivité
-        (function() {
-            let logoutTimer;
-            const LOGOUT_TIME = 1500 * 1000; // 25 minutes
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm">Points Retrait</p>
+                <p class="text-2xl font-bold text-gray-900">{{ stats.pickup_points_count }}</p>
+                <p class="text-blue-600 text-sm">Douala/Yaoundé</p>
+            </div>
+            <div class="p-3 bg-blue-100 rounded-full">
+                <i data-lucide="map-pin" class="w-6 h-6 text-blue-600"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm">Taux Satisfaction</p>
+                <p class="text-2xl font-bold text-gray-900">{{ stats.average_rating|floatformat:1 }}/5</p>
+                <p class="text-green-600 text-sm">{{ stats.total_reviews|intcomma }} avis</p>
+            </div>
+            <div class="p-3 bg-yellow-100 rounded-full">
+                <i data-lucide="star" class="w-6 h-6 text-yellow-600"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Graphiques et analyses -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Graphique des ventes -->
+    <div class="stats-card">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Évolution des Ventes (FCFA)</h3>
+            <select class="text-sm border-gray-300 rounded-md">
+                <option>7 derniers jours</option>
+                <option>30 derniers jours</option>
+                <option>3 derniers mois</option>
+            </select>
+        </div>
+        <div class="h-64">
+            <canvas id="salesChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Types de paiement -->
+    <div class="stats-card">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Répartition Paiements</h3>
+        <div class="h-64">
+            <canvas id="paymentChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Top catégories avec données réelles -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <div class="stats-card">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Catégories</h3>
+        <div class="space-y-4">
+            {% for category in top_categories %}
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                    <span class="text-sm font-medium">{{ category.name }}</span>
+                </div>
+                <span class="text-sm text-gray-600">{{ category.product_count }} produits</span>
+            </div>
+            {% empty %}
+            <p class="text-gray-500 text-sm">Aucune catégorie trouvée</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Système de fidélité avec données réelles -->
+    <div class="stats-card">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Fidélité Clients</h3>
+        <div class="space-y-4">
+            {% for level in loyalty_levels %}
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-4 h-4 {{ level.color }} rounded mr-3"></div>
+                    <span class="text-sm font-medium">{{ level.name }}</span>
+                </div>
+                <span class="text-sm text-gray-600">{{ level.count|intcomma }} clients</span>
+            </div>
+            {% endfor %}
+            <div class="mt-4 p-3 bg-green-50 rounded-lg">
+                <p class="text-sm text-green-800">Rétention: <strong>{{ stats.retention_rate }}%</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance par ville avec données réelles -->
+    <div class="stats-card">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance par Ville</h3>
+        <div class="space-y-4">
+            {% for city in city_stats %}
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-medium text-gray-700">{{ city.name }}</span>
+                    <span class="text-sm text-gray-600">{{ city.percentage }}% ({{ city.users|intcomma }} users)</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-green-500 h-2 rounded-full" style="width: {{ city.percentage }}%"></div>
+                </div>
+            </div>
+            {% endfor %}
+            <div class="mt-4 grid grid-cols-2 gap-4">
+                <div class="text-center p-2 bg-green-50 rounded">
+                    <p class="text-xs text-green-600">CA Douala</p>
+                    <p class="font-bold text-green-800">{{ city_stats.douala_revenue|floatformat:0|intcomma }} FCFA</p>
+                </div>
+                <div class="text-center p-2 bg-blue-50 rounded">
+                    <p class="text-xs text-blue-600">CA Yaoundé</p>
+                    <p class="font-bold text-blue-800">{{ city_stats.yaounde_revenue|floatformat:0|intcomma }} FCFA</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions rapides et alertes -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Actions rapides -->
+    <div class="stats-card">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions Rapides</h3>
+        <div class="space-y-3">
+            <a href="{% url 'backend:admin_stock_add' %}" class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-green-300 transition-colors">
+                <div class="flex items-center">
+                    <i data-lucide="plus-circle" class="w-5 h-5 text-green-600 mr-3"></i>
+                    <span class="text-sm font-medium">Ajouter Stock Admin</span>
+                </div>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+            </a>
+            <a href="{% url 'backend:admin_user_list' %}" class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                <div class="flex items-center">
+                    <i data-lucide="user-plus" class="w-5 h-5 text-blue-600 mr-3"></i>
+                    <span class="text-sm font-medium">Gérer Utilisateurs</span>
+                </div>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+            </a>
+            <a href="{% url 'backend:pickup_point_list' %}" class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-purple-300 transition-colors">
+                <div class="flex items-center">
+                    <i data-lucide="map-pin" class="w-5 h-5 text-purple-600 mr-3"></i>
+                    <span class="text-sm font-medium">Points de Retrait</span>
+                </div>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+            </a>
+            <a href="#" class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-orange-300 transition-colors">
+                <div class="flex items-center">
+                    <i data-lucide="megaphone" class="w-5 h-5 text-orange-600 mr-3"></i>
+                    <span class="text-sm font-medium">Campagne Promo</span>
+                </div>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Alertes système avec données réelles -->
+    <div class="stats-card">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Alertes Système</h3>
+        <div class="space-y-3">
+            {% if stats.low_stock_count > 0 %}
+            <div class="flex items-start p-3 bg-red-50 rounded-lg">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-red-500 mr-3 mt-0.5"></i>
+                <div>
+                    <p class="text-sm font-medium text-red-800">Stock faible</p>
+                    <p class="text-xs text-red-600">{{ stats.low_stock_count }} produits admin en rupture</p>
+                </div>
+            </div>
+            {% endif %}
             
-            function resetTimer() {
-                clearTimeout(logoutTimer);
-                logoutTimer = setTimeout(logoutUser, LOGOUT_TIME);
-            }
+            {% if stats.pending_payments > 0 %}
+            <div class="flex items-start p-3 bg-yellow-50 rounded-lg">
+                <i data-lucide="clock" class="w-5 h-5 text-yellow-500 mr-3 mt-0.5"></i>
+                <div>
+                    <p class="text-sm font-medium text-yellow-800">Paiements en attente</p>
+                    <p class="text-xs text-yellow-600">{{ stats.pending_payments }} paiements à valider</p>
+                </div>
+            </div>
+            {% endif %}
             
-            function logoutUser() {
-                try {
-                    localStorage.clear();
-                    sessionStorage.clear();
-                } catch(e) {
-                    console.warn('Storage clear failed:', e);
-                }
-                window.location.href = '/accounts/login/?next=' + encodeURIComponent(window.location.pathname);
-            }
+            {% if unread_messages_count > 0 %}
+            <div class="flex items-start p-3 bg-blue-50 rounded-lg">
+                <i data-lucide="message-circle" class="w-5 h-5 text-blue-500 mr-3 mt-0.5"></i>
+                <div>
+                    <p class="text-sm font-medium text-blue-800">Support Chat</p>
+                    <p class="text-xs text-blue-600">{{ unread_messages_count }} conversations en attente</p>
+                </div>
+            </div>
+            {% endif %}
             
-            ['click', 'mousemove', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
-                document.addEventListener(evt, resetTimer, true);
-            });
-            
-            resetTimer();
-        })();
+            {% if stats.pending_orders > 0 %}
+            <div class="flex items-start p-3 bg-purple-50 rounded-lg">
+                <i data-lucide="truck" class="w-5 h-5 text-purple-500 mr-3 mt-0.5"></i>
+                <div>
+                    <p class="text-sm font-medium text-purple-800">Livraisons</p>
+                    <p class="text-xs text-purple-600">{{ stats.pending_orders }} commandes à traiter</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
 
-        // Détection de la page actuelle
-        function getCurrentPageId() {
-            const path = window.location.pathname;
-            const currentLink = navigationLinks.find(link => 
-                path === link.url || path.includes(link.id)
-            );
-            return currentLink ? currentLink.id : 'dashboard';
-        }
+    <!-- Commandes récentes à traiter avec données réelles -->
+    <div class="stats-card">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Commandes Urgentes</h3>
+        <div class="space-y-3">
+            {% for order in urgent_orders %}
+            <div class="border-l-4 {% if order.status == 'PENDING' %}border-red-500{% elif order.status == 'PAID' %}border-yellow-500{% else %}border-blue-500{% endif %} pl-3">
+                <p class="text-sm font-medium text-gray-900">{{ order.order_number }}</p>
+                <p class="text-xs text-gray-600">{{ order.product.title|truncatechars:30 }} - {{ order.total_amount|floatformat:0|intcomma }} FCFA</p>
+                <p class="text-xs {% if order.status == 'PENDING' %}text-red-600{% elif order.status == 'PAID' %}text-yellow-600{% else %}text-blue-600{% endif %}">
+                    {% if order.status == 'PENDING' %}
+                        Paiement en attente
+                    {% elif order.status == 'PAID' %}
+                        En attente de retrait
+                    {% else %}
+                        {{ order.get_status_display }}
+                    {% endif %}
+                </p>
+            </div>
+            {% empty %}
+            <p class="text-gray-500 text-sm">Aucune commande urgente</p>
+            {% endfor %}
+            <a href="{% url 'backend:admin_order_list' %}" class="w-full mt-3 text-center py-2 text-sm text-green-600 hover:bg-green-50 rounded block">
+                Voir toutes les commandes
+            </a>
+        </div>
+    </div>
+</div>
 
-        // Génération des liens de navigation
-        function generateNavLinks(containerId) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            
-            const currentPageId = getCurrentPageId();
-            
-            container.innerHTML = navigationLinks.map(link => `
-                <a href="${link.url}" class="sidebar-link ${link.id === currentPageId ? 'active' : ''}" data-page="${link.id}">
-                    <i data-lucide="${link.icon}" class="w-5 h-5 mr-3"></i>
-                    <span>${link.label}</span>
-                </a>
-            `).join('');
-        }
+<!-- État des points de retrait avec données réelles -->
+<div class="stats-card mb-8">
+    <h3 class="text-lg font-semibold text-gray-900 mb-6">État des Points de Retrait</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {% for pickup_point in pickup_points %}
+        <div class="border rounded-lg p-4">
+            <div class="flex items-center justify-between mb-3">
+                <h4 class="font-medium text-gray-900">{{ pickup_point.name }}</h4>
+                <span class="bg-{% if pickup_point.is_active %}green{% else %}red{% endif %}-100 text-{% if pickup_point.is_active %}green{% else %}red{% endif %}-800 text-xs px-2 py-1 rounded-full">
+                    {% if pickup_point.is_active %}Actif{% else %}Inactif{% endif %}
+                </span>
+            </div>
+            <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Commandes en attente:</span>
+                    <span class="font-medium">{{ pickup_point.pending_orders_count|default:0 }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Staff:</span>
+                    <span class="font-medium">{{ pickup_point.staff_count|default:0 }} actifs</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Capacité:</span>
+                    <span class="font-medium">{{ pickup_point.capacity|default:0 }}%</span>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-4 text-center text-gray-500">
+            <p>Aucun point de retrait configuré</p>
+            <a href="{% url 'backend:pickup_point_list' %}" class="text-green-600 hover:text-green-800">Ajouter un point de retrait</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
 
-        // Gestion du menu mobile
-        function setupMobileMenu() {
-            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-            const mobileCloseBtn = document.getElementById('mobile-close-btn');
-            const mobileSidebar = document.getElementById('mobile-sidebar');
-            const mobileOverlay = document.getElementById('mobile-overlay');
+<!-- Statistiques avancées avec données réelles -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Performance mensuelle -->
+    <div class="stats-card">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance Mensuelle</h3>
+        <div class="space-y-4">
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                <span class="text-sm font-medium">Nouveaux utilisateurs</span>
+                <span class="text-sm font-bold text-green-600">+{{ stats.new_users_this_month|intcomma }} ({{ stats.new_users_percentage }}%)</span>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                <span class="text-sm font-medium">Taux de conversion</span>
+                <span class="text-sm font-bold text-blue-600">{{ stats.conversion_rate }}% (+{{ stats.conversion_change }}%)</span>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                <span class="text-sm font-medium">Panier moyen</span>
+                <span class="text-sm font-bold text-purple-600">{{ stats.average_order_value|floatformat:0|intcomma }} FCFA (+{{ stats.basket_change }}%)</span>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                <span class="text-sm font-medium">Retours clients</span>
+                <span class="text-sm font-bold text-red-600">{{ stats.return_rate }}% ({{ stats.return_change }}%)</span>
+            </div>
+        </div>
+    </div>
 
-            function openMobileMenu() {
-                mobileSidebar.classList.add('open');
-                mobileOverlay.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
-            }
+    <!-- Top vendeurs avec données réelles -->
+    <div class="stats-card">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Vendeurs du Mois</h3>
+        <div class="space-y-4">
+            {% for seller in top_sellers %}
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-{% if forloop.counter == 1 %}yellow{% elif forloop.counter == 2 %}gray{% else %}orange{% endif %}-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                        {{ forloop.counter }}
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium">{{ seller.get_full_name|default:seller.email }}</p>
+                        <p class="text-xs text-gray-600">{{ seller.city_display|default:"Lieu non spécifié" }} - {{ seller.total_sales }} ventes</p>
+                    </div>
+                </div>
+                <span class="text-sm font-bold">{{ seller.total_revenue|floatformat:0|intcomma }} FCFA</span>
+            </div>
+            {% empty %}
+            <p class="text-gray-500 text-sm">Aucun vendeur ce mois</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
 
-            function closeMobileMenu() {
-                mobileSidebar.classList.remove('open');
-                mobileOverlay.classList.add('hidden');
-                document.body.style.overflow = '';
-            }
+<!-- Dernières activités avec données réelles -->
+<div class="stats-card">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-semibold text-gray-900">Activités Récentes</h3>
+        <a href="{% url 'backend:admin_analytics' %}" class="text-sm text-green-600 hover:text-green-800">Voir tout</a>
+    </div>
+    <div class="flow-root">
+        <ul class="-mb-8">
+            {% for activity in recent_activities %}
+            <li>
+                <div class="relative {% if not forloop.last %}pb-8{% endif %}">
+                    {% if not forloop.last %}
+                    <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"></span>
+                    {% endif %}
+                    <div class="relative flex space-x-3">
+                        <div>
+                            <span class="h-8 w-8 rounded-full bg-{{ activity.color }}-500 flex items-center justify-center">
+                                <i data-lucide="{{ activity.icon }}" class="w-4 h-4 text-white"></i>
+                            </span>
+                        </div>
+                        <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                            <div>
+                                <p class="text-sm text-gray-500">{{ activity.message|safe }}</p>
+                            </div>
+                            <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                <time>{{ activity.created_at|timesince }} ago</time>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </li>
+            {% empty %}
+            <li class="text-gray-500 text-sm">Aucune activité récente</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}
 
-            if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', openMobileMenu);
-            if (mobileCloseBtn) mobileCloseBtn.addEventListener('click', closeMobileMenu);
-            if (mobileOverlay) mobileOverlay.addEventListener('click', closeMobileMenu);
+{% block extra_js %}
+// Dashboard-specific JavaScript
+function refreshDashboard() {
+    const button = event.target.closest('button');
+    const icon = button.querySelector('i[data-lucide="refresh-cw"]');
+    
+    if (icon) {
+        icon.classList.add('spin');
+    }
+    button.disabled = true;
+    
+    // Reload page for fresh data
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000);
+}
 
-            // Fermer le menu sur redimensionnement
-            window.addEventListener('resize', function() {
-                if (window.innerWidth >= 1024) {
-                    closeMobileMenu();
-                }
-            });
+// Export de rapport
+function exportReport() {
+    const button = event.target.closest('button');
+    button.disabled = true;
+    button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 spin"></i>Export...';
+    
+    // Redirect to export URL
+    setTimeout(() => {
+        window.location.href = '{% url "backend:admin_analytics" %}?export=pdf';
+    }, 1000);
+}
 
-            // Fermer le menu lors du clic sur un lien
-            document.addEventListener('click', function(e) {
-                if (e.target.closest('.sidebar-link') && window.innerWidth < 1024) {
-                    setTimeout(closeMobileMenu, 100);
-                }
-            });
-        }
-
-        // Navigation
-        function navigateTo(url) {
-            try {
-                window.location.href = url;
-            } catch (e) {
-                console.error('Navigation failed:', e);
-                alert(`Navigation vers: ${url}\n(Ceci redirigerait en production)`);
-            }
-        }
-
-        // Actualisation du dashboard
-        function refreshDashboard() {
-            const button = event.target.closest('button');
-            const icon = button.querySelector('i[data-lucide="refresh-cw"]');
-            
-            if (icon) {
-                icon.classList.add('spin');
-            }
-            button.disabled = true;
-            
-            setTimeout(() => {
-                if (icon) {
-                    icon.classList.remove('spin');
-                }
-                button.disabled = false;
-                updateTime();
-                console.log('Dashboard actualisé avec succès');
-            }, 2000);
-        }
-
-        // Export de rapport
-        function exportReport() {
-            const button = event.target.closest('button');
-            button.disabled = true;
-            button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 spin"></i>Export...';
-            
-            setTimeout(() => {
-                button.disabled = false;
-                button.innerHTML = '<i data-lucide="download" class="w-4 h-4 mr-2"></i>Exporter Rapport';
-                
-                // Simulation d'export
-                const link = document.createElement('a');
-                link.href = 'data:text/plain;charset=utf-8,Rapport Dashboard VGK - ' + new Date().toISOString();
-                link.download = 'rapport-vgk-' + new Date().toISOString().split('T')[0] + '.txt';
-                link.click();
-                
-                console.log('Rapport exporté avec succès');
-            }, 2000);
-        }
-
-        // Mise à jour de l'heure
-        function updateTime() {
-            const timeElement = document.getElementById('current-time');
-            if (!timeElement) return;
-            
-            const now = new Date();
-            const timeString = now.toLocaleString('fr-FR', {
-                weekday: 'short',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            timeElement.textContent = timeString;
-        }
-
-        // Initialisation des graphiques
-        function initializeCharts() {
-            try {
-                // Graphique des ventes
-                const salesCtx = document.getElementById('salesChart');
-                if (salesCtx && typeof Chart !== 'undefined') {
-                    new Chart(salesCtx, {
-                        type: 'line',
-                        data: {
-                            labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
-                            datasets: [
-                                {
-                                    label: 'Ventes Clients (FCFA)',
-                                    data: [120000, 190000, 300000, 500000, 200000, 300000, 450000],
-                                    borderColor: 'rgb(34, 197, 94)',
-                                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                                    tension: 0.4,
-                                    fill: true
-                                },
-                                {
-                                    label: 'Ventes Admin (FCFA)',
-                                    data: [80000, 120000, 150000, 200000, 180000, 220000, 280000],
-                                    borderColor: 'rgb(59, 130, 246)',
-                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                    tension: 0.4,
-                                    fill: true
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            interaction: {
-                                intersect: false,
-                                mode: 'index'
-                            },
-                            plugins: {
-                                legend: {
-                                    position: 'top',
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            return context.label + ': ' + context.parsed + '%';
-                                        }
-                                    }
+// Initialisation des graphiques avec données réelles
+function initializeCharts() {
+    try {
+        // Graphique des ventes - utiliser les données Django
+        const salesCtx = document.getElementById('salesChart');
+        if (salesCtx && typeof Chart !== 'undefined') {
+            new Chart(salesCtx, {
+                type: 'line',
+                data: {
+                    labels: {{ daily_sales_labels|safe }},
+                    datasets: [
+                        {
+                            label: 'Ventes Totales (FCFA)',
+                            data: {{ daily_sales_data|safe }},
+                            borderColor: 'rgb(34, 197, 94)',
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString() + ' FCFA';
                                 }
                             }
                         }
-                    });
-                }
-            } catch (error) {
-                console.error('Erreur initialisation graphiques:', error);
-            }
-        }
-
-        // Simulation de mise à jour en temps réel
-        function simulateRealTimeUpdate() {
-            const elements = document.querySelectorAll('.text-3xl.font-bold');
-            elements.forEach(el => {
-                if (el.textContent.includes(',')) {
-                    const currentValue = parseInt(el.textContent.replace(/,/g, ''));
-                    const variation = Math.floor(Math.random() * 10) - 5;
-                    const newValue = Math.max(0, currentValue + variation);
-                    el.textContent = newValue.toLocaleString();
-                }
-            });
-        }
-
-        // Initialisation au chargement de la page
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialiser les icônes Lucide
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-            }
-            
-            // Générer les liens de navigation
-            generateNavLinks('desktop-nav-links');
-            generateNavLinks('mobile-nav-links');
-            
-            // Re-initialiser les icônes après ajout des liens
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-            }
-            
-            // Configurer le menu mobile
-            setupMobileMenu();
-            
-            // Mettre à jour l'heure
-            updateTime();
-            setInterval(updateTime, 60000);
-            
-            // Initialiser les graphiques
-            initializeCharts();
-            
-            // Actualisation automatique toutes les 30 secondes
-            setInterval(() => {
-                console.log('Actualisation automatique des données...');
-                // Ici vous ajouteriez normalement des appels API
-            }, 30000);
-            
-            // Simulation de mise à jour toutes les 5 minutes
-            setInterval(simulateRealTimeUpdate, 300000);
-        });
-
-        // Gestion des erreurs globales
-        window.addEventListener('error', function(e) {
-            console.error('Erreur JavaScript:', e.error);
-        });
-
-        // Performance monitoring
-        if ('performance' in window) {
-            window.addEventListener('load', function() {
-                setTimeout(function() {
-                    const perf = performance.getEntriesByType('navigation')[0];
-                    if (perf) {
-                        console.log('Temps de chargement:', perf.loadEventEnd - perf.loadEventStart, 'ms');
                     }
-                }, 0);
+                }
             });
         }
 
-        // Service Worker pour PWA (optionnel)
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(function(registration) {
-                        console.log('ServiceWorker enregistré avec succès:', registration.scope);
-                    })
-                    .catch(function(error) {
-                        console.log('Échec enregistrement ServiceWorker:', error);
-                    });
-            });
-        }
-
-        // Notification API (optionnel)
-        function requestNotificationPermission() {
-            if ('Notification' in window && Notification.permission === 'default') {
-                Notification.requestPermission().then(function(permission) {
-                    if (permission === 'granted') {
-                        console.log('Permission de notification accordée');
+        // Graphique des paiements - utiliser les données Django
+        const paymentCtx = document.getElementById('paymentChart');
+        if (paymentCtx && typeof Chart !== 'undefined') {
+            new Chart(paymentCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: {{ payment_methods_labels|safe }},
+                    datasets: [{
+                        data: {{ payment_methods_data|safe }},
+                        backgroundColor: [
+                            '#3b82f6',
+                            '#10b981',
+                            '#f59e0b',
+                            '#ef4444',
+                            '#8b5cf6'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
                     }
-                });
-            }
-        }
-
-        // Appeler la demande de permission au clic sur les notifications
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('button[class*="notification"]')) {
-                requestNotificationPermission();
-            }
-        });
-
-        // Fonctions utilitaires
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
-        }
-
-        function formatDate(date) {
-            return new Date(date).toLocaleString('fr-FR', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
+                }
             });
         }
+    } catch (error) {
+        console.error('Erreur initialisation graphiques:', error);
+    }
+}
 
-        function showNotification(message, type = 'info') {
-            // Créer une notification toast (à implémenter selon vos besoins)
-            console.log(`[${type.toUpperCase()}] ${message}`);
-        }
+// Dashboard initialization
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize charts
+    initializeCharts();
+    
+    console.log('Dashboard VGK Admin initialisé avec succès');
+});
 
-        // Raccourcis clavier
-        document.addEventListener('keydown', function(e) {
-            // Ctrl/Cmd + R pour actualiser
-            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
-                e.preventDefault();
-                refreshDashboard();
-            }
-            
-            // Escape pour fermer le menu mobile
-            if (e.key === 'Escape') {
-                const mobileSidebar = document.getElementById('mobile-sidebar');
-                const mobileOverlay = document.getElementById('mobile-overlay');
-                if (mobileSidebar && mobileSidebar.classList.contains('open')) {
-                    mobileSidebar.classList.remove('open');
-                    mobileOverlay.classList.add('hidden');
-                    document.body.style.overflow = '';
-                }
-            }
-        });
-
-        // Optimisation pour appareils mobiles
-        if ('ontouchstart' in window) {
-            document.body.classList.add('touch-device');
-            
-            // Désactiver le zoom sur double tap
-            let lastTouchEnd = 0;
-            document.addEventListener('touchend', function(event) {
-                const now = (new Date()).getTime();
-                if (now - lastTouchEnd <= 300) {
-                    event.preventDefault();
-                }
-                lastTouchEnd = now;
-            }, false);
-        }
-
-        // Détection de la connectivité
-        function updateOnlineStatus() {
-            const status = navigator.onLine ? 'en ligne' : 'hors ligne';
-            console.log('Statut de connexion:', status);
-            
-            if (!navigator.onLine) {
-                showNotification('Connexion internet perdue. Certaines fonctionnalités peuvent être limitées.', 'warning');
-            }
-        }
-
-        window.addEventListener('online', updateOnlineStatus);
-        window.addEventListener('offline', updateOnlineStatus);
-
-        // Gestion de la visibilité de la page
-        document.addEventListener('visibilitychange', function() {
-            if (document.visibilityState === 'visible') {
-                // Actualiser les données quand l'utilisateur revient sur l'onglet
-                updateTime();
-                console.log('Page redevenue visible - actualisation des données');
-            }
-        });
-
-        console.log('Dashboard VGK Admin initialisé avec succès');
-    </script>
-</body>
-</html>
+// Dashboard-specific keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + R pour actualiser
+    if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+        e.preventDefault();
+        refreshDashboard();
+    }
+});
+{% endblock %}

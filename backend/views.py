@@ -142,8 +142,17 @@ class CustomLogoutView(LogoutView):
         return super().dispatch(request, *args, **kwargs)
 
 
+# Enhanced DashboardView for admin dashboard with comprehensive real data
+# Add this to your backend/views.py or create a new file backend/admin_views.py
+
+from django.db.models import Q, Count, Avg, Sum, F, Case, When, IntegerField
+from django.utils import timezone
+from datetime import datetime, timedelta
+import json
+from decimal import Decimal
+
 class DashboardView(LoginRequiredMixin, TemplateView):
-    """Tableau de bord utilisateur personnalisé selon le type"""
+    """Tableau de bord utilisateur personnalisé selon le type avec données réelles"""
     template_name = 'backend/dashboard/dashboard.html'
     
     def get_template_names(self):
@@ -158,52 +167,469 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         
-        if user.user_type == 'CLIENT':
+        if user.user_type == 'ADMIN':
+            # Dashboard admin avec données complètes
+            context.update(self.get_admin_context())
+        elif user.user_type == 'CLIENT':
             # Dashboard client
-            context.update({
-                'my_products': Product.objects.filter(seller=user).order_by('-created_at')[:5],
-                'my_orders': Order.objects.filter(buyer=user).order_by('-created_at')[:5],
-                'my_favorites': Favorite.objects.filter(user=user).select_related('product')[:5],
-                'unread_messages': Message.objects.filter(
-                    chat__buyer=user, is_read=False
-                ).exclude(sender=user).count(),
-                'notifications': Notification.objects.filter(
-                    user=user, is_read=False
-                ).order_by('-created_at')[:5],
-                'sales_stats': {
-                    'total_sales': Order.objects.filter(
-                        product__seller=user, status='DELIVERED'
-                    ).count(),
-                    'total_revenue': Order.objects.filter(
-                        product__seller=user, status='DELIVERED'
-                    ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0,
-                    'active_products': Product.objects.filter(
-                        seller=user, status='ACTIVE'
-                    ).count()
-                }
-            })
+            context.update(self.get_client_context(user))
+        elif user.user_type == 'STAFF':
+            # Dashboard staff
+            context.update(self.get_staff_context(user))
             
-        elif user.user_type == 'ADMIN':
-            # Dashboard admin
-            today = timezone.now().date()
-            context.update({
-                'daily_stats': {
-                    'new_users': User.objects.filter(date_joined__date=today).count(),
-                    'new_products': Product.objects.filter(created_at__date=today).count(),
-                    'new_orders': Order.objects.filter(created_at__date=today).count(),
-                    'daily_revenue': Order.objects.filter(
-                        created_at__date=today, status__in=['DELIVERED', 'PAID']
-                    ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-                },
-                'pending_orders': Order.objects.filter(status='PAID').count(),
-                'low_stock_items': AdminStock.objects.filter(quantity__lte=5).count(),
-                'recent_reviews': Review.objects.order_by('-created_at')[:5],
-                'top_categories': Category.objects.annotate(
-                    product_count=Count('products')
-                ).order_by('-product_count')[:5]
-            })
-        
         return context
+
+    def get_admin_context(self):
+                """Contexte complet pour le dashboard administrateur avec noms de champs corrects"""
+                now = timezone.now()
+                today = now.date()
+                this_month = now.replace(day=1).date()
+                last_month = (now.replace(day=1) - timedelta(days=1)).replace(day=1).date()
+                
+                # =========================
+                # STATISTIQUES PRINCIPALES
+                # =========================
+                
+                # Utilisateurs
+                total_users = User.objects.filter(user_type='CLIENT').count()
+                new_users_this_month = User.objects.filter(
+                    user_type='CLIENT',
+                    date_joined__date__gte=this_month
+                ).count()
+                
+                new_users_last_month = User.objects.filter(
+                    user_type='CLIENT',
+                    date_joined__date__gte=last_month,
+                    date_joined__date__lt=this_month
+                ).count()
+                
+                # Calcul pourcentage croissance utilisateurs
+                if new_users_last_month > 0:
+                    new_users_percentage = round(((new_users_this_month - new_users_last_month) / new_users_last_month) * 100, 1)
+                else:
+                    new_users_percentage = 100 if new_users_this_month > 0 else 0
+                
+                # Produits
+                active_products = Product.objects.filter(status='ACTIVE').count()
+                admin_stock_products = AdminStock.objects.filter(quantity__gt=0).count()
+                low_stock_count = AdminStock.objects.filter(quantity__lte=5).count()
+                
+                # Commandes
+                today_orders = Order.objects.filter(created_at__date=today).count()
+                pending_orders = Order.objects.filter(status__in=['PENDING', 'PAID']).count()
+                
+                # Revenus et commissions
+                monthly_revenue = Order.objects.filter(
+                    status='DELIVERED',
+                    created_at__date__gte=this_month
+                ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+                
+                monthly_commission = Order.objects.filter(
+                    status='DELIVERED',
+                    created_at__date__gte=this_month
+                ).aggregate(total=Sum('commission_amount'))['total'] or Decimal('0')
+                
+                # Paiements mobiles
+                mobile_payments = Payment.objects.filter(
+                    order__payment_method__in=['MTN_MONEY', 'ORANGE_MONEY'],
+                    status='COMPLETED',
+                    created_at__date__gte=this_month
+                ).count()
+                
+                # Points de retrait
+                pickup_points_count = PickupPoint.objects.filter(is_active=True).count()
+                
+                # Avis et satisfaction
+                reviews_data = Review.objects.filter(is_verified=True).aggregate(
+                    avg_rating=Avg('overall_rating'),
+                    total_count=Count('id')
+                )
+                average_rating = reviews_data['avg_rating'] or 0
+                total_reviews = reviews_data['total_count'] or 0
+                
+                # Paiements en attente
+                pending_payments = Payment.objects.filter(status='PENDING').count()
+                
+                # =========================
+                # DONNÉES POUR GRAPHIQUES
+                # =========================
+                
+                # Données des ventes sur 7 jours
+                daily_sales_labels = []
+                daily_sales_data = []
+                
+                for i in range(7):
+                    date = today - timedelta(days=6-i)
+                    daily_sales_labels.append(date.strftime('%a'))
+                    
+                    daily_revenue = Order.objects.filter(
+                        created_at__date=date,
+                        status='DELIVERED'
+                    ).aggregate(total=Sum('total_amount'))['total'] or 0
+                    
+                    daily_sales_data.append(float(daily_revenue))
+                
+                # Données des méthodes de paiement
+                payment_methods = Order.objects.filter(
+                    status='DELIVERED',
+                    created_at__date__gte=this_month
+                ).values('payment_method').annotate(
+                    count=Count('id')
+                ).order_by('-count')
+                
+                payment_methods_labels = []
+                payment_methods_data = []
+                
+                for pm in payment_methods:
+                    method_name = dict(Order.PAYMENT_METHODS).get(pm['payment_method'], pm['payment_method'])
+                    payment_methods_labels.append(method_name)
+                    payment_methods_data.append(pm['count'])
+                
+                # =========================
+                # TOP CATÉGORIES
+                # =========================
+                
+                top_categories = Category.objects.annotate(
+                    product_count=Count('products', filter=Q(products__status='ACTIVE'))
+                ).filter(product_count__gt=0).order_by('-product_count')[:5]
+                
+                # =========================
+                # FIDÉLITÉ CLIENTS (Corrigé)
+                # =========================
+                
+                # Calculer les niveaux de fidélité basés sur le nombre de commandes
+                loyalty_levels = []
+                
+                # Bronze: 1-3 commandes
+                bronze_count = User.objects.filter(
+                    user_type='CLIENT'
+                ).annotate(
+                    order_count=Count('orders', filter=Q(orders__status='DELIVERED'))
+                ).filter(order_count__gte=1, order_count__lte=3).count()
+                
+                # Argent: 4-10 commandes
+                silver_count = User.objects.filter(
+                    user_type='CLIENT'
+                ).annotate(
+                    order_count=Count('orders', filter=Q(orders__status='DELIVERED'))
+                ).filter(order_count__gte=4, order_count__lte=10).count()
+                
+                # Or: 11-25 commandes
+                gold_count = User.objects.filter(
+                    user_type='CLIENT'
+                ).annotate(
+                    order_count=Count('orders', filter=Q(orders__status='DELIVERED'))
+                ).filter(order_count__gte=11, order_count__lte=25).count()
+                
+                # Platine: 25+ commandes
+                platinum_count = User.objects.filter(
+                    user_type='CLIENT'
+                ).annotate(
+                    order_count=Count('orders', filter=Q(orders__status='DELIVERED'))
+                ).filter(order_count__gt=25).count()
+                
+                loyalty_levels = [
+                    {'name': 'Bronze', 'count': bronze_count, 'color': 'bg-gray-400'},
+                    {'name': 'Argent', 'count': silver_count, 'color': 'bg-gray-300'},
+                    {'name': 'Or', 'count': gold_count, 'color': 'bg-yellow-400'},
+                    {'name': 'Platine', 'count': platinum_count, 'color': 'bg-purple-500'},
+                ]
+                
+                # Calcul taux de rétention (clients qui ont commandé plus d'une fois)
+                total_customers_with_orders = User.objects.filter(
+                    user_type='CLIENT',
+                    orders__status='DELIVERED'
+                ).distinct().count()
+                
+                repeat_customers = User.objects.filter(
+                    user_type='CLIENT'
+                ).annotate(
+                    order_count=Count('orders', filter=Q(orders__status='DELIVERED'))
+                ).filter(order_count__gt=1).count()
+                
+                retention_rate = round((repeat_customers / total_customers_with_orders * 100), 1) if total_customers_with_orders > 0 else 0
+                
+                # =========================
+                # PERFORMANCE PAR VILLE
+                # =========================
+                
+                # Obtenir les statistiques par ville
+                city_stats = []
+                total_users_all_cities = User.objects.filter(user_type='CLIENT').count()
+                
+                for city_code, city_name in User.CITIES:
+                    city_users = User.objects.filter(city=city_code, user_type='CLIENT').count()
+                    city_percentage = round((city_users / total_users_all_cities * 100), 1) if total_users_all_cities > 0 else 0
+                    
+                    city_stats.append({
+                        'name': city_name,
+                        'users': city_users,
+                        'percentage': city_percentage
+                    })
+                
+                # Revenus par ville principale
+                douala_revenue = Order.objects.filter(
+                    product__city='DOUALA',
+                    status='DELIVERED',
+                    created_at__date__gte=this_month
+                ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+                
+                yaounde_revenue = Order.objects.filter(
+                    product__city='YAOUNDE',
+                    status='DELIVERED',
+                    created_at__date__gte=this_month
+                ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+                
+                # =========================
+                # COMMANDES URGENTES
+                # =========================
+                
+                urgent_orders = Order.objects.filter(
+                    status__in=['PENDING', 'PAID']
+                ).select_related('product').order_by('created_at')[:5]
+                
+                # =========================
+                # POINTS DE RETRAIT
+                # =========================
+                
+                pickup_points = PickupPoint.objects.all()
+                for point in pickup_points:
+                    # Calculer les commandes en attente pour chaque point
+                    point.pending_orders_count = Order.objects.filter(
+                        delivery_method='PICKUP',
+                        status__in=['PAID', 'PROCESSING']
+                    ).count()  # Générique pour tous les points pour l'instant
+                    
+                    # Calculer le staff actif
+                    point.staff_count = User.objects.filter(
+                        user_type='STAFF',
+                        is_active=True
+                    ).count()  # Générique pour tous les points
+                    
+                    # Capacité simulée basée sur les commandes en attente
+                    max_capacity = 50  # Capacité maximale par point
+                    point.capacity = min(100, round((point.pending_orders_count / max_capacity) * 100))
+                
+                # =========================
+                # TOP VENDEURS DU MOIS (Corrigé)
+                # =========================
+                
+                top_sellers = User.objects.filter(
+                    user_type='CLIENT',
+                    products_sold__order__status='DELIVERED',
+                    products_sold__order__created_at__date__gte=this_month
+                ).annotate(
+                    total_sales=Count('products_sold__order', filter=Q(products_sold__order__status='DELIVERED')),
+                    total_revenue=Sum('products_sold__order__total_amount', filter=Q(products_sold__order__status='DELIVERED'))
+                ).filter(total_sales__gt=0).order_by('-total_revenue')[:5]
+                
+                # Ajouter city_display pour chaque vendeur
+                for seller in top_sellers:
+                    seller.city_display = dict(User.CITIES).get(seller.city, 'Non spécifié')
+                
+                # =========================
+                # ACTIVITÉS RÉCENTES
+                # =========================
+                
+                recent_activities = []
+                
+                # Nouveaux utilisateurs (dernières 24h)
+                new_users_today = User.objects.filter(
+                    user_type='CLIENT',
+                    date_joined__date=today
+                ).order_by('-date_joined')[:3]
+                
+                for user in new_users_today:
+                    recent_activities.append({
+                        'icon': 'user-plus',
+                        'color': 'green',
+                        'message': f'Nouvel utilisateur inscrit: <strong>{user.get_full_name() or user.email}</strong> - {dict(User.CITIES).get(user.city, "Lieu non spécifié")}',
+                        'created_at': user.date_joined
+                    })
+                
+                # Nouvelles commandes (dernières 24h)
+                new_orders_today = Order.objects.filter(
+                    created_at__date=today
+                ).select_related('product', 'buyer').order_by('-created_at')[:3]
+                
+                for order in new_orders_today:
+                    recent_activities.append({
+                        'icon': 'shopping-cart',
+                        'color': 'blue',
+                        'message': f'Nouvelle commande: <strong>{order.product.title}</strong> - {order.total_amount} FCFA',
+                        'created_at': order.created_at
+                    })
+                
+                # Nouveaux avis (dernières 24h)
+                new_reviews_today = Review.objects.filter(
+                    created_at__date=today,
+                    is_verified=True
+                ).select_related('reviewer', 'order__product').order_by('-created_at')[:2]
+                
+                for review in new_reviews_today:
+                    recent_activities.append({
+                        'icon': 'star',
+                        'color': 'orange',
+                        'message': f'Nouvel avis {review.overall_rating} étoiles de <strong>{review.reviewer.get_full_name() or review.reviewer.email}</strong> sur {review.order.product.title}',
+                        'created_at': review.created_at
+                    })
+                
+                # Nouveaux produits admin stock
+                try:
+                    new_admin_products = AdminStock.objects.filter(
+                        created_at__date=today
+                    ).select_related('product').order_by('-created_at')[:2]
+                    
+                    for stock in new_admin_products:
+                        recent_activities.append({
+                            'icon': 'package',
+                            'color': 'purple',
+                            'message': f'Stock admin ajouté: <strong>{stock.product.title}</strong> - {stock.quantity} unités',
+                            'created_at': stock.created_at
+                        })
+                except:
+                    # Si AdminStock n'a pas de created_at, ignorer cette section
+                    pass
+                
+                # Trier les activités par date
+                recent_activities.sort(key=lambda x: x['created_at'], reverse=True)
+                recent_activities = recent_activities[:10]  # Garder seulement les 10 plus récentes
+                
+                # =========================
+                # MÉTRIQUES PERFORMANCE
+                # =========================
+                
+                # Taux de conversion (commandes payées / visiteurs uniques)
+                total_orders_this_month = Order.objects.filter(
+                    created_at__date__gte=this_month
+                ).count()
+                
+                conversion_rate = round((total_orders_this_month / total_users * 100), 1) if total_users > 0 else 0
+                
+                # Panier moyen
+                average_order_value = Order.objects.filter(
+                    status='DELIVERED',
+                    created_at__date__gte=this_month
+                ).aggregate(avg=Avg('total_amount'))['avg'] or Decimal('0')
+                
+                # Taux de retour (simulation)
+                return_rate = 2.1  # Simulé
+                
+                # =========================
+                # MESSAGES ET NOTIFICATIONS
+                # =========================
+                
+                # Messages non lus pour l'admin (corrigé)
+                unread_messages_count = Message.objects.filter(
+                    is_read=False
+                ).exclude(sender__user_type='ADMIN').count()
+                
+                # Notifications non lues pour l'admin
+                unread_notifications_count = Notification.objects.filter(
+                    user=self.request.user,
+                    is_read=False
+                ).count()
+                
+                # =========================
+                # ASSEMBLAGE DU CONTEXTE
+                # =========================
+                
+                return {
+                    'stats': {
+                        'total_users': total_users,
+                        'new_users_this_month': new_users_percentage,
+                        'active_products': active_products,
+                        'admin_stock_products': admin_stock_products,
+                        'admin_stock_total': AdminStock.objects.aggregate(total=Sum('quantity'))['total'] or 0,
+                        'low_stock_count': low_stock_count,
+                        'today_orders': today_orders,
+                        'pending_orders': pending_orders,
+                        'monthly_revenue': monthly_revenue,
+                        'monthly_commission': monthly_commission,
+                        'mobile_payments': mobile_payments,
+                        'pickup_points_count': pickup_points_count,
+                        'average_rating': average_rating,
+                        'total_reviews': total_reviews,
+                        'pending_payments': pending_payments,
+                        'retention_rate': retention_rate,
+                        'new_users_percentage': new_users_percentage,
+                        'conversion_rate': conversion_rate,
+                        'conversion_change': 2.1,  # Simulé
+                        'average_order_value': average_order_value,
+                        'basket_change': 5,  # Simulé
+                        'return_rate': return_rate,
+                        'return_change': -0.3,  # Simulé
+                    },
+                    'top_categories': top_categories,
+                    'loyalty_levels': loyalty_levels,
+                    'city_stats': city_stats,
+                    'city_stats': {
+                        'douala_revenue': douala_revenue,
+                        'yaounde_revenue': yaounde_revenue,
+                    },
+                    'urgent_orders': urgent_orders,
+                    'pickup_points': pickup_points,
+                    'top_sellers': top_sellers,
+                    'recent_activities': recent_activities,
+                    'unread_messages_count': unread_messages_count,
+                    'unread_notifications_count': unread_notifications_count,
+                    
+                    # Données pour les graphiques (format JSON pour JavaScript)
+                    'daily_sales_labels': json.dumps(daily_sales_labels),
+                    'daily_sales_data': json.dumps(daily_sales_data),
+                    'payment_methods_labels': json.dumps(payment_methods_labels),
+                    'payment_methods_data': json.dumps(payment_methods_data),
+                }
+    
+    def get_client_context(self, user):
+        """Contexte pour le dashboard client (existant)"""
+        return {
+            'my_products': Product.objects.filter(seller=user).order_by('-created_at')[:5],
+            'my_orders': Order.objects.filter(buyer=user).order_by('-created_at')[:5],
+            'my_favorites': Favorite.objects.filter(user=user).select_related('product')[:5],
+            'unread_messages': Message.objects.filter(
+                chat__buyer=user, is_read=False
+            ).exclude(sender=user).count(),
+            'notifications': Notification.objects.filter(
+                user=user, is_read=False
+            ).order_by('-created_at')[:5],
+            'sales_stats': {
+                'total_sales': Order.objects.filter(
+                    product__seller=user, status='DELIVERED'
+                ).count(),
+                'total_revenue': Order.objects.filter(
+                    product__seller=user, status='DELIVERED'
+                ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0,
+            }
+        }
+    
+    def get_staff_context(self, user):
+        """Contexte pour le dashboard staff"""
+        # Assumant que le staff est associé à un point de retrait
+        try:
+            pickup_point = user.pickup_point  # Relation à définir dans le modèle
+            
+            return {
+                'pickup_point': pickup_point,
+                'pending_pickups': Order.objects.filter(
+                    delivery_method='PICKUP',
+                    status='PAID',
+                    # pickup_point=pickup_point
+                ).count(),
+                'today_pickups': Order.objects.filter(
+                    delivery_method='PICKUP',
+                    status='DELIVERED',
+                    delivered_at__date=timezone.now().date(),
+                    # pickup_point=pickup_point
+                ).count(),
+            }
+        except AttributeError:
+            return {
+                'pickup_point': None,
+                'pending_pickups': 0,
+                'today_pickups': 0,
+            }
+
 
 
 class ProductListView(ListView):

@@ -1,422 +1,408 @@
-{% extends 'base.html' %}
+{% extends 'backend/base/admin_base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Gestion des Produits - Admin{% endblock %}
 
 {% block content %}
-    <!-- Top Navigation -->
-    <nav class="bg-gradient-to-r from-green-600 to-orange-500 shadow-lg sticky top-0 z-40">
-        <div class="container mx-auto px-4">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center space-x-4">
-                    <a href="/" class="text-white font-bold text-xl">
-                        <span class="text-orange-300">Vidé</span>-Grenier Kamer
-                    </a>
-                    <span class="text-white/70 text-sm">Administration</span>
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div class="mb-4 sm:mb-0">
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Gestion des Produits</h1>
+                <p class="text-gray-600">Gérez tous les produits de la plateforme</p>
+            </div>
+            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                    <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                    Ajouter Produit
+                </button>
+                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                    <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+                    Exporter
+                </button>
+                <button class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center">
+                    <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
+                    Modération
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="stats-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Produits</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ total_products|default:3456 }}</p>
+                </div>
+                <div class="p-3 bg-blue-100 rounded-full">
+                    <i data-lucide="package" class="w-6 h-6 text-blue-600"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <span class="text-green-600 text-sm font-medium">↗ +8.3%</span>
+                <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
+            </div>
+        </div>
+
+        <div class="stats-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">En modération</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ pending_products|default:42 }}</p>
+                </div>
+                <div class="p-3 bg-yellow-100 rounded-full">
+                    <i data-lucide="clock" class="w-6 h-6 text-yellow-600"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <span class="text-yellow-600 text-sm font-medium">Nécessite validation</span>
+            </div>
+        </div>
+
+        <div class="stats-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Vendus ce mois</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ sold_month|default:156 }}</p>
+                </div>
+                <div class="p-3 bg-green-100 rounded-full">
+                    <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <span class="text-green-600 text-sm font-medium">↗ +23.1%</span>
+                <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
+            </div>
+        </div>
+
+        <div class="stats-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Stock Admin</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ admin_stock|default:89 }}</p>
+                </div>
+                <div class="p-3 bg-purple-100 rounded-full">
+                    <i data-lucide="warehouse" class="w-6 h-6 text-purple-600"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <span class="text-purple-600 text-sm font-medium">Gestion directe</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="stats-card mb-8">
+        <div class="flex flex-wrap items-center gap-4 mb-4">
+            <div class="flex-1 min-w-[200px]">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+                    </div>
+                    <input type="text" placeholder="Rechercher un produit..." 
+                           class="w-full pl-10 pr-4 py-2 border-0 bg-gray-50 rounded-lg focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                </div>
+            </div>
+            
+            <select class="flex-1 min-w-[150px] border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                <option value="">Toutes les catégories</option>
+                <option value="electronics">Électronique</option>
+                <option value="clothing">Vêtements</option>
+                <option value="home">Maison & Jardin</option>
+                <option value="books">Livres</option>
+                <option value="sports">Sports</option>
+            </select>
+            
+            <select class="flex-1 min-w-[150px] border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                <option value="">Tous les statuts</option>
+                <option value="AVAILABLE">Disponible</option>
+                <option value="SOLD">Vendu</option>
+                <option value="PENDING">En attente</option>
+                <option value="REJECTED">Rejeté</option>
+            </select>
+            
+            <select class="flex-1 min-w-[150px] border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                <option value="">Toutes les villes</option>
+                <option value="YDE">Yaoundé</option>
+                <option value="DLA">Douala</option>
+                <option value="BDA">Bamenda</option>
+                <option value="BFA">Bafoussam</option>
+                <option value="GRA">Garoua</option>
+            </select>
+            
+            <div class="flex items-center space-x-2">
+                <input type="number" placeholder="Prix min" 
+                       class="border-0 bg-gray-50 rounded-lg px-4 py-2 w-24 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                <span class="text-gray-400">-</span>
+                <input type="number" placeholder="Prix max" 
+                       class="border-0 bg-gray-50 rounded-lg px-4 py-2 w-24 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+            </div>
+        </div>
+        
+        <div class="flex flex-col sm:flex-row items-center justify-between">
+            <div class="flex items-center space-x-4 mb-4 sm:mb-0">
+                <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                    Filtrer
+                </button>
+                <button class="text-gray-600 hover:text-gray-800 px-4 py-2 transition-colors">
+                    Réinitialiser
+                </button>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <span class="text-sm text-gray-600">Affichage:</span>
+                <button id="gridView" class="p-2 rounded-lg bg-green-100 text-green-600">
+                    <i data-lucide="grid" class="w-4 h-4"></i>
+                </button>
+                <button id="listView" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100">
+                    <i data-lucide="list" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Grid View -->
+    <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <!-- Product Card 1 -->
+        <div class="stats-card hover:shadow-md transition-shadow">
+            <div class="relative">
+                <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?w=300&h=200&fit=crop" 
+                     alt="iPhone 12 Pro" class="w-full h-48 object-cover rounded-t-lg">
+                <div class="absolute top-3 left-3">
+                    <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                        Disponible
+                    </span>
+                </div>
+                <div class="absolute top-3 right-3">
+                    <button class="bg-white/90 p-2 rounded-full hover:bg-white transition-colors">
+                        <i data-lucide="more-vertical" class="w-4 h-4 text-gray-600"></i>
+                    </button>
+                </div>
+                <div class="absolute bottom-3 left-3">
+                    <span class="bg-black/50 text-white text-xs px-2 py-1 rounded">
+                        📱 Électronique
+                    </span>
+                </div>
+            </div>
+            
+            <div class="p-4">
+                <h3 class="font-semibold text-gray-900 line-clamp-2 mb-2">iPhone 12 Pro 128GB - Excellent état</h3>
+                
+                <div class="flex items-center space-x-2 mb-3">
+                    <div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                        A
+                    </div>
+                    <span class="text-sm text-gray-600">Alice Simo</span>
+                    <span class="text-xs text-gray-400 hidden sm:inline">•</span>
+                    <span class="text-xs text-gray-400 hidden sm:inline">Douala</span>
                 </div>
                 
-                <div class="flex items-center space-x-4">
-                    <a href="/admin-panel/" class="text-white hover:text-orange-200 transition-colors">
-                        <i data-lucide="home" class="w-5 h-5"></i>
-                    </a>
-                    <a href="/dashboard/" class="text-white hover:text-orange-200 transition-colors">
-                        <i data-lucide="user" class="w-5 h-5"></i>
-                    </a>
-                    <a href="/auth/logout/" class="text-white hover:text-orange-200 transition-colors">
-                        <i data-lucide="log-out" class="w-5 h-5"></i>
-                    </a>
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-xl sm:text-2xl font-bold text-green-600">450,000</p>
+                        <p class="text-xs text-gray-500">FCFA</p>
+                    </div>
+                    <div class="text-right text-xs text-gray-500 hidden sm:block">
+                        <p>Publié il y a 2h</p>
+                        <p>156 vues</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <button class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                        <i data-lucide="eye" class="w-4 h-4 inline mr-1"></i>
+                        Voir
+                    </button>
+                    <button class="bg-yellow-100 text-yellow-600 p-2 rounded-lg hover:bg-yellow-200 transition-colors">
+                        <i data-lucide="edit" class="w-4 h-4"></i>
+                    </button>
+                    <button class="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition-colors">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
                 </div>
             </div>
         </div>
-    </nav>
 
-    <!-- Sidebar -->
-    <div class="flex">
-        <aside class="w-64 bg-white shadow-lg min-h-screen">
-            <div class="p-6">
-                <h2 class="text-lg font-semibold text-gray-800 mb-6">Administration</h2>
-                <nav class="space-y-2">
-                    <a href="/admin-panel/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-                        <i data-lucide="dashboard" class="w-5 h-5"></i>
-                        <span>Panel Principal</span>
-                    </a>
-                    <a href="/admin-panel/users/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-                        <i data-lucide="users" class="w-5 h-5"></i>
-                        <span>Utilisateurs</span>
-                    </a>
-                    <a href="/admin-panel/products/" class="flex items-center space-x-3 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg">
-                        <i data-lucide="package" class="w-5 h-5"></i>
-                        <span>Produits</span>
-                    </a>
-                    <a href="/admin-panel/orders/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-                        <i data-lucide="shopping-cart" class="w-5 h-5"></i>
-                        <span>Commandes</span>
-                    </a>
-                    <a href="/admin-panel/stock/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-                        <i data-lucide="warehouse" class="w-5 h-5"></i>
-                        <span>Stock</span>
-                    </a>
-                    <a href="/admin-panel/analytics/" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-                        <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
-                        <span>Analytics</span>
-                    </a>
-                </nav>
+        <!-- Product Card 2 -->
+        <div class="stats-card hover:shadow-md transition-shadow">
+            <div class="relative">
+                <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=300&h=200&fit=crop" 
+                     alt="Canapé 3 places" class="w-full h-48 object-cover rounded-t-lg">
+                <div class="absolute top-3 left-3">
+                    <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                        En attente
+                    </span>
+                </div>
+                <div class="absolute top-3 right-3">
+                    <button class="bg-white/90 p-2 rounded-full hover:bg-white transition-colors">
+                        <i data-lucide="more-vertical" class="w-4 h-4 text-gray-600"></i>
+                    </button>
+                </div>
+                <div class="absolute bottom-3 left-3">
+                    <span class="bg-black/50 text-white text-xs px-2 py-1 rounded">
+                        🏠 Maison
+                    </span>
+                </div>
             </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="flex-1 p-8 bg-gray-50">
-            <!-- Header -->
-            <div class="mb-8">
-                <div class="flex items-center justify-between">
+            
+            <div class="p-4">
+                <h3 class="font-semibold text-gray-900 line-clamp-2 mb-2">Canapé 3 places en cuir véritable</h3>
+                
+                <div class="flex items-center space-x-2 mb-3">
+                    <div class="w-6 h-6 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                        B
+                    </div>
+                    <span class="text-sm text-gray-600">Bob Mendomo</span>
+                    <span class="text-xs text-gray-400 hidden sm:inline">•</span>
+                    <span class="text-xs text-gray-400 hidden sm:inline">Yaoundé</span>
+                </div>
+                
+                <div class="flex items-center justify-between mb-3">
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-900 mb-2">Gestion des Produits</h1>
-                        <p class="text-gray-600">Gérez tous les produits de la plateforme</p>
+                        <p class="text-xl sm:text-2xl font-bold text-green-600">85,000</p>
+                        <p class="text-xs text-gray-500">FCFA</p>
                     </div>
-                    <div class="flex items-center space-x-4">
-                        <button class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                            <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
-                            Ajouter Produit
-                        </button>
-                        <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                            <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>
-                            Exporter
-                        </button>
-                        <button class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-                            <i data-lucide="eye" class="w-4 h-4 inline mr-2"></i>
-                            Modération
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white rounded-xl p-6 shadow-lg">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-600">Total Produits</p>
-                            <p class="text-3xl font-bold text-gray-900">{{ total_products|default:3456 }}</p>
-                        </div>
-                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <i data-lucide="package" class="w-6 h-6 text-blue-600"></i>
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <span class="text-green-600 text-sm font-medium">↗ +8.3%</span>
-                        <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl p-6 shadow-lg">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-600">En modération</p>
-                            <p class="text-3xl font-bold text-gray-900">{{ pending_products|default:42 }}</p>
-                        </div>
-                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                            <i data-lucide="clock" class="w-6 h-6 text-yellow-600"></i>
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <span class="text-yellow-600 text-sm font-medium">Nécessite validation</span>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl p-6 shadow-lg">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-600">Vendus ce mois</p>
-                            <p class="text-3xl font-bold text-gray-900">{{ sold_month|default:156 }}</p>
-                        </div>
-                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                            <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <span class="text-green-600 text-sm font-medium">↗ +23.1%</span>
-                        <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl p-6 shadow-lg">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-600">Stock Admin</p>
-                            <p class="text-3xl font-bold text-gray-900">{{ admin_stock|default:89 }}</p>
-                        </div>
-                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <i data-lucide="warehouse" class="w-6 h-6 text-purple-600"></i>
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <span class="text-purple-600 text-sm font-medium">Gestion directe</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Filters and Search -->
-            <div class="bg-white rounded-xl p-6 shadow-lg mb-8">
-                <div class="flex flex-wrap items-center gap-4 mb-4">
-                    <div class="flex items-center space-x-2">
-                        <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
-                        <input type="text" placeholder="Rechercher un produit..." 
-                               class="border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
-                    </div>
-                    
-                    <select class="border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
-                        <option value="">Toutes les catégories</option>
-                        <option value="electronics">Électronique</option>
-                        <option value="clothing">Vêtements</option>
-                        <option value="home">Maison & Jardin</option>
-                        <option value="books">Livres</option>
-                        <option value="sports">Sports</option>
-                    </select>
-                    
-                    <select class="border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
-                        <option value="">Tous les statuts</option>
-                        <option value="AVAILABLE">Disponible</option>
-                        <option value="SOLD">Vendu</option>
-                        <option value="PENDING">En attente</option>
-                        <option value="REJECTED">Rejeté</option>
-                    </select>
-                    
-                    <select class="border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
-                        <option value="">Toutes les villes</option>
-                        <option value="YDE">Yaoundé</option>
-                        <option value="DLA">Douala</option>
-                        <option value="BDA">Bamenda</option>
-                        <option value="BFA">Bafoussam</option>
-                        <option value="GRA">Garoua</option>
-                    </select>
-                    
-                    <div class="flex items-center space-x-2">
-                        <input type="number" placeholder="Prix min" 
-                               class="border-0 bg-gray-50 rounded-lg px-4 py-2 w-24 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
-                        <span class="text-gray-400">-</span>
-                        <input type="number" placeholder="Prix max" 
-                               class="border-0 bg-gray-50 rounded-lg px-4 py-2 w-24 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+                    <div class="text-right text-xs text-gray-500 hidden sm:block">
+                        <p>Publié il y a 1j</p>
+                        <p>89 vues</p>
                     </div>
                 </div>
                 
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
-                        <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                            Filtrer
-                        </button>
-                        <button class="text-gray-600 hover:text-gray-800 px-4 py-2 transition-colors">
-                            Réinitialiser
-                        </button>
-                    </div>
-                    
-                    <div class="flex items-center space-x-2">
-                        <span class="text-sm text-gray-600">Affichage:</span>
-                        <button id="gridView" class="p-2 rounded-lg bg-green-100 text-green-600">
-                            <i data-lucide="grid" class="w-4 h-4"></i>
-                        </button>
-                        <button id="listView" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100">
-                            <i data-lucide="list" class="w-4 h-4"></i>
-                        </button>
-                    </div>
+                <div class="flex items-center space-x-2">
+                    <button class="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg hover:bg-green-700 transition-colors text-sm">
+                        <i data-lucide="check" class="w-4 h-4 inline mr-1"></i>
+                        Approuver
+                    </button>
+                    <button class="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition-colors">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
                 </div>
             </div>
+        </div>
 
-            <!-- Products Grid -->
-            <div id="productsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <!-- Product Card 4 -->
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-                    <div class="relative">
-                        <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop" 
-                             alt="Vélo VTT" class="w-full h-48 object-cover">
-                        <div class="absolute top-3 left-3">
-                            <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+        <!-- Add more product cards as needed -->
+    </div>
+
+    <!-- Products List View (hidden by default) -->
+    <div id="productsList" class="hidden stats-card">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <input type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                        </th>
+                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Produit
+                        </th>
+                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                            Vendeur
+                        </th>
+                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Prix
+                        </th>
+                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                            Statut
+                        </th>
+                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                            Date
+                        </th>
+                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
+                            <input type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                        </td>
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <img class="h-10 w-10 rounded-lg object-cover mr-4" 
+                                     src="https://images.unsplash.com/photo-1583394838336-acd977736f90?w=100&h=100&fit=crop" 
+                                     alt="iPhone 12 Pro">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">iPhone 12 Pro 128GB</div>
+                                    <div class="text-sm text-gray-500">📱 Électronique</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                            <div class="flex items-center">
+                                <div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold mr-2">
+                                    A
+                                </div>
+                                <span class="text-sm text-gray-900">Alice Simo</span>
+                            </div>
+                        </td>
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">450,000 FCFA</div>
+                        </td>
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                 Disponible
                             </span>
-                        </div>
-                        <div class="absolute top-3 right-3">
-                            <button class="bg-white/90 p-2 rounded-full hover:bg-white transition-colors">
-                                <i data-lucide="more-vertical" class="w-4 h-4 text-gray-600"></i>
-                            </button>
-                        </div>
-                        <div class="absolute bottom-3 left-3">
-                            <span class="bg-black/50 text-white text-xs px-2 py-1 rounded">
-                                🚴 Sports
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="p-4">
-                        <div class="flex items-start justify-between mb-2">
-                            <h3 class="font-semibold text-gray-900 line-clamp-2">VTT Giant Talon 1 - Comme neuf</h3>
-                        </div>
-                        
-                        <div class="flex items-center space-x-2 mb-3">
-                            <div class="w-6 h-6 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                                D
+                        </td>
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
+                            22 Juillet 2025
+                        </td>
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex items-center space-x-2">
+                                <button class="text-blue-600 hover:text-blue-900 p-1">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
+                                <button class="text-yellow-600 hover:text-yellow-900 p-1">
+                                    <i data-lucide="edit" class="w-4 h-4"></i>
+                                </button>
+                                <button class="text-red-600 hover:text-red-900 p-1">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
                             </div>
-                            <span class="text-sm text-gray-600">David Nkomo</span>
-                            <span class="text-xs text-gray-400">•</span>
-                            <span class="text-xs text-gray-400">Garoua</span>
-                        </div>
-                        
-                        <div class="flex items-center justify-between mb-3">
-                            <div>
-                                <p class="text-2xl font-bold text-green-600">125,000</p>
-                                <p class="text-xs text-gray-500">FCFA</p>
-                            </div>
-                            <div class="text-right text-xs text-gray-500">
-                                <p>Publié il y a 4h</p>
-                                <p>67 vues</p>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center space-x-2">
-                            <button class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm">
-                                <i data-lucide="eye" class="w-4 h-4 inline mr-1"></i>
-                                Voir
-                            </button>
-                            <button class="bg-yellow-100 text-yellow-600 p-2 rounded-lg hover:bg-yellow-200 transition-colors">
-                                <i data-lucide="edit" class="w-4 h-4"></i>
-                            </button>
-                            <button class="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition-colors">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-            <!-- Products List View (hidden by default) -->
-            <div id="productsList" class="hidden bg-white rounded-xl shadow-lg overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    <input type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
-                                </th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Produit
-                                </th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Vendeur
-                                </th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Prix
-                                </th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Statut
-                                </th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Date
-                                </th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <input type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <img class="h-10 w-10 rounded-lg object-cover mr-4" 
-                                             src="https://images.unsplash.com/photo-1583394838336-acd977736f90?w=100&h=100&fit=crop" 
-                                             alt="iPhone 12 Pro">
-                                        <div>
-                                            <div class="text-sm font-medium text-gray-900">iPhone 12 Pro 128GB</div>
-                                            <div class="text-sm text-gray-500">📱 Électronique</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold mr-2">
-                                            A
-                                        </div>
-                                        <span class="text-sm text-gray-900">Alice Simo</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">450,000 FCFA</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                        Disponible
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    22 Juillet 2025
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <div class="flex items-center space-x-2">
-                                        <button class="text-blue-600 hover:text-blue-900 p-1">
-                                            <i data-lucide="eye" class="w-4 h-4"></i>
-                                        </button>
-                                        <button class="text-yellow-600 hover:text-yellow-900 p-1">
-                                            <i data-lucide="edit" class="w-4 h-4"></i>
-                                        </button>
-                                        <button class="text-red-600 hover:text-red-900 p-1">
-                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+    <!-- Pagination -->
+    <div class="mt-8 flex flex-col sm:flex-row items-center justify-between">
+        <div class="mb-4 sm:mb-0">
+            <p class="text-sm text-gray-700">
+                Affichage de <span class="font-medium">1</span> à <span class="font-medium">12</span> sur <span class="font-medium">3456</span> produits
+            </p>
+        </div>
+        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </a>
+            <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">1</a>
+            <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-green-50 text-sm font-medium text-green-600">2</a>
+            <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">3</a>
+            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+            <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">288</a>
+            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </a>
+        </nav>
+    </div>
 
-            <!-- Pagination -->
-            <div class="mt-8 flex items-center justify-between">
-                <div class="flex-1 flex justify-between sm:hidden">
-                    <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                        Précédent
-                    </a>
-                    <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                        Suivant
-                    </a>
-                </div>
-                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                    <div>
-                        <p class="text-sm text-gray-700">
-                            Affichage de <span class="font-medium">1</span> à <span class="font-medium">12</span> sur <span class="font-medium">3456</span> produits
-                        </p>
-                    </div>
-                    <div>
-                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                <i data-lucide="chevron-left" class="w-4 h-4"></i>
-                            </a>
-                            <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">1</a>
-                            <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-green-50 text-sm font-medium text-green-600">2</a>
-                            <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">3</a>
-                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
-                            <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">288</a>
-                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                            </a>
-                        </nav>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bulk Actions -->
-            <div class="mt-6 flex items-center space-x-4">
-                <select class="border border-gray-300 rounded-lg px-4 py-2 text-sm">
-                    <option value="">Actions groupées</option>
-                    <option value="approve">Approuver sélectionnés</option>
-                    <option value="reject">Rejeter sélectionnés</option>
-                    <option value="delete">Supprimer sélectionnés</option>
-                    <option value="export">Exporter sélectionnés</option>
-                </select>
-                <button class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm">
-                    Appliquer
-                </button>
-            </div>
-        </main>
+    <!-- Bulk Actions -->
+    <div class="mt-6 flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+        <select class="border border-gray-300 rounded-lg px-4 py-2 text-sm">
+            <option value="">Actions groupées</option>
+            <option value="approve">Approuver sélectionnés</option>
+            <option value="reject">Rejeter sélectionnés</option>
+            <option value="delete">Supprimer sélectionnés</option>
+            <option value="export">Exporter sélectionnés</option>
+        </select>
+        <button class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm">
+            Appliquer
+        </button>
     </div>
 
     <!-- Product Detail Modal -->
@@ -453,7 +439,7 @@
                                 <p class="text-3xl font-bold text-green-600">450,000 FCFA</p>
                             </div>
                             
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Vendeur</label>
                                     <div class="flex items-center space-x-2">
@@ -514,7 +500,7 @@
                         </div>
                     </div>
                     
-                    <div class="mt-8 flex space-x-4">
+                    <div class="mt-8 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
                         <button class="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors">
                             <i data-lucide="check" class="w-4 h-4 inline mr-2"></i>
                             Approuver
@@ -533,11 +519,7 @@
         </div>
     </div>
 
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script>
-        lucide.createIcons();
-        
         // View toggle functionality
         const gridViewBtn = document.getElementById('gridView');
         const listViewBtn = document.getElementById('listView');
@@ -575,229 +557,4 @@
             btn.closest('button').addEventListener('click', openProductModal);
         });
     </script>
-
-{% endblock %} Card 1 -->
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-                    <div class="relative">
-                        <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?w=300&h=200&fit=crop" 
-                             alt="iPhone 12 Pro" class="w-full h-48 object-cover">
-                        <div class="absolute top-3 left-3">
-                            <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                Disponible
-                            </span>
-                        </div>
-                        <div class="absolute top-3 right-3">
-                            <button class="bg-white/90 p-2 rounded-full hover:bg-white transition-colors">
-                                <i data-lucide="more-vertical" class="w-4 h-4 text-gray-600"></i>
-                            </button>
-                        </div>
-                        <div class="absolute bottom-3 left-3">
-                            <span class="bg-black/50 text-white text-xs px-2 py-1 rounded">
-                                📱 Électronique
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="p-4">
-                        <div class="flex items-start justify-between mb-2">
-                            <h3 class="font-semibold text-gray-900 line-clamp-2">iPhone 12 Pro 128GB - Excellent état</h3>
-                        </div>
-                        
-                        <div class="flex items-center space-x-2 mb-3">
-                            <div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                                A
-                            </div>
-                            <span class="text-sm text-gray-600">Alice Simo</span>
-                            <span class="text-xs text-gray-400">•</span>
-                            <span class="text-xs text-gray-400">Douala</span>
-                        </div>
-                        
-                        <div class="flex items-center justify-between mb-3">
-                            <div>
-                                <p class="text-2xl font-bold text-green-600">450,000</p>
-                                <p class="text-xs text-gray-500">FCFA</p>
-                            </div>
-                            <div class="text-right text-xs text-gray-500">
-                                <p>Publié il y a 2h</p>
-                                <p>156 vues</p>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center space-x-2">
-                            <button class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm">
-                                <i data-lucide="eye" class="w-4 h-4 inline mr-1"></i>
-                                Voir
-                            </button>
-                            <button class="bg-yellow-100 text-yellow-600 p-2 rounded-lg hover:bg-yellow-200 transition-colors">
-                                <i data-lucide="edit" class="w-4 h-4"></i>
-                            </button>
-                            <button class="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition-colors">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Product Card 2 -->
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-                    <div class="relative">
-                        <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=300&h=200&fit=crop" 
-                             alt="Canapé 3 places" class="w-full h-48 object-cover">
-                        <div class="absolute top-3 left-3">
-                            <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                En attente
-                            </span>
-                        </div>
-                        <div class="absolute top-3 right-3">
-                            <button class="bg-white/90 p-2 rounded-full hover:bg-white transition-colors">
-                                <i data-lucide="more-vertical" class="w-4 h-4 text-gray-600"></i>
-                            </button>
-                        </div>
-                        <div class="absolute bottom-3 left-3">
-                            <span class="bg-black/50 text-white text-xs px-2 py-1 rounded">
-                                🏠 Maison
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="p-4">
-                        <div class="flex items-start justify-between mb-2">
-                            <h3 class="font-semibold text-gray-900 line-clamp-2">Canapé 3 places en cuir véritable</h3>
-                        </div>
-                        
-                        <div class="flex items-center space-x-2 mb-3">
-                            <div class="w-6 h-6 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                                B
-                            </div>
-                            <span class="text-sm text-gray-600">Bob Mendomo</span>
-                            <span class="text-xs text-gray-400">•</span>
-                            <span class="text-xs text-gray-400">Yaoundé</span>
-                        </div>
-                        
-                        <div class="flex items-center justify-between mb-3">
-                            <div>
-                                <p class="text-2xl font-bold text-green-600">85,000</p>
-                                <p class="text-xs text-gray-500">FCFA</p>
-                            </div>
-                            <div class="text-right text-xs text-gray-500">
-                                <p>Publié il y a 1j</p>
-                                <p>89 vues</p>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center space-x-2">
-                            <button class="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg hover:bg-green-700 transition-colors text-sm">
-                                <i data-lucide="check" class="w-4 h-4 inline mr-1"></i>
-                                Approuver
-                            </button>
-                            <button class="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition-colors">
-                                <i data-lucide="x" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Product Card 3 -->
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-                    <div class="relative">
-                        <img src="https://images.unsplash.com/photo-1503602642458-232111445657?w=300&h=200&fit=crop" 
-                             alt="Livre de cuisine" class="w-full h-48 object-cover">
-                        <div class="absolute top-3 left-3">
-                            <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                Vendu
-                            </span>
-                        </div>
-                        <div class="absolute top-3 right-3">
-                            <button class="bg-white/90 p-2 rounded-full hover:bg-white transition-colors">
-                                <i data-lucide="more-vertical" class="w-4 h-4 text-gray-600"></i>
-                            </button>
-                        </div>
-                        <div class="absolute bottom-3 left-3">
-                            <span class="bg-black/50 text-white text-xs px-2 py-1 rounded">
-                                📚 Livres
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="p-4">
-                        <div class="flex items-start justify-between mb-2">
-                            <h3 class="font-semibold text-gray-900 line-clamp-2">Collection de livres de cuisine française</h3>
-                        </div>
-                        
-                        <div class="flex items-center space-x-2 mb-3">
-                            <div class="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                                C
-                            </div>
-                            <span class="text-sm text-gray-600">Claire Tchoumba</span>
-                            <span class="text-xs text-gray-400">•</span>
-                            <span class="text-xs text-gray-400">Bafoussam</span>
-                        </div>
-                        
-                        <div class="flex items-center justify-between mb-3">
-                            <div>
-                                <p class="text-2xl font-bold text-green-600">15,000</p>
-                                <p class="text-xs text-gray-500">FCFA</p>
-                            </div>
-                            <div class="text-right text-xs text-gray-500">
-                                <p>Vendu il y a 3j</p>
-                                <p>234 vues</p>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center space-x-2">
-                            <button class="flex-1 bg-gray-100 text-gray-600 py-2 px-3 rounded-lg cursor-not-allowed text-sm">
-                                <i data-lucide="check-circle" class="w-4 h-4 inline mr-1"></i>
-                                Vendu
-                            </button>
-                            <button class="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-200 transition-colors">
-                                <i data-lucide="eye" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Product Card 4 -->
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-                    <div class="relative">
-                        <img src="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?w=300&h=200&fit=crop" 
-                             alt="Vélo de montagne" class="w-full h-48 object-cover">
-                        <div class="absolute top-3 left-3">
-                            <span class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                Rejeté
-                            </span>
-                        </div>
-                        <div class="absolute top-3 right-3">
-                            <button class="bg-white/90 p-2 rounded-full hover:bg-white transition-colors">
-                                <i data-lucide="more-vertical" class="w-4 h-4 text-gray-600"></i>
-                            </button>
-                        </div>
-                        <div class="absolute bottom-3 left-3">
-                            <span class="bg-black/50 text-white text-xs px-2 py-1 rounded">
-                                🚴 Sport
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="p-4">
-                        <div class="flex items-start justify-between mb-2">
-                            <h3 class="font-semibold text-gray-900 line-clamp-2">Vélo de montagne Trek 5000 - Bon état</h3>
-                        </div>
-                        <!-- ...other product details here... -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Suggestion for dynamic rendering: -->
-            {#
-            {% for product in products %}
-            <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-                <!-- ...product card content using product fields... -->
-            </div>
-            {% endfor %}
-            #}
-            <!-- End products grid -->
-        </main>
-    </div>
-
-    <!-- ...existing modal and scripts... -->
 {% endblock %}

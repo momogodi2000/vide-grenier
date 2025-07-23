@@ -1,0 +1,1013 @@
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard Administrateur - Vidé-Grenier Kamer{% endblock %}</title>
+    
+    <!-- Enhanced CDN Links -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif'],
+                        'mono': ['JetBrains Mono', 'Monaco', 'monospace'],
+                    },
+                    colors: {
+                        'cameroon': {
+                            'green': '#00823A',
+                            'red': '#D32F2F',
+                            'yellow': '#FFD23F',
+                        },
+                        'vgk': {
+                            'primary': '#16a34a',
+                            'secondary': '#dc2626',
+                            'accent': '#f59e0b',
+                            'dark': '#1f2937',
+                        }
+                    },
+                    backdropBlur: {
+                        'xs': '2px',
+                    },
+                    animation: {
+                        'slide-in': 'slideIn 0.3s ease-out',
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'bounce-in': 'bounceIn 0.6s ease-out',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Enhanced Base Styles */
+        * {
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        
+        /* Modern Card Styles */
+        .stats-card { 
+            @apply bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 backdrop-blur-sm; 
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
+        }
+        
+        .dark .stats-card {
+            background: linear-gradient(135deg, rgba(31,41,55,0.9) 0%, rgba(31,41,55,0.7) 100%);
+        }
+        
+        /* Glassmorphism Metric Cards */
+        .metric-card { 
+            @apply bg-gradient-to-br text-white rounded-2xl p-6 relative overflow-hidden transform hover:scale-110 transition-all duration-500 shadow-2xl backdrop-blur-md border border-white/20; 
+            background: linear-gradient(135deg, rgba(22,163,74,0.8) 0%, rgba(21,128,61,0.9) 100%);
+        }
+        
+        .metric-card::before { 
+            content: ''; 
+            @apply absolute -top-10 -right-10 w-32 h-32 bg-white bg-opacity-10 rounded-full transform rotate-45 blur-xl; 
+        }
+        
+        .metric-card::after {
+            content: '';
+            @apply absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent;
+        }
+        
+        /* Enhanced Sidebar */
+        .sidebar-link { 
+            @apply flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 dark:hover:from-gray-700 dark:hover:to-gray-600 hover:text-green-700 dark:hover:text-green-400 transition-all duration-300 group relative overflow-hidden; 
+        }
+        
+        .sidebar-link::before {
+            content: '';
+            @apply absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-green-500 to-blue-500 transform scale-y-0 transition-transform duration-300 origin-center;
+        }
+        
+        .sidebar-link:hover::before {
+            @apply scale-y-100;
+        }
+        
+        .sidebar-link.active { 
+            @apply bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900/50 dark:to-blue-900/50 text-green-700 dark:text-green-400 font-semibold shadow-lg border-l-4 border-green-500; 
+        }
+        
+        /* Modern Navigation */
+        .navbar-glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .dark .navbar-glass {
+            background: rgba(17, 24, 39, 0.95);
+            border-bottom: 1px solid rgba(75, 85, 99, 0.2);
+        }
+        
+        /* Enhanced Notifications */
+        .notification-badge { 
+            @apply absolute -top-2 -right-2 h-6 w-6 rounded-full bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs flex items-center justify-center animate-pulse shadow-lg font-semibold; 
+        }
+
+        /* Mobile Sidebar with better animations */
+        .mobile-sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+        }
+        
+        .dark .mobile-sidebar {
+            background: rgba(17, 24, 39, 0.95);
+        }
+        
+        .mobile-sidebar.open {
+            transform: translateX(0);
+        }
+
+        /* Enhanced Dropdown */
+        .dropdown {
+            @apply absolute right-0 mt-3 w-80 bg-white/95 dark:bg-gray-800/95 rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 z-50 transform opacity-0 scale-95 transition-all duration-300 backdrop-blur-xl border border-white/20 dark:border-gray-700/50;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .dropdown.show {
+            @apply opacity-100 scale-100;
+        }
+
+        /* Custom Scrollbars */
+        .dropdown::-webkit-scrollbar,
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .dropdown::-webkit-scrollbar-track,
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(241, 245, 249, 0.5);
+            border-radius: 3px;
+        }
+
+        .dropdown::-webkit-scrollbar-thumb,
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #10b981, #059669);
+            border-radius: 3px;
+        }
+
+        /* Enhanced User Avatar */
+        .user-avatar {
+            @apply w-10 h-10 bg-gradient-to-br from-green-500 via-green-600 to-green-700 rounded-xl flex items-center justify-center text-white font-bold shadow-lg transform hover:scale-110 transition-all duration-300;
+        }
+
+        /* Profile Dropdown Items */
+        .profile-dropdown-item {
+            @apply flex items-center px-5 py-4 text-sm text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-700 dark:hover:to-gray-600 transition-all duration-200 cursor-pointer relative overflow-hidden;
+        }
+
+        .profile-dropdown-item::before {
+            content: '';
+            @apply absolute left-0 top-0 w-0 h-full bg-gradient-to-r from-green-500 to-blue-500 transition-all duration-300;
+        }
+
+        .profile-dropdown-item:hover::before {
+            @apply w-1;
+        }
+
+        /* Enhanced Icons */
+        .sidebar-icon {
+            @apply w-5 h-5 mr-3 text-gray-500 dark:text-gray-400 group-hover:text-green-600 dark:group-hover:text-green-400 transition-all duration-300 transform group-hover:scale-110;
+        }
+
+        .sidebar-link.active .sidebar-icon {
+            @apply text-green-600 dark:text-green-400;
+        }
+
+        /* Theme Toggle Button */
+        .theme-toggle {
+            @apply relative w-14 h-8 bg-gray-300 dark:bg-gray-600 rounded-full transition-colors duration-300 cursor-pointer;
+        }
+
+        .theme-toggle::before {
+            content: '';
+            @apply absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 transform;
+        }
+
+        .dark .theme-toggle::before {
+            @apply translate-x-6 bg-yellow-400;
+        }
+
+        /* Responsive Design Enhancements */
+        @media (max-width: 768px) {
+            .metric-card,
+            .stats-card {
+                @apply p-4;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .dropdown {
+                @apply w-72 right-2;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dropdown {
+                @apply w-64 right-1;
+            }
+        }
+
+        /* Enhanced Animations */
+        @keyframes slideIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(-20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(-10px) scale(0.95); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+
+        @keyframes bounceIn {
+            0% { 
+                opacity: 0; 
+                transform: scale(0.3) translateY(-50px); 
+            }
+            50% { 
+                opacity: 1; 
+                transform: scale(1.05) translateY(-10px); 
+            }
+            70% { 
+                transform: scale(0.9) translateY(0); 
+            }
+            100% { 
+                opacity: 1; 
+                transform: scale(1) translateY(0); 
+            }
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+            }
+            to {
+                box-shadow: 0 0 30px rgba(34, 197, 94, 0.8);
+            }
+        }
+
+        .glow-effect {
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        /* Loading States */
+        .loading-shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        .dark .loading-shimmer {
+            background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+            background-size: 200% 100%;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body class="h-full bg-gray-50 dark:bg-gray-900 transition-colors duration-300" x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }" x-init="$watch('darkMode', val => { localStorage.setItem('darkMode', val); val ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark') })" :class="{ 'dark': darkMode }">
+    <div class="min-h-full">
+        <!-- Mobile menu overlay -->
+        <div id="mobile-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden lg:hidden transition-opacity duration-300"></div>
+
+        <!-- Enhanced Navigation Header -->
+        <nav class="navbar-glass shadow-xl border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-30">
+            <div class="mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <!-- Mobile menu button -->
+                        <button id="mobile-menu-btn" class="p-3 rounded-xl text-gray-400 hover:text-gray-500 hover:bg-gray-100/80 dark:hover:bg-gray-700/80 lg:hidden transition-all duration-200 transform hover:scale-110">
+                            <i data-lucide="menu" class="w-6 h-6"></i>
+                        </button>
+                        
+                        <div class="flex-shrink-0 flex items-center ml-2 lg:ml-0">
+                            <div class="h-12 w-auto bg-gradient-to-br from-green-600 via-green-700 to-green-800 text-white px-5 py-2 rounded-xl font-bold shadow-lg transform hover:scale-105 transition-all duration-300 glow-effect">
+                                <div class="flex items-center space-x-1">
+                                    <i data-lucide="store" class="w-5 h-5"></i>
+                                    <span>VGK</span>
+                                </div>
+                            </div>
+                            <span class="ml-4 text-xl font-bold text-gray-900 dark:text-white hidden sm:block">Admin Panel</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-3">
+                        <!-- Enhanced Time & Date -->
+                        <div class="text-sm text-gray-600 dark:text-gray-300 hidden md:block bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-4 py-2 rounded-xl shadow-md border border-gray-200/50 dark:border-gray-700/50">
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="clock" class="w-4 h-4 text-green-500"></i>
+                                <div id="current-time" class="font-medium"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Theme Toggle -->
+                        <button @click="darkMode = !darkMode" class="p-3 rounded-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-700 transition-all duration-300 shadow-md border border-gray-200/50 dark:border-gray-700/50 transform hover:scale-110">
+                            <i data-lucide="sun" class="w-5 h-5 text-yellow-500 dark:hidden"></i>
+                            <i data-lucide="moon" class="w-5 h-5 text-blue-400 hidden dark:block"></i>
+                        </button>
+                        
+                        <!-- Enhanced Notifications -->
+                        <button class="p-3 text-gray-400 hover:text-gray-500 hover:bg-white/80 dark:hover:bg-gray-700/80 rounded-xl relative transition-all duration-300 transform hover:scale-110 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
+                            <i data-lucide="bell-ring" class="w-6 h-6"></i>
+                            {% if unread_notifications_count > 0 %}
+                            <span class="notification-badge">{{ unread_notifications_count }}</span>
+                            {% endif %}
+                        </button>
+                        
+                        <!-- Enhanced Messages -->
+                        <a href="{% url 'backend:chat_list' %}" class="p-3 text-gray-400 hover:text-gray-500 hover:bg-white/80 dark:hover:bg-gray-700/80 rounded-xl relative transition-all duration-300 transform hover:scale-110 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
+                            <i data-lucide="message-square-heart" class="w-6 h-6"></i>
+                            {% if unread_messages_count > 0 %}
+                            <span class="notification-badge">{{ unread_messages_count }}</span>
+                            {% endif %}
+                        </a>
+                        
+                        <!-- Enhanced Profile Dropdown -->
+                        <div class="relative">
+                            <button id="profile-dropdown-btn" class="flex items-center space-x-3 p-2 hover:bg-white/80 dark:hover:bg-gray-700/80 rounded-xl transition-all duration-300 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 transform hover:scale-105">
+                                <div class="user-avatar">
+                                    {{ user.first_name.0|upper|default:"A" }}
+                                </div>
+                                <div class="hidden sm:flex flex-col items-start">
+                                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ user.get_full_name|default:"Admin VGK" }}</span>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ user.email|default:"admin@vgk.com" }}</span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 hidden sm:block transition-transform duration-300" id="dropdown-chevron"></i>
+                            </button>
+                            
+                            <!-- Enhanced Dropdown Menu -->
+                            <div id="profile-dropdown" class="dropdown">
+                                <div class="py-2">
+                                    <!-- Enhanced User Info Header -->
+                                    <div class="px-5 py-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200/50 dark:border-gray-600/50">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="user-avatar">
+                                                {{ user.first_name.0|upper|default:"A" }}
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                                    {{ user.get_full_name|default:"Admin VGK" }}
+                                                </div>
+                                                <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                                    {{ user.email|default:"admin@vgk.com" }}
+                                                </div>
+                                                <div class="flex items-center space-x-1 text-xs text-green-600 dark:text-green-400 mt-1 font-medium">
+                                                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                                    <span>En ligne</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Profile Management Section -->
+                                    <div class="py-2">
+                                        <a href="#" class="profile-dropdown-item group">
+                                            <div class="flex items-center justify-between w-full">
+                                                <div class="flex items-center">
+                                                    <i data-lucide="user-circle" class="w-5 h-5 mr-3 text-gray-400 group-hover:text-blue-500 transition-colors"></i>
+                                                    <span>Mon Profil</span>
+                                                </div>
+                                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 transform group-hover:translate-x-1 transition-transform"></i>
+                                            </div>
+                                        </a>
+                                        
+                                        <a href="#" class="profile-dropdown-item group">
+                                            <div class="flex items-center justify-between w-full">
+                                                <div class="flex items-center">
+                                                    <i data-lucide="shield-check" class="w-5 h-5 mr-3 text-gray-400 group-hover:text-green-500 transition-colors"></i>
+                                                    <span>Sécurité du Compte</span>
+                                                </div>
+                                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 transform group-hover:translate-x-1 transition-transform"></i>
+                                            </div>
+                                        </a>
+                                        
+                                        <a href="#" class="profile-dropdown-item group">
+                                            <div class="flex items-center justify-between w-full">
+                                                <div class="flex items-center">
+                                                    <i data-lucide="bell-plus" class="w-5 h-5 mr-3 text-gray-400 group-hover:text-yellow-500 transition-colors"></i>
+                                                    <span>Notifications</span>
+                                                </div>
+                                                <div class="flex items-center space-x-2">
+                                                    <span class="text-xs bg-gradient-to-r from-red-500 to-pink-500 text-white px-2 py-1 rounded-full font-medium">3</span>
+                                                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 transform group-hover:translate-x-1 transition-transform"></i>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        
+                                        <a href="#" class="profile-dropdown-item group">
+                                            <div class="flex items-center justify-between w-full">
+                                                <div class="flex items-center">
+                                                    <i data-lucide="palette" class="w-5 h-5 mr-3 text-gray-400 group-hover:text-purple-500 transition-colors"></i>
+                                                    <span>Préférences</span>
+                                                </div>
+                                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 transform group-hover:translate-x-1 transition-transform"></i>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    
+                                    <div class="border-t border-gray-100 dark:border-gray-600 my-2"></div>
+                                    
+                                    <!-- System Settings Section -->
+                                    <div class="py-2">
+                                        <a href="{% url 'backend:admin_panel' %}" class="profile-dropdown-item group">
+                                            <div class="flex items-center justify-between w-full">
+                                                <div class="flex items-center">
+                                                    <i data-lucide="settings-2" class="w-5 h-5 mr-3 text-gray-400 group-hover:text-indigo-500 transition-colors"></i>
+                                                    <span>Paramètres Admin</span>
+                                                </div>
+                                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 transform group-hover:translate-x-1 transition-transform"></i>
+                                            </div>
+                                        </a>
+                                        
+                                        <a href="#" class="profile-dropdown-item group">
+                                            <div class="flex items-center justify-between w-full">
+                                                <div class="flex items-center">
+                                                    <i data-lucide="monitor-speaker" class="w-5 h-5 mr-3 text-gray-400 group-hover:text-blue-500 transition-colors"></i>
+                                                    <span>Informations Système</span>
+                                                </div>
+                                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 transform group-hover:translate-x-1 transition-transform"></i>
+                                            </div>
+                                        </a>
+                                        
+                                        <a href="#" class="profile-dropdown-item group">
+                                            <div class="flex items-center justify-between w-full">
+                                                <div class="flex items-center">
+                                                    <i data-lucide="life-buoy" class="w-5 h-5 mr-3 text-gray-400 group-hover:text-orange-500 transition-colors"></i>
+                                                    <span>Aide & Support</span>
+                                                </div>
+                                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 transform group-hover:translate-x-1 transition-transform"></i>
+                                            </div>
+                                        </a>
+                                        
+                                        <a href="#" class="profile-dropdown-item group">
+                                            <div class="flex items-center justify-between w-full">
+                                                <div class="flex items-center">
+                                                    <i data-lucide="book-open-check" class="w-5 h-5 mr-3 text-gray-400 group-hover:text-teal-500 transition-colors"></i>
+                                                    <span>Documentation</span>
+                                                </div>
+                                                <i data-lucide="external-link" class="w-4 h-4 text-gray-400"></i>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    
+                                    <div class="border-t border-gray-100 dark:border-gray-600 my-2"></div>
+                                    
+                                    <!-- Activity Section -->
+                                    <div class="py-2">
+                                        <a href="#" class="profile-dropdown-item group">
+                                            <div class="flex items-center justify-between w-full">
+                                                <div class="flex items-center">
+                                                    <i data-lucide="activity-square" class="w-5 h-5 mr-3 text-gray-400 group-hover:text-green-500 transition-colors"></i>
+                                                    <span>Journal d'Activité</span>
+                                                </div>
+                                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 transform group-hover:translate-x-1 transition-transform"></i>
+                                            </div>
+                                        </a>
+                                        
+                                        <!-- Enhanced Quick Stats -->
+                                        <div class="px-5 py-3 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 text-xs text-gray-600 dark:text-gray-300 rounded-lg mx-2 my-2">
+                                            <div class="space-y-2">
+                                                <div class="flex justify-between items-center">
+                                                    <span class="flex items-center"><i data-lucide="calendar-days" class="w-3 h-3 mr-1"></i>Sessions aujourd'hui:</span>
+                                                    <span class="font-semibold text-green-600 dark:text-green-400">2</span>
+                                                </div>
+                                                <div class="flex justify-between items-center">
+                                                    <span class="flex items-center"><i data-lucide="clock-3" class="w-3 h-3 mr-1"></i>Dernière connexion:</span>
+                                                    <span class="font-semibold">Il y a 2h</span>
+                                                </div>
+                                                <div class="flex justify-between items-center">
+                                                    <span class="flex items-center"><i data-lucide="zap" class="w-3 h-3 mr-1"></i>Statut:</span>
+                                                    <span class="font-semibold text-green-600 dark:text-green-400">Actif</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="border-t border-gray-200 dark:border-gray-600 my-2"></div>
+                                    
+                                    <!-- Logout Section -->
+                                    <div class="py-2">
+                                        <a href="{% url 'backend:logout' %}" class="profile-dropdown-item text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 group">
+                                            <div class="flex items-center justify-between w-full">
+                                                <div class="flex items-center">
+                                                    <i data-lucide="log-out" class="w-5 h-5 mr-3 text-red-500"></i>
+                                                    <span class="font-semibold">Se Déconnecter</span>
+                                                </div>
+                                                <i data-lucide="power" class="w-4 h-4 text-red-400"></i>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="flex">
+            <!-- Enhanced Mobile Sidebar -->
+            <div id="mobile-sidebar" class="fixed inset-y-0 left-0 z-50 w-72 mobile-sidebar lg:hidden shadow-2xl">
+                <div class="flex flex-col h-full pt-6 pb-4 overflow-y-auto custom-scrollbar">
+                    <div class="flex items-center justify-between px-6 mb-8">
+                        <div class="flex items-center">
+                            <div class="h-12 w-auto bg-gradient-to-br from-green-600 via-green-700 to-green-800 text-white px-4 py-2 rounded-xl font-bold shadow-lg glow-effect">
+                                <div class="flex items-center space-x-1">
+                                    <i data-lucide="store" class="w-5 h-5"></i>
+                                    <span>VGK</span>
+                                </div>
+                            </div>
+                            <span class="ml-3 text-lg font-bold text-gray-900 dark:text-white">Admin</span>
+                        </div>
+                        <button id="mobile-close-btn" class="p-2 rounded-xl text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 transform hover:scale-110">
+                            <i data-lucide="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Mobile Navigation Links -->
+                    <nav class="flex-1 px-4 space-y-2" id="mobile-nav-links">
+                        <a href="{% url 'backend:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                            <i data-lucide="layout-dashboard" class="sidebar-icon"></i>
+                            <span>Dashboard</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:admin_user_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_user_list' %}active{% endif %}">
+                            <i data-lucide="users-round" class="sidebar-icon"></i>
+                            <span>Utilisateurs</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:admin_product_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_product_list' %}active{% endif %}">
+                            <i data-lucide="package-open" class="sidebar-icon"></i>
+                            <span>Produits</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:admin_order_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_order_list' %}active{% endif %}">
+                            <i data-lucide="shopping-cart" class="sidebar-icon"></i>
+                            <span>Commandes</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'admin_payment_list' %}active{% endif %}">
+                            <i data-lucide="credit-card" class="sidebar-icon"></i>
+                            <span>Paiements</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'admin_loyalty_list' %}active{% endif %}">
+                            <i data-lucide="star" class="sidebar-icon"></i>
+                            <span>Fidélité</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'admin_promotion_list' %}active{% endif %}">
+                            <i data-lucide="percent" class="sidebar-icon"></i>
+                            <span>Promotions</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:category_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'category_list' %}active{% endif %}">
+                            <i data-lucide="layers-3" class="sidebar-icon"></i>
+                            <span>Catégories</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:admin_stock' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_stock' %}active{% endif %}">
+                            <i data-lucide="warehouse" class="sidebar-icon"></i>
+                            <span>Stock</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:admin_stock_add' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_stock_add' %}active{% endif %}">
+                            <i data-lucide="plus-square" class="sidebar-icon"></i>
+                            <span>Ajouter Stock</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:pickup_point_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'pickup_point_list' %}active{% endif %}">
+                            <i data-lucide="map-pin" class="sidebar-icon"></i>
+                            <span>Points de Retrait</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:admin_analytics' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_analytics' %}active{% endif %}">
+                            <i data-lucide="trending-up" class="sidebar-icon"></i>
+                            <span>Analytics</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:review_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'review_list' %}active{% endif %}">
+                            <i data-lucide="star-half" class="sidebar-icon"></i>
+                            <span>Avis & Évaluations</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'admin_newsletter_list' %}active{% endif %}">
+                            <i data-lucide="mail-open" class="sidebar-icon"></i>
+                            <span>Newsletter</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:admin_panel' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_panel' %}active{% endif %}">
+                            <i data-lucide="settings-2" class="sidebar-icon"></i>
+                            <span>Configuration</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Enhanced Desktop Sidebar -->
+            <div class="hidden lg:flex lg:w-72 lg:flex-col lg:fixed lg:inset-y-0 lg:top-16">
+                <div class="flex flex-col flex-grow pt-6 pb-4 overflow-y-auto bg-white/95 dark:bg-gray-800/95 border-r border-gray-200/50 dark:border-gray-700/50 custom-scrollbar backdrop-blur-xl">
+                    <nav class="flex-1 px-4 space-y-2" id="desktop-nav-links">
+                        <a href="{% url 'backend:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                            <i data-lucide="layout-dashboard" class="sidebar-icon"></i>
+                            <span>Dashboard</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:admin_user_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_user_list' %}active{% endif %}">
+                            <i data-lucide="users-round" class="sidebar-icon"></i>
+                            <span>Utilisateurs</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:admin_product_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_product_list' %}active{% endif %}">
+                            <i data-lucide="package-open" class="sidebar-icon"></i>
+                            <span>Produits</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:admin_order_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_order_list' %}active{% endif %}">
+                            <i data-lucide="shopping-cart" class="sidebar-icon"></i>
+                            <span>Commandes</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'admin_payment_list' %}active{% endif %}">
+                            <i data-lucide="credit-card" class="sidebar-icon"></i>
+                            <span>Paiements</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'admin_loyalty_list' %}active{% endif %}">
+                            <i data-lucide="star" class="sidebar-icon"></i>
+                            <span>Fidélité</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'admin_promotion_list' %}active{% endif %}">
+                            <i data-lucide="percent" class="sidebar-icon"></i>
+                            <span>Promotions</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:category_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'category_list' %}active{% endif %}">
+                            <i data-lucide="layers-3" class="sidebar-icon"></i>
+                            <span>Catégories</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:admin_stock' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_stock' %}active{% endif %}">
+                            <i data-lucide="warehouse" class="sidebar-icon"></i>
+                            <span>Stock</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:admin_stock_add' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_stock_add' %}active{% endif %}">
+                            <i data-lucide="plus-square" class="sidebar-icon"></i>
+                            <span>Ajouter Stock</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:pickup_point_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'pickup_point_list' %}active{% endif %}">
+                            <i data-lucide="map-pin" class="sidebar-icon"></i>
+                            <span>Points de Retrait</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:admin_analytics' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_analytics' %}active{% endif %}">
+                            <i data-lucide="trending-up" class="sidebar-icon"></i>
+                            <span>Analytics</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:review_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'review_list' %}active{% endif %}">
+                            <i data-lucide="star-half" class="sidebar-icon"></i>
+                            <span>Avis & Évaluations</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'admin_newsletter_list' %}active{% endif %}">
+                            <i data-lucide="mail-open" class="sidebar-icon"></i>
+                            <span>Newsletter</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="{% url 'backend:admin_panel' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_panel' %}active{% endif %}">
+                            <i data-lucide="settings-2" class="sidebar-icon"></i>
+                            <span>Configuration</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Enhanced Main Content -->
+            <div class="flex-1 lg:ml-72">
+                <main class="flex-1 relative overflow-y-auto focus:outline-none">
+                    <div class="py-8">
+                        <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+                            {% block content %}
+                            <!-- Content will be inserted here by child templates -->
+                            {% endblock %}
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced JavaScript -->
+    <script>
+        // Enhanced Time Update with more details
+        function updateTime() {
+            const timeElement = document.getElementById('current-time');
+            if (!timeElement) return;
+            
+            const now = new Date();
+            const timeString = now.toLocaleString('fr-FR', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            timeElement.textContent = timeString;
+        }
+
+        // Enhanced Mobile Menu with better animations
+        function setupMobileMenu() {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileCloseBtn = document.getElementById('mobile-close-btn');
+            const mobileSidebar = document.getElementById('mobile-sidebar');
+            const mobileOverlay = document.getElementById('mobile-overlay');
+
+            function openMobileMenu() {
+                mobileSidebar.classList.add('open');
+                mobileOverlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                
+                // Add stagger animation to menu items
+                const menuItems = mobileSidebar.querySelectorAll('.sidebar-link');
+                menuItems.forEach((item, index) => {
+                    item.style.opacity = '0';
+                    item.style.transform = 'translateX(-20px)';
+                    setTimeout(() => {
+                        item.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                        item.style.opacity = '1';
+                        item.style.transform = 'translateX(0)';
+                    }, index * 50);
+                });
+            }
+
+            function closeMobileMenu() {
+                mobileSidebar.classList.remove('open');
+                mobileOverlay.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', openMobileMenu);
+            if (mobileCloseBtn) mobileCloseBtn.addEventListener('click', closeMobileMenu);
+            if (mobileOverlay) mobileOverlay.addEventListener('click', closeMobileMenu);
+
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 1024) {
+                    closeMobileMenu();
+                }
+            });
+        }
+
+        // Enhanced Profile Dropdown with better interactions
+        function setupProfileDropdown() {
+            const profileBtn = document.getElementById('profile-dropdown-btn');
+            const profileDropdown = document.getElementById('profile-dropdown');
+            const dropdownChevron = document.getElementById('dropdown-chevron');
+            let isOpen = false;
+
+            function toggleDropdown() {
+                isOpen = !isOpen;
+                if (isOpen) {
+                    profileDropdown.classList.add('show');
+                    dropdownChevron.style.transform = 'rotate(180deg)';
+                    
+                    // Animate dropdown items
+                    const items = profileDropdown.querySelectorAll('.profile-dropdown-item');
+                    items.forEach((item, index) => {
+                        item.style.opacity = '0';
+                        item.style.transform = 'translateY(-10px)';
+                        setTimeout(() => {
+                            item.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+                            item.style.opacity = '1';
+                            item.style.transform = 'translateY(0)';
+                        }, index * 30);
+                    });
+                } else {
+                    profileDropdown.classList.remove('show');
+                    dropdownChevron.style.transform = 'rotate(0deg)';
+                }
+            }
+
+            function closeDropdown() {
+                isOpen = false;
+                profileDropdown.classList.remove('show');
+                dropdownChevron.style.transform = 'rotate(0deg)';
+            }
+
+            if (profileBtn) {
+                profileBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleDropdown();
+                });
+            }
+
+            document.addEventListener('click', function(e) {
+                if (isOpen && !profileDropdown.contains(e.target)) {
+                    closeDropdown();
+                }
+            });
+        }
+
+        // Enhanced Animations with better performance
+        function animateElements() {
+            const cards = document.querySelectorAll('.stats-card, .metric-card');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.style.opacity = '1';
+                            entry.target.style.transform = 'translateY(0) scale(1)';
+                        }, index * 100);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            cards.forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px) scale(0.95)';
+                card.style.transition = 'opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                observer.observe(card);
+            });
+        }
+
+        // Enhanced Sidebar Link Interactions
+        function enhanceSidebarLinks() {
+            const sidebarLinks = document.querySelectorAll('.sidebar-link');
+            
+            sidebarLinks.forEach(link => {
+                link.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateX(8px)';
+                });
+                
+                link.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateX(0)';
+                });
+                
+                link.addEventListener('click', function(e) {
+                    // Add ripple effect
+                    const ripple = document.createElement('span');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.position = 'absolute';
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = x + 'px';
+                    ripple.style.top = y + 'px';
+                    ripple.style.background = 'rgba(34, 197, 94, 0.3)';
+                    ripple.style.borderRadius = '50%';
+                    ripple.style.transform = 'scale(0)';
+                    ripple.style.animation = 'ripple 0.6s ease-out';
+                    ripple.style.pointerEvents = 'none';
+                    
+                    this.style.position = 'relative';
+                    this.style.overflow = 'hidden';
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+        }
+
+        // Performance optimization for scroll
+        let ticking = false;
+        function updateOnScroll() {
+            if (!ticking) {
+                requestAnimationFrame(() => {
+                    const navbar = document.querySelector('nav');
+                    if (window.scrollY > 20) {
+                        navbar.style.backdropFilter = 'blur(25px)';
+                        navbar.style.background = 'rgba(255, 255, 255, 0.8)';
+                    } else {
+                        navbar.style.backdropFilter = 'blur(20px)';
+                        navbar.style.background = 'rgba(255, 255, 255, 0.95)';
+                    }
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        }
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Alpine.js dark mode
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.documentElement.classList.add('dark');
+            }
+            
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+            
+            setupMobileMenu();
+            setupProfileDropdown();
+            enhanceSidebarLinks();
+            
+            updateTime();
+            setInterval(updateTime, 1000); // Update every second
+            
+            setTimeout(animateElements, 200);
+            
+            window.addEventListener('scroll', updateOnScroll);
+            
+            console.log('🚀 Enhanced VGK Admin Panel initialized successfully');
+        });
+
+        // Enhanced keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Escape key functionality
+            if (e.key === 'Escape') {
+                const mobileSidebar = document.getElementById('mobile-sidebar');
+                const mobileOverlay = document.getElementById('mobile-overlay');
+                const profileDropdown = document.getElementById('profile-dropdown');
+                const dropdownChevron = document.getElementById('dropdown-chevron');
+                
+                if (mobileSidebar?.classList.contains('open')) {
+                    mobileSidebar.classList.remove('open');
+                    mobileOverlay.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+                
+                if (profileDropdown?.classList.contains('show')) {
+                    profileDropdown.classList.remove('show');
+                    dropdownChevron.style.transform = 'rotate(0deg)';
+                }
+            }
+            
+            // Ctrl/Cmd + D for dashboard
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                window.location.href = "{% url 'backend:dashboard' %}";
+            }
+            
+            // Ctrl/Cmd + U for users
+            if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+                e.preventDefault();
+                window.location.href = "{% url 'backend:admin_user_list' %}";
+            }
+        });
+
+        // Add ripple animation styles
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        {% block extra_js %}{% endblock %}
+    </script>
+</body>
+</html>
