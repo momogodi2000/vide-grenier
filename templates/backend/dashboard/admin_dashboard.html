@@ -7,55 +7,84 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-    // Auto-logout after 25 minutes (1500 seconds) of inactivity
-    (function() {
-        let logoutTimer;
-        const LOGOUT_TIME = 1500 * 1000; // 25 minutes in ms
-        function resetTimer() {
-            clearTimeout(logoutTimer);
-            logoutTimer = setTimeout(logoutUser, LOGOUT_TIME);
-        }
-        function logoutUser() {
-            // Clear all localStorage
-            localStorage.clear();
-            // Optionally clear sessionStorage too
-            sessionStorage.clear();
-            // Redirect to login page with next param
-            window.location.href = '/accounts/login/?next=' + encodeURIComponent(window.location.pathname);
-        }
-        // Listen for user activity
-        ['click','mousemove','keydown','scroll','touchstart'].forEach(evt => {
-            window.addEventListener(evt, resetTimer, true);
-        });
-        resetTimer();
-    })();
-    </script>
     <style>
-        .stats-card { @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow; }
-        .metric-card { @apply bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl p-6 relative overflow-hidden; }
-        .metric-card::before { content: ''; @apply absolute top-0 right-0 w-20 h-20 bg-white bg-opacity-10 rounded-full transform translate-x-6 -translate-y-6; }
-        .sidebar-link { @apply flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-green-50 hover:text-green-700 transition-colors; }
-        .sidebar-link.active { @apply bg-green-100 text-green-700 font-medium; }
-        .notification-badge { @apply absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center; }
+        .stats-card { 
+            @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-300; 
+        }
+        
+        .metric-card { 
+            @apply bg-gradient-to-br text-white rounded-xl p-6 relative overflow-hidden transform hover:scale-105 transition-transform duration-300; 
+        }
+        
+        .metric-card::before { 
+            content: ''; 
+            @apply absolute top-0 right-0 w-20 h-20 bg-white bg-opacity-10 rounded-full transform translate-x-6 -translate-y-6; 
+        }
+        
+        .sidebar-link { 
+            @apply flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-green-50 hover:text-green-700 transition-colors duration-200; 
+        }
+        
+        .sidebar-link.active { 
+            @apply bg-green-100 text-green-700 font-medium; 
+        }
+        
+        .notification-badge { 
+            @apply absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center; 
+        }
+
+        .mobile-sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .mobile-sidebar.open {
+            transform: translateX(0);
+        }
+
+        @media (max-width: 768px) {
+            .metric-card {
+                @apply p-4;
+            }
+            .stats-card {
+                @apply p-4;
+            }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .spin {
+            animation: spin 1s linear infinite;
+        }
     </style>
 </head>
 <body class="h-full">
     <div class="min-h-full">
+        <!-- Mobile menu overlay -->
+        <div id="mobile-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden"></div>
+
         <!-- Navigation Header -->
         <nav class="bg-white shadow-sm border-b border-gray-200">
             <div class="mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 flex items-center">
+                        <!-- Mobile menu button -->
+                        <button id="mobile-menu-btn" class="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 lg:hidden">
+                            <i data-lucide="menu" class="w-6 h-6"></i>
+                        </button>
+                        
+                        <div class="flex-shrink-0 flex items-center ml-2 lg:ml-0">
                             <div class="h-8 w-auto bg-green-600 text-white px-3 py-1 rounded-md font-bold">VGK</div>
-                            <span class="ml-3 text-xl font-bold text-gray-900">Admin Panel</span>
+                            <span class="ml-3 text-xl font-bold text-gray-900 hidden sm:block">Admin Panel</span>
                         </div>
                     </div>
                     
                     <div class="flex items-center space-x-4">
                         <!-- Time & Date -->
-                        <div class="text-sm text-gray-600">
+                        <div class="text-sm text-gray-600 hidden sm:block">
                             <div id="current-time"></div>
                         </div>
                         
@@ -77,8 +106,8 @@
                                 <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white font-semibold">
                                     A
                                 </div>
-                                <span class="text-sm font-medium text-gray-700">Admin VGK</span>
-                                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+                                <span class="text-sm font-medium text-gray-700 hidden sm:block">Admin VGK</span>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 hidden sm:block"></i>
                             </button>
                         </div>
                     </div>
@@ -86,90 +115,51 @@
             </div>
         </nav>
 
-        <div class="flex h-full">
-            <!-- Sidebar -->
-            <div class="hidden md:flex md:w-64 md:flex-col">
+        <div class="flex">
+            <!-- Mobile Sidebar -->
+            <div id="mobile-sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg mobile-sidebar lg:hidden">
+                <div class="flex flex-col h-full pt-5 pb-4 overflow-y-auto">
+                    <div class="flex items-center justify-between px-4 mb-6">
+                        <div class="flex items-center">
+                            <div class="h-8 w-auto bg-green-600 text-white px-3 py-1 rounded-md font-bold">VGK</div>
+                            <span class="ml-3 text-lg font-bold text-gray-900">Admin</span>
+                        </div>
+                        <button id="mobile-close-btn" class="p-2 rounded-md text-gray-400 hover:text-gray-500">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <nav class="flex-1 px-2 space-y-1" id="mobile-nav-links">
+                        <!-- Links will be populated by JavaScript -->
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Desktop Sidebar -->
+            <div class="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:top-16">
                 <div class="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto bg-white border-r border-gray-200">
-                   <!-- filepath: e:\project\vide-grenier\vide\templates\backend\dashboard\admin_dashboard.html -->
-<div class="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto bg-white border-r border-gray-200">
-    <nav class="flex-1 px-2 space-y-2">
-        <a href="{% url 'backend:dashboard' %}" class="sidebar-link{% if request.resolver_match.url_name == 'dashboard' %} active{% endif %}">
-            <i data-lucide="layout-dashboard" class="w-5 h-5 mr-2"></i> Dashboard
-        </a>
-        <a href="{% url 'backend:admin_user_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_user_list' %} active{% endif %}">
-            <i data-lucide="users" class="w-5 h-5 mr-2"></i> Utilisateurs
-        </a>
-        <a href="{% url 'backend:admin_product_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_product_list' %} active{% endif %}">
-            <i data-lucide="package" class="w-5 h-5 mr-2"></i> Produits
-        </a>
-        <a href="{% url 'backend:admin_order_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_order_list' %} active{% endif %}">
-            <i data-lucide="shopping-cart" class="w-5 h-5 mr-2"></i> Commandes
-        </a>
-        <a href="{% url 'backend:admin_payment_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_payment_list' %} active{% endif %}">
-            <i data-lucide="credit-card" class="w-5 h-5 mr-2"></i> Paiements
-        </a>
-        <a href="{% url 'backend:admin_loyalty_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_loyalty_list' %} active{% endif %}">
-            <i data-lucide="star" class="w-5 h-5 mr-2"></i> Fidélité
-        </a>
-        <a href="{% url 'backend:admin_promotion_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_promotion_list' %} active{% endif %}">
-            <i data-lucide="percent" class="w-5 h-5 mr-2"></i> Promotions
-        </a>
-        <a href="{% url 'backend:category_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'category_list' %} active{% endif %}">
-            <i data-lucide="layers" class="w-5 h-5 mr-2"></i> Catégories
-        </a>
-        <a href="{% url 'backend:admin_stock' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_stock' %} active{% endif %}">
-            <i data-lucide="warehouse" class="w-5 h-5 mr-2"></i> Stock
-        </a>
-        <a href="{% url 'backend:admin_stock_add' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_stock_add' %} active{% endif %}">
-            <i data-lucide="plus-square" class="w-5 h-5 mr-2"></i> Ajouter Stock
-        </a>
-        <a href="{% url 'backend:pickup_point_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'pickup_point_list' %} active{% endif %}">
-            <i data-lucide="map-pin" class="w-5 h-5 mr-2"></i> Points de Retrait
-        </a>
-        <a href="{% url 'backend:admin_analytics' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_analytics' %} active{% endif %}">
-            <i data-lucide="bar-chart-3" class="w-5 h-5 mr-2"></i> Analytics
-        </a>
-        <a href="{% url 'backend:review_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'review_list' %} active{% endif %}">
-            <i data-lucide="star-half" class="w-5 h-5 mr-2"></i> Avis & Évaluations
-        </a>
-        <a href="{% url 'backend:chat_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'chat_list' %} active{% endif %}">
-            <i data-lucide="message-circle" class="w-5 h-5 mr-2"></i> Chat Support
-        </a>
-        <a href="{% url 'backend:favorite_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'favorite_list' %} active{% endif %}">
-            <i data-lucide="heart" class="w-5 h-5 mr-2"></i> Favoris
-        </a>
-        <a href="{% url 'backend:wishlist' %}" class="sidebar-link{% if request.resolver_match.url_name == 'wishlist' %} active{% endif %}">
-            <i data-lucide="gift" class="w-5 h-5 mr-2"></i> Wishlist
-        </a>
-        <a href="{% url 'backend:admin_newsletter_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_newsletter_list' %} active{% endif %}">
-            <i data-lucide="mail" class="w-5 h-5 mr-2"></i> Newsletter
-        </a>
-        <a href="{% url 'backend:admin_notification_list' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_notification_list' %} active{% endif %}">
-            <i data-lucide="bell" class="w-5 h-5 mr-2"></i> Notifications
-        </a>
-        <a href="{% url 'backend:admin_panel' %}" class="sidebar-link{% if request.resolver_match.url_name == 'admin_panel' %} active{% endif %}">
-            <i data-lucide="settings" class="w-5 h-5 mr-2"></i> Configuration
-        </a>
+                    <nav class="flex-1 px-2 space-y-1" id="desktop-nav-links">
+                        <!-- Links will be populated by JavaScript -->
+                    </nav>
                 </div>
             </div>
 
             <!-- Main Content -->
-            <div class="flex-1 flex flex-col overflow-hidden">
+            <div class="flex-1 lg:ml-64">
                 <main class="flex-1 relative overflow-y-auto focus:outline-none">
                     <div class="py-6">
                         <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
                             <!-- Header -->
-                            <div class="mb-8 flex justify-between items-center">
-                                <div>
+                            <div class="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center">
+                                <div class="mb-4 sm:mb-0">
                                     <h1 class="text-2xl font-bold text-gray-900">Dashboard Administrateur</h1>
                                     <p class="mt-1 text-sm text-gray-600">Vue d'ensemble de la plateforme Vidé-Grenier Kamer - Marketplace Camerounaise</p>
                                 </div>
-                                <div class="flex space-x-3">
-                                    <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                                    <button onclick="exportReport()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center">
                                         <i data-lucide="download" class="w-4 h-4 mr-2"></i>
                                         Exporter Rapport
                                     </button>
-                                    <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center">
+                                    <button onclick="refreshDashboard()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center">
                                         <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
                                         Actualiser
                                     </button>
@@ -177,8 +167,8 @@
                             </div>
 
                             <!-- Métriques principales -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-                                <div class="metric-card">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+                                <div class="metric-card from-green-500 to-emerald-600">
                                     <div class="flex items-center justify-between">
                                         <div>
                                             <p class="text-green-100 text-sm font-medium">Utilisateurs Totaux</p>
@@ -189,7 +179,7 @@
                                     </div>
                                 </div>
 
-                                <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-6 relative overflow-hidden">
+                                <div class="metric-card from-blue-500 to-blue-600">
                                     <div class="flex items-center justify-between">
                                         <div>
                                             <p class="text-blue-100 text-sm font-medium">Produits Actifs</p>
@@ -200,7 +190,7 @@
                                     </div>
                                 </div>
 
-                                <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl p-6 relative overflow-hidden">
+                                <div class="metric-card from-purple-500 to-purple-600">
                                     <div class="flex items-center justify-between">
                                         <div>
                                             <p class="text-purple-100 text-sm font-medium">Commandes Aujourd'hui</p>
@@ -211,7 +201,7 @@
                                     </div>
                                 </div>
 
-                                <div class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl p-6 relative overflow-hidden">
+                                <div class="metric-card from-orange-500 to-orange-600">
                                     <div class="flex items-center justify-between">
                                         <div>
                                             <p class="text-orange-100 text-sm font-medium">CA Mensuel</p>
@@ -222,7 +212,7 @@
                                     </div>
                                 </div>
 
-                                <div class="bg-gradient-to-br from-pink-500 to-pink-600 text-white rounded-xl p-6 relative overflow-hidden">
+                                <div class="metric-card from-pink-500 to-pink-600">
                                     <div class="flex items-center justify-between">
                                         <div>
                                             <p class="text-pink-100 text-sm font-medium">Commission 10%</p>
@@ -235,7 +225,7 @@
                             </div>
 
                             <!-- KPI Supplémentaires -->
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                                 <div class="stats-card">
                                     <div class="flex items-center justify-between">
                                         <div>
@@ -315,7 +305,7 @@
                                 </div>
                             </div>
 
-                            <!-- Analyse détaillée -->
+                            <!-- Analyses détaillées -->
                             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                                 <!-- Top catégories -->
                                 <div class="stats-card">
@@ -439,28 +429,28 @@
                                 <div class="stats-card">
                                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions Rapides</h3>
                                     <div class="space-y-3">
-                                        <button class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-green-300 transition-colors">
+                                        <button onclick="navigateTo('/backend/admin_stock_add/')" class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-green-300 transition-colors">
                                             <div class="flex items-center">
                                                 <i data-lucide="plus-circle" class="w-5 h-5 text-green-600 mr-3"></i>
                                                 <span class="text-sm font-medium">Ajouter Stock Admin</span>
                                             </div>
                                             <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
                                         </button>
-                                        <button class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                        <button onclick="navigateTo('/backend/admin_user_list/')" class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
                                             <div class="flex items-center">
                                                 <i data-lucide="user-plus" class="w-5 h-5 text-blue-600 mr-3"></i>
                                                 <span class="text-sm font-medium">Créer Utilisateur Staff</span>
                                             </div>
                                             <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
                                         </button>
-                                        <button class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-purple-300 transition-colors">
+                                        <button onclick="navigateTo('/backend/pickup_point_list/')" class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-purple-300 transition-colors">
                                             <div class="flex items-center">
                                                 <i data-lucide="map-pin" class="w-5 h-5 text-purple-600 mr-3"></i>
                                                 <span class="text-sm font-medium">Nouveau Point Retrait</span>
                                             </div>
                                             <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
                                         </button>
-                                        <button class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-orange-300 transition-colors">
+                                        <button onclick="navigateTo('/backend/admin_promotion_list/')" class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-orange-300 transition-colors">
                                             <div class="flex items-center">
                                                 <i data-lucide="megaphone" class="w-5 h-5 text-orange-600 mr-3"></i>
                                                 <span class="text-sm font-medium">Campagne Promo</span>
@@ -524,7 +514,7 @@
                                             <p class="text-xs text-gray-600">Chaussures Nike - 25,000 FCFA</p>
                                             <p class="text-xs text-blue-600">Retrait point Douala</p>
                                         </div>
-                                        <button class="w-full mt-3 text-center py-2 text-sm text-green-600 hover:bg-green-50 rounded">
+                                        <button onclick="navigateTo('/backend/admin_order_list/')" class="w-full mt-3 text-center py-2 text-sm text-green-600 hover:bg-green-50 rounded">
                                             Voir toutes les commandes
                                         </button>
                                     </div>
@@ -688,7 +678,7 @@
                             <div class="stats-card">
                                 <div class="flex items-center justify-between mb-6">
                                     <h3 class="text-lg font-semibold text-gray-900">Activités Récentes</h3>
-                                    <a href="#" class="text-sm text-green-600 hover:text-green-800">Voir tout</a>
+                                    <button onclick="navigateTo('/backend/admin_analytics/')" class="text-sm text-green-600 hover:text-green-800">Voir tout</button>
                                 </div>
                                 <div class="flow-root">
                                     <ul class="-mb-8">
@@ -802,11 +792,173 @@
     </div>
 
     <script>
-        // Initialize Lucide icons
-        lucide.createIcons();
+        // Configuration des liens de navigation
+        const navigationLinks = [
+            { url: '/backend/dashboard/', icon: 'layout-dashboard', label: 'Dashboard', id: 'dashboard' },
+            { url: '/backend/admin_user_list/', icon: 'users', label: 'Utilisateurs', id: 'admin_user_list' },
+            { url: '/backend/admin_product_list/', icon: 'package', label: 'Produits', id: 'admin_product_list' },
+            { url: '/backend/admin_order_list/', icon: 'shopping-cart', label: 'Commandes', id: 'admin_order_list' },
+            { url: '/backend/admin_payment_list/', icon: 'credit-card', label: 'Paiements', id: 'admin_payment_list' },
+            { url: '/backend/admin_loyalty_list/', icon: 'star', label: 'Fidélité', id: 'admin_loyalty_list' },
+            { url: '/backend/admin_promotion_list/', icon: 'percent', label: 'Promotions', id: 'admin_promotion_list' },
+            { url: '/backend/category_list/', icon: 'layers', label: 'Catégories', id: 'category_list' },
+            { url: '/backend/admin_stock/', icon: 'warehouse', label: 'Stock', id: 'admin_stock' },
+            { url: '/backend/admin_stock_add/', icon: 'plus-square', label: 'Ajouter Stock', id: 'admin_stock_add' },
+            { url: '/backend/pickup_point_list/', icon: 'map-pin', label: 'Points de Retrait', id: 'pickup_point_list' },
+            { url: '/backend/admin_analytics/', icon: 'bar-chart-3', label: 'Analytics', id: 'admin_analytics' },
+            { url: '/backend/review_list/', icon: 'star-half', label: 'Avis & Évaluations', id: 'review_list' },
+            { url: '/backend/chat_list/', icon: 'message-circle', label: 'Chat Support', id: 'chat_list' },
+            { url: '/backend/favorite_list/', icon: 'heart', label: 'Favoris', id: 'favorite_list' },
+            { url: '/backend/wishlist/', icon: 'gift', label: 'Wishlist', id: 'wishlist' },
+            { url: '/backend/admin_newsletter_list/', icon: 'mail', label: 'Newsletter', id: 'admin_newsletter_list' },
+            { url: '/backend/admin_notification_list/', icon: 'bell', label: 'Notifications', id: 'admin_notification_list' },
+            { url: '/backend/admin_panel/', icon: 'settings', label: 'Configuration', id: 'admin_panel' }
+        ];
 
-        // Update current time
+        // Auto-logout après inactivité
+        (function() {
+            let logoutTimer;
+            const LOGOUT_TIME = 1500 * 1000; // 25 minutes
+            
+            function resetTimer() {
+                clearTimeout(logoutTimer);
+                logoutTimer = setTimeout(logoutUser, LOGOUT_TIME);
+            }
+            
+            function logoutUser() {
+                try {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                } catch(e) {
+                    console.warn('Storage clear failed:', e);
+                }
+                window.location.href = '/accounts/login/?next=' + encodeURIComponent(window.location.pathname);
+            }
+            
+            ['click', 'mousemove', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
+                document.addEventListener(evt, resetTimer, true);
+            });
+            
+            resetTimer();
+        })();
+
+        // Détection de la page actuelle
+        function getCurrentPageId() {
+            const path = window.location.pathname;
+            const currentLink = navigationLinks.find(link => 
+                path === link.url || path.includes(link.id)
+            );
+            return currentLink ? currentLink.id : 'dashboard';
+        }
+
+        // Génération des liens de navigation
+        function generateNavLinks(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            const currentPageId = getCurrentPageId();
+            
+            container.innerHTML = navigationLinks.map(link => `
+                <a href="${link.url}" class="sidebar-link ${link.id === currentPageId ? 'active' : ''}" data-page="${link.id}">
+                    <i data-lucide="${link.icon}" class="w-5 h-5 mr-3"></i>
+                    <span>${link.label}</span>
+                </a>
+            `).join('');
+        }
+
+        // Gestion du menu mobile
+        function setupMobileMenu() {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileCloseBtn = document.getElementById('mobile-close-btn');
+            const mobileSidebar = document.getElementById('mobile-sidebar');
+            const mobileOverlay = document.getElementById('mobile-overlay');
+
+            function openMobileMenu() {
+                mobileSidebar.classList.add('open');
+                mobileOverlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeMobileMenu() {
+                mobileSidebar.classList.remove('open');
+                mobileOverlay.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', openMobileMenu);
+            if (mobileCloseBtn) mobileCloseBtn.addEventListener('click', closeMobileMenu);
+            if (mobileOverlay) mobileOverlay.addEventListener('click', closeMobileMenu);
+
+            // Fermer le menu sur redimensionnement
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 1024) {
+                    closeMobileMenu();
+                }
+            });
+
+            // Fermer le menu lors du clic sur un lien
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.sidebar-link') && window.innerWidth < 1024) {
+                    setTimeout(closeMobileMenu, 100);
+                }
+            });
+        }
+
+        // Navigation
+        function navigateTo(url) {
+            try {
+                window.location.href = url;
+            } catch (e) {
+                console.error('Navigation failed:', e);
+                alert(`Navigation vers: ${url}\n(Ceci redirigerait en production)`);
+            }
+        }
+
+        // Actualisation du dashboard
+        function refreshDashboard() {
+            const button = event.target.closest('button');
+            const icon = button.querySelector('i[data-lucide="refresh-cw"]');
+            
+            if (icon) {
+                icon.classList.add('spin');
+            }
+            button.disabled = true;
+            
+            setTimeout(() => {
+                if (icon) {
+                    icon.classList.remove('spin');
+                }
+                button.disabled = false;
+                updateTime();
+                console.log('Dashboard actualisé avec succès');
+            }, 2000);
+        }
+
+        // Export de rapport
+        function exportReport() {
+            const button = event.target.closest('button');
+            button.disabled = true;
+            button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 spin"></i>Export...';
+            
+            setTimeout(() => {
+                button.disabled = false;
+                button.innerHTML = '<i data-lucide="download" class="w-4 h-4 mr-2"></i>Exporter Rapport';
+                
+                // Simulation d'export
+                const link = document.createElement('a');
+                link.href = 'data:text/plain;charset=utf-8,Rapport Dashboard VGK - ' + new Date().toISOString();
+                link.download = 'rapport-vgk-' + new Date().toISOString().split('T')[0] + '.txt';
+                link.click();
+                
+                console.log('Rapport exporté avec succès');
+            }, 2000);
+        }
+
+        // Mise à jour de l'heure
         function updateTime() {
+            const timeElement = document.getElementById('current-time');
+            if (!timeElement) return;
+            
             const now = new Date();
             const timeString = now.toLocaleString('fr-FR', {
                 weekday: 'short',
@@ -816,119 +968,67 @@
                 hour: '2-digit',
                 minute: '2-digit'
             });
-            document.getElementById('current-time').textContent = timeString;
+            timeElement.textContent = timeString;
         }
-        
-        updateTime();
-        setInterval(updateTime, 60000); // Update every minute
 
-        // Initialize Sales Chart
-        const salesCtx = document.getElementById('salesChart').getContext('2d');
-        new Chart(salesCtx, {
-            type: 'line',
-            data: {
-                labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
-                datasets: [
-                    {
-                        label: 'Ventes Clients (FCFA)',
-                        data: [120000, 190000, 300000, 500000, 200000, 300000, 450000],
-                        borderColor: 'rgb(34, 197, 94)',
-                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    },
-                    {
-                        label: 'Ventes Admin (FCFA)',
-                        data: [80000, 120000, 150000, 200000, 180000, 220000, 280000],
-                        borderColor: 'rgb(59, 130, 246)',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                },
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' FCFA';
+        // Initialisation des graphiques
+        function initializeCharts() {
+            try {
+                // Graphique des ventes
+                const salesCtx = document.getElementById('salesChart');
+                if (salesCtx && typeof Chart !== 'undefined') {
+                    new Chart(salesCtx, {
+                        type: 'line',
+                        data: {
+                            labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+                            datasets: [
+                                {
+                                    label: 'Ventes Clients (FCFA)',
+                                    data: [120000, 190000, 300000, 500000, 200000, 300000, 450000],
+                                    borderColor: 'rgb(34, 197, 94)',
+                                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                                    tension: 0.4,
+                                    fill: true
+                                },
+                                {
+                                    label: 'Ventes Admin (FCFA)',
+                                    data: [80000, 120000, 150000, 200000, 180000, 220000, 280000],
+                                    borderColor: 'rgb(59, 130, 246)',
+                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                    tension: 0.4,
+                                    fill: true
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: {
+                                intersect: false,
+                                mode: 'index'
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return context.label + ': ' + context.parsed + '%';
+                                        }
+                                    }
+                                }
                             }
                         }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return (value / 1000) + 'K FCFA';
-                            }
-                        }
-                    }
+                    });
                 }
+            } catch (error) {
+                console.error('Erreur initialisation graphiques:', error);
             }
-        });
+        }
 
-        // Initialize Payment Chart
-        const paymentCtx = document.getElementById('paymentChart').getContext('2d');
-        new Chart(paymentCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['MTN Money', 'Orange Money', 'Campay', 'Espèces'],
-                datasets: [{
-                    data: [45, 30, 20, 5],
-                    backgroundColor: [
-                        '#FBBF24',
-                        '#FB923C',
-                        '#8B5CF6',
-                        '#10B981'
-                    ],
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            usePointStyle: true
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return context.label + ': ' + context.parsed + '%';
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        // Auto-refresh data every 30 seconds
-        setInterval(() => {
-            console.log('Actualisation des données du dashboard...');
-            // Here you would normally fetch fresh data from your API
-            // and update the charts and metrics
-        }, 30000);
-
-        // Simulate real-time updates
+        // Simulation de mise à jour en temps réel
         function simulateRealTimeUpdate() {
-            // Add some random variation to demonstrate live updates
             const elements = document.querySelectorAll('.text-3xl.font-bold');
             elements.forEach(el => {
                 if (el.textContent.includes(',')) {
@@ -940,8 +1040,168 @@
             });
         }
 
-        // Update every 5 minutes for demo
-        setInterval(simulateRealTimeUpdate, 300000);
+        // Initialisation au chargement de la page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialiser les icônes Lucide
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+            
+            // Générer les liens de navigation
+            generateNavLinks('desktop-nav-links');
+            generateNavLinks('mobile-nav-links');
+            
+            // Re-initialiser les icônes après ajout des liens
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+            
+            // Configurer le menu mobile
+            setupMobileMenu();
+            
+            // Mettre à jour l'heure
+            updateTime();
+            setInterval(updateTime, 60000);
+            
+            // Initialiser les graphiques
+            initializeCharts();
+            
+            // Actualisation automatique toutes les 30 secondes
+            setInterval(() => {
+                console.log('Actualisation automatique des données...');
+                // Ici vous ajouteriez normalement des appels API
+            }, 30000);
+            
+            // Simulation de mise à jour toutes les 5 minutes
+            setInterval(simulateRealTimeUpdate, 300000);
+        });
+
+        // Gestion des erreurs globales
+        window.addEventListener('error', function(e) {
+            console.error('Erreur JavaScript:', e.error);
+        });
+
+        // Performance monitoring
+        if ('performance' in window) {
+            window.addEventListener('load', function() {
+                setTimeout(function() {
+                    const perf = performance.getEntriesByType('navigation')[0];
+                    if (perf) {
+                        console.log('Temps de chargement:', perf.loadEventEnd - perf.loadEventStart, 'ms');
+                    }
+                }, 0);
+            });
+        }
+
+        // Service Worker pour PWA (optionnel)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker enregistré avec succès:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('Échec enregistrement ServiceWorker:', error);
+                    });
+            });
+        }
+
+        // Notification API (optionnel)
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission().then(function(permission) {
+                    if (permission === 'granted') {
+                        console.log('Permission de notification accordée');
+                    }
+                });
+            }
+        }
+
+        // Appeler la demande de permission au clic sur les notifications
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('button[class*="notification"]')) {
+                requestNotificationPermission();
+            }
+        });
+
+        // Fonctions utilitaires
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
+        }
+
+        function formatDate(date) {
+            return new Date(date).toLocaleString('fr-FR', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function showNotification(message, type = 'info') {
+            // Créer une notification toast (à implémenter selon vos besoins)
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        // Raccourcis clavier
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + R pour actualiser
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                refreshDashboard();
+            }
+            
+            // Escape pour fermer le menu mobile
+            if (e.key === 'Escape') {
+                const mobileSidebar = document.getElementById('mobile-sidebar');
+                const mobileOverlay = document.getElementById('mobile-overlay');
+                if (mobileSidebar && mobileSidebar.classList.contains('open')) {
+                    mobileSidebar.classList.remove('open');
+                    mobileOverlay.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+            }
+        });
+
+        // Optimisation pour appareils mobiles
+        if ('ontouchstart' in window) {
+            document.body.classList.add('touch-device');
+            
+            // Désactiver le zoom sur double tap
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(event) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+        }
+
+        // Détection de la connectivité
+        function updateOnlineStatus() {
+            const status = navigator.onLine ? 'en ligne' : 'hors ligne';
+            console.log('Statut de connexion:', status);
+            
+            if (!navigator.onLine) {
+                showNotification('Connexion internet perdue. Certaines fonctionnalités peuvent être limitées.', 'warning');
+            }
+        }
+
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        // Gestion de la visibilité de la page
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                // Actualiser les données quand l'utilisateur revient sur l'onglet
+                updateTime();
+                console.log('Page redevenue visible - actualisation des données');
+            }
+        });
+
+        console.log('Dashboard VGK Admin initialisé avec succès');
     </script>
 </body>
 </html>
