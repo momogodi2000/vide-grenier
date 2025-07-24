@@ -1,4 +1,4 @@
-# backend/urls.py - URLs COMPLÈTES POUR VIDÉ-GRENIER KAMER - FIXED VERSION
+# backend/urls.py - URLs COMPLÈTES POUR VIDÉ-GRENIER KAMER - UPDATED WITH ADMIN INTEGRATION
 
 from django.urls import path
 from . import views
@@ -60,11 +60,13 @@ urlpatterns = [
     path('reviews/', views.ReviewListView.as_view(), name='review_list'),
     path('review/<uuid:pk>/', views.ReviewDetailView.as_view(), name='review_detail'),
     
-    # ============= ADMINISTRATION EXISTANTE =============
+    # ============= ADMINISTRATION EXISTANTE - UPDATED =============
     path('admin-panel/', views.AdminPanelView.as_view(), name='admin_panel'),
+    
+    # Updated to use new admin views
+    path('admin-panel/users/', views.AdminUserListView.as_view(), name='admin_user_list'),
     path('admin-panel/products/', views.AdminProductListView.as_view(), name='admin_product_list'),
     path('admin-panel/orders/', views.AdminOrderListView.as_view(), name='admin_order_list'),
-    path('admin-panel/users/', views.AdminUserListView.as_view(), name='admin_user_list'),
     path('admin-panel/analytics/', views.AdminAnalyticsView.as_view(), name='admin_analytics'),
     
     # Gestion Stock Admin
@@ -186,8 +188,8 @@ try:
 except ImportError:
     print("⚠️ Newsletter views not found. Skipping newsletter URL patterns.")
 
-# ============= ADVANCED ADMIN FUNCTIONALITY =============
-# Only import admin views if they exist
+# ============= ADVANCED ADMIN FUNCTIONALITY - INTEGRATED =============
+# Import admin views and integrate with existing admin-panel
 try:
     from .views_admin import (
         AdminPaymentListView,
@@ -208,52 +210,72 @@ try:
         admin_notification_create,
         admin_notification_send_bulk,
         admin_dashboard,
+        admin_bulk_actions,
+        admin_export_data,
+        admin_stats_ajax,
+        admin_quick_action,
     )
     
-    # Advanced Admin URLs - using 'system' prefix to avoid conflicts with existing admin-panel
+    # Advanced Admin URLs - integrated with existing admin-panel
     urlpatterns += [
-        # System Admin Dashboard (different from your existing admin-panel)
-        path('system/dashboard/', admin_dashboard, name='system_admin_dashboard'),
+        # Enhanced Admin Dashboard (replacing existing admin_panel)
+        path('admin-panel/dashboard/', admin_dashboard, name='admin_dashboard'),
         
-        # Payment Management (separate from your existing payment views)
-        path('system/payments/', AdminPaymentListView.as_view(), name='system_payment_list'),
-        path('system/payments/<int:payment_id>/', admin_payment_detail, name='system_payment_detail'),
-        path('system/payments/<int:payment_id>/update-status/', admin_payment_update_status, name='system_payment_update_status'),
+        # Payment Management
+        path('admin-panel/payments/', AdminPaymentListView.as_view(), name='admin_payment_list'),
+        path('admin-panel/payments/<int:payment_id>/', admin_payment_detail, name='admin_payment_detail'),
+        path('admin-panel/payments/<int:payment_id>/update-status/', admin_payment_update_status, name='admin_payment_update_status'),
         
         # Loyalty Program Management
-        path('system/loyalty/', AdminLoyaltyListView.as_view(), name='system_loyalty_list'),
-        path('system/loyalty/create/', admin_loyalty_create, name='system_loyalty_create'),
-        path('system/loyalty/<int:loyalty_id>/edit/', admin_loyalty_edit, name='system_loyalty_edit'),
+        path('admin-panel/loyalty/', AdminLoyaltyListView.as_view(), name='admin_loyalty_list'),
+        path('admin-panel/loyalty/create/', admin_loyalty_create, name='admin_loyalty_create'),
+        path('admin-panel/loyalty/<int:loyalty_id>/edit/', admin_loyalty_edit, name='admin_loyalty_edit'),
         
         # Promotion Management
-        path('system/promotions/', AdminPromotionListView.as_view(), name='system_promotion_list'),
-        path('system/promotions/create/', admin_promotion_create, name='system_promotion_create'),
-        path('system/promotions/<int:promotion_id>/edit/', admin_promotion_edit, name='system_promotion_edit'),
-        path('system/promotions/<int:promotion_id>/toggle-status/', admin_promotion_toggle_status, name='system_promotion_toggle_status'),
+        path('admin-panel/promotions/', AdminPromotionListView.as_view(), name='admin_promotion_list'),
+        path('admin-panel/promotions/create/', admin_promotion_create, name='admin_promotion_create'),
+        path('admin-panel/promotions/<int:promotion_id>/edit/', admin_promotion_edit, name='admin_promotion_edit'),
+        path('admin-panel/promotions/<int:promotion_id>/toggle-status/', admin_promotion_toggle_status, name='admin_promotion_toggle_status'),
         
-        # Newsletter Management
-        path('system/newsletter/', AdminNewsletterListView.as_view(), name='system_newsletter_list'),
-        path('system/newsletter/create/', admin_newsletter_create, name='system_newsletter_create'),
-        path('system/newsletter/<int:newsletter_id>/send/', admin_newsletter_send, name='system_newsletter_send'),
-        path('system/newsletter/<int:newsletter_id>/delete/', admin_newsletter_delete, name='system_newsletter_delete'),
+        # Newsletter Management - Enhanced
+        path('admin-panel/newsletter/', AdminNewsletterListView.as_view(), name='admin_newsletter_list'),
+        path('admin-panel/newsletter/create/', admin_newsletter_create, name='admin_newsletter_create'),
+        path('admin-panel/newsletter/<int:newsletter_id>/send/', admin_newsletter_send, name='admin_newsletter_send'),
+        path('admin-panel/newsletter/<int:newsletter_id>/delete/', admin_newsletter_delete, name='admin_newsletter_delete'),
         
         # Notification Management
-        path('system/notifications/', AdminNotificationListView.as_view(), name='system_notification_list'),
-        path('system/notifications/create/', admin_notification_create, name='system_notification_create'),
-        path('system/notifications/bulk-send/', admin_notification_send_bulk, name='system_notification_bulk_send'),
+        path('admin-panel/notifications/', AdminNotificationListView.as_view(), name='admin_notification_list'),
+        path('admin-panel/notifications/create/', admin_notification_create, name='admin_notification_create'),
+        path('admin-panel/notifications/bulk-send/', admin_notification_send_bulk, name='admin_notification_bulk_send'),
+        
+        # Bulk Actions and Utilities
+        path('admin-panel/bulk-actions/', admin_bulk_actions, name='admin_bulk_actions'),
+        path('admin-panel/export/<str:export_type>/', admin_export_data, name='admin_export_data'),
+        
+        # AJAX Endpoints for Admin
+        path('admin-panel/ajax/stats/', admin_stats_ajax, name='admin_stats_ajax'),
+        path('admin-panel/ajax/quick-action/', admin_quick_action, name='admin_quick_action'),
     ]
-    print("✅ Advanced admin URL patterns added successfully")
+    print("✅ Advanced admin URL patterns integrated successfully with existing admin-panel")
     
-except ImportError:
-    print("⚠️ Advanced admin views not found. Skipping advanced admin URL patterns.")
+except ImportError as e:
+    print(f"⚠️ Advanced admin views not found: {e}. Skipping advanced admin URL patterns.")
 
 # Debug information
 if __name__ == "__main__":
     print(f"\n🔗 Total URL patterns: {len(urlpatterns)}")
-    print("✅ All existing URLs preserved")
+    print("✅ All existing URLs preserved and enhanced")
     print("🏠 Homepage: /")
     print("📊 Dashboard: /dashboard/")
     print("🛍️ Products: /products/")
     print("📧 Newsletter: /newsletter/")
-    print("🔧 System Admin: /system/")
-    print("🎛️ Admin Panel: /admin-panel/ (your existing)")
+    print("🎛️ Enhanced Admin Panel: /admin-panel/")
+    print("  └── 📊 Admin Dashboard: /admin-panel/dashboard/")
+    print("  └── 👥 Users: /admin-panel/users/")
+    print("  └── 📦 Products: /admin-panel/products/")
+    print("  └── 💳 Payments: /admin-panel/payments/")
+    print("  └── 🎯 Loyalty: /admin-panel/loyalty/")
+    print("  └── 🏷️ Promotions: /admin-panel/promotions/")
+    print("  └── 📧 Newsletter: /admin-panel/newsletter/")
+    print("  └── 🔔 Notifications: /admin-panel/notifications/")
+    print("  └── 📈 Analytics: /admin-panel/analytics/")

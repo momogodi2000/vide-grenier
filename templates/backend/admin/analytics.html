@@ -1,591 +1,506 @@
 {% extends 'backend/base/admin_base.html' %}
 {% load static %}
+{% load humanize %}
 
-{% block title %}Analytics - Admin{% endblock %}
+{% block title %}Analytics Admin - Vidé-Grenier Kamer{% endblock %}
 
 {% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Analytics & Rapports</h1>
+            <p class="text-gray-600">Analyse détaillée des performances de la plateforme</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="7">7 derniers jours</option>
+                <option value="30" selected>30 derniers jours</option>
+                <option value="90">90 derniers jours</option>
+                <option value="365">1 an</option>
+            </select>
+            <button onclick="exportReport()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+                Exporter Rapport
+            </button>
+            <button onclick="refreshAnalytics()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
+                Actualiser
+            </button>
+        </div>
+    </div>
+</div>
 
-
-        <!-- Main Content -->
-        <main class="flex-1 p-8 bg-gray-50">
-            <!-- Header -->
-            <div class="mb-8">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-3xl font-bold text-gray-900 mb-2">Analytics & Rapports</h1>
-                        <p class="text-gray-600">Tableau de bord analytique de la plateforme</p>
-                    </div>
-                    <div class="flex items-center space-x-4">
-                        <select class="border border-gray-300 rounded-lg px-4 py-2 text-sm">
-                            <option value="7">7 derniers jours</option>
-                            <option value="30" selected>30 derniers jours</option>
-                            <option value="90">90 derniers jours</option>
-                            <option value="365">1 année</option>
-                        </select>
-                        <button class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                            <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>
-                            Exporter Rapport
-                        </button>
-                    </div>
-                </div>
+<!-- Overview Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stats-card bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-blue-100 text-sm font-medium">Revenus Totaux</p>
+                <p class="text-2xl sm:text-3xl font-bold">{{ analytics.overview.total_revenue|floatformat:0|intcomma }} FCFA</p>
+                <p class="text-blue-200 text-sm">+12.5% vs mois dernier</p>
             </div>
-
-            <!-- Key Metrics -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-blue-100 text-sm font-medium">Revenus Total</p>
-                            <p class="text-3xl font-bold">{{ total_revenue|default:"12.5M" }}</p>
-                            <p class="text-blue-100 text-sm">FCFA</p>
-                        </div>
-                        <div class="w-12 h-12 bg-blue-400 rounded-lg flex items-center justify-center">
-                            <i data-lucide="trending-up" class="w-6 h-6"></i>
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <span class="text-blue-100 text-sm">↗ +18.2% vs mois dernier</span>
-                    </div>
-                </div>
-
-                <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-green-100 text-sm font-medium">Commandes</p>
-                            <p class="text-3xl font-bold">{{ total_orders|default:"2,847" }}</p>
-                            <p class="text-green-100 text-sm">Ce mois</p>
-                        </div>
-                        <div class="w-12 h-12 bg-green-400 rounded-lg flex items-center justify-center">
-                            <i data-lucide="shopping-cart" class="w-6 h-6"></i>
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <span class="text-green-100 text-sm">↗ +12.5% vs mois dernier</span>
-                    </div>
-                </div>
-
-                <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-6 text-white">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-purple-100 text-sm font-medium">Nouveaux Utilisateurs</p>
-                            <p class="text-3xl font-bold">{{ new_users|default:"186" }}</p>
-                            <p class="text-purple-100 text-sm">Ce mois</p>
-                        </div>
-                        <div class="w-12 h-12 bg-purple-400 rounded-lg flex items-center justify-center">
-                            <i data-lucide="users" class="w-6 h-6"></i>
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <span class="text-purple-100 text-sm">↗ +8.7% vs mois dernier</span>
-                    </div>
-                </div>
-
-                <div class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-6 text-white">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-orange-100 text-sm font-medium">Taux de Conversion</p>
-                            <p class="text-3xl font-bold">{{ conversion_rate|default:"4.8" }}%</p>
-                            <p class="text-orange-100 text-sm">Visiteurs → Acheteurs</p>
-                        </div>
-                        <div class="w-12 h-12 bg-orange-400 rounded-lg flex items-center justify-center">
-                            <i data-lucide="target" class="w-6 h-6"></i>
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <span class="text-orange-100 text-sm">↗ +2.1% vs mois dernier</span>
-                    </div>
-                </div>
+            <div class="p-3 bg-blue-400 bg-opacity-30 rounded-full">
+                <i data-lucide="trending-up" class="w-6 h-6"></i>
             </div>
-
-            <!-- Charts Section -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                <!-- Revenue Chart -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-semibold text-gray-900">Évolution des Revenus</h3>
-                        <div class="flex items-center space-x-2">
-                            <button class="text-sm text-gray-600 hover:text-green-600 px-3 py-1 rounded-lg hover:bg-green-50">7j</button>
-                            <button class="text-sm bg-green-100 text-green-600 px-3 py-1 rounded-lg">30j</button>
-                            <button class="text-sm text-gray-600 hover:text-green-600 px-3 py-1 rounded-lg hover:bg-green-50">90j</button>
-                        </div>
-                    </div>
-                    <div class="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-                        <canvas id="revenueChart" class="w-full h-full"></canvas>
-                    </div>
-                </div>
-
-                <!-- Orders Chart -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-semibold text-gray-900">Commandes par Jour</h3>
-                        <div class="flex items-center space-x-2 text-sm text-gray-600">
-                            <span class="w-3 h-3 bg-blue-500 rounded-full"></span>
-                            <span>Commandes</span>
-                        </div>
-                    </div>
-                    <div class="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-                        <canvas id="ordersChart" class="w-full h-full"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Categories and Cities Analysis -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                <!-- Top Categories -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Top Catégories</h3>
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-2xl">📱</span>
-                                <span class="font-medium text-gray-900">Électronique</span>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <div class="w-24 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-blue-500 h-2 rounded-full" style="width: 85%"></div>
-                                </div>
-                                <span class="text-sm text-gray-600 w-12 text-right">847</span>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-2xl">👕</span>
-                                <span class="font-medium text-gray-900">Mode & Vêtements</span>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <div class="w-24 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-green-500 h-2 rounded-full" style="width: 72%"></div>
-                                </div>
-                                <span class="text-sm text-gray-600 w-12 text-right">623</span>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-2xl">🏠</span>
-                                <span class="font-medium text-gray-900">Maison & Jardin</span>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <div class="w-24 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-purple-500 h-2 rounded-full" style="width: 58%"></div>
-                                </div>
-                                <span class="text-sm text-gray-600 w-12 text-right">492</span>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-2xl">🚗</span>
-                                <span class="font-medium text-gray-900">Véhicules</span>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <div class="w-24 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-orange-500 h-2 rounded-full" style="width: 45%"></div>
-                                </div>
-                                <span class="text-sm text-gray-600 w-12 text-right">387</span>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-2xl">📚</span>
-                                <span class="font-medium text-gray-900">Livres & Médias</span>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <div class="w-24 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-red-500 h-2 rounded-full" style="width: 32%"></div>
-                                </div>
-                                <span class="text-sm text-gray-600 w-12 text-right">276</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Performance by City -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Performance par Ville</h3>
-                    <div class="space-y-4">
-                        <div class="border border-gray-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <h4 class="font-medium text-gray-900">Yaoundé</h4>
-                                <span class="text-sm text-green-600 font-medium">+15.2%</span>
-                            </div>
-                            <div class="grid grid-cols-3 gap-4 text-sm">
-                                <div>
-                                    <p class="text-gray-600">Utilisateurs</p>
-                                    <p class="font-semibold">456</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-600">Produits</p>
-                                    <p class="font-semibold">1,234</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-600">Commandes</p>
-                                    <p class="font-semibold">789</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="border border-gray-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <h4 class="font-medium text-gray-900">Douala</h4>
-                                <span class="text-sm text-green-600 font-medium">+12.8%</span>
-                            </div>
-                            <div class="grid grid-cols-3 gap-4 text-sm">
-                                <div>
-                                    <p class="text-gray-600">Utilisateurs</p>
-                                    <p class="font-semibold">398</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-600">Produits</p>
-                                    <p class="font-semibold">1,056</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-600">Commandes</p>
-                                    <p class="font-semibold">672</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="border border-gray-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <h4 class="font-medium text-gray-900">Bafoussam</h4>
-                                <span class="text-sm text-green-600 font-medium">+8.4%</span>
-                            </div>
-                            <div class="grid grid-cols-3 gap-4 text-sm">
-                                <div>
-                                    <p class="text-gray-600">Utilisateurs</p>
-                                    <p class="font-semibold">234</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-600">Produits</p>
-                                    <p class="font-semibold">567</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-600">Commandes</p>
-                                    <p class="font-semibold">345</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Activity and Payment Methods -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                <!-- Recent Activity -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Activité Récente</h3>
-                    <div class="space-y-4">
-                        <div class="flex items-center space-x-4 p-3 bg-green-50 rounded-lg">
-                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                <i data-lucide="shopping-cart" class="w-4 h-4 text-green-600"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm font-medium text-gray-900">Nouvelle commande #VGK-1456</p>
-                                <p class="text-xs text-gray-600">iPhone 12 Pro - 450,000 FCFA</p>
-                            </div>
-                            <span class="text-xs text-gray-500">Il y a 2min</span>
-                        </div>
-
-                        <div class="flex items-center space-x-4 p-3 bg-blue-50 rounded-lg">
-                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                <i data-lucide="user-plus" class="w-4 h-4 text-blue-600"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm font-medium text-gray-900">Nouvel utilisateur inscrit</p>
-                                <p class="text-xs text-gray-600">Jean-Claude Mbida (Douala)</p>
-                            </div>
-                            <span class="text-xs text-gray-500">Il y a 15min</span>
-                        </div>
-
-                        <div class="flex items-center space-x-4 p-3 bg-purple-50 rounded-lg">
-                            <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                                <i data-lucide="package" class="w-4 h-4 text-purple-600"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm font-medium text-gray-900">Produit publié</p>
-                                <p class="text-xs text-gray-600">VTT Giant Talon 1 - 125,000 FCFA</p>
-                            </div>
-                            <span class="text-xs text-gray-500">Il y a 1h</span>
-                        </div>
-
-                        <div class="flex items-center space-x-4 p-3 bg-yellow-50 rounded-lg">
-                            <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                                <i data-lucide="star" class="w-4 h-4 text-yellow-600"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm font-medium text-gray-900">Nouvel avis 5 étoiles</p>
-                                <p class="text-xs text-gray-600">Sur Canapé en cuir - Alice Simo</p>
-                            </div>
-                            <span class="text-xs text-gray-500">Il y a 2h</span>
-                        </div>
-
-                        <div class="flex items-center space-x-4 p-3 bg-orange-50 rounded-lg">
-                            <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                                <i data-lucide="credit-card" class="w-4 h-4 text-orange-600"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm font-medium text-gray-900">Paiement reçu</p>
-                                <p class="text-xs text-gray-600">MTN Money - 85,000 FCFA</p>
-                            </div>
-                            <span class="text-xs text-gray-500">Il y a 3h</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Payment Methods Distribution -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Répartition des Paiements</h3>
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                                    <span class="text-yellow-600 font-bold text-sm">MTN</span>
-                                </div>
-                                <span class="font-medium text-gray-900">MTN Money</span>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <div class="w-32 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-yellow-500 h-2 rounded-full" style="width: 45%"></div>
-                                </div>
-                                <span class="text-sm text-gray-600 w-12 text-right">45%</span>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                                    <span class="text-orange-600 font-bold text-sm">OM</span>
-                                </div>
-                                <span class="font-medium text-gray-900">Orange Money</span>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <div class="w-32 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-orange-500 h-2 rounded-full" style="width: 32%"></div>
-                                </div>
-                                <span class="text-sm text-gray-600 w-12 text-right">32%</span>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                    <i data-lucide="credit-card" class="w-4 h-4 text-green-600"></i>
-                                </div>
-                                <span class="font-medium text-gray-900">Campay</span>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <div class="w-32 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-green-500 h-2 rounded-full" style="width: 15%"></div>
-                                </div>
-                                <span class="text-sm text-gray-600 w-12 text-right">15%</span>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                                    <i data-lucide="truck" class="w-4 h-4 text-gray-600"></i>
-                                </div>
-                                <span class="font-medium text-gray-900">Paiement à la livraison</span>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <div class="w-32 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-gray-500 h-2 rounded-full" style="width: 8%"></div>
-                                </div>
-                                <span class="text-sm text-gray-600 w-12 text-right">8%</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-6 p-4 bg-blue-50 rounded-lg">
-                        <div class="flex items-center space-x-2 mb-2">
-                            <i data-lucide="info" class="w-4 h-4 text-blue-600"></i>
-                            <span class="text-sm font-medium text-blue-900">Insight</span>
-                        </div>
-                        <p class="text-sm text-blue-800">
-                            MTN Money reste le moyen de paiement préféré avec 45% des transactions. 
-                            Les paiements mobiles représentent 92% du total.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Performance Metrics Table -->
-            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                <div class="p-6 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900">Métriques de Performance</h3>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Métrique
-                                </th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Aujourd'hui
-                                </th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Cette semaine
-                                </th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Ce mois
-                                </th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Évolution
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <i data-lucide="eye" class="w-4 h-4 text-gray-400 mr-2"></i>
-                                        <span class="text-sm font-medium text-gray-900">Pages vues</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">4,257</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">28,943</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">125,847</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center text-sm text-green-600">
-                                        <i data-lucide="trending-up" class="w-3 h-3 mr-1"></i>
-                                        +12.3%
-                                    </span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <i data-lucide="users" class="w-4 h-4 text-gray-400 mr-2"></i>
-                                        <span class="text-sm font-medium text-gray-900">Utilisateurs uniques</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1,847</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">12,643</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">48,921</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center text-sm text-green-600">
-                                        <i data-lucide="trending-up" class="w-3 h-3 mr-1"></i>
-                                        +8.7%
-                                    </span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <i data-lucide="mouse-pointer-click" class="w-4 h-4 text-gray-400 mr-2"></i>
-                                        <span class="text-sm font-medium text-gray-900">Taux de clics</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">3.2%</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">3.8%</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">4.1%</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center text-sm text-green-600">
-                                        <i data-lucide="trending-up" class="w-3 h-3 mr-1"></i>
-                                        +0.3%
-                                    </span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <i data-lucide="clock" class="w-4 h-4 text-gray-400 mr-2"></i>
-                                        <span class="text-sm font-medium text-gray-900">Temps moyen sur site</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">4:23</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">4:56</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">5:12</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center text-sm text-green-600">
-                                        <i data-lucide="trending-up" class="w-3 h-3 mr-1"></i>
-                                        +16s
-                                    </span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </main>
+        </div>
     </div>
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <script>
-        lucide.createIcons();
+    <div class="stats-card bg-gradient-to-br from-green-500 to-green-600 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-green-100 text-sm font-medium">Commandes Totales</p>
+                <p class="text-2xl sm:text-3xl font-bold">{{ analytics.overview.total_orders|intcomma }}</p>
+                <p class="text-green-200 text-sm">+8.3% vs mois dernier</p>
+            </div>
+            <div class="p-3 bg-green-400 bg-opacity-30 rounded-full">
+                <i data-lucide="shopping-cart" class="w-6 h-6"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-card bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-purple-100 text-sm font-medium">Utilisateurs Actifs</p>
+                <p class="text-2xl sm:text-3xl font-bold">{{ analytics.user_analytics.active_users_week|intcomma }}</p>
+                <p class="text-purple-200 text-sm">Cette semaine</p>
+            </div>
+            <div class="p-3 bg-purple-400 bg-opacity-30 rounded-full">
+                <i data-lucide="users" class="w-6 h-6"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-card bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-orange-100 text-sm font-medium">Taux de Conversion</p>
+                <p class="text-2xl sm:text-3xl font-bold">{{ analytics.overview.conversion_rate|floatformat:1 }}%</p>
+                <p class="text-orange-200 text-sm">+2.1% vs mois dernier</p>
+            </div>
+            <div class="p-3 bg-orange-400 bg-opacity-30 rounded-full">
+                <i data-lucide="target" class="w-6 h-6"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Revenue Chart -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">Évolution des Revenus</h3>
+            <div class="flex items-center space-x-2">
+                <span class="w-3 h-3 bg-blue-500 rounded-full"></span>
+                <span class="text-sm text-gray-600">Revenus (FCFA)</span>
+            </div>
+        </div>
+        <div class="h-64 flex items-center justify-center">
+            <canvas id="revenueChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Users Chart -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">Nouveaux Utilisateurs</h3>
+            <div class="flex items-center space-x-2">
+                <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                <span class="text-sm text-gray-600">Utilisateurs</span>
+            </div>
+        </div>
+        <div class="h-64 flex items-center justify-center">
+            <canvas id="usersChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Analytics -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+    <!-- User Analytics -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-6">Analyse des Utilisateurs</h3>
         
-        // Revenue Chart
-        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-        new Chart(revenueCtx, {
-            type: 'line',
-            data: {
-                labels: ['1 Jul', '5 Jul', '10 Jul', '15 Jul', '20 Jul', '25 Jul', '30 Jul'],
-                datasets: [{
-                    label: 'Revenus (FCFA)',
-                    data: [250000, 380000, 420000, 390000, 450000, 520000, 480000],
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
+        <div class="space-y-4">
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Nouveaux aujourd'hui</span>
+                <span class="font-semibold text-blue-600">{{ analytics.user_analytics.new_users_today }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Nouveaux cette semaine</span>
+                <span class="font-semibold text-green-600">{{ analytics.user_analytics.new_users_week }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Nouveaux ce mois</span>
+                <span class="font-semibold text-purple-600">{{ analytics.user_analytics.new_users_month }}</span>
+            </div>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-gray-200">
+            <h4 class="text-md font-medium text-gray-900 mb-4">Répartition par Type</h4>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Clients</span>
+                    <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">{{ analytics.user_analytics.user_types.clients }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Vendeurs</span>
+                    <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">{{ analytics.user_analytics.user_types.sellers }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Staff</span>
+                    <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">{{ analytics.user_analytics.user_types.staff }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Analytics -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-6">Analyse des Produits</h3>
+        
+        <div class="space-y-4">
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Produits aujourd'hui</span>
+                <span class="font-semibold text-blue-600">{{ analytics.product_analytics.products_today }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Produits cette semaine</span>
+                <span class="font-semibold text-green-600">{{ analytics.product_analytics.products_week }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Prix moyen</span>
+                <span class="font-semibold text-purple-600">{{ analytics.product_analytics.avg_product_price|floatformat:0 }} FCFA</span>
+            </div>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-gray-200">
+            <h4 class="text-md font-medium text-gray-900 mb-4">Top Catégories</h4>
+            <div class="space-y-3">
+                {% for category in analytics.product_analytics.top_categories %}
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">{{ category.name }}</span>
+                    <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">{{ category.product_count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Analytics -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-6">Analyse des Ventes</h3>
+        
+        <div class="space-y-4">
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Revenus aujourd'hui</span>
+                <span class="font-semibold text-blue-600">{{ analytics.sales_analytics.revenue_today|floatformat:0 }} FCFA</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Revenus cette semaine</span>
+                <span class="font-semibold text-green-600">{{ analytics.sales_analytics.revenue_week|floatformat:0 }} FCFA</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Panier moyen</span>
+                <span class="font-semibold text-purple-600">{{ analytics.sales_analytics.avg_order_value|floatformat:0 }} FCFA</span>
+            </div>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-gray-200">
+            <h4 class="text-md font-medium text-gray-900 mb-4">Statuts des Commandes</h4>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">En attente</span>
+                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">{{ analytics.sales_analytics.order_statuses.pending }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Confirmées</span>
+                    <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">{{ analytics.sales_analytics.order_statuses.confirmed }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Livrées</span>
+                    <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">{{ analytics.sales_analytics.order_statuses.delivered }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Annulées</span>
+                    <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">{{ analytics.sales_analytics.order_statuses.cancelled }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Engagement & Newsletter Analytics -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Engagement Analytics -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-6">Engagement Utilisateurs</h3>
+        
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                <div class="text-2xl font-bold text-blue-600">{{ analytics.engagement_analytics.total_reviews|intcomma }}</div>
+                <div class="text-sm text-blue-800">Total Avis</div>
+            </div>
+            <div class="text-center p-4 bg-green-50 rounded-lg">
+                <div class="text-2xl font-bold text-green-600">{{ analytics.engagement_analytics.avg_rating|floatformat:1 }}/5</div>
+                <div class="text-sm text-green-800">Note Moyenne</div>
+            </div>
+        </div>
+        
+        <div class="space-y-4">
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Avis cette semaine</span>
+                <span class="font-semibold text-blue-600">{{ analytics.engagement_analytics.reviews_week }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Chats actifs</span>
+                <span class="font-semibold text-green-600">{{ analytics.engagement_analytics.active_chats }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Messages cette semaine</span>
+                <span class="font-semibold text-purple-600">{{ analytics.engagement_analytics.messages_week }}</span>
+            </div>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-gray-200">
+            <h4 class="text-md font-medium text-gray-900 mb-4">Fidélité Clients</h4>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Bronze</span>
+                    <span class="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">{{ analytics.user_analytics.loyalty_levels.bronze }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Argent</span>
+                    <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">{{ analytics.user_analytics.loyalty_levels.silver }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Or</span>
+                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">{{ analytics.user_analytics.loyalty_levels.gold }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Platine</span>
+                    <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">{{ analytics.user_analytics.loyalty_levels.platinum }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Newsletter Analytics -->
+    {% if analytics.newsletter_analytics %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-6">Newsletter & Communications</h3>
+        
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="text-center p-4 bg-indigo-50 rounded-lg">
+                <div class="text-2xl font-bold text-indigo-600">{{ analytics.newsletter_analytics.total_subscribers|intcomma }}</div>
+                <div class="text-sm text-indigo-800">Abonnés Actifs</div>
+            </div>
+            <div class="text-center p-4 bg-pink-50 rounded-lg">
+                <div class="text-2xl font-bold text-pink-600">{{ analytics.newsletter_analytics.sent_newsletters }}</div>
+                <div class="text-sm text-pink-800">Envois Total</div>
+            </div>
+        </div>
+        
+        <div class="space-y-4">
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Nouveaux abonnés (semaine)</span>
+                <span class="font-semibold text-green-600">+{{ analytics.newsletter_analytics.subscribers_week }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Newsletters en brouillon</span>
+                <span class="font-semibold text-orange-600">{{ analytics.newsletter_analytics.total_newsletters|add:"-"|add:analytics.newsletter_analytics.sent_newsletters }}</span>
+            </div>
+        </div>
+
+        <div class="mt-6">
+            <a href="{% url 'backend:admin_newsletter_list' %}" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center">
+                <i data-lucide="mail" class="w-4 h-4 mr-2"></i>
+                Gérer Newsletter
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Performance Insights -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+    <h3 class="text-lg font-semibold text-gray-900 mb-6">Insights & Recommandations</h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Performance Insight -->
+        <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div class="flex items-center mb-3">
+                <div class="p-2 bg-green-100 rounded-full mr-3">
+                    <i data-lucide="trending-up" class="w-5 h-5 text-green-600"></i>
+                </div>
+                <h4 class="font-semibold text-green-800">Performance Excellente</h4>
+            </div>
+            <p class="text-sm text-green-700">Les ventes ont augmenté de 12.5% ce mois. Continuez sur cette lancée!</p>
+        </div>
+
+        <!-- Warning Insight -->
+        <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div class="flex items-center mb-3">
+                <div class="p-2 bg-yellow-100 rounded-full mr-3">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-600"></i>
+                </div>
+                <h4 class="font-semibold text-yellow-800">Attention Requise</h4>
+            </div>
+            <p class="text-sm text-yellow-700">{{ analytics.product_analytics.pending_moderation }} produits en attente de modération.</p>
+        </div>
+
+        <!-- Action Insight -->
+        <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div class="flex items-center mb-3">
+                <div class="p-2 bg-blue-100 rounded-full mr-3">
+                    <i data-lucide="lightbulb" class="w-5 h-5 text-blue-600"></i>
+                </div>
+                <h4 class="font-semibold text-blue-800">Opportunité</h4>
+            </div>
+            <p class="text-sm text-blue-700">Promouvoir les catégories populaires pour augmenter les ventes.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Monthly Trends Table -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div class="p-6 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900">Évolution Mensuelle</h3>
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mois</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilisateurs</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produits</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Commandes</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenus (FCFA)</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for month_data in analytics.monthly_data %}
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {{ month_data.month }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ month_data.users|intcomma }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ month_data.products|intcomma }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ month_data.orders|intcomma }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ month_data.revenue|floatformat:0|intcomma }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+// Chart.js Configuration
+document.addEventListener('DOMContentLoaded', function() {
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: [{% for month in analytics.monthly_data %}'{{ month.month }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Revenus (FCFA)',
+                data: [{% for month in analytics.monthly_data %}{{ month.revenue|default:0 }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return value.toLocaleString() + ' FCFA';
-                            }
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString() + ' FCFA';
                         }
                     }
                 }
             }
-        });
-        
-        // Orders Chart
-        const ordersCtx = document.getElementById('ordersChart').getContext('2d');
-        new Chart(ordersCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
-                datasets: [{
-                    label: 'Commandes',
-                    data: [23, 35, 28, 42, 38, 45, 32],
-                    backgroundColor: '#3b82f6',
-                    borderRadius: 4
-                }]
+        }
+    });
+
+    // Users Chart
+    const usersCtx = document.getElementById('usersChart').getContext('2d');
+    new Chart(usersCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for month in analytics.monthly_data %}'{{ month.month }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Nouveaux Utilisateurs',
+                data: [{% for month in analytics.monthly_data %}{{ month.users|default:0 }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                borderColor: 'rgb(34, 197, 94)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+            scales: {
+                y: {
+                    beginAtZero: true
                 }
             }
-        });
-    </script>
+        }
+    });
+});
 
+// Utility Functions
+function exportReport() {
+    const exportType = document.querySelector('select').value;
+    window.location.href = `{% url 'backend:admin_export_data' 'analytics' %}?period=${exportType}`;
+}
+
+function refreshAnalytics() {
+    fetch('{% url "backend:admin_stats_ajax" %}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error refreshing analytics:', error);
+        });
+}
+
+// Initialize Lucide icons
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>
+
+<!-- Chart.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 {% endblock %}

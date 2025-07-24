@@ -703,6 +703,7 @@ class ProductListView(ListView):
             'categories': Category.objects.filter(is_active=True, parent=None),
             'cities': User.CITIES,
             'conditions': Product.CONDITIONS,
+            'selected_conditions': self.request.GET.getlist('condition'),  # Add this line
             'current_filters': {
                 'q': self.request.GET.get('q', ''),
                 'category': self.request.GET.get('category', ''),

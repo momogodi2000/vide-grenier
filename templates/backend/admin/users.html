@@ -4,457 +4,1114 @@
 
 {% block title %}Gestion des Utilisateurs - Admin{% endblock %}
 
+{% block extra_css %}
+<style>
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e5e7eb;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-active {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.status-inactive {
+    background-color: #fef2f2;
+    color: #991b1b;
+}
+
+.status-suspended {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.user-type-badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.type-client { background-color: #dbeafe; color: #1e40af; }
+.type-seller { background-color: #dcfce7; color: #166534; }
+.type-admin { background-color: #f3e8ff; color: #7c3aed; }
+.type-staff { background-color: #fef3c7; color: #92400e; }
+
+.loyalty-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.loyalty-bronze { background-color: #fed7aa; color: #ea580c; }
+.loyalty-silver { background-color: #e5e7eb; color: #374151; }
+.loyalty-gold { background-color: #fef3c7; color: #f59e0b; }
+.loyalty-platinum { background-color: #e0e7ff; color: #6366f1; }
+</style>
+{% endblock %}
+
 {% block content %}
-    <!-- Header -->
-    <div class="mb-8">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div class="mb-4 sm:mb-0">
-                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Gestion des Utilisateurs</h1>
-                <p class="text-gray-600">Gérez tous les utilisateurs de la plateforme</p>
-            </div>
-            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
-                    <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i>
-                    Ajouter Utilisateur
-                </button>
-                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
-                    <i data-lucide="download" class="w-4 h-4 mr-2"></i>
-                    Exporter
-                </button>
-            </div>
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Gestion des Utilisateurs</h1>
+            <p class="text-gray-600">Gérez tous les utilisateurs de la plateforme Vidé-Grenier Kamer</p>
         </div>
-    </div>
-
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="stats-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">Total Utilisateurs</p>
-                    <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ total_users|default:1247 }}</p>
-                </div>
-                <div class="p-3 bg-blue-100 rounded-full">
-                    <i data-lucide="users" class="w-6 h-6 text-blue-600"></i>
-                </div>
-            </div>
-            <div class="mt-4">
-                <span class="text-green-600 text-sm font-medium">↗ +12.5%</span>
-                <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
-            </div>
-        </div>
-
-        <div class="stats-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">Nouveaux ce mois</p>
-                    <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ new_users_month|default:86 }}</p>
-                </div>
-                <div class="p-3 bg-green-100 rounded-full">
-                    <i data-lucide="user-plus" class="w-6 h-6 text-green-600"></i>
-                </div>
-            </div>
-            <div class="mt-4">
-                <span class="text-green-600 text-sm font-medium">↗ +8.2%</span>
-                <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
-            </div>
-        </div>
-
-        <div class="stats-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">Vendeurs Actifs</p>
-                    <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ active_sellers|default:342 }}</p>
-                </div>
-                <div class="p-3 bg-purple-100 rounded-full">
-                    <i data-lucide="store" class="w-6 h-6 text-purple-600"></i>
-                </div>
-            </div>
-            <div class="mt-4">
-                <span class="text-green-600 text-sm font-medium">↗ +15.1%</span>
-                <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
-            </div>
-        </div>
-
-        <div class="stats-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">Administrateurs</p>
-                    <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ admin_count|default:5 }}</p>
-                </div>
-                <div class="p-3 bg-red-100 rounded-full">
-                    <i data-lucide="shield" class="w-6 h-6 text-red-600"></i>
-                </div>
-            </div>
-            <div class="mt-4">
-                <span class="text-gray-600 text-sm font-medium">Accès complet</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="stats-card mb-8">
-        <div class="flex flex-wrap items-center gap-4">
-            <div class="flex-1 min-w-[200px]">
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
-                    </div>
-                    <input type="text" placeholder="Rechercher un utilisateur..." 
-                           class="w-full pl-10 pr-4 py-2 border-0 bg-gray-50 rounded-lg focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
-                </div>
-            </div>
-            
-            <select class="flex-1 min-w-[150px] border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
-                <option value="">Tous les types</option>
-                <option value="CLIENT">Clients</option>
-                <option value="ADMIN">Administrateurs</option>
-                <option value="STAFF">Staff</option>
-            </select>
-            
-            <select class="flex-1 min-w-[150px] border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
-                <option value="">Toutes les villes</option>
-                <option value="YDE">Yaoundé</option>
-                <option value="DLA">Douala</option>
-                <option value="BDA">Bamenda</option>
-                <option value="BFA">Bafoussam</option>
-                <option value="GRA">Garoua</option>
-            </select>
-            
-            <select class="flex-1 min-w-[150px] border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
-                <option value="">Tous les statuts</option>
-                <option value="active">Actifs</option>
-                <option value="inactive">Inactifs</option>
-                <option value="suspended">Suspendus</option>
-            </select>
-            
-            <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                Filtrer
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <button onclick="openUserModal()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i>
+                Ajouter Utilisateur
             </button>
-            
-            <button class="text-gray-600 hover:text-gray-800 px-4 py-2 transition-colors">
-                Réinitialiser
+            <button onclick="exportUsers()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+                Exporter
+            </button>
+            <button onclick="openBulkActions()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center">
+                <i data-lucide="settings" class="w-4 h-4 mr-2"></i>
+                Actions groupées
             </button>
         </div>
     </div>
+</div>
 
-    <!-- Users Table -->
-    <div class="stats-card">
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            <input type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
-                        </th>
-                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Utilisateur
-                        </th>
-                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                            Type
-                        </th>
-                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                            Ville
-                        </th>
-                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                            Inscription
-                        </th>
-                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Statut
-                        </th>
-                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Actions
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    <!-- Sample User 1 -->
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
-                            <input type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
-                        </td>
-                        <td class="px-4 sm:px-6 py-4">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold mr-3 sm:mr-4">
-                                    AS
-                                </div>
-                                <div>
-                                    <div class="text-sm font-medium text-gray-900">Alice Simo</div>
-                                    <div class="text-sm text-gray-500 truncate max-w-[150px]">alice.douala@gmail.com</div>
-                                    <div class="text-xs text-gray-500 sm:hidden">Client • Douala</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                <i data-lucide="user" class="w-3 h-3 mr-1"></i>
-                                Client
-                            </span>
-                        </td>
-                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                            <div class="flex items-center">
-                                <i data-lucide="map-pin" class="w-4 h-4 text-gray-400 mr-2"></i>
-                                <span class="text-sm text-gray-900">Douala</span>
-                            </div>
-                        </td>
-                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
-                            15 Juin 2024
-                        </td>
-                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></span>
-                                Actif
-                            </span>
-                        </td>
-                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div class="flex items-center space-x-2">
-                                <button class="text-blue-600 hover:text-blue-900 p-1">
-                                    <i data-lucide="eye" class="w-4 h-4"></i>
-                                </button>
-                                <button class="text-yellow-600 hover:text-yellow-900 p-1">
-                                    <i data-lucide="edit" class="w-4 h-4"></i>
-                                </button>
-                                <button class="text-red-600 hover:text-red-900 p-1">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-
-                    <!-- Sample User 2 -->
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
-                            <input type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
-                        </td>
-                        <td class="px-4 sm:px-6 py-4">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold mr-3 sm:mr-4">
-                                    BM
-                                </div>
-                                <div>
-                                    <div class="text-sm font-medium text-gray-900">Bob Mendomo</div>
-                                    <div class="text-sm text-gray-500 truncate max-w-[150px]">bob.yaounde@gmail.com</div>
-                                    <div class="text-xs text-gray-500 sm:hidden">Admin • Yaoundé</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                <i data-lucide="shield" class="w-3 h-3 mr-1"></i>
-                                Admin
-                            </span>
-                        </td>
-                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                            <div class="flex items-center">
-                                <i data-lucide="map-pin" class="w-4 h-4 text-gray-400 mr-2"></i>
-                                <span class="text-sm text-gray-900">Yaoundé</span>
-                            </div>
-                        </td>
-                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
-                            10 Mars 2024
-                        </td>
-                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></span>
-                                Actif
-                            </span>
-                        </td>
-                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div class="flex items-center space-x-2">
-                                <button class="text-blue-600 hover:text-blue-900 p-1">
-                                    <i data-lucide="eye" class="w-4 h-4"></i>
-                                </button>
-                                <button class="text-yellow-600 hover:text-yellow-900 p-1">
-                                    <i data-lucide="edit" class="w-4 h-4"></i>
-                                </button>
-                                <button class="text-gray-400 p-1 cursor-not-allowed">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-
-                    <!-- Sample User 3 -->
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
-                            <input type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
-                        </td>
-                        <td class="px-4 sm:px-6 py-4">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-semibold mr-3 sm:mr-4">
-                                    CT
-                                </div>
-                                <div>
-                                    <div class="text-sm font-medium text-gray-900">Claire Tchoumba</div>
-                                    <div class="text-sm text-gray-500 truncate max-w-[150px]">claire.bafoussam@gmail.com</div>
-                                    <div class="text-xs text-gray-500 sm:hidden">Client • Bafoussam</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                <i data-lucide="user" class="w-3 h-3 mr-1"></i>
-                                Client
-                            </span>
-                        </td>
-                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                            <div class="flex items-center">
-                                <i data-lucide="map-pin" class="w-4 h-4 text-gray-400 mr-2"></i>
-                                <span class="text-sm text-gray-900">Bafoussam</span>
-                            </div>
-                        </td>
-                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
-                            8 Juillet 2024
-                        </td>
-                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                <span class="w-1.5 h-1.5 bg-yellow-400 rounded-full mr-1.5"></span>
-                                Suspendu
-                            </span>
-                        </td>
-                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div class="flex items-center space-x-2">
-                                <button class="text-blue-600 hover:text-blue-900 p-1">
-                                    <i data-lucide="eye" class="w-4 h-4"></i>
-                                </button>
-                                <button class="text-green-600 hover:text-green-900 p-1" title="Réactiver">
-                                    <i data-lucide="unlock" class="w-4 h-4"></i>
-                                </button>
-                                <button class="text-red-600 hover:text-red-900 p-1">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Pagination -->
-        <div class="bg-white px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between border-t border-gray-200">
-            <div class="mb-4 sm:mb-0">
-                <p class="text-sm text-gray-700">
-                    Affichage de <span class="font-medium">1</span> à <span class="font-medium">10</span> sur <span class="font-medium">1247</span> résultats
-                </p>
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stats-card bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-blue-100 text-sm font-medium">Total Utilisateurs</p>
+                <p class="text-2xl sm:text-3xl font-bold">{{ total_users|default:12456|intcomma }}</p>
+                <p class="text-blue-200 text-sm">+{{ new_users_this_month|default:156 }} ce mois</p>
             </div>
-            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
-                </a>
-                <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">1</a>
-                <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-green-50 text-sm font-medium text-green-600">2</a>
-                <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">3</a>
-                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
-                <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">125</a>
-                <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                </a>
-            </nav>
+            <div class="p-3 bg-blue-400 bg-opacity-30 rounded-full">
+                <i data-lucide="users" class="w-6 h-6"></i>
+            </div>
         </div>
     </div>
 
-    <!-- Bulk Actions -->
-    <div class="mt-6 flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-        <select class="border border-gray-300 rounded-lg px-4 py-2 text-sm">
-            <option value="">Actions groupées</option>
-            <option value="activate">Activer sélectionnés</option>
-            <option value="suspend">Suspendre sélectionnés</option>
-            <option value="delete">Supprimer sélectionnés</option>
-            <option value="export">Exporter sélectionnés</option>
-        </select>
-        <button class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm">
-            Appliquer
-        </button>
+    <div class="stats-card bg-gradient-to-br from-green-500 to-green-600 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-green-100 text-sm font-medium">Utilisateurs Actifs</p>
+                <p class="text-2xl sm:text-3xl font-bold">{{ active_users|default:8234|intcomma }}</p>
+                <p class="text-green-200 text-sm">{{ active_percentage|default:85.2 }}% du total</p>
+            </div>
+            <div class="p-3 bg-green-400 bg-opacity-30 rounded-full">
+                <i data-lucide="activity" class="w-6 h-6"></i>
+            </div>
+        </div>
     </div>
 
-    <!-- User Detail Modal -->
-    <div id="userModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-screen overflow-y-auto">
-                <div class="p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-xl font-bold text-gray-900">Détails de l'utilisateur</h3>
-                        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
-                            <i data-lucide="x" class="w-6 h-6"></i>
-                        </button>
+    <div class="stats-card bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-purple-100 text-sm font-medium">Vendeurs</p>
+                <p class="text-2xl sm:text-3xl font-bold">{{ sellers_count|default:2456|intcomma }}</p>
+                <p class="text-purple-200 text-sm">{{ seller_percentage|default:19.7 }}% du total</p>
+            </div>
+            <div class="p-3 bg-purple-400 bg-opacity-30 rounded-full">
+                <i data-lucide="store" class="w-6 h-6"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-card bg-gradient-to-br from-red-500 to-red-600 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-red-100 text-sm font-medium">Suspendus</p>
+                <p class="text-2xl sm:text-3xl font-bold">{{ suspended_users|default:23 }}</p>
+                <p class="text-red-200 text-sm">{{ suspended_percentage|default:0.2 }}% du total</p>
+            </div>
+            <div class="p-3 bg-red-400 bg-opacity-30 rounded-full">
+                <i data-lucide="user-x" class="w-6 h-6"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+    <form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Rechercher</label>
+            <div class="relative">
+                <input type="text" name="search" value="{{ search }}" placeholder="Nom, email, téléphone..." 
+                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-3"></i>
+            </div>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Type d'utilisateur</label>
+            <select name="user_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="">Tous</option>
+                <option value="client" {% if user_type_filter == 'client' %}selected{% endif %}>Client</option>
+                <option value="seller" {% if user_type_filter == 'seller' %}selected{% endif %}>Vendeur</option>
+                <option value="admin" {% if user_type_filter == 'admin' %}selected{% endif %}>Administrateur</option>
+                <option value="staff" {% if user_type_filter == 'staff' %}selected{% endif %}>Staff</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+            <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="">Tous</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Actif</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactif</option>
+                <option value="suspended" {% if status_filter == 'suspended' %}selected{% endif %}>Suspendu</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Niveau fidélité</label>
+            <select name="loyalty_level" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="">Tous</option>
+                <option value="bronze">Bronze</option>
+                <option value="silver">Argent</option>
+                <option value="gold">Or</option>
+                <option value="platinum">Platine</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Actions</label>
+            <div class="flex space-x-2">
+                <button type="submit" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                    <i data-lucide="filter" class="w-4 h-4 mr-2"></i>
+                    Filtrer
+                </button>
+                <a href="{% url 'backend:admin_user_list' %}" class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i data-lucide="x" class="w-4 h-4 text-gray-500"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Users Table -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900">Liste des Utilisateurs</h3>
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="selectAll" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" onchange="toggleSelectAll()">
+                    <label for="selectAll" class="text-sm text-gray-600">Tout sélectionner</label>
+                </div>
+                <span class="text-sm text-gray-500">{{ users.count|default:1234 }} utilisateurs</span>
+                <button onclick="refreshTable()" class="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full" id="usersTable">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                        <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilisateur</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type & Statut</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activité</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statistiques</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fidélité</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for user in users %}
+                <tr class="hover:bg-gray-50 transition-colors" data-user-id="{{ user.id }}">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="checkbox" class="user-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" value="{{ user.id }}">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                {% if user.profile_picture %}
+                                    <img class="user-avatar" src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}">
+                                {% else %}
+                                    <div class="user-avatar bg-gray-200 flex items-center justify-center text-gray-500 font-semibold">
+                                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">
+                                    {{ user.first_name }} {{ user.last_name }}
+                                    {% if user.is_superuser %}
+                                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                            <i data-lucide="crown" class="w-3 h-3 mr-1"></i>Super Admin
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <div class="text-sm text-gray-500">{{ user.email }}</div>
+                                {% if user.phone_number %}
+                                    <div class="text-xs text-gray-400">{{ user.phone_number }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="space-y-2">
+                            <span class="user-type-badge type-{{ user.user_type|default:'client' }}">
+                                {% if user.user_type == 'admin' %}
+                                    <i data-lucide="shield" class="w-3 h-3 mr-1 inline"></i>Administrateur
+                                {% elif user.user_type == 'seller' %}
+                                    <i data-lucide="store" class="w-3 h-3 mr-1 inline"></i>Vendeur
+                                {% elif user.user_type == 'staff' %}
+                                    <i data-lucide="briefcase" class="w-3 h-3 mr-1 inline"></i>Staff
+                                {% else %}
+                                    <i data-lucide="user" class="w-3 h-3 mr-1 inline"></i>Client
+                                {% endif %}
+                            </span>
+                            <br>
+                            {% if user.is_active %}
+                                <span class="status-badge status-active">
+                                    <i data-lucide="check-circle" class="w-3 h-3 mr-1 inline"></i>Actif
+                                </span>
+                            {% else %}
+                                <span class="status-badge status-inactive">
+                                    <i data-lucide="x-circle" class="w-3 h-3 mr-1 inline"></i>Inactif
+                                </span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div class="space-y-1">
+                            <div class="flex items-center">
+                                <i data-lucide="calendar" class="w-3 h-3 mr-1"></i>
+                                <span class="text-xs">Inscrit: {{ user.date_joined|date:"d/m/Y" }}</span>
+                            </div>
+                            {% if user.last_login %}
+                                <div class="flex items-center">
+                                    <i data-lucide="clock" class="w-3 h-3 mr-1"></i>
+                                    <span class="text-xs">Dernière connexion: {{ user.last_login|timesince }}</span>
+                                </div>
+                            {% else %}
+                                <div class="flex items-center text-red-500">
+                                    <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>
+                                    <span class="text-xs">Jamais connecté</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div class="space-y-1">
+                            {% if user.user_type == 'seller' or user.user_type == 'admin' %}
+                                <div class="flex items-center">
+                                    <i data-lucide="package" class="w-3 h-3 mr-1"></i>
+                                    <span class="text-xs">{{ user.products_count|default:0 }} produits</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i data-lucide="dollar-sign" class="w-3 h-3 mr-1"></i>
+                                    <span class="text-xs">{{ user.total_sales|default:0|floatformat:0 }} FCFA</span>
+                                </div>
+                            {% endif %}
+                            {% if user.user_type == 'client' %}
+                                <div class="flex items-center">
+                                    <i data-lucide="shopping-bag" class="w-3 h-3 mr-1"></i>
+                                    <span class="text-xs">{{ user.orders_count|default:0 }} commandes</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i data-lucide="heart" class="w-3 h-3 mr-1"></i>
+                                    <span class="text-xs">{{ user.favorites_count|default:0 }} favoris</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="space-y-1">
+                            {% if user.loyalty_level %}
+                                <span class="loyalty-badge loyalty-{{ user.loyalty_level }}">
+                                    {{ user.get_loyalty_level_display|default:'Bronze' }}
+                                </span>
+                                <div class="text-xs text-gray-500">
+                                    {{ user.loyalty_points|default:0 }} points
+                                </div>
+                            {% else %}
+                                <span class="loyalty-badge loyalty-bronze">Bronze</span>
+                                <div class="text-xs text-gray-500">0 points</div>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex items-center space-x-2">
+                            <button onclick="viewUser({{ user.id }})" class="text-blue-600 hover:text-blue-900 transition-colors" title="Voir détails">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="editUser({{ user.id }})" class="text-yellow-600 hover:text-yellow-900 transition-colors" title="Modifier">
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                            </button>
+                            {% if user.is_active %}
+                                <button onclick="suspendUser({{ user.id }})" class="text-orange-600 hover:text-orange-900 transition-colors" title="Suspendre">
+                                    <i data-lucide="user-minus" class="w-4 h-4"></i>
+                                </button>
+                            {% else %}
+                                <button onclick="activateUser({{ user.id }})" class="text-green-600 hover:text-green-900 transition-colors" title="Activer">
+                                    <i data-lucide="user-check" class="w-4 h-4"></i>
+                                </button>
+                            {% endif %}
+                            <div class="relative">
+                                <button onclick="toggleUserDropdown({{ user.id }})" class="text-gray-400 hover:text-gray-600 transition-colors">
+                                    <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+                                </button>
+                                <div id="userDropdown{{ user.id }}" class="dropdown-menu absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10 hidden">
+                                    <a href="#" onclick="viewUserOrders({{ user.id }})" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <i data-lucide="shopping-cart" class="w-4 h-4 mr-2 inline"></i>Voir commandes
+                                    </a>
+                                    {% if user.user_type == 'seller' %}
+                                        <a href="#" onclick="viewUserProducts({{ user.id }})" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                            <i data-lucide="package" class="w-4 h-4 mr-2 inline"></i>Voir produits
+                                        </a>
+                                    {% endif %}
+                                    <a href="#" onclick="viewUserChats({{ user.id }})" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <i data-lucide="message-circle" class="w-4 h-4 mr-2 inline"></i>Voir conversations
+                                    </a>
+                                    <a href="#" onclick="sendNotification({{ user.id }})" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <i data-lucide="bell" class="w-4 h-4 mr-2 inline"></i>Envoyer notification
+                                    </a>
+                                    <div class="border-t border-gray-100"></div>
+                                    <a href="#" onclick="loginAsUser({{ user.id }})" class="block px-4 py-2 text-sm text-blue-600 hover:bg-blue-50">
+                                        <i data-lucide="log-in" class="w-4 h-4 mr-2 inline"></i>Se connecter en tant que
+                                    </a>
+                                    <div class="border-t border-gray-100"></div>
+                                    <a href="#" onclick="deleteUser({{ user.id }})" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                        <i data-lucide="trash-2" class="w-4 h-4 mr-2 inline"></i>Supprimer
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                        <div class="flex flex-col items-center justify-center">
+                            <i data-lucide="users" class="w-12 h-12 text-gray-400 mb-4"></i>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">Aucun utilisateur trouvé</h3>
+                            <p class="text-gray-500 mb-4">Modifiez vos filtres ou ajoutez un nouvel utilisateur.</p>
+                            <button onclick="openUserModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                Ajouter un utilisateur
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if users.has_other_pages %}
+    <div class="px-6 py-4 border-t border-gray-200">
+        <div class="flex items-center justify-between">
+            <div class="text-sm text-gray-500">
+                Affichage de {{ users.start_index }} à {{ users.end_index }} sur {{ users.paginator.count }} utilisateurs
+            </div>
+            <div class="flex items-center space-x-2">
+                {% if users.has_previous %}
+                    <a href="?page={{ users.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if user_type_filter %}&user_type={{ user_type_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+                       class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+                        Précédent
+                    </a>
+                {% endif %}
+                
+                {% for num in users.paginator.page_range %}
+                    {% if users.number == num %}
+                        <span class="px-3 py-1 text-sm bg-blue-600 text-white rounded">{{ num }}</span>
+                    {% elif num > users.number|add:'-3' and num < users.number|add:'3' %}
+                        <a href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if user_type_filter %}&user_type={{ user_type_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+                           class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+                            {{ num }}
+                        </a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if users.has_next %}
+                    <a href="?page={{ users.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if user_type_filter %}&user_type={{ user_type_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+                       class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+                        Suivant
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- User Modal -->
+<div id="userModal" class="modal">
+    <div class="modal-content">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 id="modalTitle" class="text-lg font-semibold text-gray-900">Ajouter un Utilisateur</h3>
+                <button onclick="closeUserModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+        
+        <form id="userForm" class="p-6">
+            {% csrf_token %}
+            <input type="hidden" id="userId" name="user_id">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Prénom *</label>
+                    <input type="text" id="firstName" name="first_name" required 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nom *</label>
+                    <input type="text" id="lastName" name="last_name" required 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                    <input type="email" id="email" name="email" required 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Téléphone</label>
+                    <input type="tel" id="phoneNumber" name="phone_number" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="+237 6XX XX XX XX">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Type d'utilisateur *</label>
+                    <select id="userType" name="user_type" required 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="client">Client</option>
+                        <option value="seller">Vendeur</option>
+                        <option value="staff">Staff</option>
+                        <option value="admin">Administrateur</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+                    <select id="isActive" name="is_active" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="true">Actif</option>
+                        <option value="false">Inactif</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Niveau de fidélité</label>
+                    <select id="loyaltyLevel" name="loyalty_level" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="bronze">Bronze</option>
+                        <option value="silver">Argent</option>
+                        <option value="gold">Or</option>
+                        <option value="platinum">Platine</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Points de fidélité</label>
+                    <input type="number" id="loyaltyPoints" name="loyalty_points" min="0" value="0" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+            
+            <div class="mt-6" id="passwordSection">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
+                        <input type="password" id="password" name="password" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <p class="text-xs text-gray-500 mt-1">Laissez vide pour conserver le mot de passe actuel</p>
                     </div>
                     
-                    <div class="space-y-6">
-                        <div class="flex items-center space-x-4">
-                            <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
-                                AS
-                            </div>
-                            <div>
-                                <h4 class="text-lg font-semibold text-gray-900">Alice Simo</h4>
-                                <p class="text-gray-600">Membre depuis le 15 Juin 2024</p>
-                            </div>
-                        </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Confirmer le mot de passe</label>
+                        <input type="password" id="passwordConfirm" name="password_confirm" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Biographie</label>
+                <textarea id="biography" name="biography" rows="3" 
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Informations supplémentaires sur l'utilisateur..."></textarea>
+            </div>
+            
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="emailVerified" name="email_verified" 
+                                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Email vérifié</span>
+                        </label>
                         
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                <p class="text-sm text-gray-900">alice.douala@gmail.com</p>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
-                                <p class="text-sm text-gray-900">+237 694 123 456</p>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Ville</label>
-                                <p class="text-sm text-gray-900">Douala</p>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                                <p class="text-sm text-gray-900">Client</p>
-                            </div>
-                        </div>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="phoneVerified" name="phone_verified" 
+                                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Téléphone vérifié</span>
+                        </label>
                         
-                        <div class="border-t pt-6">
-                            <h5 class="font-medium text-gray-900 mb-4">Statistiques</h5>
-                            <div class="grid grid-cols-3 gap-4">
-                                <div class="text-center">
-                                    <p class="text-2xl font-bold text-green-600">12</p>
-                                    <p class="text-sm text-gray-600">Produits vendus</p>
-                                </div>
-                                <div class="text-center">
-                                    <p class="text-2xl font-bold text-blue-600">8</p>
-                                    <p class="text-sm text-gray-600">Achats</p>
-                                </div>
-                                <div class="text-center">
-                                    <p class="text-2xl font-bold text-purple-600">4.8</p>
-                                    <p class="text-sm text-gray-600">Note moyenne</p>
-                                </div>
-                            </div>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="isStaff" name="is_staff" 
+                                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Accès admin</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 flex justify-end space-x-3">
+                <button type="button" onclick="closeUserModal()" 
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    Annuler
+                </button>
+                <button type="submit" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <span id="submitText">Ajouter</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Bulk Actions Modal -->
+<div id="bulkModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900">Actions Groupées</h3>
+                <button onclick="closeBulkModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <p class="text-sm text-gray-600 mb-4">
+                <span id="selectedCount">0</span> utilisateur(s) sélectionné(s)
+            </p>
+            
+            <div class="space-y-3">
+                <button onclick="bulkActivate()" class="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors">
+                    <div class="flex items-center">
+                        <i data-lucide="user-check" class="w-5 h-5 text-green-600 mr-3"></i>
+                        <div>
+                            <div class="font-medium text-green-800">Activer les utilisateurs</div>
+                            <div class="text-sm text-green-600">Rendre les comptes actifs</div>
                         </div>
                     </div>
-                    
-                    <div class="mt-8 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-                        <button class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
-                            Modifier
-                        </button>
-                        <button class="flex-1 bg-yellow-600 text-white py-2 px-4 rounded-lg hover:bg-yellow-700 transition-colors">
-                            Suspendre
-                        </button>
-                        <button class="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors">
-                            Supprimer
-                        </button>
+                </button>
+                
+                <button onclick="bulkSuspend()" class="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-yellow-50 hover:border-yellow-300 transition-colors">
+                    <div class="flex items-center">
+                        <i data-lucide="user-minus" class="w-5 h-5 text-yellow-600 mr-3"></i>
+                        <div>
+                            <div class="font-medium text-yellow-800">Suspendre les utilisateurs</div>
+                            <div class="text-sm text-yellow-600">Désactiver temporairement</div>
+                        </div>
                     </div>
+                </button>
+                
+                <button onclick="bulkSendNotification()" class="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors">
+                    <div class="flex items-center">
+                        <i data-lucide="bell" class="w-5 h-5 text-blue-600 mr-3"></i>
+                        <div>
+                            <div class="font-medium text-blue-800">Envoyer notification</div>
+                            <div class="text-sm text-blue-600">Message groupé</div>
+                        </div>
+                    </div>
+                </button>
+                
+                <button onclick="bulkExport()" class="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors">
+                    <div class="flex items-center">
+                        <i data-lucide="download" class="w-5 h-5 text-purple-600 mr-3"></i>
+                        <div>
+                            <div class="font-medium text-purple-800">Exporter la sélection</div>
+                            <div class="text-sm text-purple-600">Télécharger en CSV</div>
+                        </div>
+                    </div>
+                </button>
+                
+                <div class="border-t border-gray-200 pt-3">
+                    <button onclick="bulkDelete()" class="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-red-50 hover:border-red-300 transition-colors">
+                        <div class="flex items-center">
+                            <i data-lucide="trash-2" class="w-5 h-5 text-red-600 mr-3"></i>
+                            <div>
+                                <div class="font-medium text-red-800">Supprimer les utilisateurs</div>
+                                <div class="text-sm text-red-600">Action irréversible</div>
+                            </div>
+                        </div>
+                    </button>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        function openModal() {
-            document.getElementById('userModal').classList.remove('hidden');
+<script>
+// Global variables
+let selectedUsers = [];
+let editingUserId = null;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    updateSelectedCount();
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+});
+
+// Modal functions
+function openUserModal(userId = null) {
+    editingUserId = userId;
+    const modal = document.getElementById('userModal');
+    const form = document.getElementById('userForm');
+    const title = document.getElementById('modalTitle');
+    const submitText = document.getElementById('submitText');
+    
+    if (userId) {
+        title.textContent = 'Modifier l\'Utilisateur';
+        submitText.textContent = 'Modifier';
+        loadUserData(userId);
+    } else {
+        title.textContent = 'Ajouter un Utilisateur';
+        submitText.textContent = 'Ajouter';
+        form.reset();
+        document.getElementById('userId').value = '';
+    }
+    
+    modal.style.display = 'block';
+}
+
+function closeUserModal() {
+    document.getElementById('userModal').style.display = 'none';
+    editingUserId = null;
+}
+
+function openBulkActions() {
+    updateSelectedCount();
+    if (selectedUsers.length === 0) {
+        alert('Veuillez sélectionner au moins un utilisateur.');
+        return;
+    }
+    document.getElementById('bulkModal').style.display = 'block';
+}
+
+function closeBulkModal() {
+    document.getElementById('bulkModal').style.display = 'none';
+}
+
+// User selection functions
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.user-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+        const userId = checkbox.value;
+        if (selectAll.checked) {
+            if (!selectedUsers.includes(userId)) {
+                selectedUsers.push(userId);
+            }
+        } else {
+            selectedUsers = selectedUsers.filter(id => id !== userId);
         }
-        
-        function closeModal() {
-            document.getElementById('userModal').classList.add('hidden');
-        }
-        
-        // Add click handlers for view buttons
-        document.querySelectorAll('[data-lucide="eye"]').forEach(btn => {
-            btn.closest('button').addEventListener('click', openModal);
+    });
+    
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const count = selectedUsers.length;
+    const countElement = document.getElementById('selectedCount');
+    if (countElement) {
+        countElement.textContent = count;
+    }
+    
+    // Update individual checkboxes
+    document.querySelectorAll('.user-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const userId = this.value;
+            if (this.checked) {
+                if (!selectedUsers.includes(userId)) {
+                    selectedUsers.push(userId);
+                }
+            } else {
+                selectedUsers = selectedUsers.filter(id => id !== userId);
+            }
+            updateSelectedCount();
         });
-    </script>
+    });
+}
+
+// CRUD operations
+function loadUserData(userId) {
+    // Simulate loading user data
+    fetch(`/admin-panel/users/${userId}/api/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('userId').value = data.id;
+            document.getElementById('firstName').value = data.first_name;
+            document.getElementById('lastName').value = data.last_name;
+            document.getElementById('email').value = data.email;
+            document.getElementById('phoneNumber').value = data.phone_number || '';
+            document.getElementById('userType').value = data.user_type;
+            document.getElementById('isActive').value = data.is_active ? 'true' : 'false';
+            document.getElementById('loyaltyLevel').value = data.loyalty_level || 'bronze';
+            document.getElementById('loyaltyPoints').value = data.loyalty_points || 0;
+            document.getElementById('biography').value = data.biography || '';
+            document.getElementById('emailVerified').checked = data.email_verified || false;
+            document.getElementById('phoneVerified').checked = data.phone_verified || false;
+            document.getElementById('isStaff').checked = data.is_staff || false;
+        })
+        .catch(error => {
+            console.error('Error loading user data:', error);
+            alert('Erreur lors du chargement des données utilisateur.');
+        });
+}
+
+function viewUser(userId) {
+    window.open(`/admin-panel/users/${userId}/`, '_blank');
+}
+
+function editUser(userId) {
+    openUserModal(userId);
+}
+
+function suspendUser(userId) {
+    if (confirm('Êtes-vous sûr de vouloir suspendre cet utilisateur ?')) {
+        fetch(`/admin-panel/ajax/quick-action/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: `action=suspend_user&item_id=${userId}&item_type=users`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Utilisateur suspendu avec succès', 'success');
+                refreshTable();
+            } else {
+                showNotification(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Erreur lors de la suspension', 'error');
+        });
+    }
+}
+
+function activateUser(userId) {
+    if (confirm('Êtes-vous sûr de vouloir activer cet utilisateur ?')) {
+        fetch(`/admin-panel/ajax/quick-action/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: `action=activate_user&item_id=${userId}&item_type=users`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Utilisateur activé avec succès', 'success');
+                refreshTable();
+            } else {
+                showNotification(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Erreur lors de l\'activation', 'error');
+        });
+    }
+}
+
+function deleteUser(userId) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.')) {
+        fetch(`/admin-panel/bulk-actions/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: `action=delete&item_type=users&item_ids=${userId}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Utilisateur supprimé avec succès', 'success');
+                refreshTable();
+            } else {
+                showNotification(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Erreur lors de la suppression', 'error');
+        });
+    }
+}
+
+// Bulk operations
+function bulkActivate() {
+    if (confirm(`Activer ${selectedUsers.length} utilisateur(s) ?`)) {
+        performBulkAction('activate');
+    }
+}
+
+function bulkSuspend() {
+    if (confirm(`Suspendre ${selectedUsers.length} utilisateur(s) ?`)) {
+        performBulkAction('deactivate');
+    }
+}
+
+function bulkDelete() {
+    if (confirm(`Supprimer définitivement ${selectedUsers.length} utilisateur(s) ? Cette action est irréversible.`)) {
+        performBulkAction('delete');
+    }
+}
+
+function bulkSendNotification() {
+    const message = prompt('Message à envoyer :');
+    if (message) {
+        performBulkAction('send_notification', { message: message });
+    }
+}
+
+function bulkExport() {
+    const userIds = selectedUsers.join(',');
+    window.open(`/admin-panel/export/users/?user_ids=${userIds}`, '_blank');
+    closeBulkModal();
+}
+
+function performBulkAction(action, extraData = {}) {
+    const formData = new FormData();
+    formData.append('action', action);
+    formData.append('item_type', 'users');
+    selectedUsers.forEach(id => formData.append('item_ids', id));
+    
+    Object.keys(extraData).forEach(key => {
+        formData.append(key, extraData[key]);
+    });
+
+    fetch('/admin-panel/bulk-actions/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            refreshTable();
+            closeBulkModal();
+            selectedUsers = [];
+            updateSelectedCount();
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Erreur lors de l\'opération', 'error');
+    });
+}
+
+// Additional user actions
+function viewUserOrders(userId) {
+    window.open(`/admin-panel/orders/?user_id=${userId}`, '_blank');
+}
+
+function viewUserProducts(userId) {
+    window.open(`/admin-panel/products/?seller_id=${userId}`, '_blank');
+}
+
+function viewUserChats(userId) {
+    window.open(`/admin-panel/chats/?user_id=${userId}`, '_blank');
+}
+
+function sendNotification(userId) {
+    const message = prompt('Message à envoyer à cet utilisateur :');
+    if (message) {
+        fetch('/admin-panel/ajax/quick-action/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: `action=send_notification&item_id=${userId}&item_type=users&message=${encodeURIComponent(message)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Notification envoyée avec succès', 'success');
+            } else {
+                showNotification(data.message, 'error');
+            }
+        });
+    }
+}
+
+function loginAsUser(userId) {
+    if (confirm('Se connecter en tant que cet utilisateur ? Vous serez déconnecté de votre session admin.')) {
+        fetch(`/admin-panel/ajax/login-as/${userId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCsrfToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = '/dashboard/';
+            } else {
+                showNotification(data.message, 'error');
+            }
+        });
+    }
+}
+
+// Dropdown functions
+function toggleUserDropdown(userId) {
+    const dropdown = document.getElementById(`userDropdown${userId}`);
+    const allDropdowns = document.querySelectorAll('.dropdown-menu');
+    
+    // Close all other dropdowns
+    allDropdowns.forEach(d => {
+        if (d !== dropdown) d.classList.add('hidden');
+    });
+    
+    // Toggle current dropdown
+    dropdown.classList.toggle('hidden');
+}
+
+// Utility functions
+function refreshTable() {
+    window.location.reload();
+}
+
+function exportUsers() {
+    window.open('/admin-panel/export/users/', '_blank');
+}
+
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
+        type === 'success' ? 'bg-green-500 text-white' :
+        type === 'error' ? 'bg-red-500 text-white' :
+        'bg-blue-500 text-white'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Form submission
+document.getElementById('userForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const url = editingUserId ? `/admin-panel/users/${editingUserId}/edit/` : '/admin-panel/users/create/';
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            closeUserModal();
+            refreshTable();
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Erreur lors de la sauvegarde', 'error');
+    });
+});
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('[onclick*="toggleUserDropdown"]')) {
+        document.querySelectorAll('.dropdown-menu').forEach(d => d.classList.add('hidden'));
+    }
+});
+
+// Close modals when clicking outside
+window.addEventListener('click', function(event) {
+    const userModal = document.getElementById('userModal');
+    const bulkModal = document.getElementById('bulkModal');
+    
+    if (event.target === userModal) {
+        closeUserModal();
+    }
+    if (event.target === bulkModal) {
+        closeBulkModal();
+    }
+});
+</script>
 {% endblock %}

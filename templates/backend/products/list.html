@@ -146,8 +146,8 @@
                             <label class="block text-sm font-semibold text-gray-700 mb-3">État</label>
                             <div class="space-y-2">
                                 <label class="flex items-center space-x-3 cursor-pointer">
-                                           <input type="checkbox" name="condition" value="NEW" 
-                                          {% if "NEW" in request.GET.getlist 'condition' %}checked{% endif %}
+                                    <input type="checkbox" name="condition" value="NEW" 
+                                          {% if "NEW" in selected_conditions %}checked{% endif %}
                                            class="rounded border-gray-300 text-green-600">
                                     <span class="text-sm text-gray-700">Neuf</span>
                                 </label>
