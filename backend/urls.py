@@ -1,433 +1,270 @@
-# backend/urls.py - REORGANIZED AND CLEANED URLs FOR VIDÉ-GRENIER KAMER
+# backend/urls.py - REORGANIZED URLs FOR VIDÉ-GRENIER KAMER
 
-from django.urls import path
-from . import views
-from . import additional_views
-# Import visitor purchase views
-from .views import (
-    VisitorProductDetailView,
-    visitor_order_create,
-    visitor_payment_process,
-    visitor_order_success,
-    campay_webhook,
-)
+from django.urls import path, include
+from django.views.decorators.csrf import csrf_exempt
+from . import views, views_admin, additional_views, views_client, views_staff
 
 app_name = 'backend'
 
-# ============= PAGES PRINCIPALES =============
+# ============= MAIN PAGES =============
 urlpatterns = [
+    # Home page
     path('', views.HomeView.as_view(), name='home'),
+    
+    # Dashboard redirector
     path('dashboard/', views.DashboardView.as_view(), name='dashboard'),
-    path('search/', views.SearchView.as_view(), name='search'),
+    path('dashboard/client/', views.DashboardView.as_view(), {'user_type': 'CLIENT'}, name='client_dashboard'),
+    path('dashboard/admin/', views.DashboardView.as_view(), {'user_type': 'ADMIN'}, name='admin_dashboard'),
+    path('dashboard/staff/', views.DashboardView.as_view(), {'user_type': 'STAFF'}, name='staff_dashboard'),
+    
+    # Static pages
+    path('about/', additional_views.AboutView.as_view(), name='about'),
+    path('contact/', additional_views.ContactView.as_view(), name='contact'),
+    path('help/', additional_views.HelpView.as_view(), name='help'),
+    path('privacy/', additional_views.PrivacyView.as_view(), name='privacy'),
+    path('terms/', additional_views.TermsView.as_view(), name='terms'),
 ]
 
-# ============= AUTHENTIFICATION =============
+# ============= AUTHENTICATION =============
 urlpatterns += [
-    path('auth/login/', views.CustomLoginView.as_view(), name='login'),
     path('auth/register/', views.CustomSignupView.as_view(), name='register'),
+    path('auth/login/', views.CustomLoginView.as_view(), name='login'),
     path('auth/logout/', views.CustomLogoutView.as_view(), name='logout'),
-    path('auth/verify-phone/', views.PhoneVerificationView.as_view(), name='verify_phone'),
     path('auth/profile/', views.ProfileView.as_view(), name='profile'),
     path('auth/profile/edit/', views.ProfileEditView.as_view(), name='profile_edit'),
-    # Password reset
-    path('auth/password-reset/', additional_views.PasswordResetRequestView.as_view(), name='password_reset_request'),
-    path('auth/password-reset/<str:token>/', additional_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('auth/password-reset-request/', additional_views.PasswordResetRequestView.as_view(), name='password_reset_request'),
+    path('auth/password-reset-confirm/<str:token>/', additional_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('auth/verify-phone/', views.PhoneVerificationView.as_view(), name='verify_phone'),
 ]
 
-# ============= GESTION PRODUITS =============
+# ============= PRODUCTS =============
 urlpatterns += [
+    # Product listings
     path('products/', views.ProductListView.as_view(), name='product_list'),
-    path('products/create/', views.ProductCreateView.as_view(), name='product_create'),
-    path('products/<slug:slug>/', views.ProductDetailView.as_view(), name='product_detail'),
-    path('products/<slug:slug>/edit/', views.ProductEditView.as_view(), name='product_edit'),
-    path('products/<slug:slug>/delete/', views.ProductDeleteView.as_view(), name='product_delete'),
-    
-    # Gestion avancée des produits
-    path('products/<slug:slug>/promote/', additional_views.ProductPromoteView.as_view(), name='product_promote'),
-    path('products/<slug:slug>/report/', additional_views.ProductReportView.as_view(), name='product_report'),
-    path('products/bulk-actions/', additional_views.ProductBulkActionsView.as_view(), name='product_bulk_actions'),
+    path('products/trending/', additional_views.TrendingProductsView.as_view(), name='trending_products'),
+    path('products/recommended/', additional_views.RecommendedProductsView.as_view(), name='recommended_products'),
+    path('products/recently-viewed/', additional_views.RecentlyViewedView.as_view(), name='recently_viewed_products'),
     path('products/compare/', additional_views.CompareProductsView.as_view(), name='product_compare'),
+    
+    # Product CRUD
+    path('products/create/', views.ProductCreateView.as_view(), name='product_create'),
+    path('product/<slug:slug>/', views.ProductDetailView.as_view(), name='product_detail'),
+    path('product/<slug:slug>/edit/', views.ProductEditView.as_view(), name='product_edit'),
+    path('product/<slug:slug>/delete/', views.ProductDeleteView.as_view(), name='product_delete'),
+    path('product/<slug:slug>/promote/', additional_views.ProductPromoteView.as_view(), name='product_promote'),
+    path('product/<slug:slug>/report/', additional_views.ProductReportView.as_view(), name='product_report'),
+    path('products/bulk-actions/', additional_views.ProductBulkActionsView.as_view(), name='product_bulk_actions'),
+    
+    # Short URLs for sharing
+    path('p/<slug:slug>/', views.ProductDetailView.as_view(), name='product_short'),
+    path('buy/<slug:slug>/', views.PublicOrderCreateView.as_view(), name='quick_buy'),
+    
+    # Visitor-specific product routes
+    path('visitor/product/<slug:slug>/', views.VisitorProductDetailView.as_view(), name='visitor_product_detail'),
 ]
 
-# ============= CATÉGORIES =============
+# ============= CATEGORIES =============
 urlpatterns += [
-    path('category/<slug:slug>/', views.CategoryView.as_view(), name='category'),
-    path('categories/', views.CategoryListView.as_view(), name='category_list'),
+    path('categories/', additional_views.CategoryListView.as_view(), name='category_list'),
+    path('category/<slug:slug>/', views.CategoryView.as_view(), name='category_detail'),
+    # Short URL for categories
+    path('c/<slug:slug>/', views.CategoryView.as_view(), name='category_short'),
 ]
 
-# ============= COMMANDES ET PAIEMENTS =============
+# ============= ORDERS & PAYMENTS =============
 urlpatterns += [
-    # Commandes pour utilisateurs connectés
-    path('order/create/<uuid:product_id>/', views.OrderCreateView.as_view(), name='order_create'),
-    path('order/<uuid:pk>/', views.OrderDetailView.as_view(), name='order_detail'),
+    # Regular orders
     path('orders/', views.OrderListView.as_view(), name='order_list'),
+    path('orders/create/', views.OrderCreateView.as_view(), name='order_create'),
+    path('orders/<uuid:pk>/', views.OrderDetailView.as_view(), name='order_detail'),
     
-    # Commandes publiques (paiement à la livraison)
-    path('order/public/<slug:slug>/', views.PublicOrderCreateView.as_view(), name='public_order_create'),
-    path('order/public/success/<str:order_number>/', views.PublicOrderSuccessView.as_view(), name='public_order_success'),
+    # Public orders
+    path('orders/public/', views.PublicOrderCreateView.as_view(), name='public_order_create'),
+    path('orders/public/<uuid:order_id>/', views.PublicOrderSuccessView.as_view(), name='public_order_detail'),
+    path('orders/public/success/<uuid:order_id>/', views.PublicOrderSuccessView.as_view(), name='public_order_success'),
     
-    # Paiements
-    path('payment/<uuid:order_id>/', views.PaymentView.as_view(), name='payment'),
-    path('payment/<uuid:pk>/success/', views.PaymentSuccessView.as_view(), name='payment_success'),
-    path('payment/<uuid:pk>/cancel/', views.PaymentCancelView.as_view(), name='payment_cancel'),
+    # Visitor orders
+    path('visitor/order/<uuid:product_id>/', views.visitor_order_create, name='visitor_order_create'),
+    path('visitor/payment/<uuid:order_id>/', views.visitor_payment_process, name='visitor_payment'),
+    path('visitor/success/<uuid:order_id>/', views.visitor_order_success, name='visitor_order_success'),
+    
+    # Payments
+    path('payment/<uuid:order_id>/', views.PaymentView.as_view(), name='payment_create'),
+    path('payment/success/<uuid:payment_id>/', views.PaymentSuccessView.as_view(), name='payment_success'),
+    path('payment/cancel/<uuid:payment_id>/', views.PaymentCancelView.as_view(), name='payment_cancel'),
 ]
 
-# ============= CHAT ET MESSAGES =============
+# ============= SEARCH =============
+urlpatterns += [
+    path('search/', views.SearchView.as_view(), name='search_results'),
+    path('search/advanced/', additional_views.ProductAdvancedSearchView.as_view(), name='advanced_search'),
+    path('search/saved/', additional_views.SavedSearchesView.as_view(), name='saved_searches'),
+]
+
+# ============= FAVORITES & WISHLIST =============
+urlpatterns += [
+    path('favorites/', additional_views.FavoriteListView.as_view(), name='favorites_list'),
+    path('wishlist/', additional_views.WishlistView.as_view(), name='wishlist'),
+]
+
+# ============= REVIEWS =============
+urlpatterns += [
+    path('reviews/', views.ReviewListView.as_view(), name='review_list'),
+    path('review/create/<uuid:order_id>/', views.ReviewCreateView.as_view(), name='review_create'),
+    path('review/<uuid:pk>/', views.ReviewDetailView.as_view(), name='review_detail'),
+]
+
+# ============= CHAT =============
 urlpatterns += [
     path('chat/', views.ChatListView.as_view(), name='chat_list'),
     path('chat/<uuid:pk>/', views.ChatDetailView.as_view(), name='chat_detail'),
     path('chat/create/<uuid:product_id>/', views.ChatCreateView.as_view(), name='chat_create'),
 ]
 
-# ============= AVIS ET ÉVALUATIONS =============
+# ============= PICKUP POINTS =============
 urlpatterns += [
-    path('review/create/<uuid:order_id>/', views.ReviewCreateView.as_view(), name='review_create'),
-    path('reviews/', views.ReviewListView.as_view(), name='review_list'),
-    path('review/<uuid:pk>/', views.ReviewDetailView.as_view(), name='review_detail'),
+    path('pickup-points/', views.PickupPointListView.as_view(), name='pickup_list'),
+    path('pickup-point/<uuid:pk>/', views.PickupPointDetailView.as_view(), name='pickup_detail'),
 ]
 
-# ============= POINTS DE RETRAIT =============
-urlpatterns += [
-    path('pickup-points/', views.PickupPointListView.as_view(), name='pickup_point_list'),
-    path('pickup-point/<uuid:pk>/', views.PickupPointDetailView.as_view(), name='pickup_point_detail'),
-]
-
-# ============= PAGES UTILITAIRES =============
-urlpatterns += [
-    path('about/', views.AboutView.as_view(), name='about'),
-    path('contact/', views.ContactView.as_view(), name='contact'),
-    path('help/', views.HelpView.as_view(), name='help'),
-    path('terms/', views.TermsView.as_view(), name='terms'),
-    path('privacy/', views.PrivacyView.as_view(), name='privacy'),
-]
-
-# ============= FAVORIS ET WISHLIST =============
-urlpatterns += [
-    path('favorites/', additional_views.FavoriteListView.as_view(), name='favorite_list'),
-    path('wishlist/', additional_views.WishlistView.as_view(), name='wishlist'),
-]
-
-# ============= STATISTIQUES ET ANALYTICS =============
-urlpatterns += [
-    path('stats/', additional_views.StatsView.as_view(), name='personal_stats'),
-    path('trending/', additional_views.TrendingProductsView.as_view(), name='trending_products'),
-    path('recently-viewed/', additional_views.RecentlyViewedView.as_view(), name='recently_viewed'),
-    path('recommended/', additional_views.RecommendedProductsView.as_view(), name='recommended_products'),
-]
-
-# ============= PROFILS ET VENDEURS =============
+# ============= SELLER PROFILES =============
 urlpatterns += [
     path('seller/<uuid:pk>/', additional_views.SellerProfileView.as_view(), name='seller_profile'),
 ]
 
-# ============= RECHERCHE AVANCÉE =============
+# ============= ADMIN PANEL =============
 urlpatterns += [
-    path('search/advanced/', additional_views.ProductAdvancedSearchView.as_view(), name='advanced_search'),
-    path('search/saved/', additional_views.SavedSearchesView.as_view(), name='saved_searches'),
+    # Main admin panel
+    path('admin-panel/', views_admin.admin_dashboard, name='admin_panel'),
+    
+    # User Management
+    path('admin-panel/users/', views_admin.AdminUserListView.as_view() 
+         if hasattr(views_admin, 'AdminUserListView') else views_admin.admin_user_list, 
+         name='admin_user_list'),
+    path('admin-panel/users/create/', views_admin.AdminUserCreateView.as_view() 
+         if hasattr(views_admin, 'AdminUserCreateView') else views_admin.admin_user_create, 
+         name='admin_user_create'),
+    path('admin-panel/users/<uuid:user_id>/', views_admin.AdminUserDetailView.as_view() 
+         if hasattr(views_admin, 'AdminUserDetailView') else views_admin.admin_user_detail, 
+         name='admin_user_detail'),
+    path('admin-panel/users/<uuid:user_id>/edit/', views_admin.AdminUserUpdateView.as_view() 
+         if hasattr(views_admin, 'AdminUserUpdateView') else views_admin.admin_user_edit, 
+         name='admin_user_edit'),
+    
+    # Product Management
+    path('admin-panel/products/', views_admin.AdminProductListView.as_view() 
+         if hasattr(views_admin, 'AdminProductListView') else views_admin.admin_product_list, 
+         name='admin_product_list'),
+    path('admin-panel/products/create/', views_admin.admin_product_create, name='admin_product_create'),
+    path('admin-panel/products/<uuid:product_id>/', views_admin.admin_product_detail, name='admin_product_detail'),
+    path('admin-panel/products/<uuid:product_id>/edit/', views_admin.admin_product_edit, name='admin_product_edit'),
+    
+    # Order Management
+    path('admin-panel/orders/', views_admin.AdminOrderListView.as_view() 
+         if hasattr(views_admin, 'AdminOrderListView') else views_admin.admin_order_list, 
+         name='admin_order_list'),
+    
+    # Payment Management
+    path('admin-panel/payments/', views_admin.AdminPaymentListView.as_view() 
+         if hasattr(views_admin, 'AdminPaymentListView') else views_admin.admin_payment_list, 
+         name='admin_payment_list'),
+    path('admin-panel/payments/<uuid:payment_id>/', views_admin.admin_payment_detail, name='admin_payment_detail'),
+    
+    # Stock Management
+    path('admin-panel/stock/', views_admin.AdminStockView.as_view() 
+         if hasattr(views_admin, 'AdminStockView') else views_admin.admin_stock_list, 
+         name='admin_stock_list'),
+    path('admin-panel/stock/add/', views_admin.AdminStockAddView.as_view() 
+         if hasattr(views_admin, 'AdminStockAddView') else views_admin.admin_stock_add, 
+         name='admin_stock_add'),
+    
+    # Promotion Management
+    path('admin-panel/promotions/', views_admin.AdminPromotionListView.as_view() 
+         if hasattr(views_admin, 'AdminPromotionListView') else views_admin.admin_promotion_list, 
+         name='admin_promotion_list'),
+    path('admin-panel/promotions/create/', views_admin.admin_promotion_create, name='admin_promotion_create'),
+    path('admin-panel/promotions/<uuid:promotion_id>/edit/', views_admin.admin_promotion_edit, name='admin_promotion_edit'),
+    
+    # Loyalty Management
+    path('admin-panel/loyalty/', views_admin.AdminLoyaltyListView.as_view() 
+         if hasattr(views_admin, 'AdminLoyaltyListView') else views_admin.admin_loyalty_list, 
+         name='admin_loyalty_list'),
+    path('admin-panel/loyalty/create/', views_admin.admin_loyalty_create, name='admin_loyalty_create'),
+    path('admin-panel/loyalty/<uuid:loyalty_id>/edit/', views_admin.admin_loyalty_edit, name='admin_loyalty_edit'),
+    
+    # Newsletter Management
+    path('admin-panel/newsletter/', views_admin.AdminNewsletterListView.as_view() 
+         if hasattr(views_admin, 'AdminNewsletterListView') else views_admin.admin_dashboard, 
+         name='admin_newsletter_list'),
+    path('admin-panel/newsletter/create/', views_admin.admin_newsletter_create, name='admin_newsletter_create'),
+    path('admin-panel/newsletter/sent/', views_admin.admin_newsletter_send 
+         if hasattr(views_admin, 'admin_newsletter_send') else views_admin.admin_newsletter_list, 
+         name='admin_newsletter_sent'),
+    
+    # Notification Management
+    path('admin-panel/notifications/', views_admin.AdminNotificationListView.as_view() 
+         if hasattr(views_admin, 'AdminNotificationListView') else views_admin.admin_notification_list, 
+         name='admin_notification_list'),
+    path('admin-panel/notifications/create/', views_admin.admin_notification_create, name='admin_notification_create'),
+    
+    # Analytics
+    path('admin-panel/analytics/', views_admin.AdminAnalyticsView.as_view() 
+         if hasattr(views_admin, 'AdminAnalyticsView') else views_admin.admin_analytics, 
+         name='admin_analytics'),
 ]
 
-# ============= API ENDPOINTS AJAX =============
+# ============= AJAX ENDPOINTS =============
 urlpatterns += [
-    # Analytics produits
+    # Product interactions
     path('ajax/product-views/<uuid:pk>/', views.ProductViewAjax.as_view(), name='product_view_ajax'),
-    
-    # Favoris
     path('ajax/favorite/<slug:slug>/', views.FavoriteToggleView.as_view(), name='favorite_toggle'),
+    
+    # Recommendations and tracking
+    path('ajax/recommendations/', views.ajax_get_recommendations 
+         if hasattr(views, 'ajax_get_recommendations') else views.HomeView.as_view(), 
+         name='ajax_get_recommendations'),
+    path('ajax/behavior-track/', views.ajax_track_behavior 
+         if hasattr(views, 'ajax_track_behavior') else views.HomeView.as_view(), 
+         name='ajax_track_behavior'),
     
     # Notifications
     path('ajax/notifications/', views.NotificationListAjax.as_view(), name='notification_ajax'),
     path('ajax/notifications/<uuid:pk>/read/', views.NotificationMarkReadAjax.as_view(), name='notification_read_ajax'),
+    path('ajax/notifications/mark-read/', views.ajax_mark_notifications_read 
+         if hasattr(views, 'ajax_mark_notifications_read') else views.NotificationMarkReadAjax.as_view(), 
+         name='ajax_mark_notifications_read'),
+    
+    # Shopping
+    path('ajax/cart/count/', views.ajax_get_cart_count 
+         if hasattr(views, 'ajax_get_cart_count') else views.HomeView.as_view(), 
+         name='ajax_get_cart_count'),
+    path('ajax/wishlist/toggle/', views.ajax_toggle_wishlist 
+         if hasattr(views, 'ajax_toggle_wishlist') else views.FavoriteToggleView.as_view(), 
+         name='ajax_toggle_wishlist'),
+    path('ajax/follow/toggle/', views.ajax_toggle_follow 
+         if hasattr(views, 'ajax_toggle_follow') else views.HomeView.as_view(), 
+         name='ajax_toggle_follow'),
 ]
 
-# ============= WEBHOOKS PAIEMENT =============
+# ============= PAYMENT WEBHOOKS =============
 urlpatterns += [
-    path('webhooks/campay/', views.CampayWebhookView.as_view(), name='campay_webhook'),
-    path('webhooks/orange-money/', views.OrangeMoneyWebhookView.as_view(), name='orange_webhook'),
-    path('webhooks/mtn-money/', views.MTNMoneyWebhookView.as_view(), name='mtn_webhook'),
+    path('webhooks/campay/', csrf_exempt(views.CampayWebhookView.as_view()), name='campay_webhook'),
+    path('webhooks/orange-money/', csrf_exempt(views.OrangeMoneyWebhookView.as_view()), name='orange_money_webhook'),
+    path('webhooks/mtn-money/', csrf_exempt(views.MTNMoneyWebhookView.as_view()), name='mtn_money_webhook'),
+    path('api/campay/webhook/', csrf_exempt(views.campay_webhook), name='campay_webhook_alt'),
 ]
 
-# ============= PATTERNS D'URL ALTERNATIFS =============
-# URLs courtes pour partage
+# ============= ENHANCED FEATURES =============
+# Include enhanced features URLs (client and staff)
 urlpatterns += [
-    # Produit court: /p/slug/
-    path('p/<slug:slug>/', views.ProductDetailView.as_view(), name='product_short'),
+    # Enhanced client features
+    path('client/', include('backend.urls_enhanced', namespace='client')),
     
-    # Catégorie courte: /c/slug/
-    path('c/<slug:slug>/', views.CategoryView.as_view(), name='category_short'),
-    
-    # Commande rapide: /buy/slug/
-    path('buy/<slug:slug>/', views.PublicOrderCreateView.as_view(), name='quick_buy'),
+    # Enhanced staff features
+    path('staff/', include('backend.urls_enhanced', namespace='staff')),
 ]
 
-# URLs pour mobile/PWA
-urlpatterns += [
-    # Version mobile du dashboard
-    path('m/dashboard/', views.DashboardView.as_view(), {'mobile': True}, name='mobile_dashboard'),
-    
-    # Recherche mobile optimisée
-    path('m/search/', views.SearchView.as_view(), {'mobile': True}, name='mobile_search'),
-]
-
-# URLs pour API future
-urlpatterns += [
-    # Endpoints pour app mobile future
-    path('api/v1/products/', views.ProductListView.as_view(), {'format': 'json'}, name='api_products'),
-    path('api/v1/categories/', views.CategoryListView.as_view(), {'format': 'json'}, name='api_categories'),
-]
-
-# ============= NEWSLETTER FUNCTIONALITY =============
-# Import newsletter views from admin views (consolidated)
-try:
-    from .views_admin import (
-        newsletter_subscribe,
-        newsletter_unsubscribe,
-    )
-    
-    # Newsletter URLs - public endpoints
-    urlpatterns += [
-        path('newsletter/subscribe/', newsletter_subscribe, name='newsletter_subscribe'),
-        path('newsletter/unsubscribe/', newsletter_unsubscribe, name='newsletter_unsubscribe'),
-    ]
-    print("✅ Newsletter public URL patterns added successfully")
-    
-except ImportError:
-    print("⚠️ Newsletter views not found in admin views. Skipping newsletter URL patterns.")
-
-# ============= COMPLETE ADMIN PANEL - ALL CONSOLIDATED =============
-# Import all admin views from the consolidated views_admin.py
-try:
-    from .views_admin import (
-        # Main admin dashboard
-        admin_dashboard,
-        
-        # User management - Complete CRUD
-        AdminUserListView,
-        AdminUserDetailView,
-        AdminUserCreateView,
-        AdminUserUpdateView,
-        admin_user_delete,
-        admin_user_bulk_actions,
-        admin_user_toggle_status,
-        admin_user_toggle_verification,
-        admin_users_ajax,
-        admin_export_users,
-        
-        # Product management
-        AdminProductListView,
-        
-        # Order management
-        AdminOrderListView,
-        
-        # Newsletter management - Complete CRUD
-        AdminNewsletterListView,
-        admin_newsletter_create,
-        admin_newsletter_send,
-        admin_newsletter_delete,
-        
-        # Analytics and reports
-        AdminAnalyticsView,
-        
-        # Bulk actions and utilities
-        admin_bulk_actions,
-        admin_stats_ajax,
-        admin_quick_action,
-
-        AdminPaymentListView,
-        admin_payment_detail,
-        admin_payment_update_status,
-        AdminLoyaltyListView,
-        admin_loyalty_create,
-        admin_loyalty_edit,
-        AdminPromotionListView,
-        admin_promotion_create,
-        admin_promotion_edit,
-        admin_promotion_toggle_status,
-        AdminStockView,
-        AdminStockAddView,
-        AdminNotificationListView,
-        admin_notification_create,
-        admin_notification_send_bulk,
-        
-        # Product approval/rejection
-        admin_product_approve,
-        admin_product_reject,
-        admin_product_detail,
-        admin_product_create,
-        admin_product_edit,
-    )
-    
-    # ============= COMPLETE ADMIN PANEL URLs =============
-    urlpatterns += [
-        # ============= MAIN ADMIN DASHBOARD =============
-        path('admin-panel/', admin_dashboard, name='admin_panel'),
-        path('admin-panel/dashboard/', admin_dashboard, name='admin_dashboard'),
-        
-        # ============= USER MANAGEMENT - COMPLETE CRUD =============
-        path('admin-panel/users/', AdminUserListView.as_view(), name='admin_user_list'),
-        path('admin-panel/users/<int:user_id>/', AdminUserDetailView.as_view(), name='admin_user_detail'),
-        path('admin-panel/users/create/', AdminUserCreateView.as_view(), name='admin_user_create'),
-        path('admin-panel/users/<int:user_id>/edit/', AdminUserUpdateView.as_view(), name='admin_user_edit'),
-        path('admin-panel/users/<int:user_id>/delete/', admin_user_delete, name='admin_user_delete'),
-        
-        # User bulk actions
-        path('admin-panel/users/bulk-actions/', admin_user_bulk_actions, name='admin_user_bulk_actions'),
-        path('admin-panel/users/<int:user_id>/toggle-status/', admin_user_toggle_status, name='admin_user_toggle_status'),
-        path('admin-panel/users/<int:user_id>/toggle-verification/', admin_user_toggle_verification, name='admin_user_toggle_verification'),
-        
-        # User export and AJAX
-        path('admin-panel/users/export/', admin_export_users, name='admin_export_users'),
-        path('admin-panel/users/ajax/', admin_users_ajax, name='admin_users_ajax'),
-        
-        # ============= PRODUCT MANAGEMENT =============
-        path('admin-panel/products/', AdminProductListView.as_view(), name='admin_product_list'),
-        path('admin-panel/products/<uuid:product_id>/', admin_product_detail, name='admin_product_detail'),
-        path('admin-panel/products/create/', admin_product_create, name='admin_product_create'),
-        path('admin-panel/products/<uuid:product_id>/edit/', admin_product_edit, name='admin_product_edit'),
-        path('admin-panel/products/<uuid:product_id>/approve/', admin_product_approve, name='admin_product_approve'),
-        path('admin-panel/products/<uuid:product_id>/reject/', admin_product_reject, name='admin_product_reject'),
-        
-        # ============= ORDER MANAGEMENT =============
-        path('admin-panel/orders/', AdminOrderListView.as_view(), name='admin_order_list'),
-        
-        # ============= NEWSLETTER MANAGEMENT - COMPLETE CRUD =============
-        path('admin-panel/newsletter/', AdminNewsletterListView.as_view(), name='admin_newsletter_list'),
-        path('admin-panel/newsletter/create/', admin_newsletter_create, name='admin_newsletter_create'),
-        path('admin-panel/newsletter/<int:newsletter_id>/send/', admin_newsletter_send, name='admin_newsletter_send'),
-        path('admin-panel/newsletter/<int:newsletter_id>/delete/', admin_newsletter_delete, name='admin_newsletter_delete'),
-        
-        # ============= ANALYTICS AND REPORTS =============
-        path('admin-panel/analytics/', AdminAnalyticsView.as_view(), name='admin_analytics'),
-        
-        # ============= BULK ACTIONS AND UTILITIES =============
-        path('admin-panel/bulk-actions/', admin_bulk_actions, name='admin_bulk_actions'),
-        
-        # ============= AJAX ENDPOINTS FOR ADMIN =============
-        path('admin-panel/ajax/stats/', admin_stats_ajax, name='admin_stats_ajax'),
-        path('admin-panel/ajax/quick-action/', admin_quick_action, name='admin_quick_action'),
-        
-        # ============= PAYMENT MANAGEMENT =============
-        path('admin-panel/payments/', AdminPaymentListView.as_view(), name='admin_payment_list'),
-        path('admin-panel/payments/<int:payment_id>/', admin_payment_detail, name='admin_payment_detail'),
-        path('admin-panel/payments/<int:payment_id>/update-status/', admin_payment_update_status, name='admin_payment_update_status'),
-        
-        # ============= LOYALTY PROGRAM MANAGEMENT =============
-        path('admin-panel/loyalty/', AdminLoyaltyListView.as_view(), name='admin_loyalty_list'),
-        path('admin-panel/loyalty/create/', admin_loyalty_create, name='admin_loyalty_create'),
-        path('admin-panel/loyalty/<int:loyalty_id>/edit/', admin_loyalty_edit, name='admin_loyalty_edit'),
-        
-        # ============= PROMOTION MANAGEMENT =============
-        path('admin-panel/promotions/', AdminPromotionListView.as_view(), name='admin_promotion_list'),
-        path('admin-panel/promotions/create/', admin_promotion_create, name='admin_promotion_create'),
-        path('admin-panel/promotions/<int:promotion_id>/edit/', admin_promotion_edit, name='admin_promotion_edit'),
-        path('admin-panel/promotions/<int:promotion_id>/toggle-status/', admin_promotion_toggle_status, name='admin_promotion_toggle_status'),
-        
-        # ============= STOCK MANAGEMENT =============
-        path('admin-panel/stock/', AdminStockView.as_view(), name='admin_stock'),
-        path('admin-panel/stock/add/', AdminStockAddView.as_view(), name='admin_stock_add'),
-        
-        # ============= NOTIFICATION MANAGEMENT =============
-        path('admin-panel/notifications/', AdminNotificationListView.as_view(), name='admin_notification_list'),
-        path('admin-panel/notifications/create/', admin_notification_create, name='admin_notification_create'),
-        path('admin-panel/notifications/bulk-send/', admin_notification_send_bulk, name='admin_notification_bulk_send'),
-    ]
-    
-    print("✅ All missing admin URL patterns added successfully")
-    
-except ImportError as e:
-    print(f"⚠️ Some admin views not found: {e}. Add them to views_admin.py first.")
-    print("✅ Complete admin panel URL patterns added successfully")
-    print("✅ All admin views consolidated in views_admin.py")
-    print("✅ No duplicate admin views - all removed from views.py and views_newsletter.py")
-    
-except ImportError as e:
-    print(f"⚠️ Admin views not found: {e}. Using fallback admin URLs.")
-    
-    # Fallback to basic admin panel if views_admin.py is not available
-    urlpatterns += [
-        path('admin-panel/', admin_dashboard, name='admin_panel'),
-        path('admin-panel/dashboard/', admin_dashboard, name='admin_dashboard'),
-    ]
-
-# ============= DEBUG AND INFORMATION =============
-if __name__ == "__main__":
-    print(f"\n🔗 Total URL patterns: {len(urlpatterns)}")
-    print("=" * 60)
-    print("✅ URL REORGANIZATION COMPLETE")
-    print("=" * 60)
-    print("🏠 Main URLs:")
-    print("  └── Homepage: /")
-    print("  └── Dashboard: /dashboard/")
-    print("  └── Products: /products/")
-    print("  └── Search: /search/")
-    print()
-    print("🔐 Authentication URLs:")
-    print("  └── Login: /auth/login/")
-    print("  └── Register: /auth/register/")
-    print("  └── Profile: /auth/profile/")
-    print()
-    print("🛍️ E-commerce URLs:")
-    print("  └── Products: /products/")
-    print("  └── Orders: /orders/")
-    print("  └── Cart: /cart/")
-    print("  └── Payment: /payment/")
-    print()
-    print("📧 Newsletter URLs (Public):")
-    print("  └── Subscribe: /newsletter/subscribe/")
-    print("  └── Unsubscribe: /newsletter/unsubscribe/")
-    print()
-    print("🎛️ COMPLETE ADMIN PANEL:")
-    print("  └── 📊 Main Dashboard: /admin-panel/ & /admin-panel/dashboard/")
-    print("  └── 👥 User Management (CRUD): /admin-panel/users/")
-    print("      ├── List: /admin-panel/users/")
-    print("      ├── Detail: /admin-panel/users/<id>/")
-    print("      ├── Create: /admin-panel/users/create/")
-    print("      ├── Edit: /admin-panel/users/<id>/edit/")
-    print("      ├── Delete: /admin-panel/users/<id>/delete/")
-    print("      ├── Bulk Actions: /admin-panel/users/bulk-actions/")
-    print("      ├── Toggle Status: /admin-panel/users/<id>/toggle-status/")
-    print("      ├── Toggle Verification: /admin-panel/users/<id>/toggle-verification/")
-    print("      ├── Export: /admin-panel/users/export/")
-    print("      └── AJAX: /admin-panel/users/ajax/")
-    print("  └── 📦 Product Management: /admin-panel/products/")
-    print("  └── 📋 Order Management: /admin-panel/orders/")
-    print("  └── 📧 Newsletter Management (CRUD): /admin-panel/newsletter/")
-    print("      ├── List: /admin-panel/newsletter/")
-    print("      ├── Create: /admin-panel/newsletter/create/")
-    print("      ├── Send: /admin-panel/newsletter/<id>/send/")
-    print("      └── Delete: /admin-panel/newsletter/<id>/delete/")
-    print("  └── 📈 Analytics: /admin-panel/analytics/")
-    print("  └── ⚡ Bulk Actions: /admin-panel/bulk-actions/")
-    print("  └── 🔄 AJAX Endpoints: /admin-panel/ajax/")
-    print()
-    print("=" * 60)
-    print("🎯 REORGANIZATION SUMMARY:")
-    print("=" * 60)
-    print("✅ ELIMINATED duplicates in views.py")
-    print("✅ ELIMINATED duplicates in views_newsletter.py") 
-    print("✅ ALL admin views consolidated in views_admin.py")
-    print("✅ Complete CRUD for Users (Create, Read, Update, Delete)")
-    print("✅ Complete CRUD for Newsletter management")
-    print("✅ Bulk actions for admin operations")
-    print("✅ Export functionality (Excel/CSV)")
-    print("✅ AJAX endpoints for dynamic admin features")
-    print("✅ Public newsletter subscription endpoints")
-    print("✅ Comprehensive analytics and reports")
-    print("✅ Clean URL structure with logical grouping")
-    print("✅ No conflicts or overlapping view names")
-    print("=" * 60)
-
-# ============= VISITOR PURCHASE URLS (No Login Required) =============
-urlpatterns += [
-    # Visitor product detail with purchase options
-    path('visitor/product/<uuid:pk>/', VisitorProductDetailView.as_view(), name='visitor_product_detail'),
-    
-    # Visitor order creation and payment
-    path('visitor/order/create/<uuid:product_id>/', visitor_order_create, name='visitor_order_create'),
-    path('visitor/order/payment/<uuid:order_id>/', visitor_payment_process, name='visitor_payment_process'),
-    path('visitor/order/success/<uuid:order_id>/', visitor_order_success, name='visitor_order_success'),
-    
-    # Campay webhook
-    path('api/campay/webhook/', campay_webhook, name='campay_webhook'),
-]
-
-print("✅ Visitor purchase URLs added successfully")
+# ============= ERROR HANDLERS =============
+handler404 = 'backend.views.handler404'
+handler500 = 'backend.views.handler500'
+handler403 = 'backend.views.handler403'

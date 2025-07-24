@@ -43,7 +43,7 @@
             <nav class="flex items-center space-x-2 text-sm">
                 <a href="{% url 'backend:home' %}" class="text-gray-600 hover:text-green-600 transition-colors">Accueil</a>
                 <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
-                <a href="{% url 'backend:category' slug=product.category.slug %}" class="text-gray-600 hover:text-green-600 transition-colors">{{ product.category.name }}</a>
+                <a href="{% url 'backend:category_detail' slug=product.category.slug %}" class="text-gray-600 hover:text-green-600 transition-colors">{{ product.category.name }}</a>
                 <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
                 <span class="text-gray-800 font-medium">{{ product.name|truncatechars:30 }}</span>
             </nav>
@@ -388,7 +388,7 @@
             <div class="bg-white rounded-3xl p-8 shadow-lg">
                 <div class="flex items-center justify-between mb-8">
                     <h2 class="text-2xl font-bold text-gray-900">Produits similaires</h2>
-                    <a href="{% url 'backend:category' slug=product.category.slug %}" 
+                    <a href="{% url 'backend:category_detail' slug=product.category.slug %}" 
                        class="text-green-600 hover:text-green-700 font-medium flex items-center space-x-2">
                         <span>Voir tout</span>
                         <i data-lucide="arrow-right" class="w-4 h-4"></i>

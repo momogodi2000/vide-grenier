@@ -358,7 +358,7 @@
             <h3 class="text-xl font-bold text-gray-800 mb-6">Catégories tendance</h3>
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {% for category in trending_categories %}
-                <a href="{% url 'backend:category' slug=category.slug %}" 
+                <a href="{% url 'backend:category_detail' slug=category.slug %}" 
                    class="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300 text-center">
                     <div class="text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">
                         {{ category.icon }}

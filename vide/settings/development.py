@@ -31,17 +31,23 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 LOGGING['root']['level'] = 'DEBUG'
 LOGGING['loggers']['django']['level'] = 'DEBUG'
 
-# Add console handler for development
-LOGGING['handlers']['console'] = {
-    'level': 'DEBUG',
-    'class': 'logging.StreamHandler',
-    'formatter': 'verbose',
-}
-LOGGING['root']['handlers'].append('console')
-LOGGING['loggers']['django']['handlers'].append('console')
-
-# Debug toolbar pour le développement
+# Debug tools for development
 if DEBUG:
-    # INSTALLED_APPS += ['debug_toolbar']
-    # MIDDLEWARE = ['debug_toolbar.middleware.DebugToolbarMiddleware', 'allauth.account.middleware.AccountMiddleware'] + MIDDLEWARE
+    # Add browser reload for development
+    if 'django_browser_reload' not in INSTALLED_APPS:
+        INSTALLED_APPS += ['django_browser_reload']
+    
+    # Configure middleware
+    if 'django_browser_reload.middleware.BrowserReloadMiddleware' not in MIDDLEWARE:
+        MIDDLEWARE = ['django_browser_reload.middleware.BrowserReloadMiddleware'] + MIDDLEWARE
+    
     INTERNAL_IPS = ['127.0.0.1']
+
+# Development server configuration
+RUNSERVER_PLUS_PRINT_SQL = True
+SHELL_PLUS_PRINT_SQL = True
+
+# Enable auto-reload optimizations
+RUNSERVER_PLUS_AUTO_RELOAD = True
+STATICFILES_DIRS = list(STATICFILES_DIRS)  # Convert tuple to list if necessary
+WHITENOISE_AUTOREFRESH = True

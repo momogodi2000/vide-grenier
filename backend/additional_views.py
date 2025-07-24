@@ -679,3 +679,19 @@ class SavedSearchesView(LoginRequiredMixin, ListView):
     
     def get_queryset(self):
         return SavedSearch.objects.filter(user=self.request.user).order_by('-created_at')
+
+
+class AboutView(TemplateView):
+    template_name = 'backend/pages/about.html'
+
+class ContactView(TemplateView):
+    template_name = 'backend/pages/contact.html'
+
+class HelpView(TemplateView):
+    template_name = 'backend/pages/help.html'
+    
+class PrivacyView(TemplateView):
+    template_name = 'backend/pages/privacy.html'
+    
+class TermsView(TemplateView):
+    template_name = 'backend/pages/terms.html'

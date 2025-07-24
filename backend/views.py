@@ -49,7 +49,6 @@ from .utils import (
 
 
 class HomeView(TemplateView):
-    """Page d'accueil avec produits featured et catégories"""
     template_name = 'backend/home.html'
     
     def get_context_data(self, **kwargs):
@@ -1929,6 +1928,23 @@ def campay_webhook(request):
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+# ============= ERROR HANDLERS =============
+
+def handler404(request, exception=None):
+    """Vue pour les erreurs 404 - Page non trouvée"""
+    return render(request, 'backend/errors/404.html', status=404)
+
+
+def handler500(request, *args, **argv):
+    """Vue pour les erreurs 500 - Erreur serveur"""
+    return render(request, 'backend/errors/500.html', status=500)
+
+
+def handler403(request, exception=None):
+    """Vue pour les erreurs 403 - Accès interdit"""
+    return render(request, 'backend/errors/403.html', status=403)
 
 
 
