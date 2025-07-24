@@ -442,169 +442,194 @@
                         </button>
                     </div>
                     
-                    <!-- Mobile Navigation Links -->
-                    <nav class="flex-1 px-4 space-y-2" id="mobile-nav-links">
-                        <a href="{% url 'backend:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                            <i data-lucide="layout-dashboard" class="sidebar-icon"></i>
-                            <span>Dashboard</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:admin_user_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_user_list' %}active{% endif %}">
-                            <i data-lucide="users-round" class="sidebar-icon"></i>
-                            <span>Utilisateurs</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:admin_product_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_product_list' %}active{% endif %}">
-                            <i data-lucide="package-open" class="sidebar-icon"></i>
-                            <span>Produits</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:admin_order_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_order_list' %}active{% endif %}">
-                            <i data-lucide="shopping-cart" class="sidebar-icon"></i>
-                            <span>Commandes</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'admin_payment_list' %}active{% endif %}">
-                            <i data-lucide="credit-card" class="sidebar-icon"></i>
-                            <span>Paiements</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'admin_loyalty_list' %}active{% endif %}">
-                            <i data-lucide="star" class="sidebar-icon"></i>
-                            <span>Fidélité</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'admin_promotion_list' %}active{% endif %}">
-                            <i data-lucide="percent" class="sidebar-icon"></i>
-                            <span>Promotions</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:category_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'category_list' %}active{% endif %}">
-                            <i data-lucide="layers-3" class="sidebar-icon"></i>
-                            <span>Catégories</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:admin_stock' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_stock' %}active{% endif %}">
-                            <i data-lucide="warehouse" class="sidebar-icon"></i>
-                            <span>Stock</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:admin_stock_add' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_stock_add' %}active{% endif %}">
-                            <i data-lucide="plus-square" class="sidebar-icon"></i>
-                            <span>Ajouter Stock</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:pickup_point_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'pickup_point_list' %}active{% endif %}">
-                            <i data-lucide="map-pin" class="sidebar-icon"></i>
-                            <span>Points de Retrait</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:admin_analytics' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_analytics' %}active{% endif %}">
-                            <i data-lucide="trending-up" class="sidebar-icon"></i>
-                            <span>Analytics</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:review_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'review_list' %}active{% endif %}">
-                            <i data-lucide="star-half" class="sidebar-icon"></i>
-                            <span>Avis & Évaluations</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'admin_newsletter_list' %}active{% endif %}">
-                            <i data-lucide="mail-open" class="sidebar-icon"></i>
-                            <span>Newsletter</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:admin_panel' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_panel' %}active{% endif %}">
-                            <i data-lucide="settings-2" class="sidebar-icon"></i>
-                            <span>Configuration</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                    </nav>
+                    
+                <!-- Mobile Navigation Links - UPDATED -->
+                <nav class="flex-1 px-4 space-y-2" id="mobile-nav-links">
+                    <a href="{% url 'backend:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                        <i data-lucide="layout-dashboard" class="sidebar-icon"></i>
+                        <span>Dashboard</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <a href="{% url 'backend:admin_user_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_user_list' %}active{% endif %}">
+                        <i data-lucide="users-round" class="sidebar-icon"></i>
+                        <span>Utilisateurs</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <a href="{% url 'backend:admin_product_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_product_list' %}active{% endif %}">
+                        <i data-lucide="package-open" class="sidebar-icon"></i>
+                        <span>Produits</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <a href="{% url 'backend:admin_order_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_order_list' %}active{% endif %}">
+                        <i data-lucide="shopping-cart" class="sidebar-icon"></i>
+                        <span>Commandes</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <!-- FIXED: Payment Management -->
+                    <a href="{% url 'backend:admin_payment_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_payment_list' %}active{% endif %}">
+                        <i data-lucide="credit-card" class="sidebar-icon"></i>
+                        <span>Paiements</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <!-- FIXED: Loyalty Management -->
+                    <a href="{% url 'backend:admin_loyalty_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_loyalty_list' %}active{% endif %}">
+                        <i data-lucide="star" class="sidebar-icon"></i>
+                        <span>Fidélité</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <!-- FIXED: Promotion Management -->
+                    <a href="{% url 'backend:admin_promotion_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_promotion_list' %}active{% endif %}">
+                        <i data-lucide="percent" class="sidebar-icon"></i>
+                        <span>Promotions</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <a href="{% url 'backend:category_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'category_list' %}active{% endif %}">
+                        <i data-lucide="layers-3" class="sidebar-icon"></i>
+                        <span>Catégories</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <!-- FIXED: Stock Management -->
+                    <a href="{% url 'backend:admin_stock' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_stock' %}active{% endif %}">
+                        <i data-lucide="warehouse" class="sidebar-icon"></i>
+                        <span>Stock</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <!-- FIXED: Add Stock -->
+                    <a href="{% url 'backend:admin_stock_add' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_stock_add' %}active{% endif %}">
+                        <i data-lucide="plus-square" class="sidebar-icon"></i>
+                        <span>Ajouter Stock</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <a href="{% url 'backend:pickup_point_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'pickup_point_list' %}active{% endif %}">
+                        <i data-lucide="map-pin" class="sidebar-icon"></i>
+                        <span>Points de Retrait</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <a href="{% url 'backend:admin_analytics' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_analytics' %}active{% endif %}">
+                        <i data-lucide="trending-up" class="sidebar-icon"></i>
+                        <span>Analytics</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <a href="{% url 'backend:review_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'review_list' %}active{% endif %}">
+                        <i data-lucide="star-half" class="sidebar-icon"></i>
+                        <span>Avis & Évaluations</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <!-- FIXED: Newsletter Management -->
+                    <a href="{% url 'backend:admin_newsletter_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_newsletter_list' %}active{% endif %}">
+                        <i data-lucide="mail-open" class="sidebar-icon"></i>
+                        <span>Newsletter</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <!-- FIXED: Notifications -->
+                    <a href="{% url 'backend:admin_notification_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_notification_list' %}active{% endif %}">
+                        <i data-lucide="bell" class="sidebar-icon"></i>
+                        <span>Notifications</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <a href="{% url 'backend:admin_panel' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_panel' %}active{% endif %}">
+                        <i data-lucide="settings-2" class="sidebar-icon"></i>
+                        <span>Configuration</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                </nav>
                 </div>
             </div>
 
             <!-- Enhanced Desktop Sidebar -->
-            <div class="hidden lg:flex lg:w-72 lg:flex-col lg:fixed lg:inset-y-0 lg:top-16">
-                <div class="flex flex-col flex-grow pt-6 pb-4 overflow-y-auto bg-white/95 dark:bg-gray-800/95 border-r border-gray-200/50 dark:border-gray-700/50 custom-scrollbar backdrop-blur-xl">
-                    <nav class="flex-1 px-4 space-y-2" id="desktop-nav-links">
-                        <a href="{% url 'backend:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                            <i data-lucide="layout-dashboard" class="sidebar-icon"></i>
-                            <span>Dashboard</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:admin_user_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_user_list' %}active{% endif %}">
-                            <i data-lucide="users-round" class="sidebar-icon"></i>
-                            <span>Utilisateurs</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:admin_product_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_product_list' %}active{% endif %}">
-                            <i data-lucide="package-open" class="sidebar-icon"></i>
-                            <span>Produits</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:admin_order_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_order_list' %}active{% endif %}">
-                            <i data-lucide="shopping-cart" class="sidebar-icon"></i>
-                            <span>Commandes</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'admin_payment_list' %}active{% endif %}">
-                            <i data-lucide="credit-card" class="sidebar-icon"></i>
-                            <span>Paiements</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'admin_loyalty_list' %}active{% endif %}">
-                            <i data-lucide="star" class="sidebar-icon"></i>
-                            <span>Fidélité</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'admin_promotion_list' %}active{% endif %}">
-                            <i data-lucide="percent" class="sidebar-icon"></i>
-                            <span>Promotions</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:category_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'category_list' %}active{% endif %}">
-                            <i data-lucide="layers-3" class="sidebar-icon"></i>
-                            <span>Catégories</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:admin_stock' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_stock' %}active{% endif %}">
-                            <i data-lucide="warehouse" class="sidebar-icon"></i>
-                            <span>Stock</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:admin_stock_add' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_stock_add' %}active{% endif %}">
-                            <i data-lucide="plus-square" class="sidebar-icon"></i>
-                            <span>Ajouter Stock</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:pickup_point_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'pickup_point_list' %}active{% endif %}">
-                            <i data-lucide="map-pin" class="sidebar-icon"></i>
-                            <span>Points de Retrait</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:admin_analytics' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_analytics' %}active{% endif %}">
-                            <i data-lucide="trending-up" class="sidebar-icon"></i>
-                            <span>Analytics</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:review_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'review_list' %}active{% endif %}">
-                            <i data-lucide="star-half" class="sidebar-icon"></i>
-                            <span>Avis & Évaluations</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'admin_newsletter_list' %}active{% endif %}">
-                            <i data-lucide="mail-open" class="sidebar-icon"></i>
-                            <span>Newsletter</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                        <a href="{% url 'backend:admin_panel' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_panel' %}active{% endif %}">
-                            <i data-lucide="settings-2" class="sidebar-icon"></i>
-                            <span>Configuration</span>
-                            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                        </a>
-                    </nav>
+                <div class="hidden lg:flex lg:w-72 lg:flex-col lg:fixed lg:inset-y-0 lg:top-16">
+                    <div class="flex flex-col flex-grow pt-6 pb-4 overflow-y-auto bg-white/95 dark:bg-gray-800/95 border-r border-gray-200/50 dark:border-gray-700/50 custom-scrollbar backdrop-blur-xl">
+                        <nav class="flex-1 px-4 space-y-2" id="desktop-nav-links">
+                            <a href="{% url 'backend:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                                <i data-lucide="layout-dashboard" class="sidebar-icon"></i>
+                                <span>Dashboard</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="{% url 'backend:admin_user_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_user_list' %}active{% endif %}">
+                                <i data-lucide="users-round" class="sidebar-icon"></i>
+                                <span>Utilisateurs</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="{% url 'backend:admin_product_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_product_list' %}active{% endif %}">
+                                <i data-lucide="package-open" class="sidebar-icon"></i>
+                                <span>Produits</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="{% url 'backend:admin_order_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_order_list' %}active{% endif %}">
+                                <i data-lucide="shopping-cart" class="sidebar-icon"></i>
+                                <span>Commandes</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <!-- FIXED: Payment Management -->
+                            <a href="{% url 'backend:admin_payment_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_payment_list' %}active{% endif %}">
+                                <i data-lucide="credit-card" class="sidebar-icon"></i>
+                                <span>Paiements</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <!-- FIXED: Loyalty Management -->
+                            <a href="{% url 'backend:admin_loyalty_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_loyalty_list' %}active{% endif %}">
+                                <i data-lucide="star" class="sidebar-icon"></i>
+                                <span>Fidélité</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <!-- FIXED: Promotion Management -->
+                            <a href="{% url 'backend:admin_promotion_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_promotion_list' %}active{% endif %}">
+                                <i data-lucide="percent" class="sidebar-icon"></i>
+                                <span>Promotions</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="{% url 'backend:category_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'category_list' %}active{% endif %}">
+                                <i data-lucide="layers-3" class="sidebar-icon"></i>
+                                <span>Catégories</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <!-- FIXED: Stock Management -->
+                            <a href="{% url 'backend:admin_stock' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_stock' %}active{% endif %}">
+                                <i data-lucide="warehouse" class="sidebar-icon"></i>
+                                <span>Stock</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <!-- FIXED: Add Stock -->
+                            <a href="{% url 'backend:admin_stock_add' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_stock_add' %}active{% endif %}">
+                                <i data-lucide="plus-square" class="sidebar-icon"></i>
+                                <span>Ajouter Stock</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="{% url 'backend:pickup_point_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'pickup_point_list' %}active{% endif %}">
+                                <i data-lucide="map-pin" class="sidebar-icon"></i>
+                                <span>Points de Retrait</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="{% url 'backend:admin_analytics' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_analytics' %}active{% endif %}">
+                                <i data-lucide="trending-up" class="sidebar-icon"></i>
+                                <span>Analytics</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="{% url 'backend:review_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'review_list' %}active{% endif %}">
+                                <i data-lucide="star-half" class="sidebar-icon"></i>
+                                <span>Avis & Évaluations</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <!-- FIXED: Newsletter Management -->
+                            <a href="{% url 'backend:admin_newsletter_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_newsletter_list' %}active{% endif %}">
+                                <i data-lucide="mail-open" class="sidebar-icon"></i>
+                                <span>Newsletter</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <!-- FIXED: Notifications -->
+                            <a href="{% url 'backend:admin_notification_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_notification_list' %}active{% endif %}">
+                                <i data-lucide="bell" class="sidebar-icon"></i>
+                                <span>Notifications</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="{% url 'backend:admin_panel' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_panel' %}active{% endif %}">
+                                <i data-lucide="settings-2" class="sidebar-icon"></i>
+                                <span>Configuration</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                        </nav>
+                    </div>
                 </div>
-            </div>
 
             <!-- Enhanced Main Content -->
             <div class="flex-1 lg:ml-72">
