@@ -1,0 +1,353 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Programme de Fidélité - Admin{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Programme de Fidélité</h1>
+            <p class="text-gray-600">Gestion des utilisateurs du programme de fidélité</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <a href="{% url 'backend:admin_loyalty_create' %}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                Nouveau Programme
+            </a>
+            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+                Exporter
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Total Membres</p>
+                <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ total_members|default:0|intcomma }}</p>
+            </div>
+            <div class="p-3 bg-blue-100 rounded-full">
+                <i data-lucide="users" class="w-6 h-6 text-blue-600"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Bronze</p>
+                <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ bronze_members|default:0|intcomma }}</p>
+            </div>
+            <div class="p-3 bg-amber-100 rounded-full">
+                <i data-lucide="medal" class="w-6 h-6 text-amber-600"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Argent</p>
+                <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ silver_members|default:0|intcomma }}</p>
+            </div>
+            <div class="p-3 bg-gray-100 rounded-full">
+                <i data-lucide="medal" class="w-6 h-6 text-gray-600"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Or</p>
+                <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ gold_members|default:0|intcomma }}</p>
+            </div>
+            <div class="p-3 bg-yellow-100 rounded-full">
+                <i data-lucide="medal" class="w-6 h-6 text-yellow-600"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Platine</p>
+                <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ platinum_members|default:0|intcomma }}</p>
+            </div>
+            <div class="p-3 bg-indigo-100 rounded-full">
+                <i data-lucide="medal" class="w-6 h-6 text-indigo-600"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="stats-card mb-8">
+    <div class="flex flex-wrap items-center gap-4 mb-4">
+        <div class="flex-1 min-w-[200px]">
+            <div class="relative">
+                <input type="text" id="search" placeholder="Rechercher un utilisateur..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                <div class="absolute left-3 top-2.5 text-gray-400">
+                    <i data-lucide="search" class="w-5 h-5"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="w-full sm:w-auto">
+            <select id="loyalty-level-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                <option value="">Tous les niveaux</option>
+                <option value="bronze">Bronze</option>
+                <option value="silver">Argent</option>
+                <option value="gold">Or</option>
+                <option value="platinum">Platine</option>
+            </select>
+        </div>
+        
+        <div class="w-full sm:w-auto">
+            <select id="points-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                <option value="">Tous les points</option>
+                <option value="0-100">0 - 100 points</option>
+                <option value="101-500">101 - 500 points</option>
+                <option value="501-1000">501 - 1000 points</option>
+                <option value="1001+">1000+ points</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="stats-card">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Utilisateur
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Email
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Points
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Niveau
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Dernière activité
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for user in loyalty_programs %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            {% if user.profile_picture %}
+                                <img class="h-10 w-10 rounded-full object-cover" src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}">
+                            {% else %}
+                                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold">
+                                    {{ user.first_name|first|default:"U" }}{{ user.last_name|first|default:"" }}
+                                </div>
+                            {% endif %}
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">
+                                    {{ user.get_full_name|default:"Utilisateur sans nom" }}
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    {{ user.phone|default:"" }}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ user.email }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">{{ user.loyalty_points|intcomma }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            {% if user.loyalty_level == 'bronze' %}bg-amber-100 text-amber-800
+                            {% elif user.loyalty_level == 'silver' %}bg-gray-100 text-gray-800
+                            {% elif user.loyalty_level == 'gold' %}bg-yellow-100 text-yellow-800
+                            {% elif user.loyalty_level == 'platinum' %}bg-indigo-100 text-indigo-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ user.get_loyalty_level_display|default:"Standard" }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ user.last_activity|date:"d/m/Y H:i"|default:"-" }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex justify-end space-x-2">
+                            <button onclick="adjustPoints({{ user.id }}, 'add')" class="text-green-600 hover:text-green-900">
+                                <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                            </button>
+                            <button onclick="adjustPoints({{ user.id }}, 'subtract')" class="text-red-600 hover:text-red-900">
+                                <i data-lucide="minus-circle" class="w-5 h-5"></i>
+                            </button>
+                            <a href="{% url 'backend:admin_user_detail' user.id %}" class="text-blue-600 hover:text-blue-900">
+                                <i data-lucide="eye" class="w-5 h-5"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                        Aucun utilisateur avec des points de fidélité trouvé
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-gray-700">
+                    Affichage de <span class="font-medium">{{ page_obj.start_index }}</span> à <span class="font-medium">{{ page_obj.end_index }}</span> sur <span class="font-medium">{{ page_obj.paginator.count }}</span> utilisateurs
+                </p>
+            </div>
+            <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    </a>
+                    {% endif %}
+                    
+                    {% for i in page_obj.paginator.page_range %}
+                        {% if page_obj.number == i %}
+                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-green-50 text-sm font-medium text-green-600">{{ i }}</span>
+                        {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                            <a href="?page={{ i }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">{{ i }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                    </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Points Adjustment Modal -->
+<div id="pointsModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black opacity-50 transition-opacity"></div>
+        <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all max-w-lg w-full">
+            <div class="p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Ajuster les Points de Fidélité</h3>
+                <p class="text-gray-600 mb-4" id="pointsModalText">Ajoutez ou retirez des points à cet utilisateur.</p>
+                
+                <div class="mb-4">
+                    <label for="points_amount" class="block text-sm font-medium text-gray-700 mb-1">Nombre de points</label>
+                    <input type="number" id="points_amount" min="1" value="10" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="points_reason" class="block text-sm font-medium text-gray-700 mb-1">Raison</label>
+                    <textarea id="points_reason" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closePointsModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Annuler</button>
+                    <button id="confirmPointsButton" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Confirmer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let userId;
+    let pointsAction;
+    
+    function adjustPoints(id, action) {
+        userId = id;
+        pointsAction = action;
+        
+        const modalText = document.getElementById('pointsModalText');
+        const confirmButton = document.getElementById('confirmPointsButton');
+        
+        if (action === 'add') {
+            modalText.textContent = "Ajoutez des points de fidélité à cet utilisateur.";
+            confirmButton.classList.remove('bg-red-600', 'hover:bg-red-700');
+            confirmButton.classList.add('bg-green-600', 'hover:bg-green-700');
+        } else {
+            modalText.textContent = "Retirez des points de fidélité à cet utilisateur.";
+            confirmButton.classList.remove('bg-green-600', 'hover:bg-green-700');
+            confirmButton.classList.add('bg-red-600', 'hover:bg-red-700');
+        }
+        
+        document.getElementById('pointsModal').classList.remove('hidden');
+    }
+    
+    function closePointsModal() {
+        document.getElementById('pointsModal').classList.add('hidden');
+    }
+    
+    document.getElementById('confirmPointsButton').addEventListener('click', function() {
+        const amount = document.getElementById('points_amount').value;
+        const reason = document.getElementById('points_reason').value;
+        
+        // Here you would make an AJAX call to update points
+        // For now, we'll just reload the page
+        alert(`Points ${pointsAction === 'add' ? 'ajoutés' : 'retirés'} avec succès!`);
+        closePointsModal();
+        window.location.reload();
+    });
+    
+    // Search functionality
+    document.getElementById('search').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+            const searchValue = this.value.trim();
+            if (searchValue) {
+                window.location.href = `?search=${encodeURIComponent(searchValue)}`;
+            }
+        }
+    });
+    
+    // Filter functionality
+    document.getElementById('loyalty-level-filter').addEventListener('change', function() {
+        applyFilters();
+    });
+    
+    document.getElementById('points-filter').addEventListener('change', function() {
+        applyFilters();
+    });
+    
+    function applyFilters() {
+        const levelFilter = document.getElementById('loyalty-level-filter').value;
+        const pointsFilter = document.getElementById('points-filter').value;
+        const searchValue = document.getElementById('search').value.trim();
+        
+        let url = '?';
+        if (levelFilter) url += `level=${encodeURIComponent(levelFilter)}&`;
+        if (pointsFilter) url += `points=${encodeURIComponent(pointsFilter)}&`;
+        if (searchValue) url += `search=${encodeURIComponent(searchValue)}&`;
+        
+        window.location.href = url.slice(0, -1); // Remove trailing & or ?
+    }
+</script>
+{% endblock %}

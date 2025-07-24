@@ -27,8 +27,18 @@ CACHES = {
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Logging plus verbeux en développement
+# Update LOGGING configuration for development
 LOGGING['root']['level'] = 'DEBUG'
 LOGGING['loggers']['django']['level'] = 'DEBUG'
+
+# Add console handler for development
+LOGGING['handlers']['console'] = {
+    'level': 'DEBUG',
+    'class': 'logging.StreamHandler',
+    'formatter': 'verbose',
+}
+LOGGING['root']['handlers'].append('console')
+LOGGING['loggers']['django']['handlers'].append('console')
 
 # Debug toolbar pour le développement
 if DEBUG:

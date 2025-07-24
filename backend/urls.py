@@ -3,6 +3,14 @@
 from django.urls import path
 from . import views
 from . import additional_views
+# Import visitor purchase views
+from .views import (
+    VisitorProductDetailView,
+    visitor_order_create,
+    visitor_payment_process,
+    visitor_order_success,
+    campay_webhook,
+)
 
 app_name = 'backend'
 
@@ -239,6 +247,13 @@ try:
         AdminNotificationListView,
         admin_notification_create,
         admin_notification_send_bulk,
+        
+        # Product approval/rejection
+        admin_product_approve,
+        admin_product_reject,
+        admin_product_detail,
+        admin_product_create,
+        admin_product_edit,
     )
     
     # ============= COMPLETE ADMIN PANEL URLs =============
@@ -265,6 +280,11 @@ try:
         
         # ============= PRODUCT MANAGEMENT =============
         path('admin-panel/products/', AdminProductListView.as_view(), name='admin_product_list'),
+        path('admin-panel/products/<uuid:product_id>/', admin_product_detail, name='admin_product_detail'),
+        path('admin-panel/products/create/', admin_product_create, name='admin_product_create'),
+        path('admin-panel/products/<uuid:product_id>/edit/', admin_product_edit, name='admin_product_edit'),
+        path('admin-panel/products/<uuid:product_id>/approve/', admin_product_approve, name='admin_product_approve'),
+        path('admin-panel/products/<uuid:product_id>/reject/', admin_product_reject, name='admin_product_reject'),
         
         # ============= ORDER MANAGEMENT =============
         path('admin-panel/orders/', AdminOrderListView.as_view(), name='admin_order_list'),
@@ -395,3 +415,19 @@ if __name__ == "__main__":
     print("✅ Clean URL structure with logical grouping")
     print("✅ No conflicts or overlapping view names")
     print("=" * 60)
+
+# ============= VISITOR PURCHASE URLS (No Login Required) =============
+urlpatterns += [
+    # Visitor product detail with purchase options
+    path('visitor/product/<uuid:pk>/', VisitorProductDetailView.as_view(), name='visitor_product_detail'),
+    
+    # Visitor order creation and payment
+    path('visitor/order/create/<uuid:product_id>/', visitor_order_create, name='visitor_order_create'),
+    path('visitor/order/payment/<uuid:order_id>/', visitor_payment_process, name='visitor_payment_process'),
+    path('visitor/order/success/<uuid:order_id>/', visitor_order_success, name='visitor_order_success'),
+    
+    # Campay webhook
+    path('api/campay/webhook/', campay_webhook, name='campay_webhook'),
+]
+
+print("✅ Visitor purchase URLs added successfully")

@@ -1,0 +1,350 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Créer Newsletter - Admin{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Créer une Newsletter</h1>
+            <p class="text-gray-600">Créer et envoyer une newsletter à vos abonnés</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <a href="{% url 'backend:admin_newsletter_list' %}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Retour à la liste
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Newsletter Statistics -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Abonnés actifs</p>
+                <p class="text-2xl font-bold text-gray-900">{{ active_subscribers|default:0 }}</p>
+            </div>
+            <div class="p-3 bg-green-100 rounded-full">
+                <i data-lucide="users" class="w-6 h-6 text-green-600"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Newsletters envoyées</p>
+                <p class="text-2xl font-bold text-gray-900">{{ total_sent|default:0 }}</p>
+            </div>
+            <div class="p-3 bg-blue-100 rounded-full">
+                <i data-lucide="mail" class="w-6 h-6 text-blue-600"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Dernière newsletter</p>
+                <p class="text-sm text-gray-600">{{ last_newsletter_date|date:"d/m/Y"|default:"Jamais" }}</p>
+            </div>
+            <div class="p-3 bg-purple-100 rounded-full">
+                <i data-lucide="calendar" class="w-6 h-6 text-purple-600"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Newsletter Form -->
+<div class="stats-card mb-8">
+    <form method="post" id="newsletter-form">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Newsletter Content -->
+            <div class="col-span-1 lg:col-span-2">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Contenu de la newsletter</h2>
+                
+                <div class="mb-6">
+                    <label for="{{ form.subject.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Objet <span class="text-red-500">*</span></label>
+                    {{ form.subject }}
+                    {% if form.subject.errors %}
+                    <p class="text-red-600 text-xs mt-1">{{ form.subject.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">L'objet de votre email apparaîtra dans la boîte de réception</p>
+                </div>
+                
+                <div class="mb-6">
+                    <label for="{{ form.content.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Contenu <span class="text-red-500">*</span></label>
+                    {{ form.content }}
+                    {% if form.content.errors %}
+                    <p class="text-red-600 text-xs mt-1">{{ form.content.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">Vous pouvez utiliser du HTML pour formater votre contenu</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Options d'envoi -->
+        <div class="border-t border-gray-200 pt-6 mt-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Options d'envoi</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Mode d'envoi</label>
+                    <div class="space-y-2">
+                        <div class="flex items-center">
+                            <input type="radio" name="send_mode" value="draft" id="send_draft" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300" checked>
+                            <label for="send_draft" class="ml-2 block text-sm text-gray-700">Sauvegarder comme brouillon</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="radio" name="send_mode" value="send_now" id="send_now" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300">
+                            <label for="send_now" class="ml-2 block text-sm text-gray-700">Envoyer immédiatement</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="radio" name="send_mode" value="preview" id="send_preview" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300">
+                            <label for="send_preview" class="ml-2 block text-sm text-gray-700">Aperçu seulement</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Destinataires</label>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600 mb-2">Cette newsletter sera envoyée à :</p>
+                        <ul class="text-sm text-gray-700 space-y-1">
+                            <li class="flex items-center">
+                                <i data-lucide="check" class="w-4 h-4 text-green-600 mr-2"></i>
+                                {{ active_subscribers|default:0 }} abonnés actifs
+                            </li>
+                            <li class="flex items-center">
+                                <i data-lucide="x" class="w-4 h-4 text-red-600 mr-2"></i>
+                                Abonnés désactivés exclus
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-8 flex justify-between">
+            <div>
+                <button type="button" onclick="previewNewsletter()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                    <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
+                    Aperçu
+                </button>
+            </div>
+            
+            <div class="flex space-x-3">
+                <a href="{% url 'backend:admin_newsletter_list' %}" class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                    Annuler
+                </a>
+                <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center" id="submit-btn">
+                    <i data-lucide="save" class="w-4 h-4 mr-2"></i>
+                    <span id="submit-text">Sauvegarder brouillon</span>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Newsletter Templates -->
+<div class="stats-card">
+    <h2 class="text-lg font-semibold text-gray-900 mb-4">Modèles prédéfinis</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors" onclick="loadTemplate('welcome')">
+            <h3 class="font-semibold text-gray-900 mb-2">Bienvenue</h3>
+            <p class="text-sm text-gray-600">Message de bienvenue pour nouveaux abonnés</p>
+        </div>
+        
+        <div class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors" onclick="loadTemplate('promotion')">
+            <h3 class="font-semibold text-gray-900 mb-2">Promotion</h3>
+            <p class="text-sm text-gray-600">Annonce de promotions et offres spéciales</p>
+        </div>
+        
+        <div class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors" onclick="loadTemplate('update')">
+            <h3 class="font-semibold text-gray-900 mb-2">Mise à jour</h3>
+            <p class="text-sm text-gray-600">Informations sur les nouveautés de la plateforme</p>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div id="previewModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black opacity-50 transition-opacity"></div>
+        <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all max-w-4xl w-full max-h-screen">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-900">Aperçu de la newsletter</h3>
+                    <button onclick="closePreview()" class="text-gray-400 hover:text-gray-600">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+                <div id="preview-content" class="border border-gray-200 rounded-lg p-6 bg-gray-50 max-h-96 overflow-y-auto">
+                    <!-- Preview content will be loaded here -->
+                </div>
+                <div class="flex justify-end mt-4">
+                    <button onclick="closePreview()" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add styling to form inputs
+    const inputs = document.querySelectorAll('input[type="text"], textarea');
+    inputs.forEach(input => {
+        input.classList.add('w-full', 'px-3', 'py-2', 'border', 'border-gray-300', 'rounded-md', 'focus:outline-none', 'focus:ring-2', 'focus:ring-green-500', 'focus:border-transparent');
+    });
+    
+    // Style textarea specifically
+    const textarea = document.querySelector('textarea');
+    if (textarea) {
+        textarea.style.minHeight = '200px';
+    }
+    
+    // Handle send mode changes
+    const sendModeRadios = document.querySelectorAll('input[name="send_mode"]');
+    const submitBtn = document.getElementById('submit-btn');
+    const submitText = document.getElementById('submit-text');
+    
+    sendModeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            updateSubmitButton(this.value);
+        });
+    });
+    
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+});
+
+function updateSubmitButton(mode) {
+    const submitBtn = document.getElementById('submit-btn');
+    const submitText = document.getElementById('submit-text');
+    
+    switch(mode) {
+        case 'draft':
+            submitBtn.className = 'bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center';
+            submitText.textContent = 'Sauvegarder brouillon';
+            break;
+        case 'send_now':
+            submitBtn.className = 'bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center';
+            submitText.textContent = 'Envoyer maintenant';
+            break;
+        case 'preview':
+            submitBtn.className = 'bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center';
+            submitText.textContent = 'Générer aperçu';
+            break;
+    }
+}
+
+function previewNewsletter() {
+    const subject = document.querySelector('input[name="subject"]').value;
+    const content = document.querySelector('textarea[name="content"]').value;
+    
+    if (!subject || !content) {
+        alert('Veuillez remplir l\'objet et le contenu avant l\'aperçu');
+        return;
+    }
+    
+    document.getElementById('preview-content').innerHTML = `
+        <div class="email-preview">
+            <div class="mb-4 pb-4 border-b border-gray-200">
+                <h3 class="text-lg font-bold text-gray-900">Objet: ${subject}</h3>
+                <p class="text-sm text-gray-600">De: Vidé-Grenier Kamer &lt;admin@videgrenierkamer.com&gt;</p>
+            </div>
+            <div class="prose max-w-none">
+                ${content.replace(/\n/g, '<br>')}
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('previewModal').classList.remove('hidden');
+}
+
+function closePreview() {
+    document.getElementById('previewModal').classList.add('hidden');
+}
+
+function loadTemplate(type) {
+    const subjectInput = document.querySelector('input[name="subject"]');
+    const contentInput = document.querySelector('textarea[name="content"]');
+    
+    const templates = {
+        welcome: {
+            subject: 'Bienvenue sur Vidé-Grenier Kamer !',
+            content: `Bonjour et bienvenue sur Vidé-Grenier Kamer !
+
+Nous sommes ravis de vous compter parmi nos abonnés. Vidé-Grenier Kamer est votre plateforme de référence pour acheter et vendre des articles d'occasion en toute sécurité.
+
+🛍️ Découvrez des milliers d'articles
+💰 Vendez facilement vos objets
+🔒 Transactions sécurisées
+📱 Interface simple et intuitive
+
+N'hésitez pas à explorer notre plateforme et à nous faire part de vos commentaires.
+
+Bonne navigation !
+L'équipe Vidé-Grenier Kamer`
+        },
+        promotion: {
+            subject: 'Offres spéciales - Ne les manquez pas !',
+            content: `🎉 Offres spéciales cette semaine sur Vidé-Grenier Kamer !
+
+Profitez de nos promotions exceptionnelles :
+
+✨ Réduction de 10% sur tous les articles électroniques
+👗 Vêtements à partir de 5€
+🏠 Mobilier à prix réduits
+📚 Livres à 2€
+
+Ces offres sont valables jusqu'au [DATE]. Dépêchez-vous !
+
+Visitez notre site maintenant : [LIEN]
+
+L'équipe Vidé-Grenier Kamer`
+        },
+        update: {
+            subject: 'Nouveautés sur Vidé-Grenier Kamer',
+            content: `🆕 Découvrez les nouveautés de Vidé-Grenier Kamer !
+
+Nous avons le plaisir de vous annoncer plusieurs améliorations :
+
+🔧 Interface utilisateur améliorée
+💬 Nouveau système de chat en temps réel
+📊 Tableau de bord vendeur mis à jour
+🛡️ Sécurité renforcée
+
+Ces nouvelles fonctionnalités sont déjà disponibles sur votre compte.
+
+Connectez-vous pour les découvrir : [LIEN]
+
+Merci de votre fidélité !
+L'équipe Vidé-Grenier Kamer`
+        }
+    };
+    
+    if (templates[type]) {
+        subjectInput.value = templates[type].subject;
+        contentInput.value = templates[type].content;
+    }
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,336 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Gestion des Paiements - Admin{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Gestion des Paiements</h1>
+            <p class="text-gray-600">Gérer les paiements et transactions de la plateforme</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+                Exporter
+            </button>
+            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                <i data-lucide="wallet" class="w-4 h-4 mr-2"></i>
+                Portefeuille App
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Total Paiements</p>
+                <p class="text-2xl font-bold text-gray-900">{{ total_payments|default:0|intcomma }}</p>
+            </div>
+            <div class="p-3 bg-blue-100 rounded-full">
+                <i data-lucide="credit-card" class="w-6 h-6 text-blue-600"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Revenus Total</p>
+                <p class="text-2xl font-bold text-gray-900">{{ total_revenue|default:0|floatformat:0|intcomma }} FCFA</p>
+            </div>
+            <div class="p-3 bg-green-100 rounded-full">
+                <i data-lucide="trending-up" class="w-6 h-6 text-green-600"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Complétés</p>
+                <p class="text-2xl font-bold text-gray-900">{{ completed_payments|default:0|intcomma }}</p>
+            </div>
+            <div class="p-3 bg-green-100 rounded-full">
+                <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">En Attente</p>
+                <p class="text-2xl font-bold text-gray-900">{{ pending_payments|default:0|intcomma }}</p>
+            </div>
+            <div class="p-3 bg-yellow-100 rounded-full">
+                <i data-lucide="clock" class="w-6 h-6 text-yellow-600"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Échoués</p>
+                <p class="text-2xl font-bold text-gray-900">{{ failed_payments|default:0|intcomma }}</p>
+            </div>
+            <div class="p-3 bg-red-100 rounded-full">
+                <i data-lucide="x-circle" class="w-6 h-6 text-red-600"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Wallet Balance Card -->
+<div class="stats-card mb-8 bg-gradient-to-r from-green-500 to-blue-600 text-white">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+            <p class="text-sm font-medium text-green-100">Solde du Portefeuille App</p>
+            <p class="text-3xl font-bold">{{ wallet_balance|default:0|floatformat:0|intcomma }} FCFA</p>
+            <p class="text-sm text-green-100 mt-1">Dernière mise à jour: {{ last_update|default:"Maintenant" }}</p>
+        </div>
+        <div>
+            <p class="text-sm font-medium text-green-100">Commissions Collectées</p>
+            <p class="text-2xl font-bold">{{ total_commissions|default:0|floatformat:0|intcomma }} FCFA</p>
+            <p class="text-sm text-green-100 mt-1">Ce mois: {{ monthly_commissions|default:0|floatformat:0|intcomma }} FCFA</p>
+        </div>
+        <div>
+            <p class="text-sm font-medium text-green-100">Paiements en Transit</p>
+            <p class="text-2xl font-bold">{{ pending_amount|default:0|floatformat:0|intcomma }} FCFA</p>
+            <p class="text-sm text-green-100 mt-1">{{ pending_count|default:0 }} transactions</p>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="stats-card mb-8">
+    <form method="get" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div class="col-span-1 md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Rechercher</label>
+            <div class="relative">
+                <input type="text" name="search" value="{{ search }}" 
+                    placeholder="N° commande, email, produit..."
+                    class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                <i data-lucide="search" class="w-5 h-5 text-gray-400 absolute left-3 top-2.5"></i>
+            </div>
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+            <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                <option value="">Tous</option>
+                <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>En attente</option>
+                <option value="DELIVERED" {% if status_filter == 'DELIVERED' %}selected{% endif %}>Livré</option>
+                <option value="CANCELLED" {% if status_filter == 'CANCELLED' %}selected{% endif %}>Annulé</option>
+            </select>
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Méthode</label>
+            <select name="method" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                <option value="">Toutes</option>
+                <option value="CAMPAY">Campay</option>
+                <option value="ORANGE_MONEY">Orange Money</option>
+                <option value="MTN_MONEY">MTN Mobile Money</option>
+                <option value="CASH_ON_DELIVERY">Paiement à la livraison</option>
+            </select>
+        </div>
+        
+        <div class="flex items-end">
+            <button type="submit" class="w-full bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors">
+                <i data-lucide="filter" class="w-4 h-4 inline mr-2"></i>
+                Filtrer
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Payments List -->
+<div class="stats-card">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead>
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N° Commande</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Commission</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Méthode</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for payment in payments %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <a href="{% url 'backend:admin_payment_detail' payment.id %}" class="text-blue-600 hover:text-blue-900 font-medium">
+                            {{ payment.order_number }}
+                        </a>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if payment.buyer %}
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10">
+                                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm">
+                                    {{ payment.buyer.first_name.0|upper }}{{ payment.buyer.last_name.0|upper }}
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">{{ payment.buyer.get_full_name|default:payment.buyer.email }}</div>
+                                <div class="text-sm text-gray-500">{{ payment.buyer.email }}</div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <span class="text-gray-500">Client anonyme</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-900">{{ payment.product.title|truncatechars:30 }}</div>
+                        <div class="text-sm text-gray-500">{{ payment.product.category.name }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm font-semibold text-gray-900">{{ payment.total_amount|floatformat:0|intcomma }} FCFA</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm text-gray-600">{{ payment.commission_amount|floatformat:0|intcomma }} FCFA</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs rounded-full font-medium
+                            {% if payment.payment_method == 'CAMPAY' %}bg-blue-100 text-blue-800
+                            {% elif payment.payment_method == 'ORANGE_MONEY' %}bg-orange-100 text-orange-800
+                            {% elif payment.payment_method == 'MTN_MONEY' %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ payment.get_payment_method_display|default:payment.payment_method }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs rounded-full font-medium
+                            {% if payment.status == 'DELIVERED' %}bg-green-100 text-green-800
+                            {% elif payment.status == 'PENDING' %}bg-yellow-100 text-yellow-800
+                            {% elif payment.status == 'CANCELLED' %}bg-red-100 text-red-800
+                            {% elif payment.status == 'PROCESSING' %}bg-blue-100 text-blue-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ payment.get_status_display|default:payment.status }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ payment.created_at|date:"d/m/Y H:i" }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <a href="{% url 'backend:admin_payment_detail' payment.id %}" 
+                               class="text-blue-600 hover:text-blue-900" title="Voir les détails">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </a>
+                            {% if payment.status == 'PENDING' %}
+                            <button onclick="updatePaymentStatus('{{ payment.id }}', 'DELIVERED')" 
+                                    class="text-green-600 hover:text-green-900" title="Marquer comme payé">
+                                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="updatePaymentStatus('{{ payment.id }}', 'CANCELLED')" 
+                                    class="text-red-600 hover:text-red-900" title="Annuler">
+                                <i data-lucide="x-circle" class="w-4 h-4"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="px-6 py-4 text-center text-gray-500">
+                        Aucun paiement trouvé
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+        <div class="flex items-center justify-between">
+            <div class="text-sm text-gray-700">
+                Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+            </div>
+            <div class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+                   class="px-3 py-1 rounded-md bg-white border border-gray-300 text-sm hover:bg-gray-50">
+                    Précédent
+                </a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+                   class="px-3 py-1 rounded-md bg-white border border-gray-300 text-sm hover:bg-gray-50">
+                    Suivant
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function updatePaymentStatus(paymentId, newStatus) {
+    const statusText = newStatus === 'DELIVERED' ? 'marquer comme payé' : 'annuler';
+    if (!confirm(`Êtes-vous sûr de vouloir ${statusText} ce paiement?`)) return;
+    
+    const formData = new FormData();
+    formData.append('status', newStatus);
+    
+    fetch(`/admin-panel/payments/${paymentId}/update-status/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Une erreur est survenue');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Une erreur est survenue');
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Initialize Lucide icons after page load
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,366 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Gestion des Notifications - Admin{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Gestion des Notifications</h1>
+            <p class="text-gray-600">Gérer les notifications système et utilisateurs</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <a href="{% url 'backend:admin_notification_create' %}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                <i data-lucide="bell-plus" class="w-4 h-4 mr-2"></i>
+                Nouvelle Notification
+            </a>
+            <button onclick="sendBulkNotifications()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                <i data-lucide="send" class="w-4 h-4 mr-2"></i>
+                Envoi en Masse
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Total Notifications</p>
+                <p class="text-2xl font-bold text-gray-900">{{ total_notifications|default:0|intcomma }}</p>
+            </div>
+            <div class="p-3 bg-blue-100 rounded-full">
+                <i data-lucide="bell" class="w-6 h-6 text-blue-600"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Non Lues</p>
+                <p class="text-2xl font-bold text-gray-900">{{ unread_notifications|default:0|intcomma }}</p>
+            </div>
+            <div class="p-3 bg-orange-100 rounded-full">
+                <i data-lucide="bell-dot" class="w-6 h-6 text-orange-600"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Système</p>
+                <p class="text-2xl font-bold text-gray-900">{{ system_notifications|default:0|intcomma }}</p>
+            </div>
+            <div class="p-3 bg-purple-100 rounded-full">
+                <i data-lucide="settings" class="w-6 h-6 text-purple-600"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Messages</p>
+                <p class="text-2xl font-bold text-gray-900">{{ user_notifications|default:0|intcomma }}</p>
+            </div>
+            <div class="p-3 bg-green-100 rounded-full">
+                <i data-lucide="message-square" class="w-6 h-6 text-green-600"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="stats-card mb-8">
+    <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="col-span-1 md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Rechercher</label>
+            <div class="relative">
+                <input type="text" name="search" value="{{ search }}" 
+                    placeholder="Titre, message, utilisateur..."
+                    class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                <i data-lucide="search" class="w-5 h-5 text-gray-400 absolute left-3 top-2.5"></i>
+            </div>
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+            <select name="type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                <option value="">Tous les types</option>
+                <option value="ORDER">Commande</option>
+                <option value="PAYMENT">Paiement</option>
+                <option value="MESSAGE">Message</option>
+                <option value="REVIEW">Avis</option>
+                <option value="SYSTEM">Système</option>
+                <option value="PROMOTION">Promotion</option>
+            </select>
+        </div>
+        
+        <div class="flex items-end">
+            <button type="submit" class="w-full bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors">
+                <i data-lucide="filter" class="w-4 h-4 inline mr-2"></i>
+                Filtrer
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Notifications List -->
+<div class="stats-card">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead>
+                <tr>
+                    <th class="px-3 py-3 text-left">
+                        <input type="checkbox" id="select-all" class="rounded border-gray-300">
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilisateur</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Titre</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for notification in notifications %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-3 py-4">
+                        <input type="checkbox" class="notification-checkbox rounded border-gray-300" 
+                               value="{{ notification.id }}">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10">
+                                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold">
+                                    {{ notification.user.first_name.0|upper }}{{ notification.user.last_name.0|upper }}
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">{{ notification.user.get_full_name|default:notification.user.email }}</div>
+                                <div class="text-sm text-gray-500">{{ notification.user.email }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-900 font-medium">{{ notification.title|truncatechars:50 }}</div>
+                        <div class="text-sm text-gray-500">{{ notification.message|truncatechars:80 }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs rounded-full font-medium
+                            {% if notification.type == 'SYSTEM' %}bg-purple-100 text-purple-800
+                            {% elif notification.type == 'ORDER' %}bg-blue-100 text-blue-800
+                            {% elif notification.type == 'PAYMENT' %}bg-green-100 text-green-800
+                            {% elif notification.type == 'MESSAGE' %}bg-yellow-100 text-yellow-800
+                            {% elif notification.type == 'REVIEW' %}bg-orange-100 text-orange-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ notification.get_type_display|default:notification.type }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if notification.is_read %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800 font-medium">
+                                <i data-lucide="check-circle" class="w-3 h-3 inline mr-1"></i>
+                                Lu
+                            </span>
+                        {% else %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-800 font-medium">
+                                <i data-lucide="circle" class="w-3 h-3 inline mr-1"></i>
+                                Non lu
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ notification.created_at|naturaltime }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <button onclick="viewNotificationDetails('{{ notification.id }}')" 
+                                    class="text-blue-600 hover:text-blue-900">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="deleteNotification('{{ notification.id }}')" 
+                                    class="text-red-600 hover:text-red-900">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                        Aucune notification trouvée
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+        <div class="flex items-center justify-between">
+            <div class="text-sm text-gray-700">
+                Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+            </div>
+            <div class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}" 
+                   class="px-3 py-1 rounded-md bg-white border border-gray-300 text-sm hover:bg-gray-50">
+                    Précédent
+                </a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}" 
+                   class="px-3 py-1 rounded-md bg-white border border-gray-300 text-sm hover:bg-gray-50">
+                    Suivant
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Notification Details Modal -->
+<div id="notificationModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black opacity-50"></div>
+        <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all max-w-2xl w-full z-50">
+            <div class="bg-gray-50 px-6 py-4 border-b">
+                <h3 class="text-lg font-bold text-gray-900">Détails de la Notification</h3>
+            </div>
+            <div id="notificationContent" class="p-6">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="bg-gray-50 px-6 py-3 border-t flex justify-end">
+                <button onclick="closeNotificationModal()" 
+                        class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Select all functionality
+document.getElementById('select-all').addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.notification-checkbox');
+    checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+});
+
+// Send bulk notifications
+function sendBulkNotifications() {
+    const selectedIds = Array.from(document.querySelectorAll('.notification-checkbox:checked'))
+        .map(cb => cb.value);
+    
+    if (selectedIds.length === 0) {
+        alert('Veuillez sélectionner au moins une notification');
+        return;
+    }
+    
+    const action = prompt('Action: mark_read ou delete');
+    if (!action) return;
+    
+    const formData = new FormData();
+    selectedIds.forEach(id => formData.append('notification_ids', id));
+    formData.append('action', action);
+    
+    fetch("{% url 'backend:admin_notification_bulk_send' %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message);
+        }
+    });
+}
+
+// View notification details
+function viewNotificationDetails(notificationId) {
+    // For now, just show a simple modal
+    document.getElementById('notificationModal').classList.remove('hidden');
+    document.getElementById('notificationContent').innerHTML = `
+        <div class="text-center py-8">
+            <i data-lucide="loader" class="w-8 h-8 mx-auto animate-spin"></i>
+            <p class="mt-2 text-gray-600">Chargement...</p>
+        </div>
+    `;
+    
+    // In a real implementation, fetch notification details via AJAX
+    setTimeout(() => {
+        document.getElementById('notificationContent').innerHTML = `
+            <p>Détails de la notification ${notificationId}</p>
+        `;
+    }, 500);
+}
+
+// Close modal
+function closeNotificationModal() {
+    document.getElementById('notificationModal').classList.add('hidden');
+}
+
+// Delete notification
+function deleteNotification(notificationId) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette notification?')) return;
+    
+    const formData = new FormData();
+    formData.append('notification_ids', notificationId);
+    formData.append('action', 'delete');
+    
+    fetch("{% url 'backend:admin_notification_bulk_send' %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message);
+        }
+    });
+}
+
+// Get CSRF cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Initialize Lucide icons after page load
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+});
+</script>
+{% endblock %}

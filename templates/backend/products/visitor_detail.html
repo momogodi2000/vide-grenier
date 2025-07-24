@@ -1,0 +1,323 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.title }} - Vidé-Grenier Kamer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .product-image {
+        transition: transform 0.3s ease;
+    }
+    .product-image:hover {
+        transform: scale(1.05);
+    }
+    .whatsapp-btn {
+        background: #25d366;
+    }
+    .whatsapp-btn:hover {
+        background: #20ba5a;
+    }
+    .campay-btn {
+        background: #1e40af;
+    }
+    .campay-btn:hover {
+        background: #1e3a8a;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Breadcrumb -->
+        <nav class="flex mb-8" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="{% url 'backend:home' %}" class="text-gray-700 hover:text-green-600">
+                        Accueil
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        <a href="{% url 'backend:product_list' %}" class="ml-1 text-gray-700 hover:text-green-600 md:ml-2">
+                            Produits
+                        </a>
+                    </div>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="ml-1 text-gray-500 md:ml-2">{{ product.title|truncatechars:30 }}</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="md:flex">
+                
+                <!-- Product Images -->
+                <div class="md:w-1/2">
+                    <div class="relative">
+                        {% if product.images.all %}
+                            <div class="aspect-w-1 aspect-h-1">
+                                <img src="{{ product.images.first.image.url }}" 
+                                     alt="{{ product.title }}"
+                                     class="w-full h-96 object-cover product-image">
+                            </div>
+                            
+                            {% if product.images.count > 1 %}
+                            <div class="flex space-x-2 p-4 overflow-x-auto">
+                                {% for image in product.images.all %}
+                                <img src="{{ image.image.url }}" 
+                                     alt="{{ product.title }}"
+                                     class="w-20 h-20 object-cover rounded cursor-pointer border-2 border-transparent hover:border-green-500"
+                                     onclick="changeMainImage('{{ image.image.url }}')">
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="w-full h-96 bg-gray-200 flex items-center justify-center">
+                                <span class="text-gray-500">Aucune image disponible</span>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Product Status Badge -->
+                        <div class="absolute top-4 left-4">
+                            <span class="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                                {{ product.get_condition_display }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Details -->
+                <div class="md:w-1/2 p-8">
+                    <div class="mb-6">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ product.title }}</h1>
+                        <div class="flex items-center space-x-4 text-sm text-gray-600 mb-4">
+                            <span class="flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                                </svg>
+                                {{ product.city }}
+                            </span>
+                            <span class="flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
+                                </svg>
+                                {{ product.category.name }}
+                            </span>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <span class="text-4xl font-bold text-green-600">{{ product.price|floatformat:0 }} FCFA</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold mb-3">Description</h3>
+                        <p class="text-gray-700 leading-relaxed">{{ product.description }}</p>
+                    </div>
+
+                    <!-- Seller Info -->
+                    <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                        <h3 class="text-lg font-semibold mb-2">Vendeur</h3>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
+                                <span class="text-white font-bold">{{ product.seller.first_name.0|upper }}{{ product.seller.last_name.0|upper }}</span>
+                            </div>
+                            <div>
+                                <p class="font-medium">{{ product.seller.first_name }} {{ product.seller.last_name }}</p>
+                                <p class="text-sm text-gray-600">Membre depuis {{ product.seller.date_joined|date:"M Y" }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Purchase Options -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold">Options d'achat</h3>
+                        
+                        <!-- WhatsApp Contact -->
+                        <a href="{{ whatsapp_url }}" 
+                           target="_blank"
+                           class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200 whatsapp-btn">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                            </svg>
+                            <span>Discuter sur WhatsApp</span>
+                        </a>
+                        
+                        <!-- Order Button -->
+                        <button onclick="openOrderModal()" 
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13h10m0 0v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01"/>
+                            </svg>
+                            <span>Commander maintenant</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Modal -->
+<div id="orderModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Commander ce produit</h3>
+                    <button onclick="closeOrderModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <form method="post" action="{% url 'backend:visitor_order_create' product_id=product.id %}">
+                    {% csrf_token %}
+                    
+                    <!-- Personal Information -->
+                    <div class="space-y-4 mb-6">
+                        <h4 class="font-medium text-gray-900">Vos informations</h4>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nom complet *</label>
+                            <input type="text" name="visitor_name" required 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone *</label>
+                            <input type="tel" name="visitor_phone" required 
+                                   placeholder="ex: 237123456789"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email (optionnel)</label>
+                            <input type="email" name="visitor_email" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <input type="checkbox" name="whatsapp_preferred" id="whatsapp_preferred" 
+                                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <label for="whatsapp_preferred" class="ml-2 text-sm text-gray-700">
+                                Préférer WhatsApp pour les communications
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Order Details -->
+                    <div class="space-y-4 mb-6">
+                        <h4 class="font-medium text-gray-900">Détails de la commande</h4>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Quantité</label>
+                            <input type="number" name="quantity" value="1" min="1" max="10" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mode de livraison</label>
+                            <select name="delivery_method" onchange="toggleDeliveryAddress()" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="PICKUP">Retrait en point de collecte</option>
+                                <option value="DELIVERY">Livraison à domicile (+2000 FCFA)</option>
+                            </select>
+                        </div>
+                        
+                        <div id="deliveryAddressDiv" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Adresse de livraison</label>
+                            <textarea name="delivery_address" rows="3" 
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Method -->
+                    <div class="space-y-4 mb-6">
+                        <h4 class="font-medium text-gray-900">Mode de paiement</h4>
+                        
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="radio" name="payment_method" value="CASH_ON_DELIVERY" checked 
+                                       class="text-blue-600 border-gray-300 focus:ring-blue-500">
+                                <span class="ml-2 text-sm">Paiement à la livraison</span>
+                            </label>
+                            
+                            {% if campay_enabled %}
+                            <label class="flex items-center">
+                                <input type="radio" name="payment_method" value="CAMPAY" 
+                                       class="text-blue-600 border-gray-300 focus:ring-blue-500">
+                                <span class="ml-2 text-sm">Paiement mobile (Campay)</span>
+                            </label>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Notes -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes (optionnel)</label>
+                        <textarea name="notes" rows="3" 
+                                  placeholder="Informations supplémentaires..."
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <button type="submit" 
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200">
+                        Confirmer la commande
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function changeMainImage(imageUrl) {
+    document.querySelector('.product-image').src = imageUrl;
+}
+
+function openOrderModal() {
+    document.getElementById('orderModal').classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+}
+
+function closeOrderModal() {
+    document.getElementById('orderModal').classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+}
+
+function toggleDeliveryAddress() {
+    const deliveryMethod = document.querySelector('select[name="delivery_method"]').value;
+    const addressDiv = document.getElementById('deliveryAddressDiv');
+    
+    if (deliveryMethod === 'DELIVERY') {
+        addressDiv.classList.remove('hidden');
+        addressDiv.querySelector('textarea').required = true;
+    } else {
+        addressDiv.classList.add('hidden');
+        addressDiv.querySelector('textarea').required = false;
+    }
+}
+
+// Close modal when clicking outside
+document.getElementById('orderModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeOrderModal();
+    }
+});
+</script>
+
+{% endblock %} 

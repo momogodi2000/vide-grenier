@@ -1,0 +1,288 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Créer une Notification - Admin{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Créer une Nouvelle Notification</h1>
+            <p class="text-gray-600">Envoyer des notifications aux utilisateurs</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <a href="{% url 'backend:admin_notification_list' %}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Retour à la liste
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Create Form -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Main Form -->
+    <div class="lg:col-span-2">
+        <div class="stats-card">
+            <form method="post" id="notificationForm">
+                {% csrf_token %}
+                
+                <!-- Title -->
+                <div class="mb-6">
+                    <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+                        Titre de la notification <span class="text-red-600">*</span>
+                    </label>
+                    <input type="text" 
+                           id="title" 
+                           name="title" 
+                           required
+                           placeholder="Ex: Nouvelle promotion sur les produits électroniques"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                </div>
+                
+                <!-- Message -->
+                <div class="mb-6">
+                    <label for="message" class="block text-sm font-medium text-gray-700 mb-2">
+                        Message <span class="text-red-600">*</span>
+                    </label>
+                    <textarea id="message" 
+                              name="message" 
+                              rows="6" 
+                              required
+                              placeholder="Écrivez le contenu de votre notification ici..."
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"></textarea>
+                    <p class="mt-1 text-sm text-gray-500">
+                        <span id="charCount">0</span> / 500 caractères
+                    </p>
+                </div>
+                
+                <!-- Recipient Type -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Destinataires <span class="text-red-600">*</span>
+                    </label>
+                    <div class="space-y-3">
+                        <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input type="radio" 
+                                   name="recipient_type" 
+                                   value="all" 
+                                   checked
+                                   class="mr-3 text-green-600 focus:ring-green-500">
+                            <div>
+                                <p class="font-medium">Tous les utilisateurs</p>
+                                <p class="text-sm text-gray-500">Envoyer à tous les utilisateurs actifs</p>
+                            </div>
+                        </label>
+                        
+                        <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input type="radio" 
+                                   name="recipient_type" 
+                                   value="clients"
+                                   class="mr-3 text-green-600 focus:ring-green-500">
+                            <div>
+                                <p class="font-medium">Clients uniquement</p>
+                                <p class="text-sm text-gray-500">Envoyer uniquement aux utilisateurs clients</p>
+                            </div>
+                        </label>
+                        
+                        <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input type="radio" 
+                                   name="recipient_type" 
+                                   value="admins"
+                                   class="mr-3 text-green-600 focus:ring-green-500">
+                            <div>
+                                <p class="font-medium">Administrateurs uniquement</p>
+                                <p class="text-sm text-gray-500">Envoyer uniquement aux administrateurs</p>
+                            </div>
+                        </label>
+                        
+                        <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input type="radio" 
+                                   name="recipient_type" 
+                                   value="specific"
+                                   class="mr-3 text-green-600 focus:ring-green-500">
+                            <div>
+                                <p class="font-medium">Utilisateurs spécifiques</p>
+                                <p class="text-sm text-gray-500">Sélectionner manuellement les destinataires</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Specific Users Selection (Hidden by default) -->
+                <div id="specificUsersSection" class="mb-6 hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Sélectionner les utilisateurs
+                    </label>
+                    <div class="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto">
+                        <!-- This would be populated dynamically with user list -->
+                        <p class="text-gray-500 text-sm">Fonctionnalité en cours de développement...</p>
+                    </div>
+                </div>
+                
+                <!-- Additional Options -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Options supplémentaires</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" 
+                                   name="send_email" 
+                                   value="1"
+                                   class="mr-2 rounded text-green-600 focus:ring-green-500">
+                            <span class="text-sm">Envoyer également par email</span>
+                        </label>
+                        
+                        <label class="flex items-center">
+                            <input type="checkbox" 
+                                   name="is_urgent" 
+                                   value="1"
+                                   class="mr-2 rounded text-green-600 focus:ring-green-500">
+                            <span class="text-sm">Marquer comme urgent</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Submit Buttons -->
+                <div class="flex justify-end space-x-3">
+                    <button type="button" 
+                            onclick="saveDraft()"
+                            class="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">
+                        Sauvegarder comme brouillon
+                    </button>
+                    <button type="submit" 
+                            class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                        <i data-lucide="send" class="w-4 h-4 mr-2"></i>
+                        Envoyer la notification
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Sidebar with Tips -->
+    <div class="lg:col-span-1">
+        <!-- Preview Card -->
+        <div class="stats-card mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Aperçu</h3>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                            <i data-lucide="bell" class="w-5 h-5 text-green-600"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <h4 id="previewTitle" class="font-medium text-gray-900">Titre de la notification</h4>
+                        <p id="previewMessage" class="text-sm text-gray-600 mt-1">Le message apparaîtra ici...</p>
+                        <p class="text-xs text-gray-500 mt-2">Il y a quelques instants</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tips Card -->
+        <div class="stats-card">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i data-lucide="lightbulb" class="w-5 h-5 inline mr-2 text-yellow-500"></i>
+                Conseils
+            </h3>
+            <ul class="space-y-3 text-sm text-gray-600">
+                <li class="flex items-start">
+                    <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-green-500 flex-shrink-0 mt-0.5"></i>
+                    <span>Utilisez un titre court et descriptif (max 60 caractères)</span>
+                </li>
+                <li class="flex items-start">
+                    <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-green-500 flex-shrink-0 mt-0.5"></i>
+                    <span>Le message doit être clair et concis</span>
+                </li>
+                <li class="flex items-start">
+                    <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-green-500 flex-shrink-0 mt-0.5"></i>
+                    <span>Évitez d'envoyer trop de notifications pour ne pas déranger les utilisateurs</span>
+                </li>
+                <li class="flex items-start">
+                    <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-green-500 flex-shrink-0 mt-0.5"></i>
+                    <span>Les notifications urgentes apparaissent en priorité</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+// Character counter
+const messageTextarea = document.getElementById('message');
+const charCount = document.getElementById('charCount');
+
+messageTextarea.addEventListener('input', function() {
+    const length = this.value.length;
+    charCount.textContent = length;
+    
+    if (length > 500) {
+        charCount.classList.add('text-red-600');
+    } else {
+        charCount.classList.remove('text-red-600');
+    }
+    
+    updatePreview();
+});
+
+// Preview update
+const titleInput = document.getElementById('title');
+const previewTitle = document.getElementById('previewTitle');
+const previewMessage = document.getElementById('previewMessage');
+
+titleInput.addEventListener('input', updatePreview);
+
+function updatePreview() {
+    previewTitle.textContent = titleInput.value || 'Titre de la notification';
+    previewMessage.textContent = messageTextarea.value || 'Le message apparaîtra ici...';
+}
+
+// Show/hide specific users section
+document.querySelectorAll('input[name="recipient_type"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const specificUsersSection = document.getElementById('specificUsersSection');
+        if (this.value === 'specific') {
+            specificUsersSection.classList.remove('hidden');
+        } else {
+            specificUsersSection.classList.add('hidden');
+        }
+    });
+});
+
+// Save as draft
+function saveDraft() {
+    // This would save the notification as a draft
+    alert('Fonctionnalité de brouillon en cours de développement');
+}
+
+// Form submission
+document.getElementById('notificationForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Validate form
+    if (!titleInput.value.trim() || !messageTextarea.value.trim()) {
+        alert('Veuillez remplir tous les champs obligatoires');
+        return;
+    }
+    
+    // Show loading state
+    const submitButton = this.querySelector('button[type="submit"]');
+    const originalText = submitButton.innerHTML;
+    submitButton.innerHTML = '<i data-lucide="loader" class="w-4 h-4 mr-2 animate-spin"></i> Envoi en cours...';
+    submitButton.disabled = true;
+    
+    // Submit form
+    this.submit();
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updatePreview();
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+});
+</script>
+{% endblock %} 

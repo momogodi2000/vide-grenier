@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load url_helpers %}
 
 {% block title %}Tous les produits - Vidé-Grenier Kamer{% endblock %}
 
@@ -153,19 +154,19 @@
                                 </label>
                                 <label class="flex items-center space-x-3 cursor-pointer">
                                     <input type="checkbox" name="condition" value="EXCELLENT" 
-                                          {% if "EXCELLENT" in request.GET.getlist 'condition' %}checked{% endif %}
+                                          {% if "EXCELLENT" in selected_conditions %}checked{% endif %}
                                            class="rounded border-gray-300 text-green-600">
                                     <span class="text-sm text-gray-700">Excellent état</span>
                                 </label>
                                 <label class="flex items-center space-x-3 cursor-pointer">
                                     <input type="checkbox" name="condition" value="GOOD" 
-                                          {% if "GOOD" in request.GET.getlist 'condition' %}checked{% endif %}
+                                          {% if "GOOD" in selected_conditions %}checked{% endif %}
                                            class="rounded border-gray-300 text-green-600">
                                     <span class="text-sm text-gray-700">Bon état</span>
                                 </label>
                                 <label class="flex items-center space-x-3 cursor-pointer">
                                     <input type="checkbox" name="condition" value="FAIR" 
-                                          {% if "FAIR" in request.GET.getlist 'condition' %}checked{% endif %}
+                                          {% if "FAIR" in selected_conditions %}checked{% endif %}
                                            class="rounded border-gray-300 text-green-600">
                                     <span class="text-sm text-gray-700">État correct</span>
                                 </label>

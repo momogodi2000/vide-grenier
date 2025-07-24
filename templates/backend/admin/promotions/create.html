@@ -1,0 +1,244 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Créer Promotion - Admin{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Créer une Promotion</h1>
+            <p class="text-gray-600">Ajouter une nouvelle promotion ou offre spéciale</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <a href="{% url 'backend:admin_promotion_list' %}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Retour à la liste
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Create Form -->
+<div class="stats-card mb-8">
+    <form method="post">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Basic Information -->
+            <div class="col-span-1">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Informations de base</h2>
+                
+                <div class="mb-4">
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nom de la promotion <span class="text-red-600">*</span></label>
+                    <input type="text" id="name" name="name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="code" class="block text-sm font-medium text-gray-700 mb-1">Code promotionnel <span class="text-red-600">*</span></label>
+                    <input type="text" id="code" name="code" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">Code unique que les clients utiliseront (ex: SUMMER2023)</p>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea id="description" name="description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"></textarea>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Type de promotion <span class="text-red-600">*</span></label>
+                    <select id="type" name="type" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        <option value="">Sélectionner un type</option>
+                        <option value="percentage">Pourcentage</option>
+                        <option value="fixed">Montant fixe</option>
+                        <option value="free_shipping">Livraison gratuite</option>
+                    </select>
+                </div>
+                
+                <div class="mb-4" id="value-container">
+                    <label for="value" class="block text-sm font-medium text-gray-700 mb-1">Valeur <span class="text-red-600">*</span></label>
+                    <input type="number" id="value" name="value" min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1" id="value-help">Pourcentage de réduction (ex: 10 pour 10%)</p>
+                </div>
+            </div>
+            
+            <!-- Period and Limitations -->
+            <div class="col-span-1">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Période et limitations</h2>
+                
+                <div class="mb-4">
+                    <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Date de début <span class="text-red-600">*</span></label>
+                    <input type="date" id="start_date" name="start_date" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">Date de fin</label>
+                    <input type="date" id="end_date" name="end_date" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">Laissez vide pour une promotion sans date de fin</p>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="min_purchase" class="block text-sm font-medium text-gray-700 mb-1">Achat minimum (€)</label>
+                    <input type="number" id="min_purchase" name="min_purchase" min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">Montant minimum d'achat pour appliquer la promotion</p>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="max_uses" class="block text-sm font-medium text-gray-700 mb-1">Nombre d'utilisations maximum</label>
+                    <input type="number" id="max_uses" name="max_uses" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">Laissez à 0 pour des utilisations illimitées</p>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="max_uses_per_user" class="block text-sm font-medium text-gray-700 mb-1">Utilisations max par utilisateur</label>
+                    <input type="number" id="max_uses_per_user" name="max_uses_per_user" min="0" value="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">Laissez à 0 pour des utilisations illimitées par utilisateur</p>
+                </div>
+            </div>
+            
+            <!-- Applicability -->
+            <div class="col-span-1 md:col-span-2">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Applicabilité</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <div class="mb-4">
+                            <label for="applicable_to" class="block text-sm font-medium text-gray-700 mb-1">Applicable à</label>
+                            <select id="applicable_to" name="applicable_to" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                <option value="all">Tous les produits</option>
+                                <option value="categories">Catégories spécifiques</option>
+                                <option value="products">Produits spécifiques</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4 hidden" id="categories-container">
+                            <label for="categories" class="block text-sm font-medium text-gray-700 mb-1">Catégories</label>
+                            <select id="categories" name="categories" multiple class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" size="5">
+                                {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Maintenez Ctrl pour sélectionner plusieurs catégories</p>
+                        </div>
+                        
+                        <div class="mb-4 hidden" id="products-container">
+                            <label for="products" class="block text-sm font-medium text-gray-700 mb-1">Produits</label>
+                            <select id="products" name="products" multiple class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" size="5">
+                                {% for product in products %}
+                                <option value="{{ product.id }}">{{ product.title }}</option>
+                                {% endfor %}
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Maintenez Ctrl pour sélectionner plusieurs produits</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="mb-4">
+                            <label for="user_type" class="block text-sm font-medium text-gray-700 mb-1">Type d'utilisateur</label>
+                            <select id="user_type" name="user_type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                <option value="all">Tous les utilisateurs</option>
+                                <option value="new">Nouveaux utilisateurs uniquement</option>
+                                <option value="existing">Utilisateurs existants uniquement</option>
+                                <option value="loyal">Utilisateurs fidèles uniquement</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="is_public" name="is_public" checked class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                                <label for="is_public" class="ml-2 block text-sm font-medium text-gray-700">Promotion publique</label>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1 ml-6">Si non cochée, la promotion sera privée et accessible uniquement via le code</p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="is_active" name="is_active" checked class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                                <label for="is_active" class="ml-2 block text-sm font-medium text-gray-700">Promotion active</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-8 flex justify-end">
+            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                <i data-lucide="save" class="w-4 h-4 mr-2"></i>
+                Créer la promotion
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Type de promotion et affichage du champ valeur
+        const typeSelect = document.getElementById('type');
+        const valueContainer = document.getElementById('value-container');
+        const valueInput = document.getElementById('value');
+        const valueHelp = document.getElementById('value-help');
+        
+        typeSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            
+            if (selectedType === 'free_shipping') {
+                valueContainer.style.display = 'none';
+                valueInput.removeAttribute('required');
+            } else {
+                valueContainer.style.display = 'block';
+                valueInput.setAttribute('required', 'required');
+                
+                if (selectedType === 'percentage') {
+                    valueHelp.textContent = 'Pourcentage de réduction (ex: 10 pour 10%)';
+                } else if (selectedType === 'fixed') {
+                    valueHelp.textContent = 'Montant fixe de réduction en euros (ex: 5 pour 5€)';
+                }
+            }
+        });
+        
+        // Gestion de l'applicabilité
+        const applicableToSelect = document.getElementById('applicable_to');
+        const categoriesContainer = document.getElementById('categories-container');
+        const productsContainer = document.getElementById('products-container');
+        
+        applicableToSelect.addEventListener('change', function() {
+            const selectedValue = this.value;
+            
+            if (selectedValue === 'categories') {
+                categoriesContainer.classList.remove('hidden');
+                productsContainer.classList.add('hidden');
+            } else if (selectedValue === 'products') {
+                categoriesContainer.classList.add('hidden');
+                productsContainer.classList.remove('hidden');
+            } else {
+                categoriesContainer.classList.add('hidden');
+                productsContainer.classList.add('hidden');
+            }
+        });
+        
+        // Génération automatique de code promo
+        document.getElementById('name').addEventListener('input', function() {
+            if (!document.getElementById('code').value) {
+                const name = this.value.toUpperCase();
+                const sanitized = name.replace(/[^A-Z0-9]/g, '');
+                const code = sanitized.substring(0, 8);
+                document.getElementById('code').value = code;
+            }
+        });
+        
+        // Initialisation de la date de début à aujourd'hui
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('start_date').value = today;
+    });
+</script>
+{% endblock %}

@@ -1619,4 +1619,316 @@ class MTNMoneyWebhookView(View):
             return HttpResponse(f'Error: {str(e)}', status=400)
 
 
+# ==============================================================================
+# VISITOR PURCHASE VIEWS (No Login Required)
+# ==============================================================================
+
+from django.conf import settings
+import requests
+import os
+
+class VisitorProductDetailView(DetailView):
+    """Vue détaillée d'un produit pour les visiteurs avec options d'achat"""
+    model = Product
+    template_name = 'backend/products/visitor_detail.html'
+    context_object_name = 'product'
+    
+    def get_queryset(self):
+        return Product.objects.filter(status='ACTIVE').select_related(
+            'category', 'seller'
+        ).prefetch_related('images')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get admin WhatsApp number from settings or environment
+        admin_whatsapp = getattr(settings, 'ADMIN_WHATSAPP', os.getenv('ADMIN_WHATSAPP', '237'))
+        
+        # Create WhatsApp message
+        product = self.object
+        whatsapp_message = f"Bonjour! Je suis intéressé(e) par ce produit:\n\n" \
+                          f"*{product.title}*\n" \
+                          f"Prix: {product.price} FCFA\n" \
+                          f"Lien: {self.request.build_absolute_uri()}\n\n" \
+                          f"Pouvez-vous me donner plus d'informations?"
+        
+        context.update({
+            'admin_whatsapp': admin_whatsapp,
+            'whatsapp_message': whatsapp_message,
+            'whatsapp_url': f"https://wa.me/{admin_whatsapp}?text={whatsapp_message}",
+            'campay_enabled': bool(os.getenv('CAMPAY_API_KEY')),
+        })
+        return context
+
+
+def visitor_order_create(request, product_id):
+    """Créer une commande visiteur sans connexion"""
+    if request.method == 'POST':
+        try:
+            product = get_object_or_404(Product, id=product_id, status='ACTIVE')
+            
+            # Récupérer les données du formulaire
+            visitor_name = request.POST.get('visitor_name', '').strip()
+            visitor_email = request.POST.get('visitor_email', '').strip()
+            visitor_phone = request.POST.get('visitor_phone', '').strip()
+            payment_method = request.POST.get('payment_method')
+            delivery_method = request.POST.get('delivery_method', 'PICKUP')
+            delivery_address = request.POST.get('delivery_address', '').strip()
+            whatsapp_preferred = request.POST.get('whatsapp_preferred') == 'on'
+            notes = request.POST.get('notes', '').strip()
+            quantity = int(request.POST.get('quantity', 1))
+            
+            # Validation basique
+            if not all([visitor_name, visitor_phone, payment_method]):
+                messages.error(request, 'Veuillez remplir tous les champs obligatoires.')
+                return redirect('backend:visitor_product_detail', pk=product_id)
+            
+            if quantity < 1:
+                messages.error(request, 'La quantité doit être au moins 1.')
+                return redirect('backend:visitor_product_detail', pk=product_id)
+            
+            # Calculer les coûts
+            product_total = product.price * quantity
+            delivery_cost = 0
+            if delivery_method == 'DELIVERY':
+                delivery_cost = Decimal('2000')  # Frais de livraison standard
+            
+            commission_rate = Decimal(os.getenv('VGK_COMMISSION_RATE', '0.08'))
+            commission_amount = product_total * commission_rate
+            total_amount = product_total + delivery_cost
+            
+            # Créer la commande
+            order = Order.objects.create(
+                product=product,
+                quantity=quantity,
+                total_amount=total_amount,
+                commission_amount=commission_amount,
+                delivery_cost=delivery_cost,
+                payment_method=payment_method,
+                delivery_method=delivery_method,
+                delivery_address=delivery_address,
+                visitor_name=visitor_name,
+                visitor_email=visitor_email,
+                visitor_phone=visitor_phone,
+                whatsapp_preferred=whatsapp_preferred,
+                notes=notes,
+                status='PENDING'
+            )
+            
+            # Rediriger selon le mode de paiement
+            if payment_method == 'CASH_ON_DELIVERY':
+                # Paiement à la livraison - confirmer la commande
+                order.status = 'PAID' if delivery_method == 'PICKUP' else 'PROCESSING'
+                order.save()
+                
+                # Envoyer notification à l'admin (si email configuré)
+                try:
+                    from .views_admin import EnhancedEmailNotificationService
+                    email_service = EnhancedEmailNotificationService()
+                    email_service.send_visitor_order_notification(order)
+                except Exception as e:
+                    print(f"Erreur envoi email: {e}")
+                
+                messages.success(request, 'Votre commande a été créée avec succès!')
+                return redirect('backend:visitor_order_success', order_id=order.id)
+                
+            elif payment_method in ['CAMPAY', 'ORANGE_MONEY', 'MTN_MONEY']:
+                # Paiement mobile - rediriger vers le processus de paiement
+                return redirect('backend:visitor_payment_process', order_id=order.id)
+            
+            else:
+                messages.error(request, 'Méthode de paiement non supportée.')
+                return redirect('backend:visitor_product_detail', pk=product_id)
+                
+        except Exception as e:
+            messages.error(request, f'Erreur lors de la création de la commande: {str(e)}')
+            return redirect('backend:visitor_product_detail', pk=product_id)
+    
+    return redirect('backend:visitor_product_detail', pk=product_id)
+
+
+def visitor_payment_process(request, order_id):
+    """Traiter le paiement mobile pour les visiteurs"""
+    order = get_object_or_404(Order, id=order_id, buyer__isnull=True)
+    
+    if request.method == 'POST':
+        phone_number = request.POST.get('phone_number', '').strip()
+        
+        if not phone_number:
+            messages.error(request, 'Veuillez entrer votre numéro de téléphone.')
+            return render(request, 'backend/orders/visitor_payment.html', {'order': order})
+        
+        try:
+            # Intégration Campay
+            if order.payment_method == 'CAMPAY':
+                payment_response = initiate_campay_payment(order, phone_number)
+                if payment_response.get('status') == 'success':
+                    # Créer le paiement
+                    Payment.objects.create(
+                        order=order,
+                        payment_reference=payment_response.get('reference'),
+                        amount=order.total_amount,
+                        status='PROCESSING',
+                        provider_response=payment_response,
+                        transaction_id=payment_response.get('transaction_id', '')
+                    )
+                    messages.success(request, 'Paiement initié. Suivez les instructions sur votre téléphone.')
+                    return redirect('backend:visitor_order_success', order_id=order.id)
+                else:
+                    messages.error(request, f'Erreur de paiement: {payment_response.get("message", "Erreur inconnue")}')
+            
+            else:
+                messages.error(request, 'Méthode de paiement non encore supportée.')
+                
+        except Exception as e:
+            messages.error(request, f'Erreur lors du paiement: {str(e)}')
+    
+    context = {
+        'order': order,
+        'product': order.product,
+    }
+    return render(request, 'backend/orders/visitor_payment.html', context)
+
+
+def visitor_order_success(request, order_id):
+    """Page de succès pour les commandes visiteurs"""
+    order = get_object_or_404(Order, id=order_id, buyer__isnull=True)
+    
+    # Get admin WhatsApp for contact
+    admin_whatsapp = getattr(settings, 'ADMIN_WHATSAPP', os.getenv('ADMIN_WHATSAPP', '237'))
+    whatsapp_message = f"Bonjour! J'ai passé une commande (#{order.order_number}). " \
+                      f"Pouvez-vous me donner des nouvelles?"
+    
+    context = {
+        'order': order,
+        'product': order.product,
+        'admin_whatsapp': admin_whatsapp,
+        'whatsapp_url': f"https://wa.me/{admin_whatsapp}?text={whatsapp_message}",
+    }
+    return render(request, 'backend/orders/visitor_success.html', context)
+
+
+def initiate_campay_payment(order, phone_number):
+    """Initier un paiement via Campay"""
+    try:
+        api_key = os.getenv('CAMPAY_API_KEY')
+        api_secret = os.getenv('CAMPAY_API_SECRET')
+        base_url = os.getenv('CAMPAY_BASE_URL', 'https://api.campay.net/v1')
+        
+        if not all([api_key, api_secret]):
+            return {'status': 'error', 'message': 'Configuration Campay manquante'}
+        
+        # Préparer les données de paiement
+        payment_data = {
+            'amount': str(order.total_amount),
+            'currency': 'XAF',  # Franc CFA
+            'from': phone_number,
+            'description': f'Achat {order.product.title} - Commande #{order.order_number}',
+            'external_reference': str(order.id),
+            'redirect_url': f'https://yourdomain.com/orders/visitor/success/{order.id}/',
+            'webhook_url': f'https://yourdomain.com/api/campay/webhook/',
+        }
+        
+        # Headers pour l'authentification
+        headers = {
+            'Authorization': f'Token {api_key}',
+            'Content-Type': 'application/json',
+        }
+        
+        # Faire la requête à Campay
+        response = requests.post(
+            f'{base_url}/collect',
+            json=payment_data,
+            headers=headers,
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            return {
+                'status': 'success',
+                'reference': data.get('reference'),
+                'transaction_id': data.get('transaction_id'),
+                'message': 'Paiement initié avec succès'
+            }
+        else:
+            return {
+                'status': 'error',
+                'message': f'Erreur API Campay: {response.status_code}'
+            }
+            
+    except requests.RequestException as e:
+        return {'status': 'error', 'message': f'Erreur de connexion: {str(e)}'}
+    except Exception as e:
+        return {'status': 'error', 'message': f'Erreur: {str(e)}'}
+
+
+def campay_webhook(request):
+    """Webhook pour recevoir les notifications de paiement Campay"""
+    if request.method == 'POST':
+        try:
+            import json
+            import hmac
+            import hashlib
+            
+            # Vérifier la signature du webhook
+            webhook_secret = os.getenv('CAMPAY_WEBHOOK_SECRET')
+            if webhook_secret:
+                signature = request.headers.get('X-Campay-Signature')
+                payload = request.body
+                expected_signature = hmac.new(
+                    webhook_secret.encode(),
+                    payload,
+                    hashlib.sha256
+                ).hexdigest()
+                
+                if signature != expected_signature:
+                    return JsonResponse({'error': 'Invalid signature'}, status=400)
+            
+            # Traiter les données du webhook
+            data = json.loads(request.body)
+            reference = data.get('reference')
+            status = data.get('status')
+            transaction_id = data.get('transaction_id')
+            
+            # Trouver le paiement correspondant
+            try:
+                payment = Payment.objects.get(payment_reference=reference)
+                order = payment.order
+                
+                if status == 'SUCCESSFUL':
+                    payment.status = 'COMPLETED'
+                    payment.transaction_id = transaction_id
+                    payment.completed_at = timezone.now()
+                    payment.save()
+                    
+                    order.status = 'PAID'
+                    order.save()
+                    
+                    # Envoyer notification de confirmation
+                    try:
+                        from .views_admin import EnhancedEmailNotificationService
+                        email_service = EnhancedEmailNotificationService()
+                        email_service.send_visitor_payment_confirmation(order)
+                    except Exception:
+                        pass
+                        
+                elif status == 'FAILED':
+                    payment.status = 'FAILED'
+                    payment.save()
+                    
+                    order.status = 'CANCELLED'
+                    order.save()
+                
+                return JsonResponse({'status': 'success'})
+                
+            except Payment.DoesNotExist:
+                return JsonResponse({'error': 'Payment not found'}, status=404)
+                
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
 

@@ -1,0 +1,274 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Détail du Paiement - Admin{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Détail du Paiement</h1>
+            <p class="text-gray-600">Commande #{{ payment.order_number }}</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <a href="{% url 'backend:admin_payment_list' %}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Retour à la liste
+            </a>
+            <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                <i data-lucide="printer" class="w-4 h-4 mr-2"></i>
+                Imprimer
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Main Information -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Payment Summary -->
+        <div class="stats-card">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Résumé du Paiement</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-600">Montant Total</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ payment.total_amount|floatformat:0|intcomma }} FCFA</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Commission App</p>
+                    <p class="text-xl font-semibold text-green-600">{{ payment.commission_amount|floatformat:0|intcomma }} FCFA</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Montant Vendeur</p>
+                    <p class="text-xl font-semibold text-gray-900">{{ seller_amount|default:0|floatformat:0|intcomma }} FCFA</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Méthode de Paiement</p>
+                    <p class="text-lg font-medium">
+                        <span class="px-3 py-1 text-sm rounded-full font-medium
+                            {% if payment.payment_method == 'CAMPAY' %}bg-blue-100 text-blue-800
+                            {% elif payment.payment_method == 'ORANGE_MONEY' %}bg-orange-100 text-orange-800
+                            {% elif payment.payment_method == 'MTN_MONEY' %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ payment.get_payment_method_display|default:payment.payment_method }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Information -->
+        <div class="stats-card">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Informations Produit</h2>
+            <div class="flex items-start space-x-4">
+                {% if payment.product.main_image %}
+                <img src="{{ payment.product.main_image.image.url }}" alt="{{ payment.product.title }}" 
+                     class="w-24 h-24 rounded-lg object-cover">
+                {% else %}
+                <div class="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <i data-lucide="package" class="w-8 h-8 text-gray-400"></i>
+                </div>
+                {% endif %}
+                <div class="flex-1">
+                    <h3 class="font-semibold text-gray-900">{{ payment.product.title }}</h3>
+                    <p class="text-sm text-gray-600 mt-1">{{ payment.product.category.name }}</p>
+                    <p class="text-sm text-gray-600 mt-1">Vendeur: {{ payment.product.seller.get_full_name|default:payment.product.seller.email }}</p>
+                    <p class="text-lg font-semibold text-gray-900 mt-2">{{ payment.product.price|floatformat:0|intcomma }} FCFA</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buyer Information -->
+        <div class="stats-card">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Informations Acheteur</h2>
+            {% if payment.buyer %}
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-600">Nom</p>
+                    <p class="font-medium">{{ payment.buyer.get_full_name|default:"Non renseigné" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Email</p>
+                    <p class="font-medium">{{ payment.buyer.email }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Téléphone</p>
+                    <p class="font-medium">{{ payment.buyer.phone|default:"Non renseigné" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Ville</p>
+                    <p class="font-medium">{{ payment.buyer.get_city_display|default:"Non renseignée" }}</p>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t">
+                <a href="{% url 'backend:admin_user_detail' payment.buyer.id %}" 
+                   class="text-blue-600 hover:text-blue-800 font-medium">
+                    Voir le profil complet →
+                </a>
+            </div>
+            {% else %}
+            <p class="text-gray-500">Client anonyme / Paiement à la livraison</p>
+            {% endif %}
+        </div>
+
+        <!-- Delivery Information -->
+        <div class="stats-card">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Informations de Livraison</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-600">Méthode de Livraison</p>
+                    <p class="font-medium">{{ payment.get_delivery_method_display|default:payment.delivery_method }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Frais de Livraison</p>
+                    <p class="font-medium">{{ payment.delivery_cost|floatformat:0|intcomma }} FCFA</p>
+                </div>
+                {% if payment.delivery_address %}
+                <div class="col-span-2">
+                    <p class="text-sm text-gray-600">Adresse de Livraison</p>
+                    <p class="font-medium">{{ payment.delivery_address }}</p>
+                </div>
+                {% endif %}
+                {% if payment.pickup_code %}
+                <div>
+                    <p class="text-sm text-gray-600">Code de Retrait</p>
+                    <p class="font-mono text-lg font-bold text-green-600">{{ payment.pickup_code }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Status and Actions -->
+    <div class="lg:col-span-1 space-y-6">
+        <!-- Status Card -->
+        <div class="stats-card">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Statut du Paiement</h2>
+            <div class="text-center mb-6">
+                <span class="px-4 py-2 text-lg rounded-full font-medium
+                    {% if payment.status == 'DELIVERED' %}bg-green-100 text-green-800
+                    {% elif payment.status == 'PENDING' %}bg-yellow-100 text-yellow-800
+                    {% elif payment.status == 'CANCELLED' %}bg-red-100 text-red-800
+                    {% elif payment.status == 'PROCESSING' %}bg-blue-100 text-blue-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {{ payment.get_status_display|default:payment.status }}
+                </span>
+            </div>
+            
+            {% if payment.status == 'PENDING' %}
+            <div class="space-y-2">
+                <button onclick="updateStatus('DELIVERED')" 
+                        class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                    <i data-lucide="check-circle" class="w-4 h-4 inline mr-2"></i>
+                    Marquer comme Payé
+                </button>
+                <button onclick="updateStatus('CANCELLED')" 
+                        class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                    <i data-lucide="x-circle" class="w-4 h-4 inline mr-2"></i>
+                    Annuler le Paiement
+                </button>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Timeline -->
+        <div class="stats-card">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Historique</h2>
+            <div class="space-y-4">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <i data-lucide="shopping-cart" class="w-4 h-4 text-green-600"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-900">Commande créée</p>
+                        <p class="text-xs text-gray-500">{{ payment.created_at|date:"d/m/Y à H:i" }}</p>
+                    </div>
+                </div>
+                
+                {% if payment.status != 'PENDING' %}
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 {% if payment.status == 'DELIVERED' %}bg-green-100{% else %}bg-red-100{% endif %} rounded-full flex items-center justify-center">
+                            <i data-lucide="{% if payment.status == 'DELIVERED' %}check{% else %}x{% endif %}" 
+                               class="w-4 h-4 {% if payment.status == 'DELIVERED' %}text-green-600{% else %}text-red-600{% endif %}"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-900">
+                            {% if payment.status == 'DELIVERED' %}Paiement confirmé{% else %}Paiement annulé{% endif %}
+                        </p>
+                        <p class="text-xs text-gray-500">{{ payment.updated_at|date:"d/m/Y à H:i" }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="stats-card">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Notes</h2>
+            {% if payment.notes %}
+            <p class="text-sm text-gray-700">{{ payment.notes }}</p>
+            {% else %}
+            <p class="text-sm text-gray-500 italic">Aucune note</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function updateStatus(newStatus) {
+    const statusText = newStatus === 'DELIVERED' ? 'marquer comme payé' : 'annuler';
+    if (!confirm(`Êtes-vous sûr de vouloir ${statusText} ce paiement?`)) return;
+    
+    const formData = new FormData();
+    formData.append('status', newStatus);
+    
+    fetch("{% url 'backend:admin_payment_update_status' payment.id %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Une erreur est survenue');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Une erreur est survenue');
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Initialize Lucide icons after page load
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+});
+</script>
+{% endblock %}

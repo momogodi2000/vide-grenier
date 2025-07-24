@@ -249,6 +249,13 @@ class Order(models.Model):
     delivery_address = models.TextField(blank=True)
     pickup_code = models.CharField(max_length=6, blank=True)
     notes = models.TextField(blank=True)
+    
+    # Fields for visitor/anonymous orders
+    visitor_name = models.CharField(max_length=100, blank=True, help_text="Nom du visiteur (pour commandes sans compte)")
+    visitor_email = models.EmailField(blank=True, help_text="Email du visiteur (pour commandes sans compte)")
+    visitor_phone = models.CharField(max_length=20, blank=True, help_text="Téléphone du visiteur (pour commandes sans compte)")
+    whatsapp_preferred = models.BooleanField(default=False, help_text="Le visiteur préfère WhatsApp pour contact")
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     delivered_at = models.DateTimeField(null=True, blank=True)

@@ -74,6 +74,9 @@ VGK_CURRENCY_SYMBOL=FCFA
 # Maximum file upload size (in MB)
 VGK_MAX_FILE_SIZE=10
 
+# Admin Contact Information
+ADMIN_WHATSAPP=237123456789
+
 # ===========================================
 # PAYMENT CONFIGURATION
 # ===========================================
@@ -271,4 +274,4 @@ LANGUAGES=fr,en
 
 # ===========================================
 # END OF CONFIGURATION
-# ===========================================
+# =========================================== 

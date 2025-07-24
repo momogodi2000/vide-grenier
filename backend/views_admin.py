@@ -28,20 +28,26 @@ from django.conf import settings
 import threading
 import time
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+# Import all required models
 try:
-    from .models import Message, AdminStock  # Add these missing models
-except ImportError:
-    pass
+    from .models import (
+        Product, Category, Order, Review, Chat, Message, Notification, 
+        Analytics, AdminStock, PickupPoint, ProductImage, Payment, 
+        Favorite, SearchHistory
+    )
+    MAIN_MODELS_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Error importing models: {e}")
+    MAIN_MODELS_AVAILABLE = False
 
 import random  # Add this for AdminStockAddView
+from decimal import Decimal
+from django.utils.text import slugify
+from django.db import transaction
+import yagmail
+import uuid
 
-# Import your existing models
-try:
-    from .models import Product, Category, Order, Review, Chat, Notification
-    MAIN_MODELS_AVAILABLE = True
-except ImportError:
-    MAIN_MODELS_AVAILABLE = False
-    print("⚠️ Main models not found")
+# Models are now imported above
 
 # Import newsletter models
 try:
@@ -50,6 +56,26 @@ try:
 except ImportError:
     NEWSLETTER_MODELS_AVAILABLE = False
     print("⚠️ Newsletter models not found")
+
+# Import forms for product management
+try:
+    from .forms import AdminProductForm, ProductImageFormSet
+except ImportError:
+    # Create basic forms if not available
+    class AdminProductForm(forms.ModelForm):
+        class Meta:
+            model = Product if MAIN_MODELS_AVAILABLE else None
+            fields = ['title', 'description', 'category', 'price', 'condition', 'city', 'is_negotiable']
+    
+    from django.forms import inlineformset_factory
+    if MAIN_MODELS_AVAILABLE:
+        from .models import ProductImage
+        ProductImageFormSet = inlineformset_factory(
+            Product, ProductImage,
+            fields=('image', 'alt_text', 'is_primary'),
+            extra=3,
+            can_delete=True
+        )
 
 User = get_user_model()
 
@@ -1380,19 +1406,21 @@ def admin_user_bulk_actions(request):
         })
 
 # ============ PRODUCT MANAGEMENT ============
+
+# AdminProductListView was missing from the original file
 @method_decorator([login_required, staff_member_required], name='dispatch')
 class AdminProductListView(ListView):
-    """Admin view for managing products"""
+    """Admin view for managing all products"""
     model = Product
     template_name = 'backend/admin/products/list.html'
     context_object_name = 'products'
-    paginate_by = 25
+    paginate_by = 20
     
     def get_queryset(self):
         if not MAIN_MODELS_AVAILABLE:
-            return Product.objects.none()
+            return []
         
-        queryset = Product.objects.all().order_by('-created_at')
+        queryset = Product.objects.select_related('seller', 'category').order_by('-created_at')
         
         # Search functionality
         search = self.request.GET.get('search', '')
@@ -1403,15 +1431,20 @@ class AdminProductListView(ListView):
                 Q(seller__email__icontains=search)
             )
         
-        # Filter by category
-        category = self.request.GET.get('category', '')
-        if category:
-            queryset = queryset.filter(category__slug=category)
-        
         # Filter by status
         status = self.request.GET.get('status', '')
         if status:
             queryset = queryset.filter(status=status)
+        
+        # Filter by source
+        source = self.request.GET.get('source', '')
+        if source:
+            queryset = queryset.filter(source=source)
+        
+        # Filter by category
+        category = self.request.GET.get('category', '')
+        if category:
+            queryset = queryset.filter(category_id=category)
         
         return queryset
     
@@ -1422,21 +1455,787 @@ class AdminProductListView(ListView):
             try:
                 context.update({
                     'total_products': Product.objects.count(),
+                    'pending_products': Product.objects.filter(status='DRAFT').count(),
                     'active_products': Product.objects.filter(status='ACTIVE').count(),
-                    'pending_products': Product.objects.filter(status='PENDING').count(),
-                    'categories': Category.objects.all(),
+                    'sold_products': Product.objects.filter(status='SOLD').count(),
+                    'admin_products': Product.objects.filter(source='ADMIN').count(),
+                    'client_products': Product.objects.filter(source='CLIENT').count(),
+                    'categories': Category.objects.filter(is_active=True).order_by('name'),
+                    'product_statuses': Product.STATUSES if hasattr(Product, 'STATUSES') else [],
+                    'product_sources': Product.SOURCES if hasattr(Product, 'SOURCES') else [],
                 })
             except Exception as e:
                 print(f"Error loading product stats: {e}")
         
         context.update({
             'search': self.request.GET.get('search', ''),
-            'category_filter': self.request.GET.get('category', ''),
             'status_filter': self.request.GET.get('status', ''),
+            'source_filter': self.request.GET.get('source', ''),
+            'category_filter': self.request.GET.get('category', ''),
         })
         
         return context
 
+
+class EmailNotificationService:
+    """Service for handling email notifications with yagmail"""
+    
+    def __init__(self):
+        self.yag = None
+        self.setup_yagmail()
+    
+    def setup_yagmail(self):
+        """Setup yagmail configuration"""
+        try:
+            self.yag = yagmail.SMTP(
+                user=settings.EMAIL_HOST_USER,
+                password=settings.EMAIL_HOST_PASSWORD,
+                host=settings.EMAIL_HOST,
+                port=settings.EMAIL_PORT,
+                smtp_starttls=settings.EMAIL_USE_TLS,
+                smtp_ssl=settings.EMAIL_USE_SSL
+            )
+        except Exception as e:
+            print(f"Error setting up yagmail: {e}")
+            self.yag = None
+    
+    def send_product_approval_email(self, product, approved=True):
+        """Send product approval/rejection email to seller"""
+        try:
+            if not self.yag:
+                self.setup_yagmail()
+            
+            seller_email = product.seller.email
+            seller_name = product.seller.get_full_name() or product.seller.email
+            
+            if approved:
+                subject = f"✅ Votre produit '{product.title}' a été approuvé"
+                template_name = "product_approved"
+            else:
+                subject = f"❌ Votre produit '{product.title}' a été rejeté"
+                template_name = "product_rejected"
+            
+            # Context for email template
+            context = {
+                'seller_name': seller_name,
+                'product_title': product.title,
+                'product_url': f"{settings.SITE_URL}{product.get_absolute_url()}",
+                'product_price': product.price,
+                'approval_date': timezone.now(),
+                'site_name': 'Vidé-Grenier Kamer',
+                'site_url': settings.SITE_URL,
+                'support_email': settings.DEFAULT_FROM_EMAIL,
+                'approved': approved
+            }
+            
+            # Render email templates
+            html_content = render_to_string(f'emails/{template_name}.html', context)
+            text_content = render_to_string(f'emails/{template_name}.txt', context)
+            
+            # Send email
+            self.yag.send(
+                to=seller_email,
+                subject=subject,
+                contents=[text_content, html_content]
+            )
+            
+            # Create notification in database
+            Notification.objects.create(
+                user=product.seller,
+                type='PRODUCT',
+                title=subject,
+                message=f"Votre produit '{product.title}' a été {'approuvé' if approved else 'rejeté'}.",
+                data={
+                    'product_id': str(product.id),
+                    'product_title': product.title,
+                    'action': 'approved' if approved else 'rejected'
+                }
+            )
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error sending product approval email: {e}")
+            return False
+
+
+# Initialize email service
+email_service = EmailNotificationService()
+
+
+# ============ ADMIN PRODUCT LIST VIEW ============
+@login_required
+@admin_required
+def admin_product_list(request):
+    """List all products with admin management options"""
+    
+    # Get filter parameters
+    status_filter = request.GET.get('status', '')
+    source_filter = request.GET.get('source', '')
+    category_filter = request.GET.get('category', '')
+    search_query = request.GET.get('search', '')
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    
+    # Base queryset
+    products = Product.objects.select_related('seller', 'category').prefetch_related('images')
+    
+    # Apply filters
+    if status_filter:
+        products = products.filter(status=status_filter)
+    
+    if source_filter:
+        products = products.filter(source=source_filter)
+    
+    if category_filter:
+        products = products.filter(category_id=category_filter)
+    
+    if search_query:
+        products = products.filter(
+            Q(title__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(seller__email__icontains=search_query) |
+            Q(seller__first_name__icontains=search_query) |
+            Q(seller__last_name__icontains=search_query)
+        )
+    
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d')
+            products = products.filter(created_at__gte=date_from_obj)
+        except ValueError:
+            pass
+    
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d')
+            products = products.filter(created_at__lte=date_to_obj)
+        except ValueError:
+            pass
+    
+    # Order by creation date (newest first)
+    products = products.order_by('-created_at')
+    
+    # Pagination
+    paginator = Paginator(products, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Statistics
+    stats = {
+        'total_products': Product.objects.count(),
+        'pending_approval': Product.objects.filter(status='DRAFT').count(),
+        'active_products': Product.objects.filter(status='ACTIVE').count(),
+        'sold_products': Product.objects.filter(status='SOLD').count(),
+        'admin_products': Product.objects.filter(source='ADMIN').count(),
+        'client_products': Product.objects.filter(source='CLIENT').count(),
+    }
+    
+    # Categories for filter dropdown
+    categories = Category.objects.filter(is_active=True).order_by('name')
+    
+    context = {
+        'page_obj': page_obj,
+        'products': page_obj.object_list,
+        'stats': stats,
+        'categories': categories,
+        'status_filter': status_filter,
+        'source_filter': source_filter,
+        'category_filter': category_filter,
+        'search_query': search_query,
+        'date_from': date_from,
+        'date_to': date_to,
+        'product_statuses': Product.STATUSES,
+        'product_sources': Product.SOURCES,
+    }
+    
+    return render(request, 'backend/admin/products/list.html', context)
+
+
+# ============ ADMIN PRODUCT DETAIL VIEW ============
+@login_required
+@admin_required
+def admin_product_detail(request, product_id):
+    """View product details with admin actions"""
+    
+    product = get_object_or_404(
+        Product.objects.select_related('seller', 'category').prefetch_related('images'),
+        id=product_id
+    )
+    
+    # Get related data
+    orders = Order.objects.filter(product=product).select_related('buyer').order_by('-created_at')
+    admin_stock = None
+    
+    if product.source == 'ADMIN':
+        try:
+            admin_stock = AdminStock.objects.get(product=product)
+        except AdminStock.DoesNotExist:
+            pass
+    
+    # Analytics data
+    analytics_data = Analytics.objects.filter(
+        data__product_id=str(product.id),
+        metric_type='PRODUCT_VIEW'
+    ).order_by('-created_at')[:10]
+    
+    context = {
+        'product': product,
+        'orders': orders,
+        'admin_stock': admin_stock,
+        'analytics_data': analytics_data,
+        'can_approve': product.status == 'DRAFT' and product.source == 'CLIENT',
+        'can_reject': product.status in ['DRAFT', 'ACTIVE'] and product.source == 'CLIENT',
+    }
+    
+    return render(request, 'backend/admin/products/detail.html', context)
+
+
+# ============ ADMIN PRODUCT CREATE VIEW ============
+@login_required
+@admin_required
+def admin_product_create(request):
+    """Create new admin product"""
+    
+    if request.method == 'POST':
+        form = AdminProductForm(request.POST, request.FILES)
+        image_formset = ProductImageFormSet(
+            request.POST, 
+            request.FILES, 
+            queryset=ProductImage.objects.none()
+        )
+        
+        if form.is_valid() and image_formset.is_valid():
+            try:
+                with transaction.atomic():
+                    # Create product
+                    product = form.save(commit=False)
+                    product.seller = request.user
+                    product.source = 'ADMIN'
+                    product.status = 'ACTIVE'  # Admin products are automatically active
+                    
+                    # Generate unique slug
+                    base_slug = slugify(product.title)
+                    slug = base_slug
+                    counter = 1
+                    while Product.objects.filter(slug=slug).exists():
+                        slug = f"{base_slug}-{counter}"
+                        counter += 1
+                    product.slug = slug
+                    
+                    product.save()
+                    
+                    # Save images
+                    images = image_formset.save(commit=False)
+                    for i, image in enumerate(images):
+                        image.product = product
+                        image.order = i
+                        if i == 0:  # First image is primary
+                            image.is_primary = True
+                        image.save()
+                    
+                    # Create admin stock entry
+                    AdminStock.objects.create(
+                        product=product,
+                        sku=f"ADM-{product.id}",
+                        quantity=form.cleaned_data.get('quantity', 1),
+                        location=form.cleaned_data.get('location', request.user.city),
+                        purchase_price=form.cleaned_data.get('purchase_price', product.price * Decimal('0.8')),
+                        condition_notes=form.cleaned_data.get('condition_notes', ''),
+                        warranty_info=form.cleaned_data.get('warranty_info', ''),
+                    )
+                    
+                    # Log analytics
+                    Analytics.objects.create(
+                        metric_type='PRODUCT_CREATE',
+                        user=request.user,
+                        data={
+                            'product_id': str(product.id),
+                            'product_title': product.title,
+                            'source': 'ADMIN'
+                        },
+                        ip_address=request.META.get('REMOTE_ADDR', ''),
+                    )
+                    
+                    messages.success(request, f'Produit "{product.title}" créé avec succès!')
+                    return redirect('backend:admin_product_detail', product_id=product.id)
+                    
+            except Exception as e:
+                messages.error(request, f'Erreur lors de la création du produit: {e}')
+        else:
+            messages.error(request, 'Veuillez corriger les erreurs dans le formulaire.')
+    else:
+        form = AdminProductForm()
+        image_formset = ProductImageFormSet(queryset=ProductImage.objects.none())
+    
+    categories = Category.objects.filter(is_active=True).order_by('name')
+    
+    context = {
+        'form': form,
+        'image_formset': image_formset,
+        'categories': categories,
+        'cities': User.CITIES,
+        'conditions': Product.CONDITIONS,
+    }
+    
+    return render(request, 'backend/admin/products/create.html', context)
+
+
+# ============ ADMIN PRODUCT EDIT VIEW ============
+@login_required
+@admin_required
+def admin_product_edit(request, product_id):
+    """Edit existing product"""
+    
+    product = get_object_or_404(Product, id=product_id)
+    
+    if request.method == 'POST':
+        form = AdminProductForm(request.POST, request.FILES, instance=product)
+        image_formset = ProductImageFormSet(
+            request.POST, 
+            request.FILES, 
+            queryset=product.images.all()
+        )
+        
+        if form.is_valid() and image_formset.is_valid():
+            try:
+                with transaction.atomic():
+                    # Update product
+                    product = form.save()
+                    
+                    # Update images
+                    images = image_formset.save(commit=False)
+                    
+                    # Delete removed images
+                    for deleted_image in image_formset.deleted_objects:
+                        deleted_image.delete()
+                    
+                    # Save new/updated images
+                    for i, image in enumerate(images):
+                        image.product = product
+                        if not image.order:
+                            image.order = i
+                        image.save()
+                    
+                    # Ensure at least one primary image
+                    if not product.images.filter(is_primary=True).exists():
+                        first_image = product.images.first()
+                        if first_image:
+                            first_image.is_primary = True
+                            first_image.save()
+                    
+                    # Update admin stock if it's an admin product
+                    if product.source == 'ADMIN':
+                        admin_stock, created = AdminStock.objects.get_or_create(
+                            product=product,
+                            defaults={
+                                'sku': f"ADM-{product.id}",
+                                'quantity': 1,
+                                'location': product.city,
+                                'purchase_price': product.price * Decimal('0.8'),
+                            }
+                        )
+                        if not created and form.cleaned_data.get('quantity'):
+                            admin_stock.quantity = form.cleaned_data['quantity']
+                            admin_stock.save()
+                    
+                    messages.success(request, f'Produit "{product.title}" mis à jour avec succès!')
+                    return redirect('backend:admin_product_detail', product_id=product.id)
+                    
+            except Exception as e:
+                messages.error(request, f'Erreur lors de la mise à jour: {e}')
+        else:
+            messages.error(request, 'Veuillez corriger les erreurs dans le formulaire.')
+    else:
+        form = AdminProductForm(instance=product)
+        image_formset = ProductImageFormSet(queryset=product.images.all())
+    
+    categories = Category.objects.filter(is_active=True).order_by('name')
+    
+    context = {
+        'form': form,
+        'image_formset': image_formset,
+        'product': product,
+        'categories': categories,
+        'cities': User.CITIES,
+        'conditions': Product.CONDITIONS,
+    }
+    
+    return render(request, 'backend/admin/products/edit.html', context)
+
+
+# ============ ADMIN PRODUCT DELETE VIEW ============
+@login_required
+@admin_required
+@require_http_methods(["POST", "DELETE"])
+def admin_product_delete(request, product_id):
+    """Delete product"""
+    
+    product = get_object_or_404(Product, id=product_id)
+    
+    try:
+        product_title = product.title
+        
+        # Check if product has orders
+        if product.orders.exists():
+            if request.method == 'POST':
+                messages.error(request, 'Impossible de supprimer un produit qui a des commandes.')
+                return redirect('backend:admin_product_detail', product_id=product.id)
+            
+            return JsonResponse({
+                'success': False,
+                'message': 'Impossible de supprimer un produit qui a des commandes.'
+            })
+        
+        # Delete the product
+        product.delete()
+        
+        if request.method == 'POST':
+            messages.success(request, f'Produit "{product_title}" supprimé avec succès!')
+            return redirect('backend:admin_product_list')
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Produit "{product_title}" supprimé avec succès!'
+        })
+        
+    except Exception as e:
+        if request.method == 'POST':
+            messages.error(request, f'Erreur lors de la suppression: {e}')
+            return redirect('backend:admin_product_detail', product_id=product.id)
+        
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        })
+
+
+# ============ PRODUCT APPROVAL/REJECTION ACTIONS ============
+@login_required
+@admin_required
+@require_http_methods(["POST"])
+def admin_product_approve(request, product_id):
+    """Approve a client product"""
+    
+    product = get_object_or_404(Product, id=product_id)
+    
+    if product.source != 'CLIENT':
+        return JsonResponse({
+            'success': False,
+            'message': 'Seuls les produits clients peuvent être approuvés.'
+        })
+    
+    if product.status != 'DRAFT':
+        return JsonResponse({
+            'success': False,
+            'message': 'Ce produit n\'est pas en attente d\'approbation.'
+        })
+    
+    try:
+        with transaction.atomic():
+            # Update product status
+            product.status = 'ACTIVE'
+            product.save()
+            
+            # Send approval email
+            email_sent = email_service.send_product_approval_email(product, approved=True)
+            
+            # Log analytics
+            Analytics.objects.create(
+                metric_type='PRODUCT_APPROVE',
+                user=request.user,
+                data={
+                    'product_id': str(product.id),
+                    'product_title': product.title,
+                    'seller_id': str(product.seller.id),
+                    'email_sent': email_sent
+                },
+                ip_address=request.META.get('REMOTE_ADDR', ''),
+            )
+            
+            message = f'Produit "{product.title}" approuvé avec succès!'
+            if not email_sent:
+                message += ' (Email d\'approbation non envoyé - erreur)'
+            
+            return JsonResponse({
+                'success': True,
+                'message': message,
+                'new_status': product.get_status_display()
+            })
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erreur lors de l\'approbation: {e}'
+        })
+
+
+@login_required
+@admin_required
+@require_http_methods(["POST"])
+def admin_product_reject(request, product_id):
+    """Reject a client product"""
+    
+    product = get_object_or_404(Product, id=product_id)
+    
+    if product.source != 'CLIENT':
+        return JsonResponse({
+            'success': False,
+            'message': 'Seuls les produits clients peuvent être rejetés.'
+        })
+    
+    if product.status not in ['DRAFT', 'ACTIVE']:
+        return JsonResponse({
+            'success': False,
+            'message': 'Ce produit ne peut pas être rejeté.'
+        })
+    
+    try:
+        rejection_reason = request.POST.get('reason', 'Aucune raison spécifiée')
+        
+        with transaction.atomic():
+            # Update product status
+            product.status = 'SUSPENDED'
+            product.save()
+            
+            # Send rejection email with reason
+            email_sent = email_service.send_product_approval_email(product, approved=False)
+            
+            # Create detailed notification with reason
+            Notification.objects.create(
+                user=product.seller,
+                type='PRODUCT',
+                title=f"Produit '{product.title}' rejeté",
+                message=f"Votre produit a été rejeté. Raison: {rejection_reason}",
+                data={
+                    'product_id': str(product.id),
+                    'product_title': product.title,
+                    'action': 'rejected',
+                    'reason': rejection_reason
+                }
+            )
+            
+            # Log analytics
+            Analytics.objects.create(
+                metric_type='PRODUCT_REJECT',
+                user=request.user,
+                data={
+                    'product_id': str(product.id),
+                    'product_title': product.title,
+                    'seller_id': str(product.seller.id),
+                    'reason': rejection_reason,
+                    'email_sent': email_sent
+                },
+                ip_address=request.META.get('REMOTE_ADDR', ''),
+            )
+            
+            message = f'Produit "{product.title}" rejeté avec succès!'
+            if not email_sent:
+                message += ' (Email de rejet non envoyé - erreur)'
+            
+            return JsonResponse({
+                'success': True,
+                'message': message,
+                'new_status': product.get_status_display()
+            })
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erreur lors du rejet: {e}'
+        })
+
+
+# ============ BULK ACTIONS ============
+@login_required
+@admin_required
+@require_http_methods(["POST"])
+def admin_product_bulk_actions(request):
+    """Handle bulk actions on products"""
+    
+    action = request.POST.get('action')
+    product_ids = request.POST.getlist('product_ids')
+    
+    if not action or not product_ids:
+        return JsonResponse({
+            'success': False,
+            'message': 'Action ou IDs de produits manquants.'
+        })
+    
+    try:
+        products = Product.objects.filter(id__in=product_ids)
+        
+        if action == 'approve':
+            approved_count = 0
+            for product in products.filter(source='CLIENT', status='DRAFT'):
+                product.status = 'ACTIVE'
+                product.save()
+                email_service.send_product_approval_email(product, approved=True)
+                approved_count += 1
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'{approved_count} produits approuvés avec succès!'
+            })
+        
+        elif action == 'reject':
+            reason = request.POST.get('reason', 'Rejet en masse')
+            rejected_count = 0
+            
+            for product in products.filter(source='CLIENT', status__in=['DRAFT', 'ACTIVE']):
+                product.status = 'SUSPENDED'
+                product.save()
+                email_service.send_product_approval_email(product, approved=False)
+                rejected_count += 1
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'{rejected_count} produits rejetés avec succès!'
+            })
+        
+        elif action == 'delete':
+            # Only delete products without orders
+            deletable_products = products.filter(orders__isnull=True)
+            deleted_count = deletable_products.count()
+            deletable_products.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'{deleted_count} produits supprimés avec succès!'
+            })
+        
+        elif action == 'feature':
+            products.update(is_featured=True)
+            return JsonResponse({
+                'success': True,
+                'message': f'{products.count()} produits mis en avant!'
+            })
+        
+        elif action == 'unfeature':
+            products.update(is_featured=False)
+            return JsonResponse({
+                'success': True,
+                'message': f'{products.count()} produits retirés de la mise en avant!'
+            })
+        
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'Action non reconnue.'
+            })
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erreur lors de l\'action en masse: {e}'
+        })
+
+
+# ============ AJAX ENDPOINTS ============
+@login_required
+@admin_required
+@require_http_methods(["GET"])
+def admin_product_stats_ajax(request):
+    """Get product statistics via AJAX"""
+    
+    try:
+        # Basic stats
+        stats = {
+            'total_products': Product.objects.count(),
+            'pending_approval': Product.objects.filter(status='DRAFT').count(),
+            'active_products': Product.objects.filter(status='ACTIVE').count(),
+            'sold_products': Product.objects.filter(status='SOLD').count(),
+            'admin_products': Product.objects.filter(source='ADMIN').count(),
+            'client_products': Product.objects.filter(source='CLIENT').count(),
+        }
+        
+        # Revenue stats
+        total_revenue = Order.objects.filter(status='DELIVERED').aggregate(
+            total=Sum('total_amount')
+        )['total'] or 0
+        
+        commission_revenue = Order.objects.filter(
+            status='DELIVERED',
+            product__source='CLIENT'
+        ).aggregate(
+            total=Sum('commission_amount')
+        )['total'] or 0
+        
+        stats.update({
+            'total_revenue': float(total_revenue),
+            'commission_revenue': float(commission_revenue),
+        })
+        
+        # Recent activity
+        recent_products = Product.objects.filter(
+            created_at__gte=timezone.now() - timedelta(days=7)
+        ).count()
+        
+        stats['recent_products'] = recent_products
+        
+        return JsonResponse({
+            'success': True,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        })
+
+
+@login_required
+@admin_required
+@require_http_methods(["POST"])
+def admin_product_quick_action(request):
+    """Handle quick actions on products"""
+    
+    action = request.POST.get('action')
+    product_id = request.POST.get('product_id')
+    
+    if not action or not product_id:
+        return JsonResponse({
+            'success': False,
+            'message': 'Action ou ID produit manquant.'
+        })
+    
+    try:
+        product = get_object_or_404(Product, id=product_id)
+        
+        if action == 'toggle_featured':
+            product.is_featured = not product.is_featured
+            product.save()
+            
+            status = 'mis en avant' if product.is_featured else 'retiré de la mise en avant'
+            return JsonResponse({
+                'success': True,
+                'message': f'Produit {status}!',
+                'is_featured': product.is_featured
+            })
+        
+        elif action == 'toggle_premium':
+            product.is_premium = not product.is_premium
+            product.save()
+            
+            status = 'marqué premium' if product.is_premium else 'retiré du premium'
+            return JsonResponse({
+                'success': True,
+                'message': f'Produit {status}!',
+                'is_premium': product.is_premium
+            })
+        
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'Action non reconnue.'
+            })
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        })
 # ============ ORDER MANAGEMENT ============
 @method_decorator([login_required, staff_member_required], name='dispatch')
 class AdminOrderListView(ListView):
@@ -2022,3 +2821,549 @@ def admin_notification_send_bulk(request):
             'success': False,
             'message': str(e)
         })
+
+# ============ ENHANCED EMAIL NOTIFICATION SERVICE ============
+class EnhancedEmailNotificationService(EmailNotificationService):
+    """Enhanced email service with better error handling and templates"""
+    
+    def send_product_approval_email(self, product, approved=True, reason=None):
+        """Send product approval/rejection email to seller"""
+        try:
+            if not self.yag:
+                self.setup_yagmail()
+            
+            seller_email = product.seller.email
+            seller_name = product.seller.get_full_name() or product.seller.email
+            
+            if approved:
+                subject = f"✅ Votre produit '{product.title}' a été approuvé - Vidé-Grenier Kamer"
+                message = f"""
+Bonjour {seller_name},
+
+Excellente nouvelle ! Votre produit "{product.title}" a été approuvé par notre équipe.
+
+Détails du produit:
+- Titre: {product.title}
+- Prix: {product.price} FCFA
+- Catégorie: {product.category.name if hasattr(product, 'category') else 'Non spécifiée'}
+
+Votre produit est maintenant visible sur notre plateforme et les acheteurs peuvent le découvrir.
+
+Vous pouvez consulter votre produit ici: {getattr(settings, 'SITE_URL', 'http://localhost:8000')}/products/{product.slug}/
+
+Merci de faire confiance à Vidé-Grenier Kamer !
+
+L'équipe Vidé-Grenier Kamer
+{getattr(settings, 'DEFAULT_FROM_EMAIL', 'admin@videgrenierkamer.com')}
+                """
+            else:
+                subject = f"❌ Votre produit '{product.title}' a été rejeté - Vidé-Grenier Kamer"
+                message = f"""
+Bonjour {seller_name},
+
+Nous vous informons que votre produit "{product.title}" n'a pas pu être approuvé.
+
+Raison du rejet: {reason or 'Non spécifiée'}
+
+Détails du produit:
+- Titre: {product.title}
+- Prix: {product.price} FCFA
+- Catégorie: {product.category.name if hasattr(product, 'category') else 'Non spécifiée'}
+
+Vous pouvez modifier votre produit et le soumettre à nouveau pour approbation.
+
+Si vous avez des questions, n'hésitez pas à nous contacter.
+
+L'équipe Vidé-Grenier Kamer
+{getattr(settings, 'DEFAULT_FROM_EMAIL', 'admin@videgrenierkamer.com')}
+                """
+            
+            # Send email
+            if self.yag:
+                self.yag.send(
+                    to=seller_email,
+                    subject=subject,
+                    contents=message
+                )
+                return True
+            else:
+                # Fallback to Django's send_mail
+                from django.core.mail import send_mail
+                send_mail(
+                    subject=subject,
+                    message=message,
+                    from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'admin@videgrenierkamer.com'),
+                    recipient_list=[seller_email],
+                    fail_silently=False,
+                )
+                return True
+                
+        except Exception as e:
+            print(f"Error sending {'approval' if approved else 'rejection'} email: {e}")
+            return False
+    
+    def send_product_rejection_email(self, product, reason=None):
+        """Send product rejection email"""
+        return self.send_product_approval_email(product, approved=False, reason=reason)
+
+# ============ ENHANCED PRODUCT APPROVAL/REJECTION WITH EMAIL ============
+@admin_required
+@require_http_methods(["POST"])
+def admin_product_approve(request, product_id):
+    """Approve a client product and send email notification"""
+    if not MAIN_MODELS_AVAILABLE:
+        return JsonResponse({
+            'success': False,
+            'message': 'Modèles non disponibles'
+        })
+    
+    try:
+        product = get_object_or_404(Product, id=product_id)
+        
+        if product.source != 'CLIENT':
+            return JsonResponse({
+                'success': False,
+                'message': 'Seuls les produits clients peuvent être approuvés.'
+            })
+        
+        if product.status != 'DRAFT':
+            return JsonResponse({
+                'success': False,
+                'message': 'Ce produit n\'est pas en attente d\'approbation.'
+            })
+        
+        with transaction.atomic():
+            # Update product status
+            product.status = 'ACTIVE'
+            product.save()
+            
+            # Send approval email using enhanced email service
+            email_sent = False
+            try:
+                email_service = EnhancedEmailNotificationService()
+                email_sent = email_service.send_product_approval_email(product, approved=True)
+            except Exception as e:
+                print(f"Email sending failed: {e}")
+            
+            # Create notification
+            try:
+                Notification.objects.create(
+                    user=product.seller,
+                    type='PRODUCT',
+                    title=f'Produit "{product.title}" approuvé',
+                    message=f'Votre produit "{product.title}" a été approuvé et est maintenant visible sur la plateforme.',
+                    data={
+                        'product_id': str(product.id),
+                        'product_title': product.title,
+                        'action': 'approved'
+                    }
+                )
+            except Exception as e:
+                print(f"Notification creation failed: {e}")
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Produit "{product.title}" approuvé avec succès!' + 
+                          ('' if email_sent else ' (Email non envoyé)'),
+                'new_status': product.get_status_display() if hasattr(product, 'get_status_display') else product.status
+            })
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erreur lors de l\'approbation: {e}'
+        })
+
+@admin_required
+@require_http_methods(["POST"])
+def admin_product_reject(request, product_id):
+    """Reject a client product and send email notification"""
+    if not MAIN_MODELS_AVAILABLE:
+        return JsonResponse({
+            'success': False,
+            'message': 'Modèles non disponibles'
+        })
+    
+    try:
+        product = get_object_or_404(Product, id=product_id)
+        
+        if product.source != 'CLIENT':
+            return JsonResponse({
+                'success': False,
+                'message': 'Seuls les produits clients peuvent être rejetés.'
+            })
+        
+        if product.status not in ['DRAFT', 'ACTIVE']:
+            return JsonResponse({
+                'success': False,
+                'message': 'Ce produit ne peut pas être rejeté.'
+            })
+        
+        rejection_reason = request.POST.get('reason', 'Non conforme aux conditions d\'utilisation')
+        
+        with transaction.atomic():
+            # Update product status
+            product.status = 'SUSPENDED'
+            product.save()
+            
+            # Send rejection email using enhanced email service
+            email_sent = False
+            try:
+                email_service = EnhancedEmailNotificationService()
+                email_sent = email_service.send_product_rejection_email(product, reason=rejection_reason)
+            except Exception as e:
+                print(f"Email sending failed: {e}")
+            
+            # Create notification with reason
+            try:
+                Notification.objects.create(
+                    user=product.seller,
+                    type='PRODUCT',
+                    title=f'Produit "{product.title}" rejeté',
+                    message=f'Votre produit "{product.title}" a été rejeté. Raison: {rejection_reason}',
+                    data={
+                        'product_id': str(product.id),
+                        'product_title': product.title,
+                        'action': 'rejected',
+                        'reason': rejection_reason
+                    }
+                )
+            except Exception as e:
+                print(f"Notification creation failed: {e}")
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Produit "{product.title}" rejeté avec succès!' + 
+                          ('' if email_sent else ' (Email non envoyé)'),
+                'new_status': product.get_status_display() if hasattr(product, 'get_status_display') else product.status
+            })
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erreur lors du rejet: {e}'
+        })
+
+
+# ============ MISSING COMPLETE ADMIN VIEWS ============
+
+# PRODUCT MANAGEMENT - COMPLETE MISSING VIEWS
+@login_required
+@admin_required
+def admin_product_detail(request, product_id):
+    """View product details with admin actions"""
+    if not MAIN_MODELS_AVAILABLE:
+        messages.error(request, 'Modèles non disponibles!')
+        return redirect('backend:admin_product_list')
+    
+    product = get_object_or_404(
+        Product.objects.select_related('seller', 'category').prefetch_related('images'),
+        id=product_id
+    )
+    
+    # Get related data
+    orders = []
+    admin_stock = None
+    
+    try:
+        orders = Order.objects.filter(product=product).select_related('buyer').order_by('-created_at')
+    except:
+        pass
+    
+    if product.source == 'ADMIN':
+        try:
+            admin_stock = AdminStock.objects.get(product=product)
+        except AdminStock.DoesNotExist:
+            pass
+    
+    # Analytics data
+    analytics_data = []
+    try:
+        analytics_data = Analytics.objects.filter(
+            data__product_id=str(product.id),
+            metric_type='PRODUCT_VIEW'
+        ).order_by('-created_at')[:10]
+    except:
+        pass
+    
+    context = {
+        'product': product,
+        'orders': orders,
+        'admin_stock': admin_stock,
+        'analytics_data': analytics_data,
+        'can_approve': product.status == 'DRAFT' and product.source == 'CLIENT',
+        'can_reject': product.status in ['DRAFT', 'ACTIVE'] and product.source == 'CLIENT',
+    }
+    
+    return render(request, 'backend/admin/products/detail.html', context)
+
+@login_required
+@admin_required
+def admin_product_create(request):
+    """Create new admin product"""
+    if not MAIN_MODELS_AVAILABLE:
+        messages.error(request, 'Modèles non disponibles!')
+        return redirect('backend:admin_product_list')
+    
+    if request.method == 'POST':
+        try:
+            title = request.POST.get('title')
+            description = request.POST.get('description')
+            category_id = request.POST.get('category')
+            price = request.POST.get('price')
+            condition = request.POST.get('condition')
+            city = request.POST.get('city')
+            
+            if not all([title, description, category_id, price, condition, city]):
+                messages.error(request, 'Tous les champs sont requis!')
+                return render(request, 'backend/admin/products/create.html', get_product_form_context())
+            
+            with transaction.atomic():
+                # Generate unique slug
+                base_slug = slugify(title)
+                slug = base_slug
+                counter = 1
+                while Product.objects.filter(slug=slug).exists():
+                    slug = f"{base_slug}-{counter}"
+                    counter += 1
+                
+                # Create product
+                product = Product.objects.create(
+                    title=title,
+                    slug=slug,
+                    description=description,
+                    category_id=category_id,
+                    seller=request.user,
+                    price=Decimal(price),
+                    condition=condition,
+                    city=city,
+                    source='ADMIN',
+                    status='ACTIVE'
+                )
+                
+                # Create admin stock entry
+                AdminStock.objects.create(
+                    product=product,
+                    sku=f"ADM-{product.id}",
+                    quantity=1,
+                    location=city,
+                    purchase_price=Decimal(price) * Decimal('0.8'),
+                    condition_notes=request.POST.get('condition_notes', ''),
+                    warranty_info=request.POST.get('warranty_info', ''),
+                )
+                
+                messages.success(request, f'Produit "{product.title}" créé avec succès!')
+                return redirect('backend:admin_product_detail', product_id=product.id)
+                
+        except Exception as e:
+            messages.error(request, f'Erreur lors de la création du produit: {e}')
+    
+    return render(request, 'backend/admin/products/create.html', get_product_form_context())
+
+@login_required
+@admin_required
+def admin_product_edit(request, product_id):
+    """Edit existing product"""
+    if not MAIN_MODELS_AVAILABLE:
+        messages.error(request, 'Modèles non disponibles!')
+        return redirect('backend:admin_product_list')
+    
+    product = get_object_or_404(Product, id=product_id)
+    
+    if request.method == 'POST':
+        try:
+            title = request.POST.get('title')
+            description = request.POST.get('description')
+            category_id = request.POST.get('category')
+            price = request.POST.get('price')
+            condition = request.POST.get('condition')
+            city = request.POST.get('city')
+            
+            if not all([title, description, category_id, price, condition, city]):
+                messages.error(request, 'Tous les champs sont requis!')
+                return render(request, 'backend/admin/products/edit.html', 
+                            get_product_form_context(product))
+            
+            # Update product
+            product.title = title
+            product.description = description
+            product.category_id = category_id
+            product.price = Decimal(price)
+            product.condition = condition
+            product.city = city
+            product.save()
+            
+            # Update admin stock if it's an admin product
+            if product.source == 'ADMIN':
+                admin_stock, created = AdminStock.objects.get_or_create(
+                    product=product,
+                    defaults={
+                        'sku': f"ADM-{product.id}",
+                        'quantity': 1,
+                        'location': city,
+                        'purchase_price': Decimal(price) * Decimal('0.8'),
+                    }
+                )
+                if not created:
+                    admin_stock.location = city
+                    admin_stock.save()
+            
+            messages.success(request, f'Produit "{product.title}" mis à jour avec succès!')
+            return redirect('backend:admin_product_detail', product_id=product.id)
+            
+        except Exception as e:
+            messages.error(request, f'Erreur lors de la mise à jour: {e}')
+    
+    return render(request, 'backend/admin/products/edit.html', 
+                  get_product_form_context(product))
+
+def get_product_form_context(product=None):
+    """Get context for product forms"""
+    try:
+        categories = Category.objects.filter(is_active=True).order_by('name')
+    except:
+        categories = []
+    
+    return {
+        'product': product,
+        'categories': categories,
+        'cities': User.CITIES,
+        'conditions': Product.CONDITIONS,
+    }
+
+# ==============================================================================
+# VISITOR ORDER EMAIL NOTIFICATIONS
+# ==============================================================================
+
+def send_visitor_order_notification(order):
+    """Send notification to admin about new visitor order"""
+    try:
+        email_service = EnhancedEmailNotificationService()
+        
+        admin_emails = [
+            email for email, _ in settings.MANAGERS
+        ] or [settings.DEFAULT_FROM_EMAIL]
+        
+        subject = f"Nouvelle commande visiteur #{order.order_number}"
+        
+        context = {
+            'order': order,
+            'product': order.product,
+            'visitor_name': order.visitor_name,
+            'visitor_phone': order.visitor_phone,
+            'visitor_email': order.visitor_email,
+            'payment_method': order.get_payment_method_display(),
+            'delivery_method': order.get_delivery_method_display(),
+            'admin_url': f"{getattr(settings, 'SITE_URL', 'http://localhost:8000')}/admin/orders/{order.id}/",
+        }
+        
+        html_content = f"""
+        <h2>Nouvelle commande visiteur</h2>
+        <p>Une nouvelle commande a été passée par un visiteur:</p>
+        
+        <h3>Informations client:</h3>
+        <ul>
+            <li><strong>Nom:</strong> {order.visitor_name}</li>
+            <li><strong>Téléphone:</strong> {order.visitor_phone}</li>
+            <li><strong>Email:</strong> {order.visitor_email or 'Non fourni'}</li>
+            <li><strong>Contact WhatsApp:</strong> {'Oui' if order.whatsapp_preferred else 'Non'}</li>
+        </ul>
+        
+        <h3>Détails de la commande:</h3>
+        <ul>
+            <li><strong>Numéro:</strong> {order.order_number}</li>
+            <li><strong>Produit:</strong> {order.product.title}</li>
+            <li><strong>Quantité:</strong> {order.quantity}</li>
+            <li><strong>Montant total:</strong> {order.total_amount} FCFA</li>
+            <li><strong>Paiement:</strong> {order.get_payment_method_display()}</li>
+            <li><strong>Livraison:</strong> {order.get_delivery_method_display()}</li>
+        </ul>
+        
+        {f'<p><strong>Adresse de livraison:</strong> {order.delivery_address}</p>' if order.delivery_address else ''}
+        {f'<p><strong>Notes:</strong> {order.notes}</p>' if order.notes else ''}
+        
+        <p><a href="{context['admin_url']}">Voir la commande dans l'admin</a></p>
+        """
+        
+        for admin_email in admin_emails:
+            if email_service.use_yagmail and email_service.yag:
+                email_service.yag.send(
+                    to=admin_email,
+                    subject=subject,
+                    contents=html_content
+                )
+            else:
+                send_mail(
+                    subject=subject,
+                    message=f"Nouvelle commande visiteur de {order.visitor_name}",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[admin_email],
+                    html_message=html_content,
+                    fail_silently=False
+                )
+        
+        return True
+        
+    except Exception as e:
+        print(f"Error sending visitor order notification: {e}")
+        return False
+
+
+def send_visitor_payment_confirmation(order):
+    """Send payment confirmation to visitor"""
+    try:
+        if not order.visitor_email:
+            return False
+            
+        email_service = EnhancedEmailNotificationService()
+        subject = f"Confirmation de paiement - Commande #{order.order_number}"
+        
+        admin_whatsapp = getattr(settings, 'ADMIN_WHATSAPP', os.getenv('ADMIN_WHATSAPP', '237'))
+        
+        html_content = f"""
+        <h2>Paiement confirmé !</h2>
+        <p>Bonjour {order.visitor_name},</p>
+        
+        <p>Votre paiement pour la commande <strong>#{order.order_number}</strong> a été confirmé avec succès.</p>
+        
+        <h3>Détails de votre commande:</h3>
+        <ul>
+            <li><strong>Produit:</strong> {order.product.title}</li>
+            <li><strong>Quantité:</strong> {order.quantity}</li>
+            <li><strong>Montant payé:</strong> {order.total_amount} FCFA</li>
+            <li><strong>Mode de livraison:</strong> {order.get_delivery_method_display()}</li>
+        </ul>
+        
+        <p>Nous vous contacterons bientôt pour organiser {'la livraison' if order.delivery_method == 'DELIVERY' else 'le retrait'}.</p>
+        
+        <p>Pour toute question, vous pouvez nous contacter:</p>
+        <ul>
+            <li><strong>WhatsApp:</strong> <a href="https://wa.me/{admin_whatsapp}">+{admin_whatsapp}</a></li>
+            <li><strong>Email:</strong> {settings.DEFAULT_FROM_EMAIL}</li>
+        </ul>
+        
+        <p>Merci de votre confiance !</p>
+        <p>L'équipe Vidé-Grenier Kamer</p>
+        """
+        
+        if email_service.use_yagmail and email_service.yag:
+            email_service.yag.send(
+                to=order.visitor_email,
+                subject=subject,
+                contents=html_content
+            )
+        else:
+            send_mail(
+                subject=subject,
+                message=f"Votre paiement pour la commande #{order.order_number} a été confirmé.",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[order.visitor_email],
+                html_message=html_content,
+                fail_silently=False
+            )
+        
+        return True
+        
+    except Exception as e:
+        print(f"Error sending visitor payment confirmation: {e}")
+        return False

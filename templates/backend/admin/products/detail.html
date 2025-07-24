@@ -1,0 +1,396 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Détail Produit - Admin VGK{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header with Actions -->
+    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div class="flex items-center space-x-4">
+                <a href="{% url 'backend:admin_product_list' %}" class="p-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </a>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ product.title }}</h1>
+                    <p class="text-gray-500 dark:text-gray-400 mt-1">Géré par {{ product.seller.get_full_name|default:product.seller.email }}</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-3 mt-4 md:mt-0">
+                {% if can_approve %}
+                <button onclick="approveProduct()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium transition-colors">
+                    <i data-lucide="check" class="w-4 h-4 mr-2 inline"></i>
+                    Approuver
+                </button>
+                {% endif %}
+                
+                {% if can_reject %}
+                <button onclick="rejectProduct()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors">
+                    <i data-lucide="x" class="w-4 h-4 mr-2 inline"></i>
+                    Rejeter
+                </button>
+                {% endif %}
+                
+                {% if product.source == 'ADMIN' %}
+                <a href="{% url 'backend:admin_product_edit' product.id %}" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors">
+                    <i data-lucide="edit" class="w-4 h-4 mr-2 inline"></i>
+                    Modifier
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Product Information -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Product Details -->
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                    <i data-lucide="package" class="w-5 h-5 mr-2 inline text-blue-500"></i>
+                    Informations du Produit
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Prix</label>
+                        <p class="text-2xl font-bold text-green-600">{{ product.price|floatformat:0|intcomma }} FCFA</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Statut</label>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                            {% if product.status == 'ACTIVE' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
+                            {% elif product.status == 'DRAFT' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
+                            {% elif product.status == 'SOLD' %}bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200
+                            {% else %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% endif %}">
+                            {{ product.get_status_display|default:product.status }}
+                        </span>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Condition</label>
+                        <p class="text-gray-900 dark:text-white">{{ product.get_condition_display|default:product.condition }}</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ville</label>
+                        <p class="text-gray-900 dark:text-white">{{ product.get_city_display|default:product.city }}</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Source</label>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                            {% if product.source == 'ADMIN' %}bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200
+                            {% else %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200{% endif %}">
+                            {% if product.source == 'ADMIN' %}Administration{% else %}Client{% endif %}
+                        </span>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date de création</label>
+                        <p class="text-gray-900 dark:text-white">{{ product.created_at|date:"d/m/Y H:i" }}</p>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                    <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+                        <p class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ product.description }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Images -->
+            {% if product.images.exists %}
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                    <i data-lucide="image" class="w-5 h-5 mr-2 inline text-blue-500"></i>
+                    Images du Produit
+                </h2>
+                
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {% for image in product.images.all %}
+                    <div class="relative group">
+                        <img src="{{ image.image.url }}" alt="{{ image.alt_text|default:product.title }}" 
+                             class="w-full h-32 object-cover rounded-xl border-2 border-gray-200 dark:border-gray-600 
+                                    {% if image.is_primary %}border-green-500{% endif %}
+                                    group-hover:shadow-lg transition-shadow cursor-pointer">
+                        {% if image.is_primary %}
+                        <span class="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg font-medium">
+                            Principal
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Orders History -->
+            {% if orders %}
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                    <i data-lucide="shopping-cart" class="w-5 h-5 mr-2 inline text-blue-500"></i>
+                    Historique des Commandes
+                </h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Numéro</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Acheteur</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Montant</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Statut</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            {% for order in orders %}
+                            <tr>
+                                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                    {{ order.order_number }}
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                    {{ order.buyer.get_full_name|default:order.buyer.email|default:"Client anonyme" }}
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                                    {{ order.total_amount|floatformat:0|intcomma }} FCFA
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                                        {% if order.status == 'DELIVERED' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
+                                        {% elif order.status == 'PENDING' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
+                                        {% else %}bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200{% endif %}">
+                                        {{ order.get_status_display|default:order.status }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                    {{ order.created_at|date:"d/m/Y" }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Quick Stats -->
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5 mr-2 inline text-blue-500"></i>
+                    Statistiques
+                </h3>
+                
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600 dark:text-gray-400">Vues</span>
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ product.views_count|default:0 }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600 dark:text-gray-400">Favoris</span>
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ product.likes_count|default:0 }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600 dark:text-gray-400">Commandes</span>
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ orders|length }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Stock Info -->
+            {% if admin_stock %}
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    <i data-lucide="warehouse" class="w-5 h-5 mr-2 inline text-blue-500"></i>
+                    Stock Admin
+                </h3>
+                
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600 dark:text-gray-400">SKU</span>
+                        <span class="font-mono text-gray-900 dark:text-white">{{ admin_stock.sku }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600 dark:text-gray-400">Quantité</span>
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ admin_stock.quantity }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600 dark:text-gray-400">Prix d'achat</span>
+                        <span class="font-semibold text-green-600">{{ admin_stock.purchase_price|floatformat:0|intcomma }} FCFA</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600 dark:text-gray-400">Marge</span>
+                        <span class="font-semibold text-blue-600">{{ admin_stock.profit_margin|floatformat:1 }}%</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600 dark:text-gray-400">Localisation</span>
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ admin_stock.location }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Seller Info -->
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    <i data-lucide="user" class="w-5 h-5 mr-2 inline text-blue-500"></i>
+                    Informations Vendeur
+                </h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <span class="block text-gray-600 dark:text-gray-400 text-sm">Nom</span>
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ product.seller.get_full_name|default:product.seller.email }}</span>
+                    </div>
+                    
+                    <div>
+                        <span class="block text-gray-600 dark:text-gray-400 text-sm">Email</span>
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ product.seller.email }}</span>
+                    </div>
+                    
+                    <div>
+                        <span class="block text-gray-600 dark:text-gray-400 text-sm">Type</span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                            {% if product.seller.user_type == 'ADMIN' %}bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200
+                            {% else %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200{% endif %}">
+                            {{ product.seller.get_user_type_display|default:product.seller.user_type }}
+                        </span>
+                    </div>
+                    
+                    <div class="pt-2">
+                        <a href="{% url 'backend:admin_user_detail' product.seller.id %}" 
+                           class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                            <i data-lucide="external-link" class="w-4 h-4 mr-2"></i>
+                            Voir le profil
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product Approval/Rejection Modal -->
+<div id="rejectModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" style="display: none;">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Rejeter le produit</h3>
+            <button onclick="closeRejectModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        
+        <form id="rejectForm">
+            <div class="mb-4">
+                <label for="rejectReason" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Raison du rejet *
+                </label>
+                <textarea id="rejectReason" name="reason" rows="4" required
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+                    placeholder="Expliquez pourquoi ce produit est rejeté..."></textarea>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <button type="submit" class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors">
+                    <i data-lucide="x" class="w-4 h-4 mr-2 inline"></i>
+                    Rejeter
+                </button>
+                <button type="button" onclick="closeRejectModal()" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    Annuler
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function approveProduct() {
+    if (confirm('Êtes-vous sûr de vouloir approuver ce produit ?')) {
+        fetch(`{% url 'backend:admin_product_approve' product.id %}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Une erreur est survenue');
+        });
+    }
+}
+
+function rejectProduct() {
+    document.getElementById('rejectModal').style.display = 'flex';
+}
+
+function closeRejectModal() {
+    document.getElementById('rejectModal').style.display = 'none';
+}
+
+document.getElementById('rejectForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const reason = document.getElementById('rejectReason').value;
+    if (!reason.trim()) {
+        alert('Veuillez fournir une raison pour le rejet');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('reason', reason);
+    
+    fetch(`{% url 'backend:admin_product_reject' product.id %}`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Erreur: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Une erreur est survenue');
+    });
+    
+    closeRejectModal();
+});
+
+// Initialize Lucide icons
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>
+{% endblock %} 

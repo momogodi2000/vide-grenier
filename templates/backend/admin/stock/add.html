@@ -1,0 +1,252 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Ajouter Stock - Admin{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Ajouter Stock</h1>
+            <p class="text-gray-600">Ajouter un nouveau produit au stock administrateur</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <a href="{% url 'backend:admin_stock' %}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Retour au stock
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Add Stock Form -->
+<div class="stats-card mb-8">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Product Information -->
+            <div class="col-span-1">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Informations Produit</h2>
+                
+                <div class="mb-4">
+                    <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Titre <span class="text-red-600">*</span></label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                    <p class="text-red-600 text-xs mt-1">{{ form.title.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-4">
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Description <span class="text-red-600">*</span></label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <p class="text-red-600 text-xs mt-1">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-4">
+                    <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Catégorie <span class="text-red-600">*</span></label>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                    <p class="text-red-600 text-xs mt-1">{{ form.category.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-4">
+                    <label for="{{ form.price.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Prix de vente (€) <span class="text-red-600">*</span></label>
+                    {{ form.price }}
+                    {% if form.price.errors %}
+                    <p class="text-red-600 text-xs mt-1">{{ form.price.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-4">
+                    <label for="{{ form.condition.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">État <span class="text-red-600">*</span></label>
+                    {{ form.condition }}
+                    {% if form.condition.errors %}
+                    <p class="text-red-600 text-xs mt-1">{{ form.condition.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-4">
+                    <label for="{{ form.city.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Ville <span class="text-red-600">*</span></label>
+                    {{ form.city }}
+                    {% if form.city.errors %}
+                    <p class="text-red-600 text-xs mt-1">{{ form.city.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Stock Information -->
+            <div class="col-span-1">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Informations Stock</h2>
+                
+                <div class="mb-4">
+                    <label for="sku" class="block text-sm font-medium text-gray-700 mb-1">SKU</label>
+                    <input type="text" id="sku" name="sku" placeholder="SKU-XXXXX" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">Laissez vide pour générer automatiquement</p>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantité <span class="text-red-600">*</span></label>
+                    <input type="number" id="quantity" name="quantity" min="1" value="1" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="purchase_price" class="block text-sm font-medium text-gray-700 mb-1">Prix d'achat (€)</label>
+                    <input type="number" id="purchase_price" name="purchase_price" min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Emplacement</label>
+                    <input type="text" id="location" name="location" placeholder="Entrepôt A, Étagère 3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="min_stock_level" class="block text-sm font-medium text-gray-700 mb-1">Niveau stock minimum</label>
+                    <input type="number" id="min_stock_level" name="min_stock_level" min="0" value="5" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="condition_notes" class="block text-sm font-medium text-gray-700 mb-1">Notes sur l'état</label>
+                    <textarea id="condition_notes" name="condition_notes" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"></textarea>
+                </div>
+            </div>
+            
+            <!-- Images -->
+            <div class="col-span-1 md:col-span-2">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Images du produit</h2>
+                
+                {{ image_formset.management_form }}
+                
+                <div id="image-formset" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% for image_form in image_formset %}
+                        <div class="image-form p-4 border border-gray-200 rounded-lg">
+                            <div class="mb-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Image {{ forloop.counter }}</label>
+                                {{ image_form.image }}
+                                {% if image_form.image.errors %}
+                                <p class="text-red-600 text-xs mt-1">{{ image_form.image.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="flex items-center mt-2">
+                                {{ image_form.is_primary }}
+                                <label for="{{ image_form.is_primary.id_for_label }}" class="ml-2 block text-sm font-medium text-gray-700">Image principale</label>
+                            </div>
+                            
+                            {{ image_form.id }}
+                            {{ image_form.DELETE }}
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <button type="button" id="add-image" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                    <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                    Ajouter une image
+                </button>
+            </div>
+            
+            <!-- Additional Options -->
+            <div class="col-span-1 md:col-span-2">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Options supplémentaires</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="is_featured" name="is_featured" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                        <label for="is_featured" class="ml-2 block text-sm font-medium text-gray-700">Mettre en avant</label>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" id="is_premium" name="is_premium" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                        <label for="is_premium" class="ml-2 block text-sm font-medium text-gray-700">Produit premium</label>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" id="is_negotiable" name="is_negotiable" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                        <label for="is_negotiable" class="ml-2 block text-sm font-medium text-gray-700">Prix négociable</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-8 flex justify-end">
+            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                <i data-lucide="save" class="w-4 h-4 mr-2"></i>
+                Ajouter au stock
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add styling to form inputs
+        const inputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="number"], select, textarea');
+        inputs.forEach(input => {
+            input.classList.add('w-full', 'px-3', 'py-2', 'border', 'border-gray-300', 'rounded-md', 'focus:outline-none', 'focus:ring-2', 'focus:ring-green-500', 'focus:border-transparent');
+        });
+        
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.classList.add('h-4', 'w-4', 'text-green-600', 'focus:ring-green-500', 'border-gray-300', 'rounded');
+        });
+        
+        // Image formset management
+        const addImageBtn = document.getElementById('add-image');
+        const imageFormset = document.getElementById('image-formset');
+        const totalFormsInput = document.querySelector('[name="form-TOTAL_FORMS"]');
+        
+        if (addImageBtn && imageFormset && totalFormsInput) {
+            addImageBtn.addEventListener('click', function() {
+                const formCount = parseInt(totalFormsInput.value);
+                const newForm = imageFormset.querySelector('.image-form').cloneNode(true);
+                
+                // Update form index
+                newForm.innerHTML = newForm.innerHTML.replace(/-\d+-/g, `-${formCount}-`);
+                
+                // Clear input values
+                const inputs = newForm.querySelectorAll('input');
+                inputs.forEach(input => {
+                    if (input.type === 'file') {
+                        input.value = '';
+                    } else if (input.type === 'checkbox') {
+                        input.checked = false;
+                    }
+                });
+                
+                // Update label
+                const label = newForm.querySelector('label');
+                label.textContent = `Image ${formCount + 1}`;
+                
+                // Append new form
+                imageFormset.appendChild(newForm);
+                
+                // Update total forms count
+                totalFormsInput.value = formCount + 1;
+            });
+        }
+        
+        // Auto-calculate purchase price based on selling price (default to 80% of selling price)
+        const priceInput = document.getElementById('{{ form.price.id_for_label }}');
+        const purchasePriceInput = document.getElementById('purchase_price');
+        
+        if (priceInput && purchasePriceInput) {
+            priceInput.addEventListener('input', function() {
+                const sellingPrice = parseFloat(this.value) || 0;
+                purchasePriceInput.value = (sellingPrice * 0.8).toFixed(2);
+            });
+        }
+    });
+</script>
+{% endblock %}

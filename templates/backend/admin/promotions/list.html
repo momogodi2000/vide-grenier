@@ -1,0 +1,333 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Promotions - Admin{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Gestion des Promotions</h1>
+            <p class="text-gray-600">Gérer les promotions et offres spéciales</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <a href="{% url 'backend:admin_promotion_create' %}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                Nouvelle Promotion
+            </a>
+            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+                Exporter
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Total Promotions</p>
+                <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ total_promotions|default:0|intcomma }}</p>
+            </div>
+            <div class="p-3 bg-blue-100 rounded-full">
+                <i data-lucide="tag" class="w-6 h-6 text-blue-600"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Actives</p>
+                <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ active_promotions|default:0|intcomma }}</p>
+            </div>
+            <div class="p-3 bg-green-100 rounded-full">
+                <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Expirées</p>
+                <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ expired_promotions|default:0|intcomma }}</p>
+            </div>
+            <div class="p-3 bg-red-100 rounded-full">
+                <i data-lucide="x-circle" class="w-6 h-6 text-red-600"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Programmées</p>
+                <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ scheduled_promotions|default:0|intcomma }}</p>
+            </div>
+            <div class="p-3 bg-yellow-100 rounded-full">
+                <i data-lucide="clock" class="w-6 h-6 text-yellow-600"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="stats-card mb-8">
+    <div class="flex flex-wrap items-center gap-4 mb-4">
+        <div class="flex-1 min-w-[200px]">
+            <div class="relative">
+                <input type="text" id="search" placeholder="Rechercher une promotion..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                <div class="absolute left-3 top-2.5 text-gray-400">
+                    <i data-lucide="search" class="w-5 h-5"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="w-full sm:w-auto">
+            <select id="status-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                <option value="">Tous les statuts</option>
+                <option value="active">Actif</option>
+                <option value="expired">Expiré</option>
+                <option value="scheduled">Programmé</option>
+            </select>
+        </div>
+        
+        <div class="w-full sm:w-auto">
+            <select id="type-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                <option value="">Tous les types</option>
+                <option value="percentage">Pourcentage</option>
+                <option value="fixed">Montant fixe</option>
+                <option value="free_shipping">Livraison gratuite</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Promotions Table -->
+<div class="stats-card">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Code
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Nom
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Type
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Valeur
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Période
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Statut
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for promotion in promotions %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-mono font-medium text-gray-900">{{ promotion.code }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">{{ promotion.name }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">
+                            {% if promotion.type == 'percentage' %}
+                                Pourcentage
+                            {% elif promotion.type == 'fixed' %}
+                                Montant fixe
+                            {% elif promotion.type == 'free_shipping' %}
+                                Livraison gratuite
+                            {% else %}
+                                {{ promotion.type }}
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">
+                            {% if promotion.type == 'percentage' %}
+                                {{ promotion.value }}%
+                            {% elif promotion.type == 'fixed' %}
+                                {{ promotion.value|floatformat:2 }} €
+                            {% elif promotion.type == 'free_shipping' %}
+                                -
+                            {% else %}
+                                {{ promotion.value }}
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">
+                            {{ promotion.start_date|date:"d/m/Y" }} - {{ promotion.end_date|date:"d/m/Y"|default:"∞" }}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            {% if promotion.is_active %}bg-green-100 text-green-800
+                            {% elif promotion.is_scheduled %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-red-100 text-red-800{% endif %}">
+                            {% if promotion.is_active %}
+                                Actif
+                            {% elif promotion.is_scheduled %}
+                                Programmé
+                            {% else %}
+                                Expiré
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex justify-end space-x-2">
+                            <a href="{% url 'backend:admin_promotion_edit' promotion.id %}" class="text-blue-600 hover:text-blue-900">
+                                <i data-lucide="edit" class="w-5 h-5"></i>
+                            </a>
+                            <button onclick="toggleStatus({{ promotion.id }}, {{ promotion.is_active|yesno:'true,false' }})" class="{% if promotion.is_active %}text-red-600 hover:text-red-900{% else %}text-green-600 hover:text-green-900{% endif %}">
+                                <i data-lucide="{% if promotion.is_active %}pause{% else %}play{% endif %}" class="w-5 h-5"></i>
+                            </button>
+                            <button onclick="confirmDelete({{ promotion.id }})" class="text-red-600 hover:text-red-900">
+                                <i data-lucide="trash-2" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                        Aucune promotion trouvée
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-gray-700">
+                    Affichage de <span class="font-medium">{{ page_obj.start_index }}</span> à <span class="font-medium">{{ page_obj.end_index }}</span> sur <span class="font-medium">{{ page_obj.paginator.count }}</span> promotions
+                </p>
+            </div>
+            <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    </a>
+                    {% endif %}
+                    
+                    {% for i in page_obj.paginator.page_range %}
+                        {% if page_obj.number == i %}
+                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-green-50 text-sm font-medium text-green-600">{{ i }}</span>
+                        {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                            <a href="?page={{ i }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">{{ i }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                    </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black opacity-50 transition-opacity"></div>
+        <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all max-w-lg w-full">
+            <div class="p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Confirmer la suppression</h3>
+                <p class="text-gray-600 mb-6">Êtes-vous sûr de vouloir supprimer cette promotion ? Cette action est irréversible.</p>
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Annuler</button>
+                    <button onclick="deletePromotion()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Supprimer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let promotionId;
+    
+    function confirmDelete(id) {
+        promotionId = id;
+        document.getElementById('deleteModal').classList.remove('hidden');
+    }
+    
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+    }
+    
+    function deletePromotion() {
+        // Here you would make an AJAX call to delete the promotion
+        // For now, we'll just reload the page
+        alert('Promotion supprimée avec succès!');
+        closeDeleteModal();
+        window.location.reload();
+    }
+    
+    function toggleStatus(id, isActive) {
+        // Here you would make an AJAX call to toggle the promotion status
+        // For now, we'll just reload the page
+        const action = isActive ? 'désactivée' : 'activée';
+        alert(`Promotion ${action} avec succès!`);
+        window.location.reload();
+    }
+    
+    // Search functionality
+    document.getElementById('search').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+            const searchValue = this.value.trim();
+            if (searchValue) {
+                window.location.href = `?search=${encodeURIComponent(searchValue)}`;
+            }
+        }
+    });
+    
+    // Filter functionality
+    document.getElementById('status-filter').addEventListener('change', function() {
+        applyFilters();
+    });
+    
+    document.getElementById('type-filter').addEventListener('change', function() {
+        applyFilters();
+    });
+    
+    function applyFilters() {
+        const statusFilter = document.getElementById('status-filter').value;
+        const typeFilter = document.getElementById('type-filter').value;
+        const searchValue = document.getElementById('search').value.trim();
+        
+        let url = '?';
+        if (statusFilter) url += `status=${encodeURIComponent(statusFilter)}&`;
+        if (typeFilter) url += `type=${encodeURIComponent(typeFilter)}&`;
+        if (searchValue) url += `search=${encodeURIComponent(searchValue)}&`;
+        
+        window.location.href = url.slice(0, -1); // Remove trailing & or ?
+    }
+</script>
+{% endblock %}
