@@ -1,0 +1,164 @@
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Espace Client - Vidé-Grenier Kamer{% endblock %}</title>
+    
+    <!-- Enhanced CDN Links -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        code, pre { font-family: 'JetBrains Mono', monospace; }
+        .dashboard-card { @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-300; }
+        .quick-action { @apply bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg p-4 hover:from-green-600 hover:to-emerald-700 transition-all duration-300 cursor-pointer; }
+        .product-card { @apply bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow; }
+        .badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium; }
+        .badge-success { @apply bg-green-100 text-green-800; }
+        .badge-warning { @apply bg-yellow-100 text-yellow-800; }
+        .badge-info { @apply bg-blue-100 text-blue-800; }
+        .sidebar-link { @apply flex items-center text-gray-600 hover:bg-green-50 hover:text-green-600 rounded-lg px-4 py-2 my-1 transition-all duration-300; }
+        .sidebar-link.active { @apply text-green-700 bg-green-50 font-medium; }
+        .sidebar-icon { @apply w-5 h-5 mr-3; }
+    </style>
+    
+    {% block additional_head %}{% endblock %}
+</head>
+<body class="h-full">
+    <div class="min-h-full">
+        <!-- Header Navigation -->
+        <nav class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <img class="h-8 w-auto" src="https://via.placeholder.com/120x40/22c55e/ffffff?text=VGK" alt="VGK">
+                        <span class="ml-3 text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Vidé-Grenier Kamer</span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button class="p-2 text-gray-400 hover:text-gray-500 relative">
+                            <i data-lucide="bell" class="w-6 h-6"></i>
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
+                        </button>
+                        
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                {% if request.user.first_name %}{{ request.user.first_name|first|upper }}{% else %}{{ request.user.email|first|upper }}{% endif %}
+                            </div>
+                            <div class="hidden md:block">
+                                <p class="text-sm font-medium text-gray-700">
+                                    {% if request.user.get_full_name %}{{ request.user.get_full_name }}{% else %}{{ request.user.email }}{% endif %}
+                                </p>
+                                <p class="text-xs text-gray-500">Membre {% if request.user.user_level %}{{ request.user.get_user_level_display }}{% else %}Bronze{% endif %}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Main Content Grid with Sidebar -->
+            <div class="flex flex-col md:flex-row">
+                <!-- Sidebar for Client -->
+                <div class="w-full md:w-64 shrink-0 mb-8 md:mr-8">
+                    <div class="bg-white shadow-sm rounded-xl p-4 sticky top-4">
+                        <h3 class="font-medium text-lg text-gray-900 mb-4">Menu</h3>
+                        <div class="space-y-1">
+                            <a href="{% url 'backend:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                                <i data-lucide="layout-dashboard" class="sidebar-icon"></i>
+                                <span>Tableau de bord</span>
+                            </a>
+                            <a href="{% url 'backend:product_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'product_list' %}active{% endif %}">
+                                <i data-lucide="shopping-bag" class="sidebar-icon"></i>
+                                <span>Mes produits</span>
+                            </a>
+                            <a href="{% url 'backend:product_create' %}" class="sidebar-link {% if request.resolver_match.url_name == 'product_create' %}active{% endif %}">
+                                <i data-lucide="plus-circle" class="sidebar-icon"></i>
+                                <span>Ajouter produit</span>
+                            </a>
+                            <a href="{% url 'backend:order_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'order_list' %}active{% endif %}">
+                                <i data-lucide="shopping-cart" class="sidebar-icon"></i>
+                                <span>Mes achats</span>
+                            </a>
+                            <a href="{% url 'backend:favorites_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'favorites_list' %}active{% endif %}">
+                                <i data-lucide="heart" class="sidebar-icon"></i>
+                                <span>Favoris</span>
+                            </a>
+                            <a href="{% url 'backend:chat_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'chat_list' %}active{% endif %}">
+                                <i data-lucide="message-circle" class="sidebar-icon"></i>
+                                <span>Messages</span>
+                            </a>
+                            <a href="{% url 'backend:profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                                <i data-lucide="user" class="sidebar-icon"></i>
+                                <span>Mon profil</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content Area -->
+                <div class="flex-1">
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="bg-white border-t border-gray-200 py-8 mt-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Vidé-Grenier Kamer</h3>
+                        <p class="text-sm text-gray-600">La première marketplace camerounaise pour vendre et acheter entre particuliers en toute confiance.</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Liens Utiles</h3>
+                        <ul class="space-y-2 text-sm">
+                            <li><a href="{% url 'backend:about' %}" class="text-gray-600 hover:text-green-600">À propos de nous</a></li>
+                            <li><a href="{% url 'backend:help' %}" class="text-gray-600 hover:text-green-600">Centre d'aide</a></li>
+                            <li><a href="{% url 'backend:terms' %}" class="text-gray-600 hover:text-green-600">Conditions d'utilisation</a></li>
+                            <li><a href="{% url 'backend:privacy' %}" class="text-gray-600 hover:text-green-600">Politique de confidentialité</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Contact</h3>
+                        <ul class="space-y-2 text-sm">
+                            <li class="flex items-center text-gray-600">
+                                <i data-lucide="mail" class="w-4 h-4 mr-2"></i>
+                                <span>contact@vide-grenier-kamer.cm</span>
+                            </li>
+                            <li class="flex items-center text-gray-600">
+                                <i data-lucide="phone" class="w-4 h-4 mr-2"></i>
+                                <span>+237 651 234 567</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-8 pt-8 border-t border-gray-200 text-center">
+                    <p class="text-sm text-gray-600">&copy; {% now "Y" %} Vidé-Grenier Kamer. Tous droits réservés.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Initialize icons -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            lucide.createIcons();
+        });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html> 

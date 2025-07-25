@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Checkout - Vidé-Grenier Kamer{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Breadcrumb -->
+        <nav class="flex mb-8" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="{% url 'backend:home' %}" class="text-gray-700 hover:text-green-600">
+                        Accueil
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        <a href="{% url 'backend:visitor_cart' %}" class="ml-1 text-gray-700 hover:text-green-600 md:ml-2">
+                            Panier
+                        </a>
+                    </div>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="ml-1 text-gray-500 md:ml-2">Checkout</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Checkout Form -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h1 class="text-2xl font-bold text-gray-900 mb-6">Finaliser votre commande</h1>
+                
+                <form method="post" action="{% url 'backend:visitor_cart_checkout' %}">
+                    {% csrf_token %}
+                    
+                    <!-- Personal Information -->
+                    <div class="mb-8">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Vos informations</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nom complet *</label>
+                                <input type="text" name="visitor_name" required 
+                                       value="{{ visitor_cart.visitor_name }}"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone *</label>
+                                <input type="tel" name="visitor_phone" required 
+                                       value="{{ visitor_cart.visitor_phone }}"
+                                       placeholder="ex: 237123456789"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                            </div>
+                            
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Email (optionnel)</label>
+                                <input type="email" name="visitor_email" 
+                                       value="{{ visitor_cart.visitor_email }}"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                            </div>
+                            
+                            <div class="md:col-span-2">
+                                <div class="flex items-center">
+                                    <input type="checkbox" name="whatsapp_preferred" id="whatsapp_preferred" 
+                                           {% if visitor_cart.whatsapp_preferred %}checked{% endif %}
+                                           class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                                    <label for="whatsapp_preferred" class="ml-2 text-sm text-gray-700">
+                                        Préférer WhatsApp pour les communications
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Delivery Information -->
+                    <div class="mb-8">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Livraison</h2>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Mode de livraison</label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                                        <input type="radio" name="delivery_method" value="PICKUP" 
+                                               {% if visitor_cart.delivery_method == 'PICKUP' %}checked{% endif %}
+                                               onchange="toggleDeliveryAddress()"
+                                               class="text-green-600 border-gray-300 focus:ring-green-500">
+                                        <div class="ml-3">
+                                            <div class="font-medium">Retrait en point de collecte</div>
+                                            <div class="text-sm text-gray-600">Gratuit - Récupérez vos commandes dans nos points</div>
+                                        </div>
+                                    </label>
+                                    
+                                    <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                                        <input type="radio" name="delivery_method" value="DELIVERY"
+                                               {% if visitor_cart.delivery_method == 'DELIVERY' %}checked{% endif %}
+                                               onchange="toggleDeliveryAddress()"
+                                               class="text-green-600 border-gray-300 focus:ring-green-500">
+                                        <div class="ml-3">
+                                            <div class="font-medium">Livraison à domicile</div>
+                                            <div class="text-sm text-gray-600">2 000 FCFA - Livraison directe chez vous</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div id="deliveryAddressDiv" class="{% if visitor_cart.delivery_method != 'DELIVERY' %}hidden{% endif %}">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Adresse de livraison *</label>
+                                <textarea name="delivery_address" rows="3" 
+                                          placeholder="Adresse complète de livraison..."
+                                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">{{ visitor_cart.delivery_address }}</textarea>
+                                <p class="text-xs text-gray-500 mt-1">Veuillez indiquer une adresse précise avec des points de repère</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Method -->
+                    <div class="mb-8">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Mode de paiement</h2>
+                        
+                        <div class="space-y-2">
+                            <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="payment_method" value="CASH_ON_DELIVERY" checked 
+                                       class="text-green-600 border-gray-300 focus:ring-green-500">
+                                <div class="ml-3">
+                                    <div class="font-medium">Paiement à la livraison</div>
+                                    <div class="text-sm text-gray-600">Payez en espèces lors de la réception</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="payment_method" value="CAMPAY" 
+                                       class="text-green-600 border-gray-300 focus:ring-green-500">
+                                <div class="ml-3">
+                                    <div class="font-medium">Paiement mobile (Campay)</div>
+                                    <div class="text-sm text-gray-600">Orange Money, MTN Mobile Money</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Notes -->
+                    <div class="mb-8">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes spéciales (optionnel)</label>
+                        <textarea name="notes" rows="3" 
+                                  placeholder="Instructions spéciales, préférences de livraison..."
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">{{ visitor_cart.notes }}</textarea>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <button type="submit" 
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition-colors duration-200 text-lg">
+                        Confirmer la commande
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Order Summary -->
+            <div class="bg-white rounded-lg shadow-lg p-6 h-fit">
+                <h2 class="text-xl font-bold text-gray-900 mb-6">Résumé de votre commande</h2>
+                
+                <!-- Cart Items -->
+                <div class="space-y-4 mb-6">
+                    {% for item in cart_items %}
+                    <div class="flex items-center space-x-3 py-3 border-b border-gray-100">
+                        <div class="flex-shrink-0">
+                            {% if item.product.images.first %}
+                                <img src="{{ item.product.images.first.image.url }}" 
+                                     alt="{{ item.product.title }}"
+                                     class="w-12 h-12 object-cover rounded-lg">
+                            {% else %}
+                                <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="image" class="w-6 h-6 text-gray-400"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="flex-1">
+                            <h3 class="font-medium text-gray-900">{{ item.product.title|truncatechars:30 }}</h3>
+                            <p class="text-sm text-gray-600">Qté: {{ item.quantity }}</p>
+                        </div>
+                        
+                        <div class="text-right">
+                            <p class="font-medium text-gray-900">{{ item.total_price|floatformat:0 }} FCFA</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Totals -->
+                <div class="space-y-3 py-4 border-t border-gray-200">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Sous-total ({{ visitor_cart.total_items }} articles)</span>
+                        <span class="font-medium">{{ visitor_cart.total_amount|floatformat:0 }} FCFA</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Frais de livraison</span>
+                        <span class="font-medium" id="deliveryFee">
+                            {% if visitor_cart.delivery_method == 'DELIVERY' %}
+                                2 000 FCFA
+                            {% else %}
+                                Gratuit
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="flex justify-between pt-3 border-t border-gray-200">
+                        <span class="text-lg font-bold text-gray-900">Total à payer</span>
+                        <span class="text-lg font-bold text-green-600" id="finalTotal">{{ visitor_cart.final_total|floatformat:0 }} FCFA</span>
+                    </div>
+                </div>
+                
+                <!-- Payment Security -->
+                <div class="mt-6 p-4 bg-green-50 rounded-lg">
+                    <div class="flex items-center">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-green-600 mr-2"></i>
+                        <span class="text-sm text-green-700 font-medium">Paiement 100% sécurisé</span>
+                    </div>
+                    <p class="text-xs text-green-600 mt-1">Vos informations sont protégées et cryptées</p>
+                </div>
+                
+                <!-- Back to Cart -->
+                <div class="mt-6">
+                    <a href="{% url 'backend:visitor_cart' %}" 
+                       class="w-full bg-gray-200 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-300 transition-colors text-center block">
+                        ← Retour au panier
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleDeliveryAddress() {
+    const deliveryMethod = document.querySelector('input[name="delivery_method"]:checked').value;
+    const addressDiv = document.getElementById('deliveryAddressDiv');
+    const deliveryFee = document.getElementById('deliveryFee');
+    const finalTotal = document.getElementById('finalTotal');
+    
+    if (deliveryMethod === 'DELIVERY') {
+        addressDiv.classList.remove('hidden');
+        addressDiv.querySelector('textarea').required = true;
+        deliveryFee.textContent = '2 000 FCFA';
+        // Update total (base amount + 2000)
+        const baseAmount = {{ visitor_cart.total_amount }};
+        finalTotal.textContent = (baseAmount + 2000).toLocaleString() + ' FCFA';
+    } else {
+        addressDiv.classList.add('hidden');
+        addressDiv.querySelector('textarea').required = false;
+        deliveryFee.textContent = 'Gratuit';
+        // Update total (base amount only)
+        const baseAmount = {{ visitor_cart.total_amount }};
+        finalTotal.textContent = baseAmount.toLocaleString() + ' FCFA';
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleDeliveryAddress();
+    
+    // Add event listeners to delivery method radio buttons
+    document.querySelectorAll('input[name="delivery_method"]').forEach(radio => {
+        radio.addEventListener('change', toggleDeliveryAddress);
+    });
+});
+
+// Initialize Lucide icons
+if (window.lucide) {
+    lucide.createIcons();
+}
+</script>
+
+{% endblock %} 

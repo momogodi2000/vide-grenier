@@ -2667,7 +2667,7 @@ class AdminStockAddView(CreateView):
     model = Product
     template_name = 'backend/admin/stock/add.html'
     fields = ['title', 'description', 'category', 'price', 'condition', 'city']
-    success_url = reverse_lazy('backend:admin_stock')
+    success_url = reverse_lazy('backend:admin_stock_list')
     
     def form_valid(self, form):
         # Set admin as seller

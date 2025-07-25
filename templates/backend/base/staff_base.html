@@ -1,0 +1,150 @@
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Espace Staff - Vidé-Grenier Kamer{% endblock %}</title>
+    
+    <!-- Enhanced CDN Links -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        code, pre { font-family: 'JetBrains Mono', monospace; }
+        .staff-card { @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow; }
+        .task-item { @apply flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors; }
+        .priority-high { @apply border-l-4 border-red-500 bg-red-50; }
+        .priority-medium { @apply border-l-4 border-yellow-500 bg-yellow-50; }
+        .priority-low { @apply border-l-4 border-green-500 bg-green-50; }
+        .status-badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium; }
+        .status-pending { @apply bg-yellow-100 text-yellow-800; }
+        .status-processing { @apply bg-blue-100 text-blue-800; }
+        .status-completed { @apply bg-green-100 text-green-800; }
+        .sidebar-link { @apply flex items-center text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg px-4 py-2 my-1 transition-all duration-300; }
+        .sidebar-link.active { @apply text-blue-700 bg-blue-50 font-medium; }
+        .sidebar-icon { @apply w-5 h-5 mr-3; }
+    </style>
+    
+    {% block additional_head %}{% endblock %}
+</head>
+<body class="h-full">
+    <div class="min-h-full">
+        <!-- Navigation Header -->
+        <nav class="bg-white shadow-sm border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <img class="h-8 w-auto" src="https://via.placeholder.com/120x40/22c55e/ffffff?text=VGK" alt="VGK">
+                        <span class="ml-3 text-xl font-bold text-gray-900">Staff Panel</span>
+                        <span class="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                            {% if request.user.pickup_point %}{{ request.user.pickup_point.name }}{% else %}Point Retrait{% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <!-- Quick Actions -->
+                        <button class="p-2 text-gray-400 hover:text-green-600 transition-colors" title="Scanner QR Code">
+                            <i data-lucide="qr-code" class="w-6 h-6"></i>
+                        </button>
+                        
+                        <button class="p-2 text-gray-400 hover:text-blue-600 transition-colors relative" title="Notifications">
+                            <i data-lucide="bell" class="w-6 h-6"></i>
+                            <span class="absolute top-0 right-0 block h-3 w-3 rounded-full bg-red-400"></span>
+                        </button>
+                        
+                        <!-- Profile -->
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                                {% if request.user.first_name %}{{ request.user.first_name|first|upper }}{% else %}{{ request.user.email|first|upper }}{% endif %}
+                            </div>
+                            <div class="hidden md:flex flex-col">
+                                <span class="text-sm font-medium text-gray-900">
+                                    {% if request.user.get_full_name %}{{ request.user.get_full_name }}{% else %}{{ request.user.email }}{% endif %}
+                                </span>
+                                <span class="text-xs text-gray-500">Staff</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Main Content Grid with Sidebar -->
+            <div class="flex flex-col md:flex-row">
+                <!-- Sidebar for Staff -->
+                <div class="w-full md:w-64 shrink-0 mb-8 md:mr-8">
+                    <div class="bg-white shadow-sm rounded-xl p-4 sticky top-4">
+                        <h3 class="font-medium text-lg text-gray-900 mb-4">Menu Staff</h3>
+                        <div class="space-y-1">
+                            <a href="{% url 'backend:staff_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'staff_dashboard' %}active{% endif %}">
+                                <i data-lucide="layout-dashboard" class="sidebar-icon"></i>
+                                <span>Tableau de bord</span>
+                            </a>
+                            <a href="#" class="sidebar-link">
+                                <i data-lucide="qr-code" class="sidebar-icon"></i>
+                                <span>Scanner Code</span>
+                            </a>
+                            <a href="#" class="sidebar-link">
+                                <i data-lucide="package" class="sidebar-icon"></i>
+                                <span>Retrait colis</span>
+                            </a>
+                            <a href="#" class="sidebar-link">
+                                <i data-lucide="search" class="sidebar-icon"></i>
+                                <span>Recherche commande</span>
+                            </a>
+                            <a href="#" class="sidebar-link">
+                                <i data-lucide="list-checks" class="sidebar-icon"></i>
+                                <span>Historique retraits</span>
+                            </a>
+                            <a href="{% url 'backend:profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                                <i data-lucide="user" class="sidebar-icon"></i>
+                                <span>Mon profil</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content Area -->
+                <div class="flex-1">
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t border-gray-200 py-6 mt-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-4 md:mb-0">
+                        <p class="text-sm text-gray-600">&copy; {% now "Y" %} Vidé-Grenier Kamer. Tous droits réservés.</p>
+                    </div>
+                    <div class="flex space-x-6">
+                        <a href="{% url 'backend:help' %}" class="text-sm text-gray-500 hover:text-blue-600">Aide</a>
+                        <a href="#" class="text-sm text-gray-500 hover:text-blue-600">Support</a>
+                        <a href="#" class="text-sm text-gray-500 hover:text-blue-600">Contact</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Initialize icons -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            lucide.createIcons();
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html> 

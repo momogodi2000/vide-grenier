@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Reçu VGK</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #16a34a;
+            padding-bottom: 20px;
+        }
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #16a34a;
+        }
+        .receipt-info {
+            margin-bottom: 30px;
+        }
+        .customer-info {
+            margin-bottom: 30px;
+        }
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .order-table th,
+        .order-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .order-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .total-section {
+            text-align: right;
+            margin-top: 20px;
+        }
+        .total-amount {
+            font-size: 18px;
+            font-weight: bold;
+            color: #16a34a;
+        }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name">VIDÉ-GRENIER KAMER</div>
+        <div>Marketplace camerounaise de seconde main</div>
+        <div>📞 +237 694 63 84 12 | 📧 support@videgrenier-kamer.com</div>
+    </div>
+
+    <div class="receipt-info">
+        <h2>REÇU DE COMMANDE</h2>
+        <p><strong>Date:</strong> {{ generated_at|date:"d/m/Y H:i" }}</p>
+        <p><strong>Numéro de reçu:</strong> VGK-{{ generated_at|date:"YmdHi" }}</p>
+    </div>
+
+    <div class="customer-info">
+        <h3>Informations client</h3>
+        <p><strong>Nom:</strong> {{ visitor_name }}</p>
+        <p><strong>Téléphone:</strong> {{ visitor_phone }}</p>
+        {% if visitor_email %}
+        <p><strong>Email:</strong> {{ visitor_email }}</p>
+        {% endif %}
+    </div>
+
+    <h3>Détail des commandes</h3>
+    <table class="order-table">
+        <thead>
+            <tr>
+                <th>Produit</th>
+                <th>Quantité</th>
+                <th>Prix unitaire</th>
+                <th>Total</th>
+                <th>N° Commande</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order.product.title }}</td>
+                <td>{{ order.quantity }}</td>
+                <td>{{ order.product.price|floatformat:0 }} FCFA</td>
+                <td>{{ order.total_amount|floatformat:0 }} FCFA</td>
+                <td>{{ order.order_number }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total-section">
+        <p><strong>Sous-total:</strong> {{ total_amount|floatformat:0 }} FCFA</p>
+        <p class="total-amount"><strong>TOTAL GÉNÉRAL:</strong> {{ total_amount|floatformat:0 }} FCFA</p>
+    </div>
+
+    <div class="footer">
+        <p>Merci pour votre confiance !</p>
+        <p>Ce reçu confirme vos commandes. Vous serez contacté pour les modalités de livraison.</p>
+        <p>Pour toute question: +237 694 63 84 12 ou support@videgrenier-kamer.com</p>
+        <hr>
+        <p>Vidé-Grenier Kamer - Fièrement camerounais 🇨🇲</p>
+    </div>
+</body>
+</html> 

@@ -1,416 +1,248 @@
-<!DOCTYPE html>
-<html lang="fr" class="h-full bg-gray-50">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Staff - Vidé-Grenier Kamer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .staff-card { @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow; }
-        .task-item { @apply flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors; }
-        .priority-high { @apply border-l-4 border-red-500 bg-red-50; }
-        .priority-medium { @apply border-l-4 border-yellow-500 bg-yellow-50; }
-        .priority-low { @apply border-l-4 border-green-500 bg-green-50; }
-        .status-badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium; }
-        .status-pending { @apply bg-yellow-100 text-yellow-800; }
-        .status-processing { @apply bg-blue-100 text-blue-800; }
-        .status-completed { @apply bg-green-100 text-green-800; }
-    </style>
-</head>
-<body class="h-full">
-    <div class="min-h-full">
-        <!-- Navigation Header -->
-        <nav class="bg-white shadow-sm border-b border-gray-200">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
-                    <div class="flex items-center">
-                        <img class="h-8 w-auto" src="https://via.placeholder.com/120x40/22c55e/ffffff?text=VGK" alt="VGK">
-                        <span class="ml-3 text-xl font-bold text-gray-900">Staff Panel</span>
-                        <span class="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Point Retrait Akwa</span>
+{% extends 'backend/base/staff_base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Dashboard Staff - Vidé-Grenier Kamer{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Dashboard Staff</h1>
+    <p class="text-gray-600">Gérez les retraits de colis et le service client</p>
+</div>
+
+<!-- Key Metrics -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="staff-card">
+        <div class="flex justify-between items-start mb-2">
+            <h2 class="font-semibold text-gray-700">Retraits à traiter</h2>
+            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full">Aujourd'hui</span>
+        </div>
+        <div class="mt-4">
+            <div class="text-4xl font-bold text-gray-900">{{ stats.pending_pickups|default:"0" }}</div>
+            <p class="text-sm text-gray-500 mt-1">En attente de traitement</p>
+        </div>
+    </div>
+
+    <div class="staff-card">
+        <div class="flex justify-between items-start mb-2">
+            <h2 class="font-semibold text-gray-700">Retraits effectués</h2>
+            <span class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">Aujourd'hui</span>
+        </div>
+        <div class="mt-4">
+            <div class="text-4xl font-bold text-gray-900">{{ stats.today_pickups|default:"0" }}</div>
+            <p class="text-sm text-gray-500 mt-1">Colis livrés aujourd'hui</p>
+        </div>
+    </div>
+
+    <div class="staff-card">
+        <div class="flex justify-between items-start mb-2">
+            <h2 class="font-semibold text-gray-700">Clients servis</h2>
+            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">Aujourd'hui</span>
+        </div>
+        <div class="mt-4">
+            <div class="text-4xl font-bold text-gray-900">{{ stats.clients_served|default:"0" }}</div>
+            <p class="text-sm text-gray-500 mt-1">Personnes assistées</p>
+        </div>
+    </div>
+
+    <div class="staff-card">
+        <div class="flex justify-between items-start mb-2">
+            <h2 class="font-semibold text-gray-700">Satisfaction</h2>
+            <span class="bg-purple-100 text-purple-800 text-xs px-2 py-0.5 rounded-full">Moyenne</span>
+        </div>
+        <div class="mt-4">
+            <div class="text-4xl font-bold text-gray-900">{{ stats.satisfaction_score|default:"0" }}%</div>
+            <p class="text-sm text-gray-500 mt-1">Taux de satisfaction client</p>
+        </div>
+    </div>
+</div>
+
+<!-- Main Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Left Column -->
+    <div class="lg:col-span-2">
+        <!-- Pending Pickups -->
+        <div class="staff-card mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold text-gray-900">Retraits en attente</h2>
+                <button class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                    <i data-lucide="refresh-cw" class="w-4 h-4 mr-1"></i>
+                    Actualiser
+                </button>
+            </div>
+            
+            {% if pending_pickups %}
+            <div class="space-y-4">
+                {% for pickup in pending_pickups %}
+                <div class="task-item priority-medium">
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <span class="font-semibold text-gray-900">Commande #{{ pickup.ref_code }}</span>
+                            <span class="status-badge status-pending">{{ pickup.get_status_display }}</span>
+                        </div>
+                        <div class="mt-1">
+                            <p class="text-sm text-gray-600">Client: {{ pickup.buyer.get_full_name }}</p>
+                            <p class="text-sm text-gray-600">Produit: {{ pickup.product.title|truncatechars:25 }}</p>
+                            <div class="flex items-center justify-between mt-2">
+                                <span class="text-xs text-gray-500">Code: {{ pickup.pickup_code }}</span>
+                                <span class="text-xs text-gray-500">{{ pickup.created_at|naturaltime }}</span>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div class="flex items-center space-x-4">
-                        <!-- Quick Actions -->
-                        <button class="p-2 text-gray-400 hover:text-green-600 transition-colors" title="Scanner QR Code">
-                            <i data-lucide="qr-code" class="w-6 h-6"></i>
+                    <div class="ml-4 flex space-x-2">
+                        <button class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
                         </button>
-                        
-                        <button class="p-2 text-gray-400 hover:text-blue-600 transition-colors relative" title="Notifications">
-                            <i data-lucide="bell" class="w-6 h-6"></i>
-                            <span class="absolute top-0 right-0 block h-3 w-3 rounded-full bg-red-400"></span>
+                        <button class="p-2 text-green-600 hover:bg-green-50 rounded-lg">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i>
                         </button>
-                        
-                        <!-- Profile -->
-                        <div class="flex items-center space-x-3">
-                            <div class="task-item priority-medium">
-                                <div class="flex items-center space-x-3">
-                                    <i data-lucide="package" class="w-5 h-5 text-yellow-600"></i>
-                                    <div>
-                                        <p class="font-medium text-gray-900">Nouveau stock à ranger</p>
-                                        <p class="text-sm text-gray-600">5 produits admin reçus ce matin</p>
-                                    </div>
-                                </div>
-                                <button class="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700">Ranger</button>
-                            </div>
-
-                            <div class="task-item priority-low">
-                                <div class="flex items-center space-x-3">
-                                    <i data-lucide="clipboard-check" class="w-5 h-5 text-green-600"></i>
-                                    <div>
-                                        <p class="font-medium text-gray-900">Inventaire hebdomadaire</p>
-                                        <p class="text-sm text-gray-600">Vérification stock physique</p>
-                                    </div>
-                                </div>
-                                <button class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">Démarrer</button>
-                            </div>
-
-                            <div class="task-item priority-low">
-                                <div class="flex items-center space-x-3">
-                                    <i data-lucide="message-circle" class="w-5 h-5 text-blue-600"></i>
-                                    <div>
-                                        <p class="font-medium text-gray-900">Répondre aux questions</p>
-                                        <p class="text-sm text-gray-600">3 clients ont des questions</p>
-                                    </div>
-                                </div>
-                                <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">Répondre</button>
-                            </div>
-                        </div>
                     </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="bg-gray-50 rounded-lg p-6 text-center">
+                <i data-lucide="check-circle" class="w-12 h-12 text-green-500 mx-auto mb-4"></i>
+                <p class="text-gray-600">Aucun retrait en attente actuellement.</p>
+                <p class="text-sm text-gray-500 mt-2">Tous les retraits ont été traités!</p>
+            </div>
+            {% endif %}
+        </div>
 
-                    <!-- Commandes en Attente de Retrait -->
-                    <div class="staff-card">
-                        <div class="flex items-center justify-between mb-6">
-                            <h2 class="text-xl font-semibold text-gray-900">Commandes en Attente</h2>
-                            <div class="flex space-x-2">
-                                <button class="p-2 text-gray-400 hover:text-green-600" title="Scanner QR">
-                                    <i data-lucide="qr-code" class="w-5 h-5"></i>
-                                </button>
-                                <button class="p-2 text-gray-400 hover:text-blue-600" title="Rechercher">
-                                    <i data-lucide="search" class="w-5 h-5"></i>
-                                </button>
-                            </div>
+        <!-- Recent Activity -->
+        <div class="staff-card">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Activité Récente</h2>
+            
+            {% if activities %}
+            <div class="space-y-4">
+                {% for activity in activities %}
+                <div class="activity-item p-3 rounded-lg border border-gray-100">
+                    <div class="flex items-start">
+                        <div class="p-2 rounded-full bg-blue-100 mr-3">
+                            <i data-lucide="{{ activity.icon|default:'activity' }}" class="w-4 h-4 text-blue-600"></i>
                         </div>
-                        
-                        <div class="space-y-4">
-                            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center space-x-4">
-                                        <img src="https://via.placeholder.com/60x60/f3f4f6/9ca3af?text=iPhone" alt="iPhone" class="w-15 h-15 rounded object-cover">
-                                        <div>
-                                            <h3 class="font-medium text-gray-900">iPhone 12 Pro - 128GB</h3>
-                                            <p class="text-sm text-gray-600">Code: <span class="font-mono bg-gray-100 px-2 py-1 rounded">VGK-789432</span></p>
-                                            <p class="text-sm text-gray-600">Client: Jean Mbarga (+237 694 123 456)</p>
-                                            <p class="text-xs text-gray-500">Arrivé: Aujourd'hui 09:30</p>
-                                        </div>
-                                    </div>
-                                    <div class="text-right">
-                                        <span class="status-badge status-pending">En attente</span>
-                                        <p class="text-lg font-bold text-green-600 mt-1">450,000 FCFA</p>
-                                        <button class="mt-2 bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700">
-                                            Traiter le retrait
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center space-x-4">
-                                        <img src="https://via.placeholder.com/60x60/f3f4f6/9ca3af?text=Robe" alt="Robe" class="w-15 h-15 rounded object-cover">
-                                        <div>
-                                            <h3 class="font-medium text-gray-900">Robe d'été élégante</h3>
-                                            <p class="text-sm text-gray-600">Code: <span class="font-mono bg-gray-100 px-2 py-1 rounded">VGK-456789</span></p>
-                                            <p class="text-sm text-gray-600">Client: Marie Fotso (+237 677 987 654)</p>
-                                            <p class="text-xs text-gray-500">Arrivé: Hier 16:45</p>
-                                        </div>
-                                    </div>
-                                    <div class="text-right">
-                                        <span class="status-badge status-pending">En attente</span>
-                                        <p class="text-lg font-bold text-green-600 mt-1">25,000 FCFA</p>
-                                        <button class="mt-2 bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700">
-                                            Traiter le retrait
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center space-x-4">
-                                        <img src="https://via.placeholder.com/60x60/f3f4f6/9ca3af?text=Sac" alt="Sac" class="w-15 h-15 rounded object-cover">
-                                        <div>
-                                            <h3 class="font-medium text-gray-900">Sac à main cuir noir</h3>
-                                            <p class="text-sm text-gray-600">Code: <span class="font-mono bg-gray-100 px-2 py-1 rounded">VGK-123456</span></p>
-                                            <p class="text-sm text-gray-600">Client: Claire Ndong (+237 655 111 222)</p>
-                                            <p class="text-xs text-gray-500">Arrivé: Hier 14:20</p>
-                                        </div>
-                                    </div>
-                                    <div class="text-right">
-                                        <span class="status-badge status-processing">En cours</span>
-                                        <p class="text-lg font-bold text-green-600 mt-1">35,000 FCFA</p>
-                                        <button class="mt-2 bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
-                                            Continuer
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-4 text-center">
-                            <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                                Voir toutes les commandes (23)
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Historique des Retraits -->
-                    <div class="staff-card">
-                        <div class="flex items-center justify-between mb-6">
-                            <h2 class="text-xl font-semibold text-gray-900">Retraits Effectués Aujourd'hui</h2>
-                            <span class="text-sm text-gray-600">15 retraits réussis</span>
-                        </div>
-                        
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                                <div class="flex items-center space-x-3">
-                                    <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
-                                    <div>
-                                        <p class="font-medium text-gray-900">Jean slim noir - VGK-987654</p>
-                                        <p class="text-sm text-gray-600">Retiré par Paul Ngono à 15:30</p>
-                                    </div>
-                                </div>
-                                <span class="text-green-600 font-semibold">28,000 FCFA</span>
-                            </div>
-
-                            <div class="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                                <div class="flex items-center space-x-3">
-                                    <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
-                                    <div>
-                                        <p class="font-medium text-gray-900">Montre classique - VGK-567890</p>
-                                        <p class="text-sm text-gray-600">Retiré par Emma Talla à 14:15</p>
-                                    </div>
-                                </div>
-                                <span class="text-green-600 font-semibold">65,000 FCFA</span>
-                            </div>
-
-                            <div class="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                                <div class="flex items-center space-x-3">
-                                    <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
-                                    <div>
-                                        <p class="font-medium text-gray-900">T-shirt vintage - VGK-345678</p>
-                                        <p class="text-sm text-gray-600">Retiré par David Olama à 13:45</p>
-                                    </div>
-                                </div>
-                                <span class="text-green-600 font-semibold">15,000 FCFA</span>
-                            </div>
+                        <div>
+                            <p class="text-gray-900">{{ activity.description }}</p>
+                            <p class="text-xs text-gray-500 mt-1">{{ activity.timestamp|naturaltime }}</p>
                         </div>
                     </div>
                 </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="bg-gray-50 rounded-lg p-6 text-center">
+                <p class="text-gray-600">Aucune activité récente.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
 
-                <!-- Right Column -->
-                <div class="space-y-8">
-                    <!-- Actions Rapides -->
-                    <div class="staff-card">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Actions Rapides</h2>
-                        <div class="space-y-3">
-                            <button class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors">
-                                <div class="flex items-center">
-                                    <i data-lucide="qr-code" class="w-5 h-5 text-green-600 mr-3"></i>
-                                    <span class="font-medium">Scanner Code Retrait</span>
-                                </div>
-                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
-                            </button>
-
-                            <button class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors">
-                                <div class="flex items-center">
-                                    <i data-lucide="search" class="w-5 h-5 text-blue-600 mr-3"></i>
-                                    <span class="font-medium">Rechercher Commande</span>
-                                </div>
-                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
-                            </button>
-
-                            <button class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors">
-                                <div class="flex items-center">
-                                    <i data-lucide="package-plus" class="w-5 h-5 text-purple-600 mr-3"></i>
-                                    <span class="font-medium">Recevoir Stock</span>
-                                </div>
-                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
-                            </button>
-
-                            <button class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-colors">
-                                <div class="flex items-center">
-                                    <i data-lucide="clipboard-list" class="w-5 h-5 text-orange-600 mr-3"></i>
-                                    <span class="font-medium">Rapport Journalier</span>
-                                </div>
-                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
-                            </button>
-                        </div>
+    <!-- Right Column -->
+    <div class="space-y-8">
+        <!-- Actions Rapides -->
+        <div class="staff-card">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Actions Rapides</h2>
+            <div class="space-y-3">
+                <button class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors">
+                    <div class="flex items-center">
+                        <i data-lucide="qr-code" class="w-5 h-5 text-green-600 mr-3"></i>
+                        <span class="font-medium">Scanner Code Retrait</span>
                     </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                </button>
 
-                    <!-- Statistiques du Point -->
-                    <div class="staff-card">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Performance Point Retrait</h2>
-                        <canvas id="performanceChart" width="300" height="200"></canvas>
-                        <div class="mt-4 grid grid-cols-2 gap-4 text-center">
-                            <div>
-                                <p class="text-2xl font-bold text-blue-600">95%</p>
-                                <p class="text-xs text-gray-600">Satisfaction clients</p>
-                            </div>
-                            <div>
-                                <p class="text-2xl font-bold text-green-600">18min</p>
-                                <p class="text-xs text-gray-600">Temps moyen retrait</p>
-                            </div>
-                        </div>
+                <button class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                    <div class="flex items-center">
+                        <i data-lucide="search" class="w-5 h-5 text-blue-600 mr-3"></i>
+                        <span class="font-medium">Rechercher Commande</span>
                     </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                </button>
 
-                    <!-- Informations Point Retrait -->
-                    <div class="staff-card">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Informations Point</h2>
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-600">Adresse:</span>
-                                <span class="text-sm font-medium">123 Avenue Ahidjo, Akwa</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-600">Horaires:</span>
-                                <span class="text-sm font-medium">7h30 - 18h30</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-600">Manager:</span>
-                                <span class="text-sm font-medium">Robert Kamga</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-600">Téléphone:</span>
-                                <span class="text-sm font-medium">+237 694 123 456</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-600">Email:</span>
-                                <span class="text-sm font-medium">akwa@vgk.com</span>
-                            </div>
-                        </div>
+                <button class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors">
+                    <div class="flex items-center">
+                        <i data-lucide="clipboard-list" class="w-5 h-5 text-purple-600 mr-3"></i>
+                        <span class="font-medium">Voir Historique</span>
                     </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                </button>
 
-                    <!-- Stock Disponible -->
-                    <div class="staff-card">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Stock Disponible</h2>
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                <div>
-                                    <p class="font-medium text-gray-900">Produits en attente</p>
-                                    <p class="text-xs text-gray-600">Commandes clients</p>
-                                </div>
-                                <span class="text-xl font-bold text-blue-600">87</span>
-                            </div>
-                            
-                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                <div>
-                                    <p class="font-medium text-gray-900">Stock admin</p>
-                                    <p class="text-xs text-gray-600">Produits VGK</p>
-                                </div>
-                                <span class="text-xl font-bold text-green-600">45</span>
-                            </div>
-                            
-                            <div class="w-full bg-gray-200 rounded-full h-2 mt-3">
-                                <div class="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full" style="width: 66%"></div>
-                            </div>
-                            <p class="text-xs text-gray-600 text-center">Capacité utilisée: 132/200 (66%)</p>
-                        </div>
+                <button class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-colors">
+                    <div class="flex items-center">
+                        <i data-lucide="alert-circle" class="w-5 h-5 text-orange-600 mr-3"></i>
+                        <span class="font-medium">Signaler Problème</span>
                     </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                </button>
+            </div>
+        </div>
 
-                    <!-- Messages & Alerts -->
-                    <div class="staff-card">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Messages & Alertes</h2>
-                        <div class="space-y-3">
-                            <div class="flex items-start space-x-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                                <i data-lucide="alert-triangle" class="w-5 h-5 text-red-600 mt-0.5"></i>
-                                <div>
-                                    <p class="text-sm font-medium text-red-900">Stock faible</p>
-                                    <p class="text-xs text-red-700">Plus que 3 emplacements libres</p>
-                                </div>
-                            </div>
-
-                            <div class="flex items-start space-x-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                <i data-lucide="message-circle" class="w-5 h-5 text-blue-600 mt-0.5"></i>
-                                <div>
-                                    <p class="text-sm font-medium text-blue-900">Message admin</p>
-                                    <p class="text-xs text-blue-700">Nouvelle procédure de sécurité</p>
-                                </div>
-                            </div>
-
-                            <div class="flex items-start space-x-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                                <i data-lucide="check-circle" class="w-5 h-5 text-green-600 mt-0.5"></i>
-                                <div>
-                                    <p class="text-sm font-medium text-green-900">Objectif atteint</p>
-                                    <p class="text-xs text-green-700">15 retraits effectués aujourd'hui</p>
-                                </div>
-                            </div>
-                        </div>
+        <!-- Point de Retrait Info -->
+        {% if pickup_point %}
+        <div class="staff-card">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Point de Retrait</h2>
+            <div class="p-4 bg-blue-50 rounded-lg">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-medium text-blue-900">{{ pickup_point.name }}</h3>
+                        <p class="text-sm text-blue-700 mt-1">{{ pickup_point.address }}</p>
+                        <p class="text-sm text-blue-700">{{ pickup_point.city }}</p>
+                    </div>
+                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
+                        {{ pickup_point.get_status_display }}
+                    </span>
+                </div>
+                
+                <div class="mt-4">
+                    <div class="flex items-center text-sm text-blue-700">
+                        <i data-lucide="phone" class="w-4 h-4 mr-2"></i>
+                        <span>{{ pickup_point.phone }}</span>
+                    </div>
+                    <div class="flex items-center text-sm text-blue-700 mt-1">
+                        <i data-lucide="clock" class="w-4 h-4 mr-2"></i>
+                        <span>{{ pickup_point.opening_hours }}</span>
                     </div>
                 </div>
             </div>
         </div>
+        {% endif %}
+
+        <!-- Today's Stats -->
+        <div class="staff-card">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Aujourd'hui</h2>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                            <i data-lucide="users" class="w-4 h-4 text-blue-600"></i>
+                        </div>
+                        <span class="text-gray-700">Visiteurs</span>
+                    </div>
+                    <span class="text-xl font-bold text-gray-900">{{ stats.visitors_today|default:"0" }}</span>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                            <i data-lucide="package" class="w-4 h-4 text-green-600"></i>
+                        </div>
+                        <span class="text-gray-700">Livraisons</span>
+                    </div>
+                    <span class="text-xl font-bold text-gray-900">{{ stats.deliveries_today|default:"0" }}</span>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center mr-3">
+                            <i data-lucide="x-circle" class="w-4 h-4 text-red-600"></i>
+                        </div>
+                        <span class="text-gray-700">Problèmes</span>
+                    </div>
+                    <span class="text-xl font-bold text-gray-900">{{ stats.issues_today|default:"0" }}</span>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <script>
-        // Initialize Lucide icons
-        lucide.createIcons();
-
-        // Initialize Performance Chart
-        const ctx = document.getElementById('performanceChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['9h', '10h', '11h', '12h', '13h', '14h', '15h', '16h'],
-                datasets: [{
-                    label: 'Retraits par heure',
-                    data: [2, 3, 4, 6, 8, 5, 7, 4],
-                    borderColor: 'rgb(59, 130, 246)',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 10
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
-
-        // QR Code Scanner Simulation
-        function scanQRCode() {
-            // Simulate QR code scanning
-            alert('Scanner QR code activé. En mode réel, cela activerait la caméra.');
-        }
-
-        // Auto-refresh data every 30 seconds
-        setInterval(() => {
-            // Update dashboard data
-            console.log('Refreshing staff dashboard...');
-        }, 30000);
-
-        // Real-time notifications simulation
-        function showNotification(message, type = 'info') {
-            // In real implementation, this would show toast notifications
-            console.log(`${type.toUpperCase()}: ${message}`);
-        }
-
-        // Simulate receiving new orders
-        setTimeout(() => {
-            showNotification('Nouvelle commande arrivée au point retrait', 'success');
-        }, 10000);
-    </script>
-</body>
-</html>
+</div>
+{% endblock %}

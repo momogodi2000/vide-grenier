@@ -7,7 +7,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, Submit, Row, Column, Field
 from crispy_forms.bootstrap import FormActions
 import re
-from .models import User, Product, Order, Review, Message, Category
+from .models import User, Product, Order, Review, Message, Category, GroupChat, GroupChatMessage
 
 
 class CustomSignupForm(UserCreationForm):
@@ -123,6 +123,8 @@ class CustomSignupForm(UserCreationForm):
         user.last_name = self.cleaned_data['last_name']
         user.city = self.cleaned_data['city']
         user.user_type = 'CLIENT'
+        # Set username to None since we use email as USERNAME_FIELD
+        user.username = None
         
         if commit:
             user.save()
@@ -426,6 +428,138 @@ class ChatMessageForm(forms.ModelForm):
         
         if message_type == 'TEXT' and not content:
             raise ValidationError('Le message ne peut pas être vide.')
+        
+        return cleaned_data
+
+
+class GroupChatForm(forms.ModelForm):
+    """Formulaire de création de groupe de discussion"""
+    
+    selected_participants = forms.ModelMultipleChoiceField(
+        queryset=User.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple(attrs={
+            'class': 'participant-checkbox'
+        }),
+        label="Participants"
+    )
+    
+    class Meta:
+        model = GroupChat
+        fields = ['name', 'description', 'type']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nom du groupe'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Description du groupe (optionnel)'
+            }),
+            'type': forms.Select(attrs={
+                'class': 'form-control'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        if user:
+            # Filter users based on the current user's type
+            if user.user_type == 'ADMIN':
+                # Admins can add any user
+                self.fields['selected_participants'].queryset = User.objects.exclude(id=user.id)
+            elif user.user_type == 'STAFF':
+                # Staff can add clients and other staff
+                self.fields['selected_participants'].queryset = User.objects.filter(
+                    user_type__in=['CLIENT', 'STAFF']
+                ).exclude(id=user.id)
+            else:
+                # Clients can only add other clients
+                self.fields['selected_participants'].queryset = User.objects.filter(
+                    user_type='CLIENT'
+                ).exclude(id=user.id)
+            
+            # Set initial type based on user type
+            if user.user_type == 'ADMIN':
+                self.fields['type'].initial = 'ADMIN_CLIENT'
+            elif user.user_type == 'STAFF':
+                self.fields['type'].initial = 'CLIENT_STAFF'
+            else:
+                self.fields['type'].initial = 'GENERAL'
+        
+        self.helper = FormHelper()
+        self.helper.form_class = 'group-chat-form'
+        self.helper.layout = Layout(
+            Field('name', css_class='form-group'),
+            Field('description', css_class='form-group'),
+            Field('type', css_class='form-group'),
+            Field('selected_participants', css_class='form-group'),
+            FormActions(
+                Submit('submit', 'Créer le groupe', css_class='btn btn-primary')
+            )
+        )
+    
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        if len(name) < 3:
+            raise ValidationError('Le nom du groupe doit comporter au moins 3 caractères.')
+        return name
+
+
+class GroupChatMessageForm(forms.ModelForm):
+    """Formulaire de message dans un groupe de discussion"""
+    
+    class Meta:
+        model = GroupChatMessage
+        fields = ['content', 'message_type', 'image', 'file']
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Tapez votre message...'
+            }),
+            'message_type': forms.Select(attrs={'class': 'form-control'}),
+            'image': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*'
+            }),
+            'file': forms.FileInput(attrs={
+                'class': 'form-control',
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'group-message-form'
+        self.helper.layout = Layout(
+            Field('message_type', css_class='d-none', id='message-type'),
+            Field('content', css_class='form-group'),
+            Field('image', css_class='form-group d-none', id='image-field'),
+            Field('file', css_class='form-group d-none', id='file-field'),
+            FormActions(
+                Submit('submit', 'Envoyer', css_class='btn btn-primary')
+            )
+        )
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        message_type = cleaned_data.get('message_type')
+        content = cleaned_data.get('content')
+        image = cleaned_data.get('image')
+        file = cleaned_data.get('file')
+        
+        if message_type == 'TEXT' and not content:
+            raise ValidationError('Le message ne peut pas être vide.')
+        
+        if message_type == 'IMAGE' and not image:
+            raise ValidationError('Une image est requise pour ce type de message.')
+        
+        if message_type == 'FILE' and not file:
+            raise ValidationError('Un fichier est requis pour ce type de message.')
         
         return cleaned_data
 

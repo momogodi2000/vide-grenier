@@ -28,6 +28,8 @@ class User(AbstractUser):
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # Override username to make it optional since we use email as USERNAME_FIELD
+    username = models.CharField(max_length=150, blank=True, null=True)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=15, unique=True)
     user_type = models.CharField(max_length=10, choices=USER_TYPES, default='CLIENT')
@@ -97,7 +99,7 @@ class Category(models.Model):
         return self.name
     
     def get_absolute_url(self):
-        return reverse('backend:category', kwargs={'slug': self.slug})
+        return reverse('backend:category_detail', kwargs={'slug': self.slug})
 
 
 class Product(models.Model):
@@ -362,6 +364,39 @@ class Chat(models.Model):
         return f"Chat {self.buyer.email} - {self.seller.email}"
 
 
+class GroupChat(models.Model):
+    """Conversations de groupe entre utilisateurs"""
+    
+    TYPES = [
+        ('ADMIN_CLIENT', 'Admin-Client'),
+        ('ADMIN_STAFF', 'Admin-Staff'),
+        ('CLIENT_STAFF', 'Client-Staff'),
+        ('GENERAL', 'Général'),
+        ('SUPPORT', 'Support'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    type = models.CharField(max_length=20, choices=TYPES, default='GENERAL')
+    participants = models.ManyToManyField(User, related_name='group_chats')
+    creator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_group_chats')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'group_chats'
+        ordering = ['-updated_at']
+    
+    def __str__(self):
+        return f"Groupe: {self.name}"
+    
+    @property
+    def last_message(self):
+        return self.group_messages.order_by('-created_at').first()
+
+
 class Message(models.Model):
     """Messages dans les chats"""
     
@@ -388,6 +423,38 @@ class Message(models.Model):
     
     def __str__(self):
         return f"Message de {self.sender.email} - {self.created_at}"
+
+
+class GroupChatMessage(models.Model):
+    """Messages dans les conversations de groupe"""
+    
+    MESSAGE_TYPES = [
+        ('TEXT', 'Texte'),
+        ('IMAGE', 'Image'),
+        ('FILE', 'Fichier'),
+        ('SYSTEM', 'Message système'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    group_chat = models.ForeignKey(GroupChat, on_delete=models.CASCADE, related_name='group_messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_group_messages')
+    message_type = models.CharField(max_length=10, choices=MESSAGE_TYPES, default='TEXT')
+    content = models.TextField()
+    image = models.ImageField(upload_to='chat/group_images/', blank=True, null=True)
+    file = models.FileField(upload_to='chat/group_files/', blank=True, null=True)
+    read_by = models.ManyToManyField(User, related_name='read_group_messages', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'group_chat_messages'
+        ordering = ['created_at']
+    
+    def __str__(self):
+        return f"Message groupe de {self.sender.email} - {self.created_at}"
+    
+    @property
+    def is_read_by_all(self):
+        return self.read_by.count() == self.group_chat.participants.count()
 
 
 class Favorite(models.Model):

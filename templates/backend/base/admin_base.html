@@ -488,8 +488,8 @@
                         <span>Catégories</span>
                         <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                     </a>
-                    <!-- FIXED: Stock Management -->
-                    <a href="{% url 'backend:admin_stock' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_stock' %}active{% endif %}">
+                    <!-- Stock Management -->
+                    <a href="{% url 'backend:admin_stock_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_stock_list' or request.resolver_match.url_name == 'admin_stock' %}active{% endif %}">
                         <i data-lucide="warehouse" class="sidebar-icon"></i>
                         <span>Stock</span>
                         <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
@@ -583,8 +583,8 @@
                                 <span>Catégories</span>
                                 <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                             </a>
-                            <!-- FIXED: Stock Management -->
-                            <a href="{% url 'backend:admin_stock' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_stock' %}active{% endif %}">
+                            <!-- Stock Management -->
+                            <a href="{% url 'backend:admin_stock_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_stock_list' or request.resolver_match.url_name == 'admin_stock' %}active{% endif %}">
                                 <i data-lucide="warehouse" class="sidebar-icon"></i>
                                 <span>Stock</span>
                                 <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>

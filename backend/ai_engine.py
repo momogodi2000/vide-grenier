@@ -1,13 +1,21 @@
 # backend/ai_engine.py - AI RECOMMENDATION ENGINE FOR VGK
-import numpy as np
-import pandas as pd
+# Temporarily disable AI features to avoid dependency issues during development
+try:
+    import numpy as np
+    import pandas as pd
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.metrics.pairwise import cosine_similarity
+    from sklearn.cluster import KMeans
+    from sklearn.preprocessing import StandardScaler
+    AI_LIBRARIES_AVAILABLE = True
+except ImportError:
+    # Fallback for when AI libraries are not available
+    AI_LIBRARIES_AVAILABLE = False
+    np = None
+
 from django.db.models import Count, Avg, Q, F
 from django.utils import timezone
 from datetime import datetime, timedelta
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
 import logging
 import json
 from typing import List, Dict, Tuple, Optional
@@ -34,11 +42,16 @@ class AIRecommendationEngine:
         self.min_interactions = 5  # Minimum interactions for recommendations
         self.similarity_threshold = 0.1
         self.recommendation_cache_hours = 6
+        self.ai_available = AI_LIBRARIES_AVAILABLE
         
     def generate_recommendations_for_user(self, user: User, num_recommendations: int = 12) -> List[Dict]:
         """
         Generate comprehensive recommendations for a user
         """
+        # Fallback when AI libraries are not available
+        if not self.ai_available:
+            return self._simple_recommendations(user, num_recommendations)
+            
         try:
             # Check if we have cached recommendations
             cached_recs = self._get_cached_recommendations(user)
@@ -587,6 +600,57 @@ class AIRecommendationEngine:
             
         except Exception as e:
             logger.error(f"Error in quick preference update: {e}")
+
+    def _simple_recommendations(self, user: User, num_recommendations: int = 12) -> List[Dict]:
+        """
+        Simple recommendation fallback when AI libraries are not available
+        """
+        try:
+            # Get user's order history to find preferred categories
+            user_categories = Category.objects.filter(
+                products__orders__user=user
+            ).distinct()[:3] if hasattr(user, 'orders') else []
+            
+            # Get trending products from user's preferred categories
+            recommendations = []
+            if user_categories:
+                for category in user_categories:
+                    products = Product.objects.filter(
+                        category=category,
+                        status='ACTIVE'
+                    ).exclude(
+                        orders__user=user  # Exclude already purchased
+                    ).order_by('-views_count', '-created_at')[:num_recommendations//3]
+                    
+                    for product in products:
+                        recommendations.append({
+                            'product_id': product.id,
+                            'confidence_score': 0.7,
+                            'reason': f'Popular in {category.name}',
+                            'recommendation_type': 'TRENDING'
+                        })
+            
+            # Fill remaining slots with overall trending products
+            if len(recommendations) < num_recommendations:
+                trending = Product.objects.filter(
+                    status='ACTIVE'
+                ).exclude(
+                    id__in=[r['product_id'] for r in recommendations]
+                ).order_by('-views_count', '-created_at')[:num_recommendations - len(recommendations)]
+                
+                for product in trending:
+                    recommendations.append({
+                        'product_id': product.id,
+                        'confidence_score': 0.5,
+                        'reason': 'Trending product',
+                        'recommendation_type': 'TRENDING'
+                    })
+            
+            return recommendations[:num_recommendations]
+            
+        except Exception as e:
+            logger.error(f"Error in simple recommendations: {str(e)}")
+            return []
 
 # Singleton instance
 ai_engine = AIRecommendationEngine() 

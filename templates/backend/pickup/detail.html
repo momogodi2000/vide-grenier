@@ -12,7 +12,7 @@
             <ol class="flex items-center space-x-2 text-sm">
                 <li><a href="{% url 'backend:home' %}" class="text-green-600 hover:text-green-700">Accueil</a></li>
                 <li><i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i></li>
-                <li><a href="{% url 'backend:pickup_list' %}" class="text-green-600 hover:text-green-700">Points de retrait</a></li>
+                <li><a href="{% url 'backend:pickup_point_list' %}" class="text-green-600 hover:text-green-700">Points de retrait</a></li>
                 <li><i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i></li>
                 <li class="text-gray-600">{{ pickup_point.name }}</li>
             </ol>
@@ -317,7 +317,7 @@
                 <h3 class="text-lg font-semibold text-gray-800 mb-4">Autres points à proximité</h3>
                 <div class="space-y-3">
                     {% for similar in similar_pickup_points %}
-                    <a href="{% url 'backend:pickup_detail' pk=similar.pk %}" 
+                    <a href="{% url 'backend:pickup_point_detail' pk=similar.pk %}" 
                        class="block p-3 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors">
                         <h4 class="font-medium text-gray-800">{{ similar.name }}</h4>
                         <p class="text-sm text-gray-600">{{ similar.address }}</p>

@@ -61,6 +61,35 @@ urlpatterns += [
     
     # Visitor-specific product routes
     path('visitor/product/<slug:slug>/', views.VisitorProductDetailView.as_view(), name='visitor_product_detail'),
+    
+    # Visitor cart operations
+    path('visitor/cart/add/<uuid:product_id>/', views.visitor_add_to_cart, name='visitor_add_to_cart'),
+    path('visitor/cart/update/<uuid:item_id>/', views.visitor_update_cart_item, name='visitor_update_cart_item'),
+    path('visitor/cart/remove/<uuid:item_id>/', views.visitor_remove_cart_item, name='visitor_remove_cart_item'),
+    path('visitor/cart/', views.visitor_cart_view, name='visitor_cart'),
+    path('visitor/cart/update-info/', views.visitor_update_cart_info, name='visitor_update_cart_info'),
+    path('visitor/cart/checkout/', views.visitor_cart_checkout, name='visitor_cart_checkout'),
+    path('visitor/cart/payment/', views.visitor_cart_payment, name='visitor_cart_payment'),
+    path('visitor/cart/success/<str:cart_session>/', views.visitor_cart_success, name='visitor_cart_success'),
+    
+    # Product reporting
+    path('visitor/report/<uuid:product_id>/', views.visitor_report_product, name='visitor_report_product'),
+    
+    # Receipt download
+    path('visitor/receipt/download/', views.visitor_download_receipt, name='visitor_download_receipt'),
+    
+    # AJAX endpoints for cart widget
+    path('visitor/cart/status/', views.visitor_cart_status, name='visitor_cart_status'),
+    path('visitor/cart/preview/', views.visitor_cart_preview, name='visitor_cart_preview'),
+    
+    # Visitor favorites, compare, likes, comments, alerts
+    path('visitor/favorite/toggle/<uuid:product_id>/', views.visitor_toggle_favorite, name='visitor_toggle_favorite'),
+    path('visitor/favorites/', views.visitor_favorites_list, name='visitor_favorites_list'),
+    path('visitor/compare/toggle/<uuid:product_id>/', views.visitor_toggle_compare, name='visitor_toggle_compare'),
+    path('visitor/compare/', views.visitor_compare_list, name='visitor_compare_list'),
+    path('visitor/comment/add/<uuid:product_id>/', views.visitor_add_comment, name='visitor_add_comment'),
+    path('visitor/like/toggle/<uuid:product_id>/', views.visitor_toggle_like, name='visitor_toggle_like'),
+    path('visitor/alert/create/<uuid:product_id>/', views.visitor_create_alert, name='visitor_create_alert'),
 ]
 
 # ============= CATEGORIES =============
@@ -110,21 +139,30 @@ urlpatterns += [
 # ============= REVIEWS =============
 urlpatterns += [
     path('reviews/', views.ReviewListView.as_view(), name='review_list'),
+    path('review/create/', views.ReviewListView.as_view(), name='review_create'),
     path('review/create/<uuid:order_id>/', views.ReviewCreateView.as_view(), name='review_create'),
     path('review/<uuid:pk>/', views.ReviewDetailView.as_view(), name='review_detail'),
 ]
 
 # ============= CHAT =============
 urlpatterns += [
+    # Private chats (product-based)
     path('chat/', views.ChatListView.as_view(), name='chat_list'),
     path('chat/<uuid:pk>/', views.ChatDetailView.as_view(), name='chat_detail'),
     path('chat/create/<uuid:product_id>/', views.ChatCreateView.as_view(), name='chat_create'),
+    
+    # Group chats (new)
+    path('group-chat/', views.GroupChatListView.as_view(), name='group_chat_list'),
+    path('group-chat/<uuid:pk>/', views.GroupChatDetailView.as_view(), name='group_chat_detail'),
+    path('group-chat/create/', views.GroupChatCreateView.as_view(), name='group_chat_create'),
+    path('group-chat/<uuid:pk>/add-user/', views.GroupChatAddUserView.as_view(), name='group_chat_add_user'),
+    path('group-chat/<uuid:pk>/leave/', views.GroupChatLeaveView.as_view(), name='group_chat_leave'),
 ]
 
 # ============= PICKUP POINTS =============
 urlpatterns += [
-    path('pickup-points/', views.PickupPointListView.as_view(), name='pickup_list'),
-    path('pickup-point/<uuid:pk>/', views.PickupPointDetailView.as_view(), name='pickup_detail'),
+    path('pickup-points/', views.PickupPointListView.as_view(), name='pickup_point_list'),
+    path('pickup-point/<uuid:pk>/', views.PickupPointDetailView.as_view(), name='pickup_point_detail'),
 ]
 
 # ============= SELLER PROFILES =============
@@ -177,6 +215,10 @@ urlpatterns += [
     path('admin-panel/stock/add/', views_admin.AdminStockAddView.as_view() 
          if hasattr(views_admin, 'AdminStockAddView') else views_admin.admin_stock_add, 
          name='admin_stock_add'),
+    # Add URL for admin_stock pattern
+    path('admin-panel/stock/', views_admin.AdminStockView.as_view() 
+         if hasattr(views_admin, 'AdminStockView') else views_admin.admin_stock_list, 
+         name='admin_stock'),
     
     # Promotion Management
     path('admin-panel/promotions/', views_admin.AdminPromotionListView.as_view() 
@@ -197,15 +239,22 @@ urlpatterns += [
          if hasattr(views_admin, 'AdminNewsletterListView') else views_admin.admin_dashboard, 
          name='admin_newsletter_list'),
     path('admin-panel/newsletter/create/', views_admin.admin_newsletter_create, name='admin_newsletter_create'),
-    path('admin-panel/newsletter/sent/', views_admin.admin_newsletter_send 
+    path('admin-panel/newsletter/send/', views_admin.admin_newsletter_send 
          if hasattr(views_admin, 'admin_newsletter_send') else views_admin.admin_newsletter_list, 
-         name='admin_newsletter_sent'),
+         name='admin_newsletter_send'),
+    # Fix: Change admin_newsletter_sent to admin_newsletter_send
+    path('admin-panel/newsletter/send-email/', views_admin.admin_newsletter_send_email
+         if hasattr(views_admin, 'admin_newsletter_send_email') else views_admin.admin_newsletter_send, 
+         name='admin_newsletter_send'),
     
     # Notification Management
     path('admin-panel/notifications/', views_admin.AdminNotificationListView.as_view() 
-         if hasattr(views_admin, 'AdminNotificationListView') else views_admin.admin_notification_list, 
+         if hasattr(views_admin, 'AdminNotificationListView') else views_admin.admin_notification_create, 
          name='admin_notification_list'),
     path('admin-panel/notifications/create/', views_admin.admin_notification_create, name='admin_notification_create'),
+    path('admin-panel/notifications/bulk-action/', views_admin.admin_notification_bulk_action 
+         if hasattr(views_admin, 'admin_notification_bulk_action') else views_admin.admin_notification_create, 
+         name='admin_notification_bulk_send'),
     
     # Analytics
     path('admin-panel/analytics/', views_admin.AdminAnalyticsView.as_view() 
@@ -227,6 +276,11 @@ urlpatterns += [
          if hasattr(views, 'ajax_track_behavior') else views.HomeView.as_view(), 
          name='ajax_track_behavior'),
     
+    # Reviews
+    path('ajax/reviewable-orders/', views.ajax_get_reviewable_orders
+         if hasattr(views, 'ajax_get_reviewable_orders') else views.HomeView.as_view(),
+         name='ajax_get_reviewable_orders'),
+    
     # Notifications
     path('ajax/notifications/', views.NotificationListAjax.as_view(), name='notification_ajax'),
     path('ajax/notifications/<uuid:pk>/read/', views.NotificationMarkReadAjax.as_view(), name='notification_read_ajax'),
@@ -244,6 +298,14 @@ urlpatterns += [
     path('ajax/follow/toggle/', views.ajax_toggle_follow 
          if hasattr(views, 'ajax_toggle_follow') else views.HomeView.as_view(), 
          name='ajax_toggle_follow'),
+         
+    # Group chat AJAX endpoints
+    path('ajax/group-chat/messages/<uuid:chat_id>/', views.ajax_get_group_chat_messages, 
+         name='ajax_get_group_chat_messages'),
+    path('ajax/group-chat/send-message/', views.ajax_send_group_chat_message, 
+         name='ajax_send_group_chat_message'),
+    path('ajax/group-chat/mark-read/<uuid:message_id>/', views.ajax_mark_group_message_read, 
+         name='ajax_mark_group_message_read'),
 ]
 
 # ============= PAYMENT WEBHOOKS =============

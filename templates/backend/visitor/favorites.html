@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mes Favoris - Vidé-Grenier Kamer{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-sm mb-8 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Mes Favoris</h1>
+                    <p class="text-gray-600 mt-2">{{ total_favorites }} produit{{ total_favorites|pluralize }} en favoris</p>
+                </div>
+                <div class="text-right">
+                    <a href="{% url 'backend:home' %}" class="text-green-600 hover:text-green-700 font-medium">
+                        ← Retour aux produits
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {% if favorites %}
+        <!-- Products Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {% for favorite in favorites %}
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                <div class="relative">
+                    {% if favorite.product.main_image %}
+                    <img src="{{ favorite.product.main_image.image.url }}" 
+                         alt="{{ favorite.product.title }}" 
+                         class="w-full h-48 object-cover">
+                    {% else %}
+                    <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                        <i data-lucide="image" class="w-12 h-12 text-gray-400"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Remove from favorites button -->
+                    <button onclick="removeFavorite('{{ favorite.product.id }}')" 
+                            class="absolute top-3 right-3 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                
+                <div class="p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">{{ favorite.product.title }}</h3>
+                    
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-lg font-bold text-green-600">{{ favorite.product.price|floatformat:0 }} FCFA</span>
+                        <span class="text-sm text-gray-500">{{ favorite.product.get_city_display }}</span>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <a href="{% url 'backend:visitor_product_detail' slug=favorite.product.slug %}" 
+                           class="flex-1 bg-green-600 text-white text-center py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
+                            Voir détails
+                        </a>
+                        <button onclick="addToCart('{{ favorite.product.id }}')" 
+                                class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                            <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-16">
+            <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="heart" class="w-12 h-12 text-gray-400"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">Aucun favori pour le moment</h3>
+            <p class="text-gray-600 mb-6">Ajoutez des produits à vos favoris pour les retrouver facilement ici.</p>
+            <a href="{% url 'backend:home' %}" 
+               class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors inline-flex items-center space-x-2">
+                <i data-lucide="search" class="w-5 h-5"></i>
+                <span>Découvrir des produits</span>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+async function removeFavorite(productId) {
+    try {
+        const response = await fetch(`/visitor/favorite/toggle/${productId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Remove the product card from the page
+            event.target.closest('.bg-white').remove();
+            
+            // Update the count
+            const countElement = document.querySelector('h1 + p');
+            if (countElement) {
+                const newCount = Math.max(0, parseInt(countElement.textContent) - 1);
+                countElement.textContent = `${newCount} produit${newCount !== 1 ? 's' : ''} en favoris`;
+            }
+            
+            showNotification(data.message, 'success');
+            
+            // Reload page if no favorites left
+            if (document.querySelectorAll('.bg-white.rounded-lg').length === 0) {
+                location.reload();
+            }
+        } else {
+            showNotification(data.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Erreur lors de la suppression', 'error');
+    }
+}
+
+async function addToCart(productId) {
+    try {
+        const response = await fetch(`/visitor/cart/add/${productId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            },
+            body: 'quantity=1'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification(data.message, 'success');
+            
+            // Update cart widget if available
+            if (typeof updateVisitorCartWidget === 'function') {
+                updateVisitorCartWidget();
+            }
+        } else {
+            showNotification(data.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Erreur lors de l\'ajout au panier', 'error');
+    }
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 max-w-sm p-4 rounded-lg shadow-lg transition-all duration-300 ${
+        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+    }`;
+    notification.innerHTML = `
+        <div class="flex items-center justify-between">
+            <span>${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white/80 hover:text-white">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove
+    setTimeout(() => notification.remove(), 5000);
+    
+    // Re-initialize icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+</script>
+{% endblock %} 

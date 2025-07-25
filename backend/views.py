@@ -18,28 +18,36 @@ from django.db.models import Q, Count, Avg, Sum, F
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 from django.core.paginator import Paginator
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.conf import settings
 from django.core.mail import send_mail
+from django.contrib.auth.decorators import login_required, user_passes_test
 
 import json
 import random
 import string
+import urllib.parse
 from datetime import datetime, timedelta
 from decimal import Decimal
 
 from .models import (
     User, Product, Category, Order, Payment, Review, 
     Chat, Message, Favorite, SearchHistory, Notification, 
-    AdminStock, PickupPoint, Analytics, ProductImage
+    AdminStock, PickupPoint, Analytics, ProductImage,
+    GroupChat, GroupChatMessage
+)
+from .models_advanced import (
+    VisitorCart, VisitorCartItem, ProductReport, VisitorFavorite, 
+    VisitorCompare, ProductComment, ProductLike, ProductAlert
 )
 from .forms import (
     CustomSignupForm, CustomLoginForm, ProductForm, 
     OrderForm, ReviewForm, ChatMessageForm, ProfileForm,
-    SearchForm, AdminStockForm, ContactForm
+    SearchForm, AdminStockForm, ContactForm,
+    GroupChatForm, GroupChatMessageForm
 )
 from .utils import (
     send_sms_notification, send_email_notification, 
@@ -54,16 +62,64 @@ class HomeView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
+        # Get or create visitor session for cart functionality
+        session_key = self.request.session.session_key
+        if not session_key:
+            self.request.session.create()
+            session_key = self.request.session.session_key
+        
+        # Get visitor cart for product integration
+        visitor_cart, created = VisitorCart.objects.get_or_create(
+            session_key=session_key,
+            defaults={'session_key': session_key}
+        )
+        
         # Produits en vedette
-        context['featured_products'] = Product.objects.filter(
+        featured_products = Product.objects.filter(
             is_featured=True, 
             status='ACTIVE'
         ).select_related('category', 'seller').prefetch_related('images')[:8]
         
         # Produits récents
-        context['recent_products'] = Product.objects.filter(
+        recent_products = Product.objects.filter(
             status='ACTIVE'
         ).select_related('category', 'seller').prefetch_related('images').order_by('-created_at')[:12]
+        
+        # Add visitor interaction data to products
+        if session_key:
+            # Get visitor favorites
+            favorite_product_ids = set(
+                VisitorFavorite.objects.filter(session_key=session_key)
+                .values_list('product_id', flat=True)
+            )
+            
+            # Get visitor cart items
+            cart_product_ids = set(
+                visitor_cart.items.values_list('product_id', flat=True)
+            )
+            
+            # Get visitor compares
+            compare_product_ids = set(
+                VisitorCompare.objects.filter(session_key=session_key)
+                .values_list('product_id', flat=True)
+            )
+            
+            # Add flags to products
+            for product in featured_products:
+                product.is_favorited = product.id in favorite_product_ids
+                product.is_in_cart = product.id in cart_product_ids
+                product.is_comparing = product.id in compare_product_ids
+                # Get like counts
+                product.likes_count = ProductLike.objects.filter(product=product, like_type='LIKE').count()
+                product.comments_count = ProductComment.objects.filter(product=product, is_approved=True).count()
+            
+            for product in recent_products:
+                product.is_favorited = product.id in favorite_product_ids
+                product.is_in_cart = product.id in cart_product_ids
+                product.is_comparing = product.id in compare_product_ids
+                # Get like counts
+                product.likes_count = ProductLike.objects.filter(product=product, like_type='LIKE').count()
+                product.comments_count = ProductComment.objects.filter(product=product, is_approved=True).count()
         
         # Catégories principales
         context['main_categories'] = Category.objects.filter(
@@ -76,13 +132,22 @@ class HomeView(TemplateView):
             'total_products': Product.objects.filter(status='ACTIVE').count(),
             'total_users': User.objects.filter(user_type='CLIENT').count(),
             'total_orders': Order.objects.filter(status='DELIVERED').count(),
-            'cities_count': len(settings.VGK_SETTINGS['SUPPORTED_CITIES'])
+            'cities_count': len(getattr(settings, 'VGK_SETTINGS', {}).get('SUPPORTED_CITIES', ['DOUALA', 'YAOUNDE']))
         }
         
         # Témoignages (derniers avis 5 étoiles)
         context['testimonials'] = Review.objects.filter(
             overall_rating=5
         ).select_related('reviewer', 'order__product').order_by('-created_at')[:6]
+        
+        # Add visitor data to context
+        context.update({
+            'featured_products': featured_products,
+            'recent_products': recent_products,
+            'visitor_cart': visitor_cart,
+            'total_favorites': VisitorFavorite.objects.filter(session_key=session_key).count() if session_key else 0,
+            'total_compares': VisitorCompare.objects.filter(session_key=session_key).count() if session_key else 0,
+        })
         
         return context
 
@@ -117,17 +182,22 @@ class CustomSignupView(CreateView):
     
     def form_valid(self, form):
         user = form.save()
-        login(self.request, user)
+        # Specify the backend explicitly to avoid multiple backends error
+        login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
         messages.success(
             self.request, 
             "Compte créé avec succès! Vérifiez votre email pour activer votre compte."
         )
         
         # Envoyer SMS de bienvenue
-        send_sms_notification(
-            user.phone,
-            f"Bienvenue sur Vidé-Grenier Kamer! Votre compte a été créé avec succès."
-        )
+        try:
+            send_sms_notification(
+                user.phone,
+                f"Bienvenue sur Vidé-Grenier Kamer! Votre compte a été créé avec succès."
+            )
+        except Exception as e:
+            # Log the error but don't fail the registration
+            print(f"SMS sending failed: {e}")
         
         return super().form_valid(form)
 
@@ -698,11 +768,61 @@ class ProductListView(ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        # Get or create visitor cart for cart-related annotations
+        session_key = self.request.session.session_key
+        if not session_key:
+            self.request.session.create()
+            session_key = self.request.session.session_key
+        
+        visitor_cart, created = VisitorCart.objects.get_or_create(session_key=session_key)
+        
+        # Annotate products with visitor interaction data
+        products = context['products']
+        if products:
+            # Get current visitor's favorites, comparisons, and cart items
+            visitor_favorites = set(VisitorFavorite.objects.filter(
+                session_key=session_key
+            ).values_list('product_id', flat=True))
+            
+            visitor_compares = set(VisitorCompare.objects.filter(
+                session_key=session_key
+            ).values_list('product_id', flat=True))
+            
+            cart_items = set(VisitorCartItem.objects.filter(
+                cart=visitor_cart
+            ).values_list('product_id', flat=True))
+            
+            # Annotate each product
+            for product in products:
+                product.is_favorited = product.id in visitor_favorites
+                product.is_comparing = product.id in visitor_compares
+                product.is_in_cart = product.id in cart_items
+                
+                # Get like counts
+                likes_count = ProductLike.objects.filter(
+                    product=product, like_type='LIKE'
+                ).count()
+                dislikes_count = ProductLike.objects.filter(
+                    product=product, like_type='DISLIKE'
+                ).count()
+                product.likes_count = likes_count
+                product.dislikes_count = dislikes_count
+                
+                # Get comments count
+                product.comments_count = ProductComment.objects.filter(
+                    product=product, is_approved=True, parent=None
+                ).count()
+        
+        # Get visitor favorites and comparisons count for display
+        total_favorites = VisitorFavorite.objects.filter(session_key=session_key).count()
+        total_compares = VisitorCompare.objects.filter(session_key=session_key).count()
+        
         context.update({
             'categories': Category.objects.filter(is_active=True, parent=None),
             'cities': User.CITIES,
             'conditions': Product.CONDITIONS,
-            'selected_conditions': self.request.GET.getlist('condition'),  # Add this line
+            'selected_conditions': self.request.GET.getlist('condition'),
             'current_filters': {
                 'q': self.request.GET.get('q', ''),
                 'category': self.request.GET.get('category', ''),
@@ -711,7 +831,10 @@ class ProductListView(ListView):
                 'max_price': self.request.GET.get('max_price', ''),
                 'condition': self.request.GET.get('condition', ''),
                 'sort': self.request.GET.get('sort', '-created_at'),
-            }
+            },
+            'visitor_cart': visitor_cart,
+            'total_favorites': total_favorites,
+            'total_compares': total_compares,
         })
         return context
 
@@ -1245,6 +1368,270 @@ class ChatCreateView(LoginRequiredMixin, CreateView):
         return reverse('backend:chat_detail', kwargs={'pk': self.object.id})
 
 
+# Group Chat Views
+class GroupChatListView(LoginRequiredMixin, ListView):
+    """Liste des conversations de groupe"""
+    model = GroupChat
+    template_name = 'backend/chat/group_list.html'
+    context_object_name = 'group_chats'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        return GroupChat.objects.filter(
+            participants=self.request.user,
+            is_active=True
+        ).prefetch_related('participants').order_by('-updated_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Count unread messages for each group chat
+        for chat in context['group_chats']:
+            chat.unread_count = GroupChatMessage.objects.filter(
+                group_chat=chat
+            ).exclude(
+                read_by=self.request.user
+            ).exclude(
+                sender=self.request.user
+            ).count()
+        
+        # Add statistics
+        context['total_group_chats'] = self.get_queryset().count()
+        context['unread_messages'] = sum(chat.unread_count for chat in context['group_chats'])
+        
+        # Add user types for filtering
+        context['admin_users'] = User.objects.filter(user_type='ADMIN')
+        context['staff_users'] = User.objects.filter(user_type='STAFF')
+        context['client_users'] = User.objects.filter(user_type='CLIENT')
+        
+        return context
+
+
+class GroupChatDetailView(LoginRequiredMixin, DetailView):
+    """Détail d'une conversation de groupe avec messages"""
+    model = GroupChat
+    template_name = 'backend/chat/group_detail.html'
+    context_object_name = 'group_chat'
+    
+    def get_object(self):
+        group_chat = get_object_or_404(GroupChat, id=self.kwargs['pk'])
+        
+        # Vérifier si l'utilisateur est participant
+        if not group_chat.participants.filter(id=self.request.user.id).exists():
+            raise PermissionDenied("Vous n'avez pas accès à cette conversation de groupe.")
+        
+        # Marquer les messages comme lus
+        unread_messages = GroupChatMessage.objects.filter(
+            group_chat=group_chat
+        ).exclude(
+            read_by=self.request.user
+        ).exclude(
+            sender=self.request.user
+        )
+        
+        for message in unread_messages:
+            message.read_by.add(self.request.user)
+        
+        return group_chat
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['messages'] = self.object.group_messages.select_related('sender').order_by('created_at')
+        context['form'] = GroupChatMessageForm()
+        context['participants'] = self.object.participants.all()
+        
+        # Check if user is creator/admin of the group
+        context['is_admin'] = (self.request.user == self.object.creator or 
+                               self.request.user.user_type == 'ADMIN')
+        
+        # Get potential users to add to the group
+        if context['is_admin']:
+            existing_participants = self.object.participants.all()
+            context['potential_users'] = User.objects.exclude(
+                id__in=[user.id for user in existing_participants]
+            )
+        
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = GroupChatMessageForm(request.POST, request.FILES)
+        
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.group_chat = self.object
+            message.sender = request.user
+            message.save()
+            
+            # Add sender to read_by
+            message.read_by.add(request.user)
+            
+            # Update group chat timestamp
+            self.object.updated_at = timezone.now()
+            self.object.save(update_fields=['updated_at'])
+            
+            # Notify other participants
+            for participant in self.object.participants.exclude(id=request.user.id):
+                Notification.objects.create(
+                    user=participant,
+                    type='MESSAGE',
+                    title=f'Nouveau message dans {self.object.name}',
+                    message=f'{request.user.get_full_name()} a envoyé un message dans le groupe',
+                    data={'group_chat_id': str(self.object.id)}
+                )
+            
+            messages.success(request, "Message envoyé avec succès!")
+            return redirect('backend:group_chat_detail', pk=self.object.id)
+        
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+class GroupChatCreateView(LoginRequiredMixin, CreateView):
+    """Créer une nouvelle conversation de groupe"""
+    model = GroupChat
+    form_class = GroupChatForm
+    template_name = 'backend/chat/group_create.html'
+    
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        response = super().form_valid(form)
+        
+        # Add creator as participant
+        self.object.participants.add(self.request.user)
+        
+        # Add selected participants
+        participants = form.cleaned_data.get('selected_participants', [])
+        if participants:
+            self.object.participants.add(*participants)
+        
+        # Create welcome message
+        GroupChatMessage.objects.create(
+            group_chat=self.object,
+            sender=self.request.user,
+            message_type='SYSTEM',
+            content=f"Groupe '{self.object.name}' créé par {self.request.user.get_full_name()}"
+        )
+        
+        # Notify participants
+        for participant in self.object.participants.exclude(id=self.request.user.id):
+            Notification.objects.create(
+                user=participant,
+                type='MESSAGE',
+                title=f'Nouveau groupe: {self.object.name}',
+                message=f'{self.request.user.get_full_name()} vous a ajouté au groupe {self.object.name}',
+                data={'group_chat_id': str(self.object.id)}
+            )
+        
+        messages.success(self.request, f"Groupe '{self.object.name}' créé avec succès!")
+        return response
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    
+    def get_success_url(self):
+        return reverse('backend:group_chat_detail', kwargs={'pk': self.object.id})
+
+
+class GroupChatAddUserView(LoginRequiredMixin, View):
+    """Ajouter un utilisateur à un groupe"""
+    
+    def post(self, request, pk):
+        group_chat = get_object_or_404(GroupChat, id=pk)
+        
+        # Vérifier si l'utilisateur est admin du groupe
+        if request.user != group_chat.creator and request.user.user_type != 'ADMIN':
+            messages.error(request, "Vous n'avez pas les droits pour ajouter des utilisateurs.")
+            return redirect('backend:group_chat_detail', pk=group_chat.id)
+        
+        user_id = request.POST.get('user_id')
+        if not user_id:
+            messages.error(request, "Utilisateur non spécifié.")
+            return redirect('backend:group_chat_detail', pk=group_chat.id)
+        
+        try:
+            user = User.objects.get(id=user_id)
+            
+            # Vérifier si l'utilisateur est déjà dans le groupe
+            if group_chat.participants.filter(id=user.id).exists():
+                messages.warning(request, f"{user.get_full_name()} est déjà dans le groupe.")
+                return redirect('backend:group_chat_detail', pk=group_chat.id)
+            
+            # Ajouter l'utilisateur
+            group_chat.participants.add(user)
+            
+            # Créer message système
+            GroupChatMessage.objects.create(
+                group_chat=group_chat,
+                sender=request.user,
+                message_type='SYSTEM',
+                content=f"{user.get_full_name()} a été ajouté au groupe par {request.user.get_full_name()}"
+            )
+            
+            # Notifier l'utilisateur ajouté
+            Notification.objects.create(
+                user=user,
+                type='MESSAGE',
+                title=f'Ajouté au groupe: {group_chat.name}',
+                message=f'{request.user.get_full_name()} vous a ajouté au groupe {group_chat.name}',
+                data={'group_chat_id': str(group_chat.id)}
+            )
+            
+            messages.success(request, f"{user.get_full_name()} a été ajouté au groupe.")
+            
+        except User.DoesNotExist:
+            messages.error(request, "Utilisateur non trouvé.")
+        
+        return redirect('backend:group_chat_detail', pk=group_chat.id)
+
+
+class GroupChatLeaveView(LoginRequiredMixin, View):
+    """Quitter un groupe de discussion"""
+    
+    def post(self, request, pk):
+        group_chat = get_object_or_404(GroupChat, id=pk)
+        
+        # Vérifier si l'utilisateur est dans le groupe
+        if not group_chat.participants.filter(id=request.user.id).exists():
+            messages.error(request, "Vous n'êtes pas membre de ce groupe.")
+            return redirect('backend:group_chat_list')
+        
+        # Si c'est le créateur et qu'il y a d'autres participants
+        if request.user == group_chat.creator and group_chat.participants.count() > 1:
+            # Trouver un nouveau créateur
+            new_creator = group_chat.participants.exclude(id=request.user.id).first()
+            group_chat.creator = new_creator
+            group_chat.save()
+            
+            # Message système pour le changement de créateur
+            GroupChatMessage.objects.create(
+                group_chat=group_chat,
+                sender=request.user,
+                message_type='SYSTEM',
+                content=f"{new_creator.get_full_name()} est maintenant administrateur du groupe"
+            )
+        
+        # Retirer l'utilisateur du groupe
+        group_chat.participants.remove(request.user)
+        
+        # Message système pour le départ
+        GroupChatMessage.objects.create(
+            group_chat=group_chat,
+            sender=request.user,
+            message_type='SYSTEM',
+            content=f"{request.user.get_full_name()} a quitté le groupe"
+        )
+        
+        # Si plus de participants, désactiver le groupe
+        if group_chat.participants.count() == 0:
+            group_chat.is_active = False
+            group_chat.save()
+        
+        messages.success(request, f"Vous avez quitté le groupe '{group_chat.name}'.")
+        return redirect('backend:group_chat_list')
+
+
 class ReviewCreateView(LoginRequiredMixin, CreateView):
     """Créer un avis après livraison"""
     model = Review
@@ -1627,7 +2014,7 @@ import requests
 import os
 
 class VisitorProductDetailView(DetailView):
-    """Vue détaillée d'un produit pour les visiteurs avec options d'achat"""
+    """Vue détaillée d'un produit pour les visiteurs avec options d'achat et panier"""
     model = Product
     template_name = 'backend/products/visitor_detail.html'
     context_object_name = 'product'
@@ -1640,24 +2027,128 @@ class VisitorProductDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Get admin WhatsApp number from settings or environment
-        admin_whatsapp = getattr(settings, 'ADMIN_WHATSAPP', os.getenv('ADMIN_WHATSAPP', '237'))
+        # Get or create visitor cart
+        session_key = self.request.session.session_key
+        if not session_key:
+            self.request.session.create()
+            session_key = self.request.session.session_key
         
-        # Create WhatsApp message
+        visitor_cart, created = VisitorCart.objects.get_or_create(
+            session_key=session_key,
+            defaults={'session_key': session_key}
+        )
+        
+        # Get admin WhatsApp number from settings or environment
+        admin_whatsapp = getattr(settings, 'ADMIN_WHATSAPP', os.getenv('ADMIN_WHATSAPP', '237694638412'))
+        
+        # Create WhatsApp message for single product
         product = self.object
-        whatsapp_message = f"Bonjour! Je suis intéressé(e) par ce produit:\n\n" \
-                          f"*{product.title}*\n" \
-                          f"Prix: {product.price} FCFA\n" \
-                          f"Lien: {self.request.build_absolute_uri()}\n\n" \
-                          f"Pouvez-vous me donner plus d'informations?"
+        single_whatsapp_message = f"Bonjour! Je suis intéressé(e) par ce produit:\n\n" \
+                                 f"*{product.title}*\n" \
+                                 f"Prix: {product.price:,.0f} FCFA\n" \
+                                 f"Lien: {self.request.build_absolute_uri()}\n\n" \
+                                 f"Pouvez-vous me donner plus d'informations?"
+        
+        # Create WhatsApp message for cart
+        cart_whatsapp_message = self._generate_cart_whatsapp_message(visitor_cart, admin_whatsapp)
+        
+        # Check if product is in cart
+        is_in_cart = visitor_cart.items.filter(product=product).exists()
+        cart_item = None
+        if is_in_cart:
+            cart_item = visitor_cart.items.get(product=product)
+        
+        # Get visitor interaction data
+        is_favorited = VisitorFavorite.objects.filter(
+            session_key=session_key, product=product
+        ).exists()
+        
+        is_comparing = VisitorCompare.objects.filter(
+            session_key=session_key, product=product
+        ).exists()
+        
+        # Get visitor likes data
+        user_like = None
+        if self.request.user.is_authenticated:
+            user_like_obj = ProductLike.objects.filter(
+                product=product, user=self.request.user
+            ).first()
+            user_like = user_like_obj.like_type if user_like_obj else None
+        else:
+            visitor_like_obj = ProductLike.objects.filter(
+                product=product, 
+                visitor_ip=get_client_ip(self.request),
+                session_key=session_key
+            ).first()
+            user_like = visitor_like_obj.like_type if visitor_like_obj else None
+        
+        # Get like counts
+        likes_count = ProductLike.objects.filter(product=product, like_type='LIKE').count()
+        dislikes_count = ProductLike.objects.filter(product=product, like_type='DISLIKE').count()
+        
+        # Get comments for this product
+        comments = ProductComment.objects.filter(
+            product=product, 
+            parent=None,  # Only top-level comments
+            is_approved=True
+        ).prefetch_related('replies').order_by('-created_at')[:10]
+        
+        # Get total counts for visitor
+        total_favorites = VisitorFavorite.objects.filter(session_key=session_key).count()
+        total_compares = VisitorCompare.objects.filter(session_key=session_key).count()
         
         context.update({
             'admin_whatsapp': admin_whatsapp,
-            'whatsapp_message': whatsapp_message,
-            'whatsapp_url': f"https://wa.me/{admin_whatsapp}?text={whatsapp_message}",
+            'single_whatsapp_message': single_whatsapp_message,
+            'single_whatsapp_url': f"https://wa.me/{admin_whatsapp}?text={urllib.parse.quote(single_whatsapp_message)}",
+            'cart_whatsapp_message': cart_whatsapp_message,
+            'cart_whatsapp_url': f"https://wa.me/{admin_whatsapp}?text={urllib.parse.quote(cart_whatsapp_message)}",
             'campay_enabled': bool(os.getenv('CAMPAY_API_KEY')),
+            'visitor_cart': visitor_cart,
+            'is_in_cart': is_in_cart,
+            'cart_item': cart_item,
+            'delivery_cost': Decimal('2000'),
+            'similar_products': Product.objects.filter(
+                category=product.category,
+                status='ACTIVE'
+            ).exclude(id=product.id)[:6],
+            # Visitor interaction data
+            'is_favorited': is_favorited,
+            'is_comparing': is_comparing,
+            'user_like': user_like,
+            'likes_count': likes_count,
+            'dislikes_count': dislikes_count,
+            'comments': comments,
+            'total_favorites': total_favorites,
+            'total_compares': total_compares,
+            'comments_count': ProductComment.objects.filter(product=product, is_approved=True).count(),
         })
         return context
+    
+    def _generate_cart_whatsapp_message(self, cart, admin_whatsapp):
+        """Generate WhatsApp message with cart contents"""
+        if not cart.items.exists():
+            return "Bonjour! Je souhaite obtenir des informations sur vos produits."
+        
+        message = "Bonjour! Je suis intéressé(e) par ces produits:\n\n"
+        
+        for item in cart.items.all():
+            message += f"🛍️ *{item.product.title}*\n"
+            message += f"   Quantité: {item.quantity}\n"
+            message += f"   Prix unitaire: {item.unit_price:,.0f} FCFA\n"
+            message += f"   Sous-total: {item.total_price:,.0f} FCFA\n\n"
+        
+        message += f"💰 Total produits: {cart.total_amount:,.0f} FCFA\n"
+        if cart.delivery_method == 'DELIVERY':
+            message += f"🚚 Frais de livraison: {cart.delivery_cost:,.0f} FCFA\n"
+            message += f"💳 Total final: {cart.final_total:,.0f} FCFA\n"
+        else:
+            message += f"📍 Mode: Retrait en point de collecte\n"
+        
+        message += f"\nPouvez-vous confirmer ma commande?\n"
+        message += f"Merci!"
+        
+        return message
 
 
 def visitor_order_create(request, product_id):
@@ -1756,7 +2247,976 @@ def visitor_payment_process(request, order_id):
         if not phone_number:
             messages.error(request, 'Veuillez entrer votre numéro de téléphone.')
             return render(request, 'backend/orders/visitor_payment.html', {'order': order})
+
+
+# ============= VISITOR CART OPERATIONS =============
+
+@require_POST
+def visitor_add_to_cart(request, product_id):
+    """Add product to visitor cart"""
+    try:
+        product = get_object_or_404(Product, id=product_id, status='ACTIVE')
         
+        # Get or create session
+        if not request.session.session_key:
+            request.session.create()
+        
+        # Get or create visitor cart
+        visitor_cart, created = VisitorCart.objects.get_or_create(
+            session_key=request.session.session_key
+        )
+        
+        # Get quantity from request
+        quantity = int(request.POST.get('quantity', 1))
+        if quantity < 1:
+            quantity = 1
+        
+        # Add or update cart item
+        cart_item, item_created = VisitorCartItem.objects.get_or_create(
+            cart=visitor_cart,
+            product=product,
+            defaults={
+                'quantity': quantity,
+                'unit_price': product.price
+            }
+        )
+        
+        if not item_created:
+            cart_item.quantity += quantity
+            cart_item.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'{product.title} ajouté au panier',
+            'cart_items': visitor_cart.total_items,
+            'cart_total': float(visitor_cart.total_amount)
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erreur: {str(e)}'
+        })
+
+
+@require_POST
+def visitor_update_cart_item(request, item_id):
+    """Update visitor cart item quantity"""
+    try:
+        if not request.session.session_key:
+            return JsonResponse({'success': False, 'message': 'Session non trouvée'})
+        
+        cart_item = get_object_or_404(
+            VisitorCartItem,
+            id=item_id,
+            cart__session_key=request.session.session_key
+        )
+        
+        quantity = int(request.POST.get('quantity', 1))
+        
+        if quantity <= 0:
+            cart_item.delete()
+            message = 'Produit retiré du panier'
+        else:
+            cart_item.quantity = quantity
+            cart_item.save()
+            message = 'Quantité mise à jour'
+        
+        cart = cart_item.cart
+        
+        return JsonResponse({
+            'success': True,
+            'message': message,
+            'cart_items': cart.total_items,
+            'cart_total': float(cart.total_amount),
+            'item_total': float(cart_item.total_price) if quantity > 0 else 0
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erreur: {str(e)}'
+        })
+
+
+@require_POST
+def visitor_remove_cart_item(request, item_id):
+    """Remove item from visitor cart"""
+    try:
+        if not request.session.session_key:
+            return JsonResponse({'success': False, 'message': 'Session non trouvée'})
+        
+        cart_item = get_object_or_404(
+            VisitorCartItem,
+            id=item_id,
+            cart__session_key=request.session.session_key
+        )
+        
+        cart = cart_item.cart
+        cart_item.delete()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Produit retiré du panier',
+            'cart_items': cart.total_items,
+            'cart_total': float(cart.total_amount)
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erreur: {str(e)}'
+        })
+
+
+def visitor_cart_view(request):
+    """Display visitor cart"""
+    if not request.session.session_key:
+        request.session.create()
+    
+    try:
+        visitor_cart = VisitorCart.objects.get(session_key=request.session.session_key)
+    except VisitorCart.DoesNotExist:
+        visitor_cart = VisitorCart.objects.create(session_key=request.session.session_key)
+    
+    context = {
+        'visitor_cart': visitor_cart,
+        'cart_items': visitor_cart.items.select_related('product').all(),
+        'delivery_cost': Decimal('2000'),
+    }
+    
+    return render(request, 'backend/visitor/cart.html', context)
+
+
+@require_POST 
+def visitor_update_cart_info(request):
+    """Update visitor cart information (delivery, contact info)"""
+    try:
+        if not request.session.session_key:
+            return JsonResponse({'success': False, 'message': 'Session non trouvée'})
+        
+        visitor_cart = get_object_or_404(VisitorCart, session_key=request.session.session_key)
+        
+        # Update cart information
+        visitor_cart.visitor_name = request.POST.get('visitor_name', '')
+        visitor_cart.visitor_email = request.POST.get('visitor_email', '')
+        visitor_cart.visitor_phone = request.POST.get('visitor_phone', '')
+        visitor_cart.delivery_method = request.POST.get('delivery_method', 'PICKUP')
+        visitor_cart.delivery_address = request.POST.get('delivery_address', '')
+        visitor_cart.whatsapp_preferred = request.POST.get('whatsapp_preferred') == 'on'
+        visitor_cart.notes = request.POST.get('notes', '')
+        visitor_cart.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Informations mises à jour',
+            'final_total': float(visitor_cart.final_total)
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erreur: {str(e)}'
+        })
+
+
+# ============= VISITOR CART CHECKOUT =============
+
+def visitor_cart_checkout(request):
+    """Checkout visitor cart"""
+    if not request.session.session_key:
+        messages.error(request, 'Panier introuvable')
+        return redirect('backend:home')
+    
+    try:
+        visitor_cart = VisitorCart.objects.get(session_key=request.session.session_key)
+        
+        if not visitor_cart.items.exists():
+            messages.error(request, 'Votre panier est vide')
+            return redirect('backend:visitor_cart')
+        
+        if request.method == 'POST':
+            # Create orders for each cart item
+            orders = []
+            
+            # Update cart info from form
+            visitor_cart.visitor_name = request.POST.get('visitor_name', '')
+            visitor_cart.visitor_email = request.POST.get('visitor_email', '')
+            visitor_cart.visitor_phone = request.POST.get('visitor_phone', '')
+            visitor_cart.delivery_method = request.POST.get('delivery_method', 'PICKUP')
+            visitor_cart.delivery_address = request.POST.get('delivery_address', '')
+            visitor_cart.whatsapp_preferred = request.POST.get('whatsapp_preferred') == 'on'
+            visitor_cart.notes = request.POST.get('notes', '')
+            payment_method = request.POST.get('payment_method', 'CASH_ON_DELIVERY')
+            visitor_cart.save()
+            
+            # Validate required fields
+            if not all([visitor_cart.visitor_name, visitor_cart.visitor_phone]):
+                messages.error(request, 'Veuillez remplir tous les champs obligatoires.')
+                return render(request, 'backend/visitor/checkout.html', {'visitor_cart': visitor_cart})
+            
+            # Calculate delivery cost per order (split equally)
+            total_delivery_cost = visitor_cart.delivery_cost
+            items_count = visitor_cart.items.count()
+            delivery_per_order = total_delivery_cost / items_count if items_count > 0 else Decimal('0')
+            
+            with transaction.atomic():
+                for cart_item in visitor_cart.items.all():
+                    # Calculate totals
+                    product_total = cart_item.total_price
+                    commission_rate = Decimal('0.08')
+                    commission_amount = product_total * commission_rate
+                    total_amount = product_total + delivery_per_order
+                    
+                    # Create order
+                    order = Order.objects.create(
+                        product=cart_item.product,
+                        quantity=cart_item.quantity,
+                        total_amount=total_amount,
+                        commission_amount=commission_amount,
+                        delivery_cost=delivery_per_order,
+                        payment_method=payment_method,
+                        delivery_method=visitor_cart.delivery_method,
+                        delivery_address=visitor_cart.delivery_address,
+                        visitor_name=visitor_cart.visitor_name,
+                        visitor_email=visitor_cart.visitor_email,
+                        visitor_phone=visitor_cart.visitor_phone,
+                        whatsapp_preferred=visitor_cart.whatsapp_preferred,
+                        notes=visitor_cart.notes,
+                        status='PENDING'
+                    )
+                    orders.append(order)
+                
+                # Handle payment method
+                if payment_method == 'CASH_ON_DELIVERY':
+                    # Update all orders to paid/processing
+                    for order in orders:
+                        order.status = 'PAID' if visitor_cart.delivery_method == 'PICKUP' else 'PROCESSING'
+                        order.save()
+                    
+                    # Clear cart
+                    visitor_cart.items.all().delete()
+                    
+                    # Send notifications to admin
+                    try:
+                        self._send_cart_order_notifications(orders, visitor_cart)
+                    except Exception as e:
+                        print(f"Erreur envoi notification: {e}")
+                    
+                    messages.success(request, f'Vos {len(orders)} commandes ont été créées avec succès!')
+                    return redirect('backend:visitor_cart_success', cart_session=request.session.session_key)
+                
+                elif payment_method in ['CAMPAY']:
+                    # Store orders in session for payment processing
+                    request.session['pending_orders'] = [str(order.id) for order in orders]
+                    return redirect('backend:visitor_cart_payment')
+                
+        context = {
+            'visitor_cart': visitor_cart,
+            'cart_items': visitor_cart.items.select_related('product').all(),
+        }
+        
+        return render(request, 'backend/visitor/checkout.html', context)
+        
+    except VisitorCart.DoesNotExist:
+        messages.error(request, 'Panier introuvable')
+        return redirect('backend:home')
+
+
+def _send_cart_order_notifications(orders, cart):
+    """Send notifications to admin for cart orders"""
+    admin_users = User.objects.filter(user_type='ADMIN')
+    
+    for admin in admin_users:
+        Notification.objects.create(
+            user=admin,
+            type='ORDER',
+            title=f'Nouvelles commandes visiteur ({len(orders)})',
+            message=f'{cart.visitor_name} a passé {len(orders)} commandes pour un total de {cart.final_total:,.0f} FCFA',
+            data={
+                'order_ids': [str(order.id) for order in orders],
+                'visitor_name': cart.visitor_name,
+                'visitor_phone': cart.visitor_phone,
+                'total_amount': float(cart.final_total)
+            }
+        )
+
+
+# ============= PRODUCT REPORTING =============
+
+@require_POST
+def visitor_report_product(request, product_id):
+    """Report a product"""
+    try:
+        product = get_object_or_404(Product, id=product_id)
+        
+        report_type = request.POST.get('report_type')
+        description = request.POST.get('description', '').strip()
+        reporter_email = request.POST.get('reporter_email', '').strip()
+        
+        if not all([report_type, description]):
+            return JsonResponse({
+                'success': False,
+                'message': 'Veuillez remplir tous les champs obligatoires'
+            })
+        
+        # Create product report
+        report = ProductReport.objects.create(
+            product=product,
+            reporter_ip=request.META.get('REMOTE_ADDR', '127.0.0.1'),
+            reporter_email=reporter_email,
+            report_type=report_type,
+            description=description
+        )
+        
+        # Send notification to admins
+        admin_users = User.objects.filter(user_type='ADMIN')
+        for admin in admin_users:
+            Notification.objects.create(
+                user=admin,
+                type='SYSTEM',
+                title='Produit signalé',
+                message=f'Le produit "{product.title}" a été signalé pour: {report.get_report_type_display()}',
+                data={
+                    'product_id': str(product.id),
+                    'report_id': str(report.id),
+                    'report_type': report_type,
+                    'reporter_ip': report.reporter_ip
+                }
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Signalement envoyé. Nos équipes vont examiner ce produit.'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erreur: {str(e)}'
+        })
+
+
+# ============= VISITOR PAYMENT & RECEIPTS =============
+
+def visitor_cart_payment(request):
+    """Process payment for visitor cart"""
+    if not request.session.get('pending_orders'):
+        messages.error(request, 'Aucune commande en attente de paiement')
+        return redirect('backend:visitor_cart')
+    
+    order_ids = request.session['pending_orders']
+    orders = Order.objects.filter(id__in=order_ids)
+    total_amount = sum(order.total_amount for order in orders)
+    
+    if request.method == 'POST':
+        phone_number = request.POST.get('phone_number', '').strip()
+        
+        if not phone_number:
+            messages.error(request, 'Veuillez entrer votre numéro de téléphone.')
+            return render(request, 'backend/visitor/payment.html', {
+                'orders': orders,
+                'total_amount': total_amount
+            })
+        
+        try:
+            # Process Campay payment for total amount
+            payment_response = initiate_campay_payment_bulk(orders, phone_number)
+            
+            if payment_response.get('status') == 'success':
+                # Create payment record
+                for order in orders:
+                    Payment.objects.create(
+                        order=order,
+                        payment_reference=payment_response.get('reference'),
+                        amount=order.total_amount,
+                        status='PROCESSING',
+                        provider_response=payment_response
+                    )
+                
+                # Clear pending orders
+                del request.session['pending_orders']
+                
+                messages.success(request, 'Paiement initié. Suivez les instructions sur votre téléphone.')
+                return redirect('backend:visitor_cart_success', cart_session=request.session.session_key)
+            else:
+                messages.error(request, f'Erreur de paiement: {payment_response.get("message", "Erreur inconnue")}')
+        
+        except Exception as e:
+            messages.error(request, f'Erreur lors du paiement: {str(e)}')
+    
+    context = {
+        'orders': orders,
+        'total_amount': total_amount,
+    }
+    
+    return render(request, 'backend/visitor/payment.html', context)
+
+
+def visitor_cart_success(request, cart_session):
+    """Success page for visitor cart orders"""
+    # Get orders for this session
+    orders = Order.objects.filter(
+        visitor_phone__isnull=False,
+        created_at__gte=timezone.now() - timedelta(hours=1)
+    ).order_by('-created_at')
+    
+    # Filter by session if available
+    if cart_session and hasattr(request, 'session') and request.session.session_key == cart_session:
+        # Additional filtering if needed
+        pass
+    
+    context = {
+        'orders': orders[:10],  # Show recent orders
+        'can_download_receipt': True,
+    }
+    
+    return render(request, 'backend/visitor/success.html', context)
+
+
+def visitor_download_receipt(request):
+    """Generate and download receipt for visitor orders"""
+    order_ids = request.GET.getlist('order_ids')
+    
+    if not order_ids:
+        messages.error(request, 'Aucune commande sélectionnée')
+        return redirect('backend:home')
+    
+    orders = Order.objects.filter(id__in=order_ids, visitor_phone__isnull=False)
+    
+    if not orders.exists():
+        messages.error(request, 'Commandes introuvables')
+        return redirect('backend:home')
+    
+    # Generate receipt
+    from django.template.loader import render_to_string
+    from django.http import HttpResponse
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import letter
+    from io import BytesIO
+    import qrcode
+    import base64
+    
+    try:
+        # Create PDF
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=letter)
+        
+        # Generate QR code for receipt verification
+        receipt_id = f"VGK-{timezone.now().strftime('%Y%m%d%H%M')}-{orders.first().id}"
+        qr_data = f"VGK Receipt: {receipt_id}\nTotal: {sum(order.total_amount for order in orders):,.0f} FCFA\nDate: {timezone.now().strftime('%d/%m/%Y %H:%M')}\nCustomer: {orders.first().visitor_name}"
+        
+        # Create QR code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(qr_data)
+        qr.make(fit=True)
+        
+        # Generate QR code image
+        qr_img = qr.make_image(fill_color="black", back_color="white")
+        qr_buffer = BytesIO()
+        qr_img.save(qr_buffer, format='PNG')
+        qr_buffer.seek(0)
+        
+        # Enhanced receipt layout
+        y = 750
+        
+        # Header
+        p.setFont("Helvetica-Bold", 16)
+        p.drawString(50, y, "VIDÉ-GRENIER KAMER")
+        p.setFont("Helvetica", 10)
+        y -= 15
+        p.drawString(50, y, "Marketplace camerounaise de seconde main")
+        y -= 10
+        p.drawString(50, y, "📞 +237 694 63 84 12 | 📧 support@videgrenier-kamer.com")
+        
+        # Receipt info
+        y -= 30
+        p.setFont("Helvetica-Bold", 14)
+        p.drawString(50, y, "REÇU DE COMMANDE")
+        
+        p.setFont("Helvetica", 10)
+        y -= 20
+        p.drawString(50, y, f"Date: {timezone.now().strftime('%d/%m/%Y %H:%M')}")
+        y -= 15
+        p.drawString(50, y, f"Numéro de reçu: {receipt_id}")
+        
+        # Customer info
+        y -= 25
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(50, y, "Informations client")
+        p.setFont("Helvetica", 10)
+        y -= 15
+        p.drawString(50, y, f"Nom: {orders.first().visitor_name}")
+        y -= 15
+        p.drawString(50, y, f"Téléphone: {orders.first().visitor_phone}")
+        if orders.first().visitor_email:
+            y -= 15
+            p.drawString(50, y, f"Email: {orders.first().visitor_email}")
+        
+        # Orders details
+        y -= 25
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(50, y, "Détail des commandes")
+        p.setFont("Helvetica", 10)
+        y -= 15
+        
+        # Table header
+        p.drawString(50, y, "Produit")
+        p.drawString(250, y, "Qté")
+        p.drawString(300, y, "Prix unitaire")
+        p.drawString(400, y, "Total")
+        p.drawString(480, y, "N° Commande")
+        y -= 5
+        p.line(50, y, 550, y)  # Line under header
+        y -= 10
+        
+        total = Decimal('0')
+        for order in orders:
+            # Truncate long product titles
+            title = order.product.title[:25] + "..." if len(order.product.title) > 25 else order.product.title
+            p.drawString(50, y, title)
+            p.drawString(250, y, str(order.quantity))
+            p.drawString(300, y, f"{order.product.price:,.0f} FCFA")
+            p.drawString(400, y, f"{order.total_amount:,.0f} FCFA")
+            p.drawString(480, y, order.order_number)
+            total += order.total_amount
+            y -= 15
+        
+        # Total
+        y -= 10
+        p.line(50, y, 550, y)  # Line above total
+        y -= 15
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(400, y, f"TOTAL GÉNÉRAL: {total:,.0f} FCFA")
+        
+        # QR Code
+        y -= 40
+        p.setFont("Helvetica", 10)
+        p.drawString(50, y, "Code QR pour vérification:")
+        
+        # Draw QR code (simplified - in real implementation you'd need to handle image drawing)
+        from reportlab.lib.utils import ImageReader
+        qr_image = ImageReader(qr_buffer)
+        p.drawImage(qr_image, 50, y-100, width=80, height=80)
+        
+        # Footer
+        y -= 120
+        p.setFont("Helvetica", 8)
+        p.drawString(50, y, "Merci pour votre confiance !")
+        y -= 10
+        p.drawString(50, y, "Ce reçu confirme vos commandes. Vous serez contacté pour les modalités de livraison.")
+        y -= 10
+        p.drawString(50, y, "Pour toute question: +237 694 63 84 12 ou support@videgrenier-kamer.com")
+        y -= 15
+        p.line(50, y, 550, y)
+        y -= 10
+        p.drawString(50, y, "Vidé-Grenier Kamer - Fièrement camerounais 🇨🇲")
+        
+        p.save()
+        buffer.seek(0)
+        
+        response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="recu_vgk_{timezone.now().strftime("%Y%m%d_%H%M")}.pdf"'
+        
+        return response
+        
+    except Exception as e:
+        messages.error(request, f'Erreur lors de la génération du reçu: {str(e)}')
+        return redirect('backend:home')
+
+
+# Helper function for bulk Campay payment
+def initiate_campay_payment_bulk(orders, phone_number):
+    """Initiate Campay payment for multiple orders"""
+    try:
+        total_amount = sum(order.total_amount for order in orders)
+        
+        # Use existing Campay integration
+        from .utils import initiate_campay_payment
+        
+        # Create a temporary order with total amount for payment processing
+        main_order = orders.first()
+        payment_data = {
+            'amount': float(total_amount),
+            'phone': phone_number,
+            'description': f'Commande VGK - {len(orders)} articles'
+        }
+        
+        return initiate_campay_payment(main_order, phone_number)
+        
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
+
+
+# ============= VISITOR CART AJAX ENDPOINTS =============
+
+def visitor_cart_status(request):
+    """Get visitor cart status for widget"""
+    try:
+        if not request.session.session_key:
+            return JsonResponse({'items': 0, 'total': 0})
+        
+        visitor_cart = VisitorCart.objects.filter(session_key=request.session.session_key).first()
+        
+        if visitor_cart:
+            return JsonResponse({
+                'items': visitor_cart.total_items,
+                'total': float(visitor_cart.final_total)
+            })
+        else:
+            return JsonResponse({'items': 0, 'total': 0})
+            
+    except Exception as e:
+        return JsonResponse({'items': 0, 'total': 0})
+
+
+def visitor_cart_preview(request):
+    """Get visitor cart preview for modal"""
+    try:
+        if not request.session.session_key:
+            return JsonResponse({'items': [], 'total': '0'})
+        
+        visitor_cart = VisitorCart.objects.filter(session_key=request.session.session_key).first()
+        
+        if visitor_cart and visitor_cart.items.exists():
+            items = []
+            for item in visitor_cart.items.select_related('product'):
+                items.append({
+                    'title': item.product.title[:30] + '...' if len(item.product.title) > 30 else item.product.title,
+                    'quantity': item.quantity,
+                    'total': f"{item.total_price:,.0f}"
+                })
+            
+            return JsonResponse({
+                'items': items,
+                'total': f"{visitor_cart.final_total:,.0f}"
+            })
+        else:
+            return JsonResponse({'items': [], 'total': '0'})
+            
+    except Exception as e:
+        return JsonResponse({'items': [], 'total': '0'})
+
+
+# ============= VISITOR FAVORITES & INTERACTIONS =============
+
+@require_POST  
+def visitor_toggle_favorite(request, product_id):
+    """Toggle favorite for visitor"""
+    try:
+        if not request.session.session_key:
+            request.session.create()
+        
+        product = get_object_or_404(Product, id=product_id, status='ACTIVE')
+        session_key = request.session.session_key
+        
+        favorite, created = VisitorFavorite.objects.get_or_create(
+            session_key=session_key,
+            product=product
+        )
+        
+        if not created:
+            favorite.delete()
+            is_favorited = False
+            message = f"{product.title} retiré des favoris"
+        else:
+            is_favorited = True
+            message = f"{product.title} ajouté aux favoris"
+        
+        # Get total favorites count for this visitor
+        total_favorites = VisitorFavorite.objects.filter(session_key=session_key).count()
+        
+        return JsonResponse({
+            'success': True,
+            'is_favorited': is_favorited,
+            'total_favorites': total_favorites,
+            'message': message
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+
+def visitor_favorites_list(request):
+    """List visitor's favorites"""
+    if not request.session.session_key:
+        favorites = []
+    else:
+        favorites = VisitorFavorite.objects.filter(
+            session_key=request.session.session_key
+        ).select_related('product__category', 'product__seller').prefetch_related('product__images')
+    
+    context = {
+        'favorites': favorites,
+        'total_favorites': len(favorites)
+    }
+    return render(request, 'backend/visitor/favorites.html', context)
+
+
+@require_POST
+def visitor_toggle_compare(request, product_id):
+    """Toggle compare for visitor"""
+    try:
+        if not request.session.session_key:
+            request.session.create()
+        
+        product = get_object_or_404(Product, id=product_id, status='ACTIVE')
+        session_key = request.session.session_key
+        
+        # Check if already comparing (limit to 4 products)
+        current_compares = VisitorCompare.objects.filter(session_key=session_key).count()
+        
+        compare, created = VisitorCompare.objects.get_or_create(
+            session_key=session_key,
+            product=product
+        )
+        
+        if not created:
+            compare.delete()
+            is_comparing = False
+            message = f"{product.title} retiré de la comparaison"
+        else:
+            if current_compares >= 4:
+                return JsonResponse({
+                    'success': False, 
+                    'message': 'Vous ne pouvez comparer que 4 produits maximum'
+                })
+            
+            is_comparing = True
+            message = f"{product.title} ajouté à la comparaison"
+        
+        # Get total compares count for this visitor
+        total_compares = VisitorCompare.objects.filter(session_key=session_key).count()
+        
+        return JsonResponse({
+            'success': True,
+            'is_comparing': is_comparing,
+            'total_compares': total_compares,
+            'message': message
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+
+def visitor_compare_list(request):
+    """List visitor's compared products"""
+    if not request.session.session_key:
+        compares = []
+    else:
+        compares = VisitorCompare.objects.filter(
+            session_key=request.session.session_key
+        ).select_related('product__category', 'product__seller').prefetch_related('product__images')
+    
+    context = {
+        'compares': compares,
+        'total_compares': len(compares)
+    }
+    return render(request, 'backend/visitor/compare.html', context)
+
+
+@require_POST
+def visitor_add_comment(request, product_id):
+    """Add comment to product"""
+    try:
+        product = get_object_or_404(Product, id=product_id, status='ACTIVE')
+        
+        visitor_name = request.POST.get('visitor_name', '').strip()
+        visitor_email = request.POST.get('visitor_email', '').strip()
+        content = request.POST.get('content', '').strip()
+        parent_id = request.POST.get('parent_id')
+        
+        if not visitor_name or not content:
+            return JsonResponse({
+                'success': False,
+                'message': 'Nom et commentaire requis'
+            })
+        
+        if len(content) < 10:
+            return JsonResponse({
+                'success': False,
+                'message': 'Le commentaire doit contenir au moins 10 caractères'
+            })
+        
+        # Get parent comment if replying
+        parent = None
+        if parent_id:
+            try:
+                parent = ProductComment.objects.get(id=parent_id, product=product)
+            except ProductComment.DoesNotExist:
+                pass
+        
+        # Create comment
+        comment = ProductComment.objects.create(
+            product=product,
+            user=request.user if request.user.is_authenticated else None,
+            visitor_name=visitor_name if not request.user.is_authenticated else '',
+            visitor_email=visitor_email if not request.user.is_authenticated else '',
+            visitor_ip=get_client_ip(request),
+            content=content,
+            parent=parent
+        )
+        
+        # Send notification to admin
+        try:
+            send_email_notification(
+                subject=f"Nouveau commentaire sur {product.title}",
+                message=f"Un nouveau commentaire a été ajouté par {visitor_name}: {content[:100]}...",
+                recipient_list=['admin@videgrenier-kamer.com']
+            )
+        except Exception as e:
+            print(f"Failed to send email notification: {e}")
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Commentaire ajouté avec succès',
+            'comment': {
+                'id': str(comment.id),
+                'commenter_name': comment.commenter_name,
+                'content': comment.content,
+                'created_at': comment.created_at.strftime('%d/%m/%Y à %H:%M'),
+                'is_reply': comment.is_reply
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+
+@require_POST
+def visitor_toggle_like(request, product_id):
+    """Toggle like/dislike for product"""
+    try:
+        if not request.session.session_key:
+            request.session.create()
+        
+        product = get_object_or_404(Product, id=product_id, status='ACTIVE')
+        like_type = request.POST.get('like_type', 'LIKE')  # LIKE or DISLIKE
+        
+        if like_type not in ['LIKE', 'DISLIKE']:
+            return JsonResponse({'success': False, 'message': 'Type de vote invalide'})
+        
+        # Remove existing like/dislike for this visitor
+        existing_likes = ProductLike.objects.filter(
+            product=product,
+            user=request.user if request.user.is_authenticated else None,
+            visitor_ip=get_client_ip(request) if not request.user.is_authenticated else None,
+            session_key=request.session.session_key if not request.user.is_authenticated else ''
+        )
+        
+        # Check if same type already exists
+        same_like = existing_likes.filter(like_type=like_type).first()
+        
+        if same_like:
+            # Remove the like/dislike
+            same_like.delete()
+            user_vote = None
+            message = "Vote retiré"
+        else:
+            # Remove any existing vote and add new one
+            existing_likes.delete()
+            
+            ProductLike.objects.create(
+                product=product,
+                user=request.user if request.user.is_authenticated else None,
+                visitor_ip=get_client_ip(request) if not request.user.is_authenticated else None,
+                session_key=request.session.session_key if not request.user.is_authenticated else '',
+                like_type=like_type
+            )
+            user_vote = like_type
+            message = f"Produit {'aimé' if like_type == 'LIKE' else 'non aimé'}"
+        
+        # Get updated counts
+        likes_count = ProductLike.objects.filter(product=product, like_type='LIKE').count()
+        dislikes_count = ProductLike.objects.filter(product=product, like_type='DISLIKE').count()
+        
+        return JsonResponse({
+            'success': True,
+            'user_vote': user_vote,
+            'likes_count': likes_count,
+            'dislikes_count': dislikes_count,
+            'message': message
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+
+@require_POST
+def visitor_create_alert(request, product_id):
+    """Create price alert for product"""
+    try:
+        product = get_object_or_404(Product, id=product_id, status='ACTIVE')
+        
+        visitor_email = request.POST.get('visitor_email', '').strip()
+        visitor_phone = request.POST.get('visitor_phone', '').strip()
+        alert_type = request.POST.get('alert_type', 'PRICE_DROP')
+        target_price = request.POST.get('target_price')
+        
+        if not visitor_email and not visitor_phone:
+            return JsonResponse({
+                'success': False,
+                'message': 'Email ou téléphone requis pour les alertes'
+            })
+        
+        if alert_type == 'PRICE_DROP' and target_price:
+            try:
+                target_price = Decimal(target_price)
+                if target_price >= product.price:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Le prix cible doit être inférieur au prix actuel'
+                    })
+            except (ValueError, TypeError):
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Prix cible invalide'
+                })
+        else:
+            target_price = None
+        
+        # Check if alert already exists
+        existing_alert = ProductAlert.objects.filter(
+            product=product,
+            user=request.user if request.user.is_authenticated else None,
+            visitor_email=visitor_email if not request.user.is_authenticated else '',
+            alert_type=alert_type,
+            is_active=True
+        ).first()
+        
+        if existing_alert:
+            return JsonResponse({
+                'success': False,
+                'message': 'Vous avez déjà une alerte active pour ce produit'
+            })
+        
+        # Create alert
+        ProductAlert.objects.create(
+            product=product,
+            user=request.user if request.user.is_authenticated else None,
+            visitor_email=visitor_email if not request.user.is_authenticated else '',
+            visitor_phone=visitor_phone if not request.user.is_authenticated else '',
+            alert_type=alert_type,
+            target_price=target_price
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Alerte créée avec succès. Vous serez notifié par email.'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+
+def visitor_order_create(request, product_id):
+    """Créer une commande visiteur sans connexion"""
+    if request.method == 'POST':
         try:
             # Intégration Campay
             if order.payment_method == 'CAMPAY':
@@ -1928,6 +3388,161 @@ def campay_webhook(request):
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+# AJAX functions for group chat
+@login_required
+@require_http_methods(["GET"])
+def ajax_get_group_chat_messages(request, chat_id):
+    """Get messages for a group chat via AJAX"""
+    try:
+        group_chat = get_object_or_404(GroupChat, id=chat_id)
+        
+        # Check if user is participant
+        if not group_chat.participants.filter(id=request.user.id).exists():
+            return JsonResponse({'error': 'Accès non autorisé'}, status=403)
+        
+        # Get last_message_id for pagination
+        last_message_id = request.GET.get('last_message_id')
+        limit = int(request.GET.get('limit', 20))
+        
+        # Get messages
+        messages_query = group_chat.group_messages.select_related('sender')
+        
+        if last_message_id:
+            try:
+                last_message = GroupChatMessage.objects.get(id=last_message_id)
+                messages_query = messages_query.filter(created_at__lt=last_message.created_at)
+            except GroupChatMessage.DoesNotExist:
+                pass
+        
+        messages_list = messages_query.order_by('-created_at')[:limit]
+        
+        # Mark messages as read
+        for message in messages_list:
+            if request.user != message.sender and not message.read_by.filter(id=request.user.id).exists():
+                message.read_by.add(request.user)
+        
+        # Format messages for JSON
+        messages_data = []
+        for message in reversed(list(messages_list)):
+            messages_data.append({
+                'id': str(message.id),
+                'sender_id': str(message.sender.id),
+                'sender_name': message.sender.get_full_name(),
+                'sender_initials': message.sender.get_full_name()[0:2].upper(),
+                'content': message.content,
+                'message_type': message.message_type,
+                'created_at': message.created_at.isoformat(),
+                'formatted_time': message.created_at.strftime('%H:%M'),
+                'is_read_by_all': message.is_read_by_all,
+                'read_by_count': message.read_by.count(),
+                'is_own_message': message.sender.id == request.user.id,
+                'has_image': bool(message.image),
+                'image_url': message.image.url if message.image else None,
+                'has_file': bool(message.file),
+                'file_url': message.file.url if message.file else None,
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'messages': messages_data,
+            'has_more': messages_list.count() == limit,
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def ajax_send_group_chat_message(request):
+    """Send a message to a group chat via AJAX"""
+    try:
+        data = json.loads(request.body)
+        group_chat_id = data.get('group_chat_id')
+        content = data.get('content', '').strip()
+        message_type = data.get('message_type', 'TEXT')
+        
+        if not group_chat_id or not content:
+            return JsonResponse({'error': 'Paramètres manquants'}, status=400)
+        
+        group_chat = get_object_or_404(GroupChat, id=group_chat_id)
+        
+        # Check if user is participant
+        if not group_chat.participants.filter(id=request.user.id).exists():
+            return JsonResponse({'error': 'Accès non autorisé'}, status=403)
+        
+        # Create message
+        message = GroupChatMessage.objects.create(
+            group_chat=group_chat,
+            sender=request.user,
+            message_type=message_type,
+            content=content
+        )
+        
+        # Mark as read by sender
+        message.read_by.add(request.user)
+        
+        # Update group chat timestamp
+        group_chat.updated_at = timezone.now()
+        group_chat.save(update_fields=['updated_at'])
+        
+        # Notify other participants
+        for participant in group_chat.participants.exclude(id=request.user.id):
+            Notification.objects.create(
+                user=participant,
+                type='MESSAGE',
+                title=f'Nouveau message dans {group_chat.name}',
+                message=f'{request.user.get_full_name()} a envoyé un message dans le groupe',
+                data={'group_chat_id': str(group_chat.id)}
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'message': {
+                'id': str(message.id),
+                'sender_id': str(message.sender.id),
+                'sender_name': message.sender.get_full_name(),
+                'sender_initials': message.sender.get_full_name()[0:2].upper(),
+                'content': message.content,
+                'message_type': message.message_type,
+                'created_at': message.created_at.isoformat(),
+                'formatted_time': message.created_at.strftime('%H:%M'),
+                'is_read_by_all': False,
+                'read_by_count': 1,  # Just the sender
+                'is_own_message': True,
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def ajax_mark_group_message_read(request, message_id):
+    """Mark a group chat message as read via AJAX"""
+    try:
+        message = get_object_or_404(GroupChatMessage, id=message_id)
+        group_chat = message.group_chat
+        
+        # Check if user is participant
+        if not group_chat.participants.filter(id=request.user.id).exists():
+            return JsonResponse({'error': 'Accès non autorisé'}, status=403)
+        
+        # Mark as read if not already
+        if not message.read_by.filter(id=request.user.id).exists():
+            message.read_by.add(request.user)
+        
+        return JsonResponse({
+            'success': True,
+            'read_by_count': message.read_by.count(),
+            'is_read_by_all': message.is_read_by_all,
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 # ============= ERROR HANDLERS =============

@@ -1,0 +1,381 @@
+{% extends "backend/base/admin_base.html" %}
+{% load static %}
+
+{% block title %}Mes Groupes de Discussion{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto p-4">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Mes Groupes de Discussion</h1>
+            <p class="text-gray-600">Gérez vos discussions de groupe avec les utilisateurs</p>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+            <!-- Search -->
+            <div class="relative">
+                <input type="text" placeholder="Rechercher un groupe..." 
+                    class="w-64 px-4 py-2 pl-10 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    id="search-input">
+                <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"></i>
+            </div>
+            
+            <!-- Filter -->
+            <select class="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    id="filter-select">
+                <option value="">Tous les groupes</option>
+                <option value="ADMIN_CLIENT">Admin-Client</option>
+                <option value="ADMIN_STAFF">Admin-Staff</option>
+                <option value="CLIENT_STAFF">Client-Staff</option>
+                <option value="GENERAL">Général</option>
+                <option value="SUPPORT">Support</option>
+            </select>
+            
+            <!-- Create Button -->
+            <a href="{% url 'backend:group_chat_create' %}" 
+               class="bg-gradient-to-r from-green-600 to-blue-600 text-white px-4 py-2 rounded-xl font-semibold hover:from-green-700 hover:to-blue-700 transition-all">
+                <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
+                Nouveau groupe
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-blue-100 text-sm">Total groupes</p>
+                    <p class="text-2xl font-bold">{{ total_group_chats }}</p>
+                </div>
+                <i data-lucide="users" class="w-8 h-8 text-blue-200"></i>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-green-100 text-sm">Messages non lus</p>
+                    <p class="text-2xl font-bold">{{ unread_messages }}</p>
+                </div>
+                <i data-lucide="mail" class="w-8 h-8 text-green-200"></i>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-purple-100 text-sm">Groupes actifs</p>
+                    <p class="text-2xl font-bold">{{ group_chats|length }}</p>
+                </div>
+                <i data-lucide="message-circle" class="w-8 h-8 text-purple-200"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Group Chats List -->
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+        {% if group_chats %}
+            <div class="divide-y divide-gray-200">
+                {% for group_chat in group_chats %}
+                    <div class="group-chat-item p-6 hover:bg-gray-50 transition-colors cursor-pointer" 
+                         onclick="window.location.href='{% url 'backend:group_chat_detail' pk=group_chat.id %}'">
+                        <div class="flex items-center space-x-4">
+                            <!-- Group Icon -->
+                            <div class="flex-shrink-0">
+                                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                                    {% if group_chat.type == 'ADMIN_CLIENT' %}
+                                        <i data-lucide="headphones" class="w-8 h-8 text-white"></i>
+                                    {% elif group_chat.type == 'ADMIN_STAFF' %}
+                                        <i data-lucide="briefcase" class="w-8 h-8 text-white"></i>
+                                    {% elif group_chat.type == 'CLIENT_STAFF' %}
+                                        <i data-lucide="shopping-bag" class="w-8 h-8 text-white"></i>
+                                    {% elif group_chat.type == 'SUPPORT' %}
+                                        <i data-lucide="help-circle" class="w-8 h-8 text-white"></i>
+                                    {% else %}
+                                        <i data-lucide="users" class="w-8 h-8 text-white"></i>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Group Info -->
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <h3 class="text-lg font-semibold text-gray-900 truncate">{{ group_chat.name }}</h3>
+                                        <div class="flex items-center space-x-4 mt-1">
+                                            <span class="text-sm text-gray-600 flex items-center">
+                                                <i data-lucide="users" class="w-3 h-3 mr-1"></i>
+                                                {{ group_chat.participants.count }} participants
+                                            </span>
+                                            <span class="text-sm text-gray-500 flex items-center">
+                                                <i data-lucide="clock" class="w-3 h-3 mr-1"></i>
+                                                {{ group_chat.updated_at|timesince }} ago
+                                            </span>
+                                        </div>
+                                        
+                                        <!-- Last Message Preview -->
+                                        {% if group_chat.last_message %}
+                                            <p class="text-sm text-gray-600 mt-2 truncate">
+                                                {% if group_chat.last_message.sender == request.user %}
+                                                    <span class="text-green-600">Vous:</span>
+                                                {% else %}
+                                                    <span class="text-blue-600">{{ group_chat.last_message.sender.first_name }}:</span>
+                                                {% endif %}
+                                                {{ group_chat.last_message.content|truncatechars:50 }}
+                                            </p>
+                                        {% else %}
+                                            <p class="text-sm text-gray-400 mt-2 italic">Aucun message</p>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Right Side Info -->
+                                    <div class="text-right flex-shrink-0 ml-4">
+                                        <!-- Type Badge -->
+                                        <div class="mb-2">
+                                            {% if group_chat.type == 'ADMIN_CLIENT' %}
+                                                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                                                    <i data-lucide="headphones" class="w-3 h-3 inline mr-1"></i>
+                                                    Admin-Client
+                                                </span>
+                                            {% elif group_chat.type == 'ADMIN_STAFF' %}
+                                                <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
+                                                    <i data-lucide="briefcase" class="w-3 h-3 inline mr-1"></i>
+                                                    Admin-Staff
+                                                </span>
+                                            {% elif group_chat.type == 'CLIENT_STAFF' %}
+                                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                                                    <i data-lucide="shopping-bag" class="w-3 h-3 inline mr-1"></i>
+                                                    Client-Staff
+                                                </span>
+                                            {% elif group_chat.type == 'SUPPORT' %}
+                                                <span class="px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-medium">
+                                                    <i data-lucide="help-circle" class="w-3 h-3 inline mr-1"></i>
+                                                    Support
+                                                </span>
+                                            {% else %}
+                                                <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">
+                                                    <i data-lucide="users" class="w-3 h-3 inline mr-1"></i>
+                                                    Général
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="flex items-center justify-end space-x-2">
+                                            <!-- Unread Messages -->
+                                            {% if group_chat.unread_count > 0 %}
+                                                <span class="bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-semibold">
+                                                    {{ group_chat.unread_count }}
+                                                </span>
+                                            {% endif %}
+                                            
+                                            <!-- Creator Badge -->
+                                            {% if group_chat.creator == request.user %}
+                                                <span class="inline-flex items-center px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
+                                                    <i data-lucide="crown" class="w-3 h-3 mr-1"></i>
+                                                    Créateur
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons (shown on hover) -->
+                        <div class="flex items-center justify-end space-x-2 mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <a href="{% url 'backend:group_chat_detail' pk=group_chat.id %}" 
+                               class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm"
+                               onclick="event.stopPropagation()">
+                                <i data-lucide="message-circle" class="w-4 h-4 inline mr-1"></i>
+                                Ouvrir
+                            </a>
+                            
+                            {% if request.user == group_chat.creator %}
+                                <button type="button" 
+                                        class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"
+                                        onclick="event.stopPropagation(); showAddUserModal('{{ group_chat.id }}')">
+                                    <i data-lucide="user-plus" class="w-4 h-4 inline mr-1"></i>
+                                    Ajouter
+                                </button>
+                            {% endif %}
+                            
+                            <form method="post" action="{% url 'backend:group_chat_leave' pk=group_chat.id %}" 
+                                  onsubmit="return confirm('Êtes-vous sûr de vouloir quitter ce groupe ?');"
+                                  onclick="event.stopPropagation()">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm">
+                                    <i data-lucide="log-out" class="w-4 h-4 inline mr-1"></i>
+                                    Quitter
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+                <div class="bg-gray-50 px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm text-gray-700">
+                            Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+                            ({{ page_obj.paginator.count }} groupe{{ page_obj.paginator.count|pluralize }})
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            {% if page_obj.has_previous %}
+                                <a href="?page={{ page_obj.previous_page_number }}" 
+                                   class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                                </a>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <span class="px-3 py-2 bg-green-500 text-white rounded-lg">{{ num }}</span>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <a href="?page={{ num }}" 
+                                       class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">{{ num }}</a>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <a href="?page={{ page_obj.next_page_number }}" 
+                                   class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-16">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="users" class="w-12 h-12 text-gray-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Aucun groupe de discussion</h3>
+                <p class="text-gray-600 mb-6">Vous n'avez pas encore de groupes de discussion</p>
+                <a href="{% url 'backend:group_chat_create' %}" 
+                   class="bg-gradient-to-r from-green-600 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-green-700 hover:to-blue-700 transition-all">
+                    <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
+                    Créer un groupe
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add User Modal (hidden by default) -->
+<div id="add-user-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">Ajouter des participants</h3>
+            <button type="button" onclick="hideAddUserModal()" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        
+        <form id="add-user-form" method="post" action="">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Sélectionner un utilisateur</label>
+                <select name="user_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    <optgroup label="Administrateurs">
+                        {% for user in admin_users %}
+                            <option value="{{ user.id }}">{{ user.get_full_name }} ({{ user.email }})</option>
+                        {% endfor %}
+                    </optgroup>
+                    <optgroup label="Staff">
+                        {% for user in staff_users %}
+                            <option value="{{ user.id }}">{{ user.get_full_name }} ({{ user.email }})</option>
+                        {% endfor %}
+                    </optgroup>
+                    <optgroup label="Clients">
+                        {% for user in client_users %}
+                            <option value="{{ user.id }}">{{ user.get_full_name }} ({{ user.email }})</option>
+                        {% endfor %}
+                    </optgroup>
+                </select>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="hideAddUserModal()" 
+                        class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
+                    Annuler
+                </button>
+                <button type="submit" 
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    Ajouter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script>
+    lucide.createIcons();
+    
+    // Search functionality
+    const searchInput = document.getElementById('search-input');
+    const filterSelect = document.getElementById('filter-select');
+    const groupChatItems = document.querySelectorAll('.group-chat-item');
+    
+    function filterGroupChats() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const filterValue = filterSelect.value;
+        
+        groupChatItems.forEach(item => {
+            const groupName = item.querySelector('h3').textContent.toLowerCase();
+            const groupType = item.querySelector('[class*="bg-"][class*="-100"]').textContent.trim().toLowerCase();
+            const lastMessage = item.querySelector('.truncate') ? item.querySelector('.truncate').textContent.toLowerCase() : '';
+            
+            const matchesSearch = groupName.includes(searchTerm) || 
+                                 lastMessage.includes(searchTerm);
+            
+            let matchesFilter = true;
+            if (filterValue) {
+                matchesFilter = item.innerHTML.includes(`type="${filterValue}"`);
+            }
+            
+            if (matchesSearch && matchesFilter) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+    
+    searchInput.addEventListener('input', filterGroupChats);
+    filterSelect.addEventListener('change', filterGroupChats);
+    
+    // Add User Modal
+    function showAddUserModal(groupId) {
+        const modal = document.getElementById('add-user-modal');
+        const form = document.getElementById('add-user-form');
+        
+        form.action = `/group-chat/${groupId}/add-user/`;
+        modal.classList.remove('hidden');
+    }
+    
+    function hideAddUserModal() {
+        const modal = document.getElementById('add-user-modal');
+        modal.classList.add('hidden');
+    }
+    
+    // Auto-refresh unread count every 30 seconds
+    setInterval(function() {
+        fetch('/ajax/group-chat/unread-count/')
+            .then(response => response.json())
+            .then(data => {
+                // Update unread counts in the UI
+                // This would be implemented in a real app
+            })
+            .catch(console.error);
+    }, 30000);
+</script>
+{% endblock %} 

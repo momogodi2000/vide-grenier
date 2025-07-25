@@ -3,7 +3,15 @@
 Celery tasks for background processing including scheduled newsletters
 """
 
-from celery import shared_task
+# Make celery optional to avoid dependency issues during development
+try:
+    from celery import shared_task
+    CELERY_AVAILABLE = True
+except ImportError:
+    # Fallback decorator when celery is not available
+    CELERY_AVAILABLE = False
+    def shared_task(func):
+        return func
 from django.utils import timezone
 from django.core.mail import send_mail, send_mass_mail
 from django.template.loader import render_to_string

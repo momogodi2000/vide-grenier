@@ -20,6 +20,17 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.onrender.com', 'vide-grenier-kamer.onrender.com']
 
+# VGK Specific Settings
+VGK_SETTINGS = {
+    'SUPPORTED_CITIES': ['DOUALA', 'YAOUNDE'],
+    'DEFAULT_CURRENCY': 'FCFA',
+    'DELIVERY_FEE': 2000,
+    'ADMIN_WHATSAPP': '237694638412',
+    'COMPANY_NAME': 'Vidé-Grenier Kamer',
+    'COMPANY_EMAIL': 'support@videgrenier-kamer.com',
+    'COMPANY_PHONE': '+237 694 63 84 12'
+}
+
 # Application definition
 DJANGO_APPS = [
     'django.contrib.admin',

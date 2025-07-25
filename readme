@@ -1,211 +1,169 @@
 
-# README.md
-# Vidé-Grenier Kamer
+# Vidé-Grenier Kamer (VGK)
 
-Marketplace camerounaise de seconde main - Version 2.5
+Une plateforme de marketplace complète pour l'achat et la vente de produits d'occasion au Cameroun.
 
-## Présentation du Projet
+## Fonctionnalités principales
 
-Vidé-Grenier Kamer est une marketplace moderne dédiée à l'achat et la vente de produits d'occasion au Cameroun. Elle propose une expérience complète pour les clients, les administrateurs et le staff des points de retrait, avec des fonctionnalités avancées telles que le paiement mobile, le chat en temps réel, la gestion des stocks physiques, et un système de fidélité.
+### Utilisateurs CLIENT (Utilisateurs principaux du marketplace)
 
-### Types d'utilisateurs
-- **Client** : Peut acheter, vendre, laisser des avis, discuter avec les vendeurs, gérer ses commandes et favoris.
-- **Administrateur** : Gère la plateforme, les utilisateurs, les produits, les points de retrait, les stocks administratifs et supervise les opérations.
-- **Staff Point de Retrait** : Gère les commandes et le stock physique dans les points de retrait, traite les retraits et assure le suivi logistique.
+✅ **Gestion des produits**
+- Création/édition/suppression de produits avec images multiples
+- Gestion des statuts de produits (BROUILLON, ACTIF, VENDU, etc.)
+- Organisation par catégories
+- Recherche et filtrage de produits (prix, lieu, état)
+- Analytique de produits (suivi des vues, likes)
 
-### Principales fonctionnalités
-- Authentification sécurisée (2FA, vérification email/téléphone)
-- Gestion complète des produits (images multiples, conditions, statuts)
-- Paiement mobile (Campay, Orange Money, MTN)
-- Commandes et retraits physiques
-- Chat temps réel entre acheteurs et vendeurs
-- Système d'avis et évaluations
-- Notifications temps réel et alertes
-- Système de fidélité et niveaux (Bronze, Argent, Or, Platine)
-- Analytics et rapports business
-- PWA et support offline
-- Gestion des stocks administratifs
-- Recherche avancée et alertes personnalisées
+✅ **Gestion des commandes**
+- Passer des commandes avec plusieurs méthodes de paiement
+- Suivi de commande (flux PENDING → DELIVERED)
+- Commande anonyme/visiteur
+- Historique des commandes et mises à jour de statut
+- Génération de code de retrait pour la collecte en point
 
-### Architecture technique
-- **Backend** : Django 4.2, Django REST Framework
-- **Frontend** : Django Templates, Tailwind CSS
-- **Base de données** : PostgreSQL (prod) / SQLite (dev)
-- **Cache** : Redis
-- **Temps réel** : Django Channels
-- **Déploiement** : Render, Docker
+✅ **Communication**
+- Chat en temps réel avec acheteurs/vendeurs
+- Historique des messages
+- Chat de groupe entre utilisateurs (admin, clients, staff)
+- Discussion sur les prix et négociations
+- Système de notifications (email, SMS, in-app)
 
-### Structure du code
-Le projet est organisé en modules clairs :
-- `backend/models.py` : Modèles principaux (User, Product, Order, Review, Chat, Notification, etc.)
-- `backend/views.py` : Logique métier et API
-- `backend/templates/` : Pages HTML pour chaque dashboard et fonctionnalité
-- `backend/static/` : Fichiers statiques (CSS, JS, images)
-- `vide/settings/` : Configuration Django
+✅ **Fonctionnalités personnelles**
+- Gestion des favoris/liste de souhaits
+- Comparaison de produits
+- Recherches sauvegardées
+- Tableau de bord personnel avec statistiques
+- Gestion de profil avec vérification
 
-### Logique métier
-- Les utilisateurs sont typés (`user_type`) et disposent de rôles et permissions adaptés.
-- Les produits peuvent être créés par les clients ou ajoutés au stock admin.
-- Les commandes sont suivies du paiement à la livraison/retrait.
-- Les points de retrait sont gérés par le staff, avec inventaire et suivi des retraits.
-- Les avis et évaluations enrichissent la confiance et la transparence.
-- Les notifications et alertes assurent la réactivité de la plateforme.
+✅ **Gamification**
+- Système de points de fidélité (Bronze, Argent, Or, Platine)
+- Score de confiance basé sur les avis
+- Système d'avis et de notation
 
-### Démos et Dashboards
-- **Client Dashboard** : Suivi des achats, favoris, revenus, produits récents, commandes, notifications, recommandations, fidélité.
-- **Admin Dashboard** : Gestion globale, analytics, utilisateurs, produits, stocks, points de retrait.
-- **Staff Dashboard** : Gestion des commandes à retirer, inventaire, messages, alertes, statistiques du point.
+✅ **Paiement et livraison**
+- Méthodes de paiement multiples (Campay, Orange Money, MTN, Cash à la livraison)
+- Sélection de point de retrait
+- Options de livraison à domicile
+- Calcul de commission
 
-### Pour aller plus loin
-Consultez la documentation, les commandes de gestion, et les exemples d'utilisateurs de test pour explorer toutes les fonctionnalités.
+### Utilisateurs ADMIN (Administrateurs de la plateforme)
 
-## 🚀 Installation et Configuration
+✅ **Gestion des utilisateurs**
+- Opérations CRUD complètes pour les utilisateurs
+- Gestion de la vérification et du statut des utilisateurs
+- Actions en masse (bannir, activer, supprimer)
+- Gestion des scores de confiance et points de fidélité
+
+✅ **Gestion des produits**
+- Création et gestion de stock admin
+- Flux d'approbation/rejet de produits
+- Gestion des catégories
+- Suivi d'inventaire avec SKUs
+
+✅ **Analytique et rapports**
+- Analytique des ventes avec graphiques
+- Métriques d'engagement utilisateur
+- Suivi des revenus
+- Tableaux de bord de performance
+
+✅ **Administration système**
+- Gestion des newsletters et envoi en masse
+- Gestion du système de notifications
+- Configuration du site
+- Gestion des modèles d'emails
+
+✅ **Gestion des emplacements**
+- Gestion des points de retrait
+- Affectation du personnel aux emplacements
+- Surveillance de la capacité
+
+### Utilisateurs STAFF (Opérateurs de points de retrait)
+
+✅ **Traitement des commandes**
+- Gestion des commandes de retrait
+- Mises à jour de statut des commandes
+- Interface de service client
+
+✅ **Opérations d'inventaire**
+- Réception et organisation des stocks
+- Gestion d'inventaire physique
+- Surveillance de la capacité des points de retrait
+
+## Nouvelles fonctionnalités
+
+### Système de chat avancé
+- **Chat privé** entre acheteurs et vendeurs lié aux produits
+- **Chat de groupe** entre administrateurs, clients et staff
+- Types de groupes prédéfinis (Admin-Client, Admin-Staff, Client-Staff, Général, Support)
+- Partage d'images et de fichiers dans les conversations de groupe
+- Notifications en temps réel pour les nouveaux messages
+- Gestion des participants (ajout/retrait) dans les groupes
+- Interface utilisateur intuitive et responsive
+
+## Technologies utilisées
+
+- **Backend**: Django, Python
+- **Frontend**: HTML, CSS (Tailwind CSS), JavaScript
+- **Base de données**: PostgreSQL
+- **Paiement**: Intégration avec Campay, Orange Money, MTN Money
+- **Déploiement**: Docker, Render
+
+## Installation et configuration
 
 ### Prérequis
-- Python 3.11+
-- PostgreSQL 15+ (production)
-- Redis 7+ (production)
-- Git
+- Python 3.8+
+- PostgreSQL
+- Node.js et npm (pour Tailwind CSS)
 
-### Installation Rapide
+### Installation
 
-1. **Cloner le projet**
+1. Cloner le dépôt
 ```bash
-git clone <repo-url>
-cd vide-grenier-kamer
+git clone https://github.com/votre-utilisateur/vide-grenier.git
+cd vide-grenier
 ```
 
-2. **Créer l'environnement virtuel**
+2. Créer et activer un environnement virtuel
 ```bash
-python -m venv vide_grenier_env
-source vide_grenier_env/bin/activate  # Linux/Mac
-# ou
-vide_grenier_env\Scripts\activate  # Windows
+python -m venv venv
+source venv/bin/activate  # Sur Windows: venv\Scripts\activate
 ```
 
-3. **Installer les dépendances**
+3. Installer les dépendances
 ```bash
 pip install -r requirements.txt
+npm install
 ```
 
-4. **Configuration**
+4. Configurer les variables d'environnement
 ```bash
-cp .env.example .env
-# Modifier .env avec vos paramètres
+cp env_config.example .env
+# Éditer le fichier .env avec vos configurations
 ```
 
-5. **Setup complet automatique**
+5. Appliquer les migrations
 ```bash
-python manage.py setup_vgk
-```
-
-6. **Démarrer le serveur**
-```bash
-python manage.py runserver
-```
-
-### Utilisateurs de Test
-
-**Administrateurs:**
-- admin@vgk.com / AdminVGK2025!
-- superadmin@vgk.com / AdminVGK2025!
-
-**Clients de test:**
-- alice.douala@gmail.com / TestVGK2025!
-- bob.yaounde@gmail.com / TestVGK2025!
-- claire.bafoussam@gmail.com / TestVGK2025!
-- david.garoua@gmail.com / TestVGK2025!
-- emma.bamenda@gmail.com / TestVGK2025!
-
-## 📚 Documentation
-
-### URLs Principales
-- 🏠 Accueil: `/`
-- 🔐 Connexion: `/auth/login/`
-- 📊 Dashboard: `/dashboard/`
-- 🛍️ Produits: `/products/`
-- ⚙️ Admin: `/admin/`
-
-### Commandes Utiles
-```bash
-# Créer des utilisateurs de test
-python manage.py create_test_users --with-demo-data
-
-# Peupler les catégories
-python manage.py populate_categories
-
-# Setup complet
-python manage.py setup_vgk
-
-# Migrations
-python manage.py makemigrations
 python manage.py migrate
-
-# Collecter les statiques
-python manage.py collectstatic
 ```
 
-## 🏗️ Architecture
-
-### Structure du Projet
-```
-vide/
-├── manage.py
-├── requirements.txt
-├── .env
-├── vide/
-│   ├── settings/
-│   ├── urls.py
-│   ├── wsgi.py
-│   └── asgi.py
-└── backend/
-    ├── models/
-    ├── views/
-    ├── templates/
-    ├── static/
-    └── management/
+6. Créer un superutilisateur
+```bash
+python manage.py createsuperuser
 ```
 
-### Technologies
-- **Backend**: Django 4.2 + DRF
-- **Base de données**: PostgreSQL / SQLite
-- **Cache**: Redis
-- **Frontend**: Django Templates + Tailwind CSS
-- **Real-time**: Django Channels
-- **Deployment**: Render
+7. Lancer le serveur de développement
+```bash
+python dev.py
+```
 
-## 🎯 Fonctionnalités
+## Déploiement
 
-- ✅ Authentification complète avec 2FA
-- ✅ Gestion produits avec images multiples
-- ✅ Système de paiement mobile (Campay, Orange Money, MTN)
-- ✅ Chat temps réel entre acheteurs/vendeurs
-- ✅ Système d'avis et évaluations
-- ✅ Points de retrait physiques
-- ✅ Dashboard admin complet
-- ✅ PWA avec support offline
-- ✅ Notifications temps réel
-- ✅ Système de fidélité
-- ✅ Analytics intégrés
+Le projet peut être déployé avec Docker en utilisant le fichier docker-compose.yml inclus.
 
-## 🚀 Déploiement
-
-### Render (Production)
-1. Connecter le repository GitHub
-2. Configurer les variables d'environnement
-3. Déployer automatiquement
-
-### Docker (Développement)
 ```bash
 docker-compose up -d
 ```
 
-## 📞 Support
+## Licence
 
-Pour toute question ou problème:
-- 📧 Email: support@videgrenier-kamer.com
-- 📱 WhatsApp: +237 694 63 84 12
-
----
-
-**Vidé-Grenier Kamer** - *Vendez, Achetez, Économisez – Simplicité et Sécurité*
+Ce projet est sous licence propriétaire. Tous droits réservés.

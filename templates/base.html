@@ -224,6 +224,67 @@
     </div>
     {% endif %}
     
+    <!-- Visitor Cart Widget (for non-authenticated users) -->
+    {% if not user.is_authenticated %}
+    <div id="visitor-cart-widget" class="fixed top-1/2 right-4 transform -translate-y-1/2 z-40 hidden">
+        <div class="bg-white rounded-full shadow-lg border-2 border-green-600 p-3 hover:shadow-xl transition-all cursor-pointer" onclick="openVisitorCartModal()">
+            <div class="relative">
+                <i data-lucide="shopping-cart" class="w-6 h-6 text-green-600"></i>
+                <div id="visitor-cart-badge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold" style="display: none;">
+                    0
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Visitor Cart Modal -->
+    <div id="visitor-cart-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-96 overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold">Mon panier</h3>
+                        <button onclick="closeVisitorCartModal()" class="text-gray-400 hover:text-gray-600">
+                            <i data-lucide="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="visitor-cart-content">
+                        <div class="text-center py-8">
+                            <i data-lucide="shopping-cart" class="w-12 h-12 text-gray-400 mx-auto mb-4"></i>
+                            <p class="text-gray-600">Votre panier est vide</p>
+                        </div>
+                    </div>
+                    
+                    <div id="visitor-cart-actions" class="mt-6 space-y-3" style="display: none;">
+                        <div class="flex justify-between items-center font-semibold text-lg">
+                            <span>Total:</span>
+                            <span id="visitor-cart-total" class="text-green-600">0 FCFA</span>
+                        </div>
+                        
+                        <!-- WhatsApp Contact Option -->
+                        <button onclick="contactViaWhatsApp(); closeVisitorCartModal();" 
+                                class="w-full bg-green-500 text-white py-3 px-4 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center space-x-2">
+                            <i data-lucide="message-circle" class="w-5 h-5"></i>
+                            <span>Commander par WhatsApp</span>
+                        </button>
+                        
+                        <a href="/visitor/cart/" 
+                           class="w-full bg-orange-500 text-white py-3 px-4 rounded-lg hover:bg-orange-600 transition-colors text-center block">
+                            Voir le panier complet
+                        </a>
+                        <a href="/visitor/cart/checkout/" 
+                           class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors text-center block flex items-center justify-center space-x-2">
+                            <i data-lucide="credit-card" class="w-4 h-4"></i>
+                            <span>Payer par Mobile Money</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
     <!-- Main Content -->
     <main id="main-content" class="min-h-screen">
         {% block content %}
@@ -278,6 +339,9 @@
             
             // Back to top functionality
             const backToTopBtn = document.getElementById('back-to-top');
+            
+            // Initialize visitor cart widget
+            initVisitorCartWidget();
             window.addEventListener('scroll', () => {
                 if (window.pageYOffset > 300) {
                     backToTopBtn.classList.remove('translate-y-16', 'opacity-0');
@@ -289,6 +353,150 @@
             backToTopBtn.addEventListener('click', () => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
+        });
+        
+        // Visitor Cart Widget Functions
+        function initVisitorCartWidget() {
+            updateVisitorCartWidget();
+            // Update cart widget every 30 seconds
+            setInterval(updateVisitorCartWidget, 30000);
+        }
+        
+        async function updateVisitorCartWidget() {
+            if (document.querySelector('#visitor-cart-widget')) {
+                try {
+                    const response = await fetch('/visitor/cart/status/');
+                    const data = await response.json();
+                    
+                    const widget = document.getElementById('visitor-cart-widget');
+                    const badge = document.getElementById('visitor-cart-badge');
+                    
+                    if (data.items && data.items > 0) {
+                        widget.classList.remove('hidden');
+                        badge.style.display = 'flex';
+                        badge.textContent = data.items;
+                    } else {
+                        widget.classList.add('hidden');
+                        badge.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.log('Cart widget update error:', error);
+                }
+            }
+        }
+        
+        function openVisitorCartModal() {
+            document.getElementById('visitor-cart-modal').classList.remove('hidden');
+            loadVisitorCartContent();
+        }
+        
+        function closeVisitorCartModal() {
+            document.getElementById('visitor-cart-modal').classList.add('hidden');
+        }
+        
+        async function loadVisitorCartContent() {
+            try {
+                const response = await fetch('/visitor/cart/preview/');
+                const data = await response.json();
+                
+                const content = document.getElementById('visitor-cart-content');
+                const actions = document.getElementById('visitor-cart-actions');
+                const total = document.getElementById('visitor-cart-total');
+                
+                if (data.items && data.items.length > 0) {
+                    content.innerHTML = data.items.map(item => `
+                        <div class="flex items-center space-x-3 py-2 border-b">
+                            <div class="w-12 h-12 bg-gray-200 rounded"></div>
+                            <div class="flex-1">
+                                <h4 class="font-medium">${item.title}</h4>
+                                <p class="text-sm text-gray-600">Qté: ${item.quantity}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-medium">${item.total} FCFA</p>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    actions.style.display = 'block';
+                    total.textContent = data.total + ' FCFA';
+                } else {
+                    content.innerHTML = `
+                        <div class="text-center py-8">
+                            <i data-lucide="shopping-cart" class="w-12 h-12 text-gray-400 mx-auto mb-4"></i>
+                            <p class="text-gray-600">Votre panier est vide</p>
+                        </div>
+                    `;
+                    actions.style.display = 'none';
+                }
+                
+                // Re-initialize icons for new content
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                console.log('Error loading cart content:', error);
+            }
+        }
+        
+        // WhatsApp contact function for cart items
+        async function contactViaWhatsApp() {
+            try {
+                // Get cart data via AJAX
+                const response = await fetch('/visitor/cart/preview/', {
+                    method: 'GET'
+                });
+                
+                const cartData = await response.json();
+                
+                if (!cartData.success || cartData.items.length === 0) {
+                    alert('Votre panier est vide');
+                    return;
+                }
+                
+                // Construct WhatsApp message
+                let message = "🛒 *Nouvelle demande de commande - Vidé-Grenier Kamer*\n\n";
+                message += "📦 *Détails de la commande:*\n";
+                
+                cartData.items.forEach((item, index) => {
+                    message += `${index + 1}. ${item.product_title}\n`;
+                    message += `   Quantité: ${item.quantity}\n`;
+                    message += `   Prix unitaire: ${item.product_price.toLocaleString()} FCFA\n`;
+                    message += `   Sous-total: ${item.total_price.toLocaleString()} FCFA\n\n`;
+                });
+                
+                message += `💰 *Total produits: ${cartData.total_amount.toLocaleString()} FCFA*\n`;
+                message += `🚚 *Frais de livraison: 2,000 FCFA*\n`;
+                message += `💳 *TOTAL GÉNÉRAL: ${(cartData.total_amount + 2000).toLocaleString()} FCFA*\n\n`;
+                
+                message += "👤 *Informations client:*\n";
+                message += "Nom: _À remplir_\n";
+                message += "Téléphone: _À remplir_\n";
+                message += "Adresse de livraison: _À remplir_\n\n";
+                
+                message += "📝 *Commentaires:*\n";
+                message += "_Ajoutez vos commentaires ici si nécessaire..._\n\n";
+                
+                message += "✅ Merci de confirmer cette commande pour procéder à la livraison.";
+                
+                // Encode message for URL
+                const encodedMessage = encodeURIComponent(message);
+                const whatsappNumber = "237694638412"; // Admin WhatsApp number from settings
+                const whatsappURL = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+                
+                // Open WhatsApp
+                window.open(whatsappURL, '_blank');
+                
+            } catch (error) {
+                console.error('Erreur WhatsApp:', error);
+                alert('Erreur lors de la génération du message WhatsApp');
+            }
+        }
+
+        // Close cart modal when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'visitor-cart-modal') {
+                closeVisitorCartModal();
+            }
         });
     </script>
     

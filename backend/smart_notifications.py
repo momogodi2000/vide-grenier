@@ -8,7 +8,15 @@ from datetime import datetime, timedelta
 import json
 import logging
 from typing import Dict, List, Optional, Tuple
-from celery import shared_task
+# Make celery optional to avoid dependency issues during development
+try:
+    from celery import shared_task
+    CELERY_AVAILABLE = True
+except ImportError:
+    # Fallback decorator when celery is not available
+    CELERY_AVAILABLE = False
+    def shared_task(func):
+        return func
 import requests
 
 from .models import User, Product, Order

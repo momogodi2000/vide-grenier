@@ -1,0 +1,529 @@
+{% extends "backend/base/admin_base.html" %}
+{% load static %}
+
+{% block title %}Groupe: {{ group_chat.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.message-bubble {
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.message-user {
+    margin-left: auto;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border-radius: 18px 18px 6px 18px;
+}
+
+.message-other {
+    margin-right: auto;
+    background: #f3f4f6;
+    color: #374151;
+    border-radius: 18px 18px 18px 6px;
+}
+
+.message-system {
+    margin: 0 auto;
+    background: #e5e7eb;
+    color: #6b7280;
+    border-radius: 18px;
+    max-width: 70%;
+    text-align: center;
+    font-style: italic;
+    padding: 0.5rem 1rem;
+}
+
+.chat-container {
+    height: calc(100vh - 200px);
+    min-height: 400px;
+}
+
+.messages-container {
+    height: calc(100% - 80px);
+    overflow-y: auto;
+    scroll-behavior: smooth;
+}
+
+.input-container {
+    height: 80px;
+}
+
+.participant-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message-item {
+    animation: messageSlideIn 0.3s ease-out;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto p-4">
+    <!-- Chat Header -->
+    <div class="bg-white rounded-t-2xl shadow-lg border-b border-gray-200 p-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <a href="{% url 'backend:group_chat_list' %}" 
+                   class="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
+                    <i data-lucide="arrow-left" class="w-5 h-5 text-gray-600"></i>
+                </a>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                        {% if group_chat.type == 'ADMIN_CLIENT' %}
+                            <i data-lucide="headphones" class="w-6 h-6 text-white"></i>
+                        {% elif group_chat.type == 'ADMIN_STAFF' %}
+                            <i data-lucide="briefcase" class="w-6 h-6 text-white"></i>
+                        {% elif group_chat.type == 'CLIENT_STAFF' %}
+                            <i data-lucide="shopping-bag" class="w-6 h-6 text-white"></i>
+                        {% elif group_chat.type == 'SUPPORT' %}
+                            <i data-lucide="help-circle" class="w-6 h-6 text-white"></i>
+                        {% else %}
+                            <i data-lucide="users" class="w-6 h-6 text-white"></i>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900">{{ group_chat.name }}</h1>
+                        <div class="flex items-center space-x-4 text-sm text-gray-500">
+                            <span class="flex items-center">
+                                <i data-lucide="users" class="w-4 h-4 mr-1"></i>
+                                {{ participants.count }} participants
+                            </span>
+                            <span class="flex items-center">
+                                <i data-lucide="clock" class="w-4 h-4 mr-1"></i>
+                                {{ group_chat.updated_at|timesince }} ago
+                            </span>
+                            <span class="flex items-center">
+                                <i data-lucide="tag" class="w-4 h-4 mr-1"></i>
+                                {{ group_chat.get_type_display }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                {% if is_admin %}
+                    <button type="button" 
+                            onclick="showAddUserModal()"
+                            class="bg-blue-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600 transition-colors">
+                        <i data-lucide="user-plus" class="w-4 h-4 inline mr-2"></i>
+                        Ajouter
+                    </button>
+                {% endif %}
+                
+                <form method="post" action="{% url 'backend:group_chat_leave' pk=group_chat.id %}" 
+                      onsubmit="return confirm('Êtes-vous sûr de vouloir quitter ce groupe ?');">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="bg-red-500 text-white px-4 py-2 rounded-xl hover:bg-red-600 transition-colors">
+                        <i data-lucide="log-out" class="w-4 h-4 inline mr-2"></i>
+                        Quitter
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Container -->
+    <div class="bg-white shadow-lg chat-container">
+        <!-- Messages Area -->
+        <div class="messages-container p-6 space-y-4" id="messages-container">
+            {% for message in messages %}
+                {% if message.message_type == 'SYSTEM' %}
+                    <div class="message-item message-system">
+                        <p class="text-sm">{{ message.content }}</p>
+                        <span class="text-xs opacity-70">{{ message.created_at|date:"H:i" }}</span>
+                    </div>
+                {% else %}
+                    <div class="message-item flex items-start space-x-3 {% if message.sender == request.user %}justify-end{% endif %}">
+                        {% if message.sender != request.user %}
+                            <div class="participant-avatar bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0">
+                                <span>{{ message.sender.first_name|first|upper }}{{ message.sender.last_name|first|upper }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="message-bubble p-4 {% if message.sender == request.user %}message-user{% else %}message-other{% endif %}">
+                            {% if message.sender != request.user %}
+                                <p class="text-xs font-semibold mb-1">{{ message.sender.get_full_name }}</p>
+                            {% endif %}
+                            
+                            {% if message.message_type == 'IMAGE' and message.image %}
+                                <img src="{{ message.image.url }}" alt="Image partagée" class="rounded-lg mb-2 max-w-full">
+                            {% endif %}
+                            
+                            {% if message.message_type == 'FILE' and message.file %}
+                                <div class="bg-gray-100 rounded-lg p-2 mb-2 flex items-center">
+                                    <i data-lucide="file" class="w-4 h-4 mr-2 text-blue-500"></i>
+                                    <a href="{{ message.file.url }}" target="_blank" class="text-blue-500 hover:underline">
+                                        {{ message.file.name|slice:"14:" }}
+                                    </a>
+                                </div>
+                            {% endif %}
+                            
+                            <p class="text-sm">{{ message.content }}</p>
+                            
+                            <div class="flex items-center justify-between mt-2">
+                                <span class="text-xs opacity-70">{{ message.created_at|date:"H:i" }}</span>
+                                
+                                {% if message.sender == request.user %}
+                                    <div class="flex items-center space-x-1">
+                                        {% if message.is_read_by_all %}
+                                            <i data-lucide="check-check" class="w-3 h-3 opacity-70"></i>
+                                            <span class="text-xs opacity-70">Tous</span>
+                                        {% else %}
+                                            <i data-lucide="check" class="w-3 h-3 opacity-70"></i>
+                                            <span class="text-xs opacity-70">{{ message.read_by.count }}</span>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if message.sender == request.user %}
+                            <div class="participant-avatar bg-gradient-to-br from-green-500 to-blue-600 flex-shrink-0">
+                                <span>{{ message.sender.first_name|first|upper }}{{ message.sender.last_name|first|upper }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% empty %}
+                <div class="text-center py-12">
+                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="message-circle" class="w-8 h-8 text-gray-400"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucun message</h3>
+                    <p class="text-gray-500">Commencez la conversation en envoyant un message</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Message Input -->
+        <div class="input-container border-t border-gray-200 p-4">
+            <form method="post" class="flex items-end space-x-3" id="message-form" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="message_type" value="TEXT" id="message-type-input">
+                
+                <div class="flex-1">
+                    <div class="relative">
+                        <textarea name="content" rows="2" placeholder="Tapez votre message..." required
+                            class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                            id="message-input"></textarea>
+                        <div class="absolute right-3 bottom-3 text-xs text-gray-400" id="char-counter">
+                            <span id="char-count">0</span>/500
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <div class="relative" id="attachment-dropdown">
+                        <button type="button" 
+                                class="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+                                title="Pièce jointe"
+                                onclick="toggleAttachmentMenu()">
+                            <i data-lucide="paperclip" class="w-5 h-5 text-gray-600"></i>
+                        </button>
+                        
+                        <div class="absolute bottom-full mb-2 right-0 bg-white shadow-lg rounded-lg py-2 hidden" id="attachment-menu">
+                            <button type="button" class="flex items-center px-4 py-2 hover:bg-gray-100 w-full text-left" onclick="selectMessageType('IMAGE')">
+                                <i data-lucide="image" class="w-4 h-4 mr-2 text-blue-500"></i>
+                                <span>Image</span>
+                            </button>
+                            <button type="button" class="flex items-center px-4 py-2 hover:bg-gray-100 w-full text-left" onclick="selectMessageType('FILE')">
+                                <i data-lucide="file" class="w-4 h-4 mr-2 text-green-500"></i>
+                                <span>Fichier</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" 
+                            class="w-12 h-12 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-full flex items-center justify-center hover:from-green-700 hover:to-blue-700 transition-all transform hover:scale-105"
+                            id="send-button">
+                        <i data-lucide="send" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                
+                <div class="hidden" id="image-upload-container">
+                    <input type="file" name="image" accept="image/*" id="image-input">
+                </div>
+                
+                <div class="hidden" id="file-upload-container">
+                    <input type="file" name="file" id="file-input">
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Group Info Sidebar -->
+    <div class="bg-white rounded-b-2xl shadow-lg p-6 border-t border-gray-200">
+        <div class="grid md:grid-cols-3 gap-6">
+            <!-- Group Details -->
+            <div>
+                <h3 class="font-semibold text-gray-900 mb-3">
+                    <i data-lucide="info" class="w-4 h-4 inline mr-2 text-blue-600"></i>
+                    Détails du groupe
+                </h3>
+                <div class="space-y-2 text-sm">
+                    <p class="text-gray-600">{{ group_chat.description|default:"Pas de description" }}</p>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Créé par:</span>
+                        <span class="font-semibold">{{ group_chat.creator.get_full_name }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Créé le:</span>
+                        <span>{{ group_chat.created_at|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Type:</span>
+                        <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                            {{ group_chat.get_type_display }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Participants -->
+            <div class="col-span-2">
+                <h3 class="font-semibold text-gray-900 mb-3">
+                    <i data-lucide="users" class="w-4 h-4 inline mr-2 text-purple-600"></i>
+                    Participants ({{ participants.count }})
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {% for participant in participants %}
+                        <div class="flex items-center space-x-2 p-2 border border-gray-200 rounded-lg">
+                            <div class="participant-avatar bg-gradient-to-br {% if participant == group_chat.creator %}from-yellow-500 to-orange-600{% else %}from-blue-500 to-purple-600{% endif %}">
+                                <span>{{ participant.first_name|first|upper }}{{ participant.last_name|first|upper }}</span>
+                            </div>
+                            <div class="overflow-hidden">
+                                <p class="font-medium text-sm truncate">{{ participant.get_full_name }}</p>
+                                <p class="text-xs text-gray-500 truncate">{{ participant.email }}</p>
+                            </div>
+                            {% if participant == group_chat.creator %}
+                                <span class="ml-auto">
+                                    <i data-lucide="crown" class="w-4 h-4 text-yellow-500"></i>
+                                </span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add User Modal (hidden by default) -->
+<div id="add-user-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">Ajouter des participants</h3>
+            <button type="button" onclick="hideAddUserModal()" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        
+        <form method="post" action="{% url 'backend:group_chat_add_user' pk=group_chat.id %}">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Sélectionner un utilisateur</label>
+                <select name="user_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    {% for user in potential_users %}
+                        <option value="{{ user.id }}">{{ user.get_full_name }} ({{ user.email }})</option>
+                    {% empty %}
+                        <option disabled>Aucun utilisateur disponible</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="hideAddUserModal()" 
+                        class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
+                    Annuler
+                </button>
+                <button type="submit" 
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    Ajouter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Image Preview Modal -->
+<div id="image-preview-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+    <div class="max-w-4xl w-full p-4">
+        <div class="flex justify-end mb-2">
+            <button type="button" onclick="hideImagePreview()" class="text-white hover:text-gray-300">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        <img id="image-preview" src="" alt="Image preview" class="max-w-full max-h-[80vh] mx-auto rounded-lg">
+    </div>
+</div>
+
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script>
+    lucide.createIcons();
+    
+    const messagesContainer = document.getElementById('messages-container');
+    const messageInput = document.getElementById('message-input');
+    const charCount = document.getElementById('char-count');
+    const sendButton = document.getElementById('send-button');
+    const messageForm = document.getElementById('message-form');
+    const messageTypeInput = document.getElementById('message-type-input');
+    const imageInput = document.getElementById('image-input');
+    const fileInput = document.getElementById('file-input');
+    
+    // Auto-scroll to bottom
+    function scrollToBottom() {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    // Character counter
+    messageInput.addEventListener('input', function() {
+        const length = this.value.length;
+        charCount.textContent = length;
+        
+        if (length > 500) {
+            charCount.parentElement.classList.add('text-red-500');
+            sendButton.disabled = true;
+        } else {
+            charCount.parentElement.classList.remove('text-red-500');
+            sendButton.disabled = false;
+        }
+    });
+    
+    // Auto-resize textarea
+    messageInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+    
+    // Send message with Enter (but not Shift+Enter)
+    messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            messageForm.submit();
+        }
+    });
+    
+    // Focus input on load
+    messageInput.focus();
+    
+    // Scroll to bottom on load
+    scrollToBottom();
+    
+    // Attachment menu
+    function toggleAttachmentMenu() {
+        const menu = document.getElementById('attachment-menu');
+        menu.classList.toggle('hidden');
+    }
+    
+    function selectMessageType(type) {
+        messageTypeInput.value = type;
+        
+        // Hide attachment menu
+        document.getElementById('attachment-menu').classList.add('hidden');
+        
+        if (type === 'IMAGE') {
+            imageInput.click();
+        } else if (type === 'FILE') {
+            fileInput.click();
+        }
+    }
+    
+    // Handle file selection
+    imageInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            const fileName = this.files[0].name;
+            messageInput.value = `Image: ${fileName}`;
+            messageInput.disabled = true;
+        }
+    });
+    
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            const fileName = this.files[0].name;
+            messageInput.value = `Fichier: ${fileName}`;
+            messageInput.disabled = true;
+        }
+    });
+    
+    // Add User Modal
+    function showAddUserModal() {
+        const modal = document.getElementById('add-user-modal');
+        modal.classList.remove('hidden');
+    }
+    
+    function hideAddUserModal() {
+        const modal = document.getElementById('add-user-modal');
+        modal.classList.add('hidden');
+    }
+    
+    // Image Preview
+    function showImagePreview(imageUrl) {
+        const modal = document.getElementById('image-preview-modal');
+        const preview = document.getElementById('image-preview');
+        
+        preview.src = imageUrl;
+        modal.classList.remove('hidden');
+    }
+    
+    function hideImagePreview() {
+        const modal = document.getElementById('image-preview-modal');
+        modal.classList.add('hidden');
+    }
+    
+    // Add click event to all images in messages
+    document.querySelectorAll('.message-bubble img').forEach(img => {
+        img.addEventListener('click', function() {
+            showImagePreview(this.src);
+        });
+    });
+    
+    // Close modals when clicking outside
+    window.addEventListener('click', function(e) {
+        const attachmentMenu = document.getElementById('attachment-menu');
+        const attachmentDropdown = document.getElementById('attachment-dropdown');
+        
+        if (!attachmentDropdown.contains(e.target)) {
+            attachmentMenu.classList.add('hidden');
+        }
+    });
+    
+    // Auto-refresh messages every 30 seconds
+    setInterval(function() {
+        fetch(`/ajax/group-chat/messages/{{ group_chat.id }}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.messages.length > 0) {
+                    // Implementation would update messages in a real app
+                    // For now, we'd reload the page if there are new messages
+                }
+            })
+            .catch(console.error);
+    }, 30000);
+</script>
+{% endblock %} 

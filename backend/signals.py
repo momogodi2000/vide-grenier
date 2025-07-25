@@ -35,10 +35,17 @@ def order_status_notifications(sender, instance, created, **kwargs):
     if created:
         # Notifier le vendeur d'une nouvelle commande
         seller = instance.product.seller
+        
+        # Handle visitor orders (buyer can be None)
+        if instance.buyer:
+            buyer_name = instance.buyer.get_full_name()
+        else:
+            buyer_name = instance.visitor_name or "Visiteur anonyme"
+        
         create_system_notification(
             user=seller,
             title='Nouvelle commande reçue!',
-            message=f'Vous avez reçu une commande pour "{instance.product.title}" de {instance.buyer.get_full_name()}',
+            message=f'Vous avez reçu une commande pour "{instance.product.title}" de {buyer_name}',
             notification_type='ORDER',
             data={'order_id': str(instance.id)}
         )

@@ -86,11 +86,12 @@
             
             {% if user.is_authenticated %}
             <div class="mt-8">
-                <a href="{% url 'backend:review_create' %}" 
+                <!-- Change to just a button that opens a modal to select an order -->
+                <button onclick="openOrderSelectionModal()" 
                    class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-2xl hover:from-green-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg font-semibold text-lg">
                     <i data-lucide="plus" class="w-5 h-5 mr-2"></i>
                     Partager mon expérience
-                </a>
+                </button>
             </div>
             {% endif %}
         </div>
@@ -182,11 +183,93 @@
 
         <!-- Distribution des notes -->
         <div class="bg-white rounded-3xl shadow-2xl p-8 mb-12">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                <i data-lucide="bar-chart-3" class="w-6 h-6 mr-3 text-blue-600"></i>
-                Distribution des notes
-            </h2>
-            
+
+<!-- Order Selection Modal -->
+<div id="orderSelectionModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-gray-900">Sélectionner une commande</h3>
+            <button onclick="closeOrderSelectionModal()" class="text-gray-500 hover:text-gray-700">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        <p class="text-gray-600 mb-4">Sélectionnez une commande pour laquelle vous souhaitez partager votre avis :</p>
+        
+        <div class="space-y-2 max-h-60 overflow-y-auto mb-4" id="ordersList">
+            <!-- Orders will be loaded here via JavaScript -->
+            <p class="text-center text-gray-500 py-4">Chargement des commandes...</p>
+        </div>
+        
+        <div class="flex justify-end space-x-3 mt-4">
+            <button onclick="closeOrderSelectionModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
+                Annuler
+            </button>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    // Order Selection Modal Functions
+    function openOrderSelectionModal() {
+        document.getElementById('orderSelectionModal').classList.remove('hidden');
+        loadUserOrders();
+    }
+    
+    function closeOrderSelectionModal() {
+        document.getElementById('orderSelectionModal').classList.add('hidden');
+    }
+    
+    function loadUserOrders() {
+        // Fetch user's orders that can be reviewed
+        fetch('{% url "backend:ajax_get_reviewable_orders" %}')
+            .then(response => response.json())
+            .then(data => {
+                const ordersList = document.getElementById('ordersList');
+                
+                if (data.orders && data.orders.length > 0) {
+                    ordersList.innerHTML = '';
+                    data.orders.forEach(order => {
+                        ordersList.innerHTML += `
+                            <a href="{% url 'backend:review_create' order_id='ORDER_ID' %}".replace('ORDER_ID', order.id)
+                               class="block p-3 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <p class="font-medium text-gray-900">Commande #${order.ref_code}</p>
+                                        <p class="text-sm text-gray-600">${order.product_title}</p>
+                                    </div>
+                                    <p class="text-sm text-gray-500">${order.date}</p>
+                                </div>
+                            </a>
+                        `;
+                    });
+                } else {
+                    ordersList.innerHTML = `
+                        <div class="text-center py-6">
+                            <i data-lucide="package" class="w-12 h-12 text-gray-400 mx-auto mb-2"></i>
+                            <p class="text-gray-600">Aucune commande éligible trouvée</p>
+                            <p class="text-sm text-gray-500 mt-1">Vous devez avoir des commandes livrées pour laisser un avis.</p>
+                        </div>
+                    `;
+                }
+                
+                // Initialize any Lucide icons in the modal
+                lucide.createIcons();
+            })
+            .catch(error => {
+                console.error('Error loading orders:', error);
+                document.getElementById('ordersList').innerHTML = `
+                    <div class="text-center py-6">
+                        <i data-lucide="alert-triangle" class="w-12 h-12 text-red-400 mx-auto mb-2"></i>
+                        <p class="text-gray-600">Erreur lors du chargement des commandes</p>
+                        <p class="text-sm text-gray-500 mt-1">Veuillez réessayer ultérieurement.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+            });
+    }
+</script>
+{% endblock %}
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <!-- Graphique des notes -->
                 <div class="space-y-4">
