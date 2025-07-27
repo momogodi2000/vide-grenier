@@ -683,7 +683,7 @@ def admin_export_users(request):
             # Data
             for user in User.objects.all().order_by('-date_joined'):
                 row = [
-                    user.id,
+                    str(user.id),  # Convert UUID to string
                     user.email,
                     user.first_name,
                     user.last_name,
@@ -724,7 +724,7 @@ def admin_export_users(request):
             # Data
             for user in User.objects.all().order_by('-date_joined'):
                 writer.writerow([
-                    user.id,
+                    str(user.id),  # Convert UUID to string
                     user.email,
                     user.first_name,
                     user.last_name,
@@ -743,7 +743,7 @@ def admin_export_users(request):
         
     except Exception as e:
         messages.error(request, f'Erreur lors de l\'export: {e}')
-        return redirect('backend:admin_user_list')
+        return redirect('admin_panel:users')
 
 # ============ USER STATUS ACTIONS ============
 @admin_required
@@ -4741,7 +4741,9 @@ class AdminChatListView(AdminRequiredMixin, ListView):
     context_object_name = 'chats'
     
     def get_queryset(self):
-        return Chat.objects.filter(participants__is_staff=True).distinct().order_by('-last_activity')
+        return Chat.objects.filter(
+            Q(buyer__is_staff=True) | Q(seller__is_staff=True)
+        ).distinct().order_by('-updated_at')
 
 class AdminChatDetailView(AdminRequiredMixin, DetailView):
     """Chat detail view for admin"""
@@ -4753,8 +4755,9 @@ class AdminChatDetailView(AdminRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         # Get or create chat between admin and user
         chat, created = Chat.objects.get_or_create(
-            chat_type='private',
-            participants__in=[self.request.user, self.object]
+            buyer=self.request.user,
+            seller=self.object,
+            defaults={'product': None}
         )
         context['chat'] = chat
         context['messages'] = chat.messages.all().order_by('created_at')
@@ -4767,8 +4770,9 @@ class AdminChatMessagesView(AdminRequiredMixin, View):
         try:
             user = User.objects.get(id=user_id)
             chat, created = Chat.objects.get_or_create(
-                chat_type='private',
-                participants__in=[request.user, user]
+                buyer=request.user,
+                seller=user,
+                defaults={'product': None}
             )
             
             messages = chat.messages.all().order_by('created_at')
@@ -4803,8 +4807,9 @@ class AdminChatSendView(AdminRequiredMixin, View):
                 return JsonResponse({'success': False, 'message': 'Message content is required'})
             
             chat, created = Chat.objects.get_or_create(
-                chat_type='private',
-                participants__in=[request.user, user]
+                buyer=request.user,
+                seller=user,
+                defaults={'product': None}
             )
             
             message = Message.objects.create(

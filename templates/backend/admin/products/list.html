@@ -17,13 +17,13 @@
                     <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
                     Ajouter Produit
                 </a>
-                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                <button onclick="exportProducts()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
                     <i data-lucide="download" class="w-4 h-4 mr-2"></i>
                     Exporter
                 </button>
-                <button class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center">
-                    <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
-                    Modération
+                <button onclick="openBulkActions()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center">
+                    <i data-lucide="settings" class="w-4 h-4 mr-2"></i>
+                    Actions Groupées
                 </button>
             </div>
         </div>
@@ -35,23 +35,22 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-600">Total Produits</p>
-                    <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ total_products|default:3456 }}</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ total_products|default:0 }}</p>
                 </div>
                 <div class="p-3 bg-blue-100 rounded-full">
                     <i data-lucide="package" class="w-6 h-6 text-blue-600"></i>
                 </div>
             </div>
             <div class="mt-4">
-                <span class="text-green-600 text-sm font-medium">↗ +8.3%</span>
-                <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
+                <span class="text-green-600 text-sm font-medium">Tous produits</span>
             </div>
         </div>
 
         <div class="stats-card">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">En modération</p>
-                    <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ pending_products|default:42 }}</p>
+                    <p class="text-sm font-medium text-gray-600">En attente</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ pending_products|default:0 }}</p>
                 </div>
                 <div class="p-3 bg-yellow-100 rounded-full">
                     <i data-lucide="clock" class="w-6 h-6 text-yellow-600"></i>
@@ -65,16 +64,15 @@
         <div class="stats-card">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Vendus ce mois</p>
-                    <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ sold_month|default:156 }}</p>
+                    <p class="text-sm font-medium text-gray-600">Actifs</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ active_products|default:0 }}</p>
                 </div>
                 <div class="p-3 bg-green-100 rounded-full">
                     <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
                 </div>
             </div>
             <div class="mt-4">
-                <span class="text-green-600 text-sm font-medium">↗ +23.1%</span>
-                <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
+                <span class="text-green-600 text-sm font-medium">En vente</span>
             </div>
         </div>
 
@@ -82,7 +80,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-600">Stock Admin</p>
-                    <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ admin_stock|default:89 }}</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ admin_products|default:0 }}</p>
                 </div>
                 <div class="p-3 bg-purple-100 rounded-full">
                     <i data-lucide="warehouse" class="w-6 h-6 text-purple-600"></i>
@@ -96,204 +94,76 @@
 
     <!-- Filters and Search -->
     <div class="stats-card mb-8">
-        <div class="flex flex-wrap items-center gap-4 mb-4">
-            <div class="flex-1 min-w-[200px]">
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
-                    </div>
-                    <input type="text" placeholder="Rechercher un produit..." 
-                           class="w-full pl-10 pr-4 py-2 border-0 bg-gray-50 rounded-lg focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+        <form method="get" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Search -->
+                <div>
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Rechercher</label>
+                    <input type="text" name="search" id="search" value="{{ search }}" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Nom, description, vendeur...">
+                </div>
+
+                <!-- Status Filter -->
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+                    <select name="status" id="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Tous les statuts</option>
+                        {% for status_code, status_name in product_statuses %}
+                            <option value="{{ status_code }}" {% if status_filter == status_code %}selected{% endif %}>{{ status_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Source Filter -->
+                <div>
+                    <label for="source" class="block text-sm font-medium text-gray-700 mb-1">Source</label>
+                    <select name="source" id="source" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Toutes les sources</option>
+                        {% for source_code, source_name in product_sources %}
+                            <option value="{{ source_code }}" {% if source_filter == source_code %}selected{% endif %}>{{ source_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Category Filter -->
+                <div>
+                    <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
+                    <select name="category" id="category" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Toutes les catégories</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}" {% if category_filter == category.id|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
-            
-            <select class="flex-1 min-w-[150px] border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
-                <option value="">Toutes les catégories</option>
-                <option value="electronics">Électronique</option>
-                <option value="clothing">Vêtements</option>
-                <option value="home">Maison & Jardin</option>
-                <option value="books">Livres</option>
-                <option value="sports">Sports</option>
-            </select>
-            
-            <select class="flex-1 min-w-[150px] border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
-                <option value="">Tous les statuts</option>
-                <option value="AVAILABLE">Disponible</option>
-                <option value="SOLD">Vendu</option>
-                <option value="PENDING">En attente</option>
-                <option value="REJECTED">Rejeté</option>
-            </select>
-            
-            <select class="flex-1 min-w-[150px] border-0 bg-gray-50 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
-                <option value="">Toutes les villes</option>
-                <option value="YDE">Yaoundé</option>
-                <option value="DLA">Douala</option>
-                <option value="BDA">Bamenda</option>
-                <option value="BFA">Bafoussam</option>
-                <option value="GRA">Garoua</option>
-            </select>
-            
-            <div class="flex items-center space-x-2">
-                <input type="number" placeholder="Prix min" 
-                       class="border-0 bg-gray-50 rounded-lg px-4 py-2 w-24 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
-                <span class="text-gray-400">-</span>
-                <input type="number" placeholder="Prix max" 
-                       class="border-0 bg-gray-50 rounded-lg px-4 py-2 w-24 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all">
+
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+                <div class="flex space-x-2">
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i data-lucide="search" class="w-4 h-4 inline mr-2"></i>
+                        Filtrer
+                    </button>
+                    <a href="{% url 'admin_panel:products' %}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                        <i data-lucide="refresh-cw" class="w-4 h-4 inline mr-2"></i>
+                        Réinitialiser
+                    </a>
+                </div>
+                <div class="text-sm text-gray-600">
+                    {{ page_obj.paginator.count|default:0 }} produit(s) trouvé(s)
+                </div>
             </div>
-        </div>
-        
-        <div class="flex flex-col sm:flex-row items-center justify-between">
-            <div class="flex items-center space-x-4 mb-4 sm:mb-0">
-                <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                    Filtrer
-                </button>
-                <button class="text-gray-600 hover:text-gray-800 px-4 py-2 transition-colors">
-                    Réinitialiser
-                </button>
-            </div>
-            
-            <div class="flex items-center space-x-2">
-                <span class="text-sm text-gray-600">Affichage:</span>
-                <button id="gridView" class="p-2 rounded-lg bg-green-100 text-green-600">
-                    <i data-lucide="grid" class="w-4 h-4"></i>
-                </button>
-                <button id="listView" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100">
-                    <i data-lucide="list" class="w-4 h-4"></i>
-                </button>
-            </div>
-        </div>
+        </form>
     </div>
 
-    <!-- Products Grid View -->
-    <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <!-- Product Card 1 -->
-        <div class="stats-card hover:shadow-md transition-shadow">
-            <div class="relative">
-                <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?w=300&h=200&fit=crop" 
-                     alt="iPhone 12 Pro" class="w-full h-48 object-cover rounded-t-lg">
-                <div class="absolute top-3 left-3">
-                    <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                        Disponible
-                    </span>
-                </div>
-                <div class="absolute top-3 right-3">
-                    <button class="bg-white/90 p-2 rounded-full hover:bg-white transition-colors">
-                        <i data-lucide="more-vertical" class="w-4 h-4 text-gray-600"></i>
-                    </button>
-                </div>
-                <div class="absolute bottom-3 left-3">
-                    <span class="bg-black/50 text-white text-xs px-2 py-1 rounded">
-                        📱 Électronique
-                    </span>
-                </div>
-            </div>
-            
-            <div class="p-4">
-                <h3 class="font-semibold text-gray-900 line-clamp-2 mb-2">iPhone 12 Pro 128GB - Excellent état</h3>
-                
-                <div class="flex items-center space-x-2 mb-3">
-                    <div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                        A
-                    </div>
-                    <span class="text-sm text-gray-600">Alice Simo</span>
-                    <span class="text-xs text-gray-400 hidden sm:inline">•</span>
-                    <span class="text-xs text-gray-400 hidden sm:inline">Douala</span>
-                </div>
-                
-                <div class="flex items-center justify-between mb-3">
-                    <div>
-                        <p class="text-xl sm:text-2xl font-bold text-green-600">450,000</p>
-                        <p class="text-xs text-gray-500">FCFA</p>
-                    </div>
-                    <div class="text-right text-xs text-gray-500 hidden sm:block">
-                        <p>Publié il y a 2h</p>
-                        <p>156 vues</p>
-                    </div>
-                </div>
-                
-                <div class="flex items-center space-x-2">
-                    <button class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm">
-                        <i data-lucide="eye" class="w-4 h-4 inline mr-1"></i>
-                        Voir
-                    </button>
-                    <button class="bg-yellow-100 text-yellow-600 p-2 rounded-lg hover:bg-yellow-200 transition-colors">
-                        <i data-lucide="edit" class="w-4 h-4"></i>
-                    </button>
-                    <button class="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition-colors">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Product Card 2 -->
-        <div class="stats-card hover:shadow-md transition-shadow">
-            <div class="relative">
-                <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=300&h=200&fit=crop" 
-                     alt="Canapé 3 places" class="w-full h-48 object-cover rounded-t-lg">
-                <div class="absolute top-3 left-3">
-                    <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                        En attente
-                    </span>
-                </div>
-                <div class="absolute top-3 right-3">
-                    <button class="bg-white/90 p-2 rounded-full hover:bg-white transition-colors">
-                        <i data-lucide="more-vertical" class="w-4 h-4 text-gray-600"></i>
-                    </button>
-                </div>
-                <div class="absolute bottom-3 left-3">
-                    <span class="bg-black/50 text-white text-xs px-2 py-1 rounded">
-                        🏠 Maison
-                    </span>
-                </div>
-            </div>
-            
-            <div class="p-4">
-                <h3 class="font-semibold text-gray-900 line-clamp-2 mb-2">Canapé 3 places en cuir véritable</h3>
-                
-                <div class="flex items-center space-x-2 mb-3">
-                    <div class="w-6 h-6 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                        B
-                    </div>
-                    <span class="text-sm text-gray-600">Bob Mendomo</span>
-                    <span class="text-xs text-gray-400 hidden sm:inline">•</span>
-                    <span class="text-xs text-gray-400 hidden sm:inline">Yaoundé</span>
-                </div>
-                
-                <div class="flex items-center justify-between mb-3">
-                    <div>
-                        <p class="text-xl sm:text-2xl font-bold text-green-600">85,000</p>
-                        <p class="text-xs text-gray-500">FCFA</p>
-                    </div>
-                    <div class="text-right text-xs text-gray-500 hidden sm:block">
-                        <p>Publié il y a 1j</p>
-                        <p>89 vues</p>
-                    </div>
-                </div>
-                
-                <div class="flex items-center space-x-2">
-                    <button class="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg hover:bg-green-700 transition-colors text-sm">
-                        <i data-lucide="check" class="w-4 h-4 inline mr-1"></i>
-                        Approuver
-                    </button>
-                    <button class="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition-colors">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Add more product cards as needed -->
-    </div>
-
-    <!-- Products List View (hidden by default) -->
-    <div id="productsList" class="hidden stats-card">
+    <!-- Products Table -->
+    <div class="stats-card">
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            <input type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                            <input type="checkbox" id="selectAll" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
                         </th>
                         <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Produit
@@ -316,245 +186,302 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
+                    {% for product in products %}
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
-                            <input type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                            <input type="checkbox" name="selected_products" value="{{ product.id }}" class="product-checkbox rounded border-gray-300 text-green-600 focus:ring-green-500">
                         </td>
                         <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
-                                <img class="h-10 w-10 rounded-lg object-cover mr-4" 
-                                     src="https://images.unsplash.com/photo-1583394838336-acd977736f90?w=100&h=100&fit=crop" 
-                                     alt="iPhone 12 Pro">
+                                {% if product.main_image %}
+                                    <img class="h-10 w-10 rounded-lg object-cover mr-4" 
+                                         src="{{ product.main_image.image.url }}" 
+                                         alt="{{ product.title }}">
+                                {% else %}
+                                    <div class="h-10 w-10 rounded-lg bg-gray-200 mr-4 flex items-center justify-center">
+                                        <i data-lucide="image" class="w-5 h-5 text-gray-400"></i>
+                                    </div>
+                                {% endif %}
                                 <div>
-                                    <div class="text-sm font-medium text-gray-900">iPhone 12 Pro 128GB</div>
-                                    <div class="text-sm text-gray-500">📱 Électronique</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ product.title }}</div>
+                                    <div class="text-sm text-gray-500">{{ product.category.name }}</div>
                                 </div>
                             </div>
                         </td>
                         <td class="px-4 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
                             <div class="flex items-center">
                                 <div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold mr-2">
-                                    A
+                                    {{ product.seller.first_name|first|upper }}
                                 </div>
-                                <span class="text-sm text-gray-900">Alice Simo</span>
+                                <span class="text-sm text-gray-900">{{ product.seller.get_full_name }}</span>
                             </div>
                         </td>
                         <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">450,000 FCFA</div>
+                            <div class="text-sm font-medium text-gray-900">{{ product.price|floatformat:0 }} FCFA</div>
                         </td>
                         <td class="px-4 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                Disponible
-                            </span>
+                            {% if product.status == 'ACTIVE' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Actif
+                                </span>
+                            {% elif product.status == 'DRAFT' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    En attente
+                                </span>
+                            {% elif product.status == 'SOLD' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    Vendu
+                                </span>
+                            {% elif product.status == 'SUSPENDED' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    Suspendu
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    {{ product.get_status_display }}
+                                </span>
+                            {% endif %}
                         </td>
                         <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
-                            22 Juillet 2025
+                            {{ product.created_at|date:"d/m/Y" }}
                         </td>
                         <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex items-center space-x-2">
-                                <button class="text-blue-600 hover:text-blue-900 p-1">
+                                <a href="{% url 'admin_panel:product_detail' product.id %}" class="text-blue-600 hover:text-blue-900 p-1" title="Voir détails">
                                     <i data-lucide="eye" class="w-4 h-4"></i>
-                                </button>
-                                <button class="text-yellow-600 hover:text-yellow-900 p-1">
+                                </a>
+                                <a href="{% url 'admin_panel:product_edit' product.id %}" class="text-yellow-600 hover:text-yellow-900 p-1" title="Modifier">
                                     <i data-lucide="edit" class="w-4 h-4"></i>
-                                </button>
-                                <button class="text-red-600 hover:text-red-900 p-1">
+                                </a>
+                                {% if product.status == 'DRAFT' %}
+                                    <a href="{% url 'admin_panel:product_approve' product.id %}" class="text-green-600 hover:text-green-900 p-1" title="Approuver">
+                                        <i data-lucide="check" class="w-4 h-4"></i>
+                                    </a>
+                                    <a href="{% url 'admin_panel:product_reject' product.id %}" class="text-red-600 hover:text-red-900 p-1" title="Rejeter">
+                                        <i data-lucide="x" class="w-4 h-4"></i>
+                                    </a>
+                                {% endif %}
+                                <a href="{% url 'admin_panel:product_contact_seller' product.id %}" class="text-purple-600 hover:text-purple-900 p-1" title="Contacter vendeur">
+                                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                                </a>
+                                <button onclick="deleteProduct('{{ product.id }}')" class="text-red-600 hover:text-red-900 p-1" title="Supprimer">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                 </button>
                             </div>
                         </td>
                     </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-4 sm:px-6 py-8 text-center text-gray-500">
+                            <div class="flex flex-col items-center">
+                                <i data-lucide="package" class="w-12 h-12 text-gray-300 mb-4"></i>
+                                <p class="text-lg font-medium">Aucun produit trouvé</p>
+                                <p class="text-sm">Aucun produit ne correspond à vos critères de recherche.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 
     <!-- Pagination -->
+    {% if is_paginated %}
     <div class="mt-8 flex flex-col sm:flex-row items-center justify-between">
         <div class="mb-4 sm:mb-0">
             <p class="text-sm text-gray-700">
-                Affichage de <span class="font-medium">1</span> à <span class="font-medium">12</span> sur <span class="font-medium">3456</span> produits
+                Affichage de <span class="font-medium">{{ page_obj.start_index }}</span> à <span class="font-medium">{{ page_obj.end_index }}</span> sur <span class="font-medium">{{ page_obj.paginator.count }}</span> produits
             </p>
         </div>
         <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                <i data-lucide="chevron-left" class="w-4 h-4"></i>
-            </a>
-            <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">1</a>
-            <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-green-50 text-sm font-medium text-green-600">2</a>
-            <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">3</a>
-            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
-            <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">288</a>
-            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                <i data-lucide="chevron-right" class="w-4 h-4"></i>
-            </a>
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if source_filter %}&source={{ source_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </a>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-green-50 text-sm font-medium text-green-600">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if source_filter %}&source={{ source_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if source_filter %}&source={{ source_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </a>
+            {% endif %}
         </nav>
     </div>
+    {% endif %}
 
-    <!-- Bulk Actions -->
-    <div class="mt-6 flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-        <select class="border border-gray-300 rounded-lg px-4 py-2 text-sm">
-            <option value="">Actions groupées</option>
-            <option value="approve">Approuver sélectionnés</option>
-            <option value="reject">Rejeter sélectionnés</option>
-            <option value="delete">Supprimer sélectionnés</option>
-            <option value="export">Exporter sélectionnés</option>
-        </select>
-        <button class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm">
-            Appliquer
-        </button>
-    </div>
-
-    <!-- Product Detail Modal -->
-    <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-screen overflow-y-auto">
-                <div class="p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-xl font-bold text-gray-900">Détails du produit</h3>
-                        <button onclick="closeProductModal()" class="text-gray-400 hover:text-gray-600">
-                            <i data-lucide="x" class="w-6 h-6"></i>
-                        </button>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div>
-                            <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?w=500&h=400&fit=crop" 
-                                 alt="iPhone 12 Pro" class="w-full h-80 object-cover rounded-lg">
-                            <div class="grid grid-cols-4 gap-2 mt-4">
-                                <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?w=100&h=100&fit=crop" 
-                                     class="w-full h-16 object-cover rounded-lg border-2 border-green-500">
-                                <img src="https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=100&h=100&fit=crop" 
-                                     class="w-full h-16 object-cover rounded-lg border border-gray-200">
-                                <img src="https://images.unsplash.com/photo-1580910051074-3eb694886505?w=100&h=100&fit=crop" 
-                                     class="w-full h-16 object-cover rounded-lg border border-gray-200">
-                                <img src="https://images.unsplash.com/photo-1556656793-08538906a9f8?w=100&h=100&fit=crop" 
-                                     class="w-full h-16 object-cover rounded-lg border border-gray-200">
-                            </div>
-                        </div>
-                        
-                        <div class="space-y-6">
-                            <div>
-                                <h4 class="text-2xl font-bold text-gray-900 mb-2">iPhone 12 Pro 128GB - Excellent état</h4>
-                                <p class="text-3xl font-bold text-green-600">450,000 FCFA</p>
-                            </div>
-                            
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Vendeur</label>
-                                    <div class="flex items-center space-x-2">
-                                        <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                                            A
-                                        </div>
-                                        <span class="text-sm text-gray-900">Alice Simo</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Ville</label>
-                                    <p class="text-sm text-gray-900">Douala</p>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
-                                    <p class="text-sm text-gray-900">📱 Électronique</p>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">État</label>
-                                    <p class="text-sm text-gray-900">Excellent</p>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Publié le</label>
-                                    <p class="text-sm text-gray-900">22 Juillet 2025</p>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Vues</label>
-                                    <p class="text-sm text-gray-900">156 vues</p>
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                                <p class="text-sm text-gray-600 leading-relaxed">
-                                    iPhone 12 Pro en excellent état, très peu utilisé. Acheté il y a 6 mois, 
-                                    toujours sous garantie. Écran parfait, aucune rayure. Batterie à 98% de santé. 
-                                    Vendu avec chargeur, câble et boîte d'origine.
-                                </p>
-                            </div>
-                            
-                            <div class="border-t pt-6">
-                                <h5 class="font-medium text-gray-900 mb-4">Statistiques</h5>
-                                <div class="grid grid-cols-3 gap-4">
-                                    <div class="text-center">
-                                        <p class="text-2xl font-bold text-blue-600">156</p>
-                                        <p class="text-sm text-gray-600">Vues</p>
-                                    </div>
-                                    <div class="text-center">
-                                        <p class="text-2xl font-bold text-green-600">12</p>
-                                        <p class="text-sm text-gray-600">Intéressés</p>
-                                    </div>
-                                    <div class="text-center">
-                                        <p class="text-2xl font-bold text-purple-600">3</p>
-                                        <p class="text-sm text-gray-600">Messages</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-8 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-                        <button class="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors">
-                            <i data-lucide="check" class="w-4 h-4 inline mr-2"></i>
-                            Approuver
-                        </button>
-                        <button class="flex-1 bg-yellow-600 text-white py-3 px-4 rounded-lg hover:bg-yellow-700 transition-colors">
-                            <i data-lucide="edit" class="w-4 h-4 inline mr-2"></i>
-                            Modifier
-                        </button>
-                        <button class="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors">
-                            <i data-lucide="trash-2" class="w-4 h-4 inline mr-2"></i>
-                            Supprimer
-                        </button>
-                    </div>
+    <!-- Bulk Actions Modal -->
+    <div id="bulkActionsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Actions Groupées</h3>
+                <div class="space-y-3">
+                    <button onclick="bulkAction('approve')" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        <i data-lucide="check" class="w-4 h-4 inline mr-2"></i>
+                        Approuver sélectionnés
+                    </button>
+                    <button onclick="bulkAction('reject')" class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                        <i data-lucide="x" class="w-4 h-4 inline mr-2"></i>
+                        Rejeter sélectionnés
+                    </button>
+                    <button onclick="bulkAction('delete')" class="w-full bg-red-800 text-white px-4 py-2 rounded-lg hover:bg-red-900 transition-colors">
+                        <i data-lucide="trash-2" class="w-4 h-4 inline mr-2"></i>
+                        Supprimer sélectionnés
+                    </button>
+                </div>
+                <div class="mt-4 flex justify-end">
+                    <button onclick="closeBulkActions()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                        Annuler
+                    </button>
                 </div>
             </div>
         </div>
     </div>
+{% endblock %}
 
-    <script>
-        // View toggle functionality
-        const gridViewBtn = document.getElementById('gridView');
-        const listViewBtn = document.getElementById('listView');
-        const productsGrid = document.getElementById('productsGrid');
-        const productsList = document.getElementById('productsList');
-        
-        gridViewBtn.addEventListener('click', () => {
-            productsGrid.classList.remove('hidden');
-            productsList.classList.add('hidden');
-            gridViewBtn.classList.add('bg-green-100', 'text-green-600');
-            gridViewBtn.classList.remove('text-gray-400', 'hover:bg-gray-100');
-            listViewBtn.classList.remove('bg-green-100', 'text-green-600');
-            listViewBtn.classList.add('text-gray-400', 'hover:bg-gray-100');
+{% block extra_js %}
+<script>
+    // Select all functionality
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.product-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
         });
-        
-        listViewBtn.addEventListener('click', () => {
-            productsList.classList.remove('hidden');
-            productsGrid.classList.add('hidden');
-            listViewBtn.classList.add('bg-green-100', 'text-green-600');
-            listViewBtn.classList.remove('text-gray-400', 'hover:bg-gray-100');
-            gridViewBtn.classList.remove('bg-green-100', 'text-green-600');
-            gridViewBtn.classList.add('text-gray-400', 'hover:bg-gray-100');
+    });
+
+    // Update select all when individual checkboxes change
+    document.querySelectorAll('.product-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const allCheckboxes = document.querySelectorAll('.product-checkbox');
+            const checkedCheckboxes = document.querySelectorAll('.product-checkbox:checked');
+            document.getElementById('selectAll').checked = allCheckboxes.length === checkedCheckboxes.length;
         });
+    });
+
+    function exportProducts() {
+        // Get current filters
+        const search = document.getElementById('search').value;
+        const status = document.getElementById('status').value;
+        const source = document.getElementById('source').value;
+        const category = document.getElementById('category').value;
         
-        function openProductModal() {
-            document.getElementById('productModal').classList.remove('hidden');
+        // Build export URL with filters
+        let exportUrl = '/admin-panel/export/products/?';
+        if (search) exportUrl += `search=${encodeURIComponent(search)}&`;
+        if (status) exportUrl += `status=${status}&`;
+        if (source) exportUrl += `source=${source}&`;
+        if (category) exportUrl += `category=${category}&`;
+        
+        window.location.href = exportUrl;
+    }
+
+    function openBulkActions() {
+        const selectedProducts = document.querySelectorAll('.product-checkbox:checked');
+        if (selectedProducts.length === 0) {
+            showNotification('Veuillez sélectionner au moins un produit', 'warning');
+            return;
         }
+        document.getElementById('bulkActionsModal').classList.remove('hidden');
+    }
+
+    function closeBulkActions() {
+        document.getElementById('bulkActionsModal').classList.add('hidden');
+    }
+
+    function bulkAction(action) {
+        const selectedProducts = document.querySelectorAll('.product-checkbox:checked');
+        const productIds = Array.from(selectedProducts).map(cb => cb.value);
         
-        function closeProductModal() {
-            document.getElementById('productModal').classList.add('hidden');
+        if (productIds.length === 0) {
+            showNotification('Aucun produit sélectionné', 'warning');
+            return;
         }
-        
-        // Add click handlers for view buttons
-        document.querySelectorAll('[data-lucide="eye"]').forEach(btn => {
-            btn.closest('button').addEventListener('click', openProductModal);
+
+        const confirmMessages = {
+            'approve': 'Êtes-vous sûr de vouloir approuver les produits sélectionnés ?',
+            'reject': 'Êtes-vous sûr de vouloir rejeter les produits sélectionnés ?',
+            'delete': 'Êtes-vous sûr de vouloir supprimer les produits sélectionnés ? Cette action est irréversible.'
+        };
+
+        if (!confirm(confirmMessages[action])) {
+            return;
+        }
+
+        fetch('/admin-panel/products/bulk-actions/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: `action=${action}&product_ids=${productIds.join(',')}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                closeBulkActions();
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showNotification(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Erreur lors de l\'action groupée', 'error');
         });
-    </script>
+    }
+
+    function deleteProduct(productId) {
+        if (confirm('Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.')) {
+            fetch(`/admin-panel/products/${productId}/delete/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCsrfToken()
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Produit supprimé avec succès', 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Erreur lors de la suppression', 'error');
+            });
+        }
+    }
+
+    function getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    }
+
+    function showNotification(message, type) {
+        // Simple notification implementation
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${type === 'success' ? 'bg-green-600' : type === 'error' ? 'bg-red-600' : 'bg-yellow-600'}`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+</script>
 {% endblock %}

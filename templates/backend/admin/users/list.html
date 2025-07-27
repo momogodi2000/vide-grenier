@@ -822,18 +822,17 @@ function editUser(userId) {
 
 function suspendUser(userId) {
     if (confirm('Êtes-vous sûr de vouloir suspendre cet utilisateur ?')) {
-        fetch(`/admin-panel/ajax/quick-action/`, {
+        fetch(`/admin-panel/users/${userId}/toggle-status/`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
                 'X-CSRFToken': getCsrfToken()
-            },
-            body: `action=suspend_user&item_id=${userId}&item_type=users`
+            }
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showNotification('Utilisateur suspendu avec succès', 'success');
+                showNotification(data.message, 'success');
                 refreshTable();
             } else {
                 showNotification(data.message, 'error');
@@ -848,18 +847,17 @@ function suspendUser(userId) {
 
 function activateUser(userId) {
     if (confirm('Êtes-vous sûr de vouloir activer cet utilisateur ?')) {
-        fetch(`/admin-panel/ajax/quick-action/`, {
+        fetch(`/admin-panel/users/${userId}/toggle-status/`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
                 'X-CSRFToken': getCsrfToken()
-            },
-            body: `action=activate_user&item_id=${userId}&item_type=users`
+            }
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showNotification('Utilisateur activé avec succès', 'success');
+                showNotification(data.message, 'success');
                 refreshTable();
             } else {
                 showNotification(data.message, 'error');
@@ -874,13 +872,12 @@ function activateUser(userId) {
 
 function deleteUser(userId) {
     if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.')) {
-        fetch(`/admin-panel/bulk-actions/`, {
+        fetch(`/admin-panel/users/${userId}/delete/`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
                 'X-CSRFToken': getCsrfToken()
-            },
-            body: `action=delete&item_type=users&item_ids=${userId}`
+            }
         })
         .then(response => response.json())
         .then(data => {

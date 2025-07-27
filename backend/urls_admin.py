@@ -21,6 +21,7 @@ urlpatterns = [
     path('users/<uuid:pk>/', views_admin.AdminUserDetailView.as_view(), name='user_detail'),
     path('users/<uuid:pk>/edit/', views_admin.AdminUserUpdateView.as_view(), name='user_edit'),
     path('users/<uuid:pk>/delete/', views_admin.AdminUserDeleteView.as_view(), name='user_delete'),
+    path('users/<uuid:pk>/toggle-status/', views_admin.admin_user_toggle_status, name='user_toggle_status'),
     path('users/bulk-actions/', views_admin.AdminUserBulkActionsView.as_view(), name='user_bulk_actions'),
     path('export/users/', views_admin.admin_export_users, name='export_users'),
     path('ajax/quick-action/', views_admin.admin_quick_action, name='admin_quick_action'),

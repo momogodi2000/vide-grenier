@@ -10,7 +10,7 @@
     <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between">
             <div class="flex items-center space-x-4">
-                <a href="{% url 'backend:admin_product_list' %}" class="p-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                <a href="{% url 'admin_panel:products' %}" class="p-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                     <i data-lucide="arrow-left" class="w-5 h-5"></i>
                 </a>
                 <div>
@@ -35,7 +35,7 @@
                 {% endif %}
                 
                 {% if product.source == 'ADMIN' %}
-                <a href="{% url 'backend:admin_product_edit' product.id %}" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors">
+                <a href="{% url 'admin_panel:product_edit' product.id %}" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors">
                     <i data-lucide="edit" class="w-4 h-4 mr-2 inline"></i>
                     Modifier
                 </a>
