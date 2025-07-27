@@ -9,7 +9,7 @@ from django.conf import settings
 User = get_user_model()
 
 class PasswordResetRequestView(View):
-    template_name = 'backend/auth/password_reset_request.html'
+    template_name = 'backend/visitor/auth/password_reset_request.html'
 
     def get(self, request):
         form = PasswordResetRequestForm()
@@ -41,7 +41,7 @@ class PasswordResetRequestView(View):
         return render(request, self.template_name, {'form': form})
 
 class PasswordResetConfirmView(View):
-    template_name = 'backend/auth/password_reset_confirm.html'
+    template_name = 'backend/visitor/auth/password_reset_confirm.html'
 
     def get(self, request, token):
         try:
@@ -98,7 +98,7 @@ from .utils import send_sms_notification, send_email_notification
 class FavoriteListView(LoginRequiredMixin, ListView):
     """Liste des produits favoris de l'utilisateur"""
     model = Favorite
-    template_name = 'backend/favorites/list.html'
+    template_name = 'backend/client/favorites/list.html'
     context_object_name = 'favorites'
     paginate_by = 24
     
@@ -110,7 +110,7 @@ class FavoriteListView(LoginRequiredMixin, ListView):
 
 class StatsView(LoginRequiredMixin, TemplateView):
     """Statistiques personnelles pour vendeurs"""
-    template_name = 'backend/stats/personal.html'
+    template_name = 'backend/client/analytics/personal_stats.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -167,7 +167,7 @@ class StatsView(LoginRequiredMixin, TemplateView):
 
 class ProductPromoteView(LoginRequiredMixin, TemplateView):
     """Promouvoir un produit (mise en avant payante)"""
-    template_name = 'backend/products/promote.html'
+    template_name = 'backend/client/products/promote.html'
     
     def dispatch(self, request, *args, **kwargs):
         self.product = get_object_or_404(
@@ -226,7 +226,7 @@ class ProductPromoteView(LoginRequiredMixin, TemplateView):
 
 class WishlistView(LoginRequiredMixin, TemplateView):
     """Wishlist avec alertes de prix"""
-    template_name = 'backend/wishlist/list.html'
+    template_name = 'backend/client/favorites/wishlist.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -262,7 +262,7 @@ class WishlistView(LoginRequiredMixin, TemplateView):
 class SellerProfileView(DetailView):
     """Profil public d'un vendeur"""
     model = User
-    template_name = 'backend/sellers/profile.html'
+    template_name = 'backend/visitor/sellers/profile.html'
     context_object_name = 'seller'
     
     def get_queryset(self):
@@ -306,7 +306,7 @@ class SellerProfileView(DetailView):
 
 class CompareProductsView(TemplateView):
     """Comparaison de produits"""
-    template_name = 'backend/products/compare.html'
+    template_name = 'backend/visitor/products/compare.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -336,7 +336,7 @@ class CompareProductsView(TemplateView):
 
 class ProductReportView(LoginRequiredMixin, TemplateView):
     """Signaler un produit"""
-    template_name = 'backend/products/report.html'
+    template_name = 'backend/client/products/report.html'
     
     def dispatch(self, request, *args, **kwargs):
         self.product = get_object_or_404(Product, slug=kwargs['slug'])
@@ -383,7 +383,7 @@ class ProductReportView(LoginRequiredMixin, TemplateView):
 class SavedSearchesView(LoginRequiredMixin, ListView):
     """Recherches sauvegardées avec alertes"""
     model = SearchHistory
-    template_name = 'backend/searches/saved.html'
+    template_name = 'backend/client/search/saved.html'
     context_object_name = 'saved_searches'
     
     def get_queryset(self):
@@ -395,7 +395,7 @@ class SavedSearchesView(LoginRequiredMixin, ListView):
 
 class ProductAdvancedSearchView(FormView):
     """Recherche avancée avec filtres détaillés"""
-    template_name = 'backend/search/advanced.html'
+    template_name = 'backend/visitor/search/advanced.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -472,7 +472,7 @@ class ProductAdvancedSearchView(FormView):
 
 class ProductBulkActionsView(LoginRequiredMixin, TemplateView):
     """Actions en lot sur les produits"""
-    template_name = 'backend/products/bulk_actions.html'
+    template_name = 'backend/client/products/bulk_actions.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -532,7 +532,7 @@ class ProductBulkActionsView(LoginRequiredMixin, TemplateView):
 class TrendingProductsView(ListView):
     """Produits tendance basés sur l'activité"""
     model = Product
-    template_name = 'backend/products/trending.html'
+    template_name = 'backend/visitor/products/trending.html'
     context_object_name = 'trending_products'
     paginate_by = 24
     
@@ -550,7 +550,7 @@ class TrendingProductsView(ListView):
 
 class RecentlyViewedView(LoginRequiredMixin, TemplateView):
     """Produits récemment consultés"""
-    template_name = 'backend/products/recently_viewed.html'
+    template_name = 'backend/visitor/products/recently_viewed.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -583,7 +583,7 @@ class RecentlyViewedView(LoginRequiredMixin, TemplateView):
 
 class RecommendedProductsView(LoginRequiredMixin, TemplateView):
     """Produits recommandés basés sur l'historique"""
-    template_name = 'backend/products/recommended.html'
+    template_name = 'backend/visitor/products/recommended.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -629,7 +629,7 @@ class RecommendedProductsView(LoginRequiredMixin, TemplateView):
 class CategoryListView(ListView):
     """Liste complète de toutes les catégories"""
     model = Category
-    template_name = 'backend/categories/list.html'
+    template_name = 'backend/client/categories/list.html'
     context_object_name = 'categories'
     
     def get_queryset(self):
@@ -652,7 +652,7 @@ class CategoryListView(ListView):
 
 class ProductAdvancedSearchView(TemplateView):
     """Page de recherche avancée"""
-    template_name = 'backend/search/advanced.html'
+    template_name = 'backend/visitor/search/advanced.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -674,7 +674,7 @@ class ProductAdvancedSearchView(TemplateView):
 class SavedSearchesView(LoginRequiredMixin, ListView):
     """Liste des recherches sauvegardées"""
     model = SavedSearch
-    template_name = 'backend/search/saved.html'
+    template_name = 'backend/client/search/saved.html'
     context_object_name = 'saved_searches'
     
     def get_queryset(self):
@@ -682,16 +682,16 @@ class SavedSearchesView(LoginRequiredMixin, ListView):
 
 
 class AboutView(TemplateView):
-    template_name = 'backend/pages/about.html'
+    template_name = 'backend/visitor/pages/about.html'
 
 class ContactView(TemplateView):
-    template_name = 'backend/pages/contact.html'
+    template_name = 'backend/visitor/pages/contact.html'
 
 class HelpView(TemplateView):
-    template_name = 'backend/pages/help.html'
+    template_name = 'backend/visitor/pages/help.html'
     
 class PrivacyView(TemplateView):
-    template_name = 'backend/pages/privacy.html'
+    template_name = 'backend/visitor/pages/privacy.html'
     
 class TermsView(TemplateView):
-    template_name = 'backend/pages/terms.html'
+    template_name = 'backend/visitor/pages/terms.html'

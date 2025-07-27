@@ -22,6 +22,11 @@ urlpatterns = [
     
     # Main application URLs
     path('', include('backend.urls')),
+    
+    # User-type-specific URLs
+    path('client/', include('backend.urls_client', namespace='client')),
+    path('staff/', include('backend.urls_staff', namespace='staff')),
+    path('admin-panel/', include('backend.urls_admin', namespace='admin_panel')),
 ]
 
 # Browser reload for development

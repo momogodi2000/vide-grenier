@@ -715,3 +715,439 @@ class ProductAlert(models.Model):
     def __str__(self):
         identifier = self.user.get_full_name() if self.user else self.visitor_email
         return f"{identifier} - {self.get_alert_type_display()} for {self.product.title}"
+
+
+# ============= WALLET & FINANCIAL SYSTEM =============
+
+class Wallet(models.Model):
+    """User wallet for managing funds"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='wallet')
+    balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    pending_balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    total_earned = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    total_spent = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    is_frozen = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'wallets'
+        verbose_name = 'Portefeuille'
+        verbose_name_plural = 'Portefeuilles'
+    
+    def __str__(self):
+        return f"Wallet {self.user.email} - {self.balance} XAF"
+    
+    @property
+    def available_balance(self):
+        return self.balance - self.pending_balance
+    
+    def can_withdraw(self, amount):
+        return self.available_balance >= amount and not self.is_frozen
+    
+    def add_funds(self, amount, description="Ajout de fonds"):
+        """Add funds to wallet"""
+        if amount > 0:
+            self.balance += amount
+            self.total_earned += amount
+            self.save()
+            
+            Transaction.objects.create(
+                wallet=self,
+                transaction_type='CREDIT',
+                amount=amount,
+                description=description,
+                status='COMPLETED'
+            )
+    
+    def deduct_funds(self, amount, description="Déduction de fonds"):
+        """Deduct funds from wallet"""
+        if amount > 0 and self.can_withdraw(amount):
+            self.balance -= amount
+            self.total_spent += amount
+            self.save()
+            
+            Transaction.objects.create(
+                wallet=self,
+                transaction_type='DEBIT',
+                amount=amount,
+                description=description,
+                status='COMPLETED'
+            )
+            return True
+        return False
+
+
+class Transaction(models.Model):
+    """Wallet transactions"""
+    TRANSACTION_TYPES = [
+        ('CREDIT', 'Crédit'),
+        ('DEBIT', 'Débit'),
+        ('COMMISSION', 'Commission'),
+        ('REFUND', 'Remboursement'),
+        ('WITHDRAWAL', 'Retrait'),
+        ('DEPOSIT', 'Dépôt'),
+    ]
+    
+    STATUSES = [
+        ('PENDING', 'En attente'),
+        ('PROCESSING', 'En traitement'),
+        ('COMPLETED', 'Complété'),
+        ('FAILED', 'Échoué'),
+        ('CANCELLED', 'Annulé'),
+    ]
+    
+    SOURCES = [
+        ('SALE', 'Vente'),
+        ('PURCHASE', 'Achat'),
+        ('COMMISSION', 'Commission'),
+        ('ADMIN_CREDIT', 'Crédit Admin'),
+        ('ADMIN_DEBIT', 'Débit Admin'),
+        ('REFUND', 'Remboursement'),
+        ('WITHDRAWAL', 'Retrait'),
+        ('DEPOSIT', 'Dépôt'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='transactions')
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    description = models.TextField()
+    source = models.CharField(max_length=20, choices=SOURCES, default='ADMIN_CREDIT')
+    reference_id = models.CharField(max_length=100, blank=True)  # Order ID, Payment ID, etc.
+    status = models.CharField(max_length=20, choices=STATUSES, default='PENDING')
+    metadata = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'transactions'
+        verbose_name = 'Transaction'
+        verbose_name_plural = 'Transactions'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['wallet', 'status']),
+            models.Index(fields=['transaction_type', 'created_at']),
+            models.Index(fields=['reference_id']),
+        ]
+    
+    def __str__(self):
+        return f"{self.transaction_type} - {self.amount} XAF - {self.wallet.user.email}"
+
+
+class Commission(models.Model):
+    """Track admin commissions from sales"""
+    COMMISSION_TYPES = [
+        ('SALE', 'Commission sur vente'),
+        ('SERVICE', 'Frais de service'),
+        ('PENALTY', 'Pénalité'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    order = models.OneToOneField('Order', on_delete=models.CASCADE, related_name='commission_record')
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='commissions_paid')
+    commission_type = models.CharField(max_length=20, choices=COMMISSION_TYPES, default='SALE')
+    base_amount = models.DecimalField(max_digits=12, decimal_places=2)  # Original sale amount
+    commission_rate = models.DecimalField(max_digits=5, decimal_places=4, default=Decimal('0.1000'))  # 10%
+    commission_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    seller_amount = models.DecimalField(max_digits=12, decimal_places=2)  # Amount credited to seller
+    is_paid = models.BooleanField(default=False)
+    transaction = models.ForeignKey(Transaction, on_delete=models.SET_NULL, null=True, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'commissions'
+        verbose_name = 'Commission'
+        verbose_name_plural = 'Commissions'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Commission {self.commission_amount} XAF - Commande {self.order.order_number}"
+    
+    def save(self, *args, **kwargs):
+        if not self.commission_amount:
+            self.commission_amount = self.base_amount * self.commission_rate
+        if not self.seller_amount:
+            self.seller_amount = self.base_amount - self.commission_amount
+        super().save(*args, **kwargs)
+
+
+class WithdrawalRequest(models.Model):
+    """User withdrawal requests"""
+    STATUSES = [
+        ('PENDING', 'En attente'),
+        ('APPROVED', 'Approuvé'),
+        ('PROCESSING', 'En traitement'),
+        ('COMPLETED', 'Complété'),
+        ('REJECTED', 'Rejeté'),
+        ('CANCELLED', 'Annulé'),
+    ]
+    
+    WITHDRAWAL_METHODS = [
+        ('MOBILE_MONEY', 'Mobile Money'),
+        ('BANK_TRANSFER', 'Virement bancaire'),
+        ('CASH_PICKUP', 'Retrait en espèces'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='withdrawal_requests')
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    withdrawal_method = models.CharField(max_length=20, choices=WITHDRAWAL_METHODS)
+    account_details = models.JSONField(default=dict)  # Phone number, bank details, etc.
+    status = models.CharField(max_length=20, choices=STATUSES, default='PENDING')
+    admin_notes = models.TextField(blank=True)
+    transaction = models.ForeignKey(Transaction, on_delete=models.SET_NULL, null=True, blank=True)
+    processed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='processed_withdrawals')
+    requested_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'withdrawal_requests'
+        verbose_name = 'Demande de retrait'
+        verbose_name_plural = 'Demandes de retrait'
+        ordering = ['-requested_at']
+    
+    def __str__(self):
+        return f"Retrait {self.amount} XAF - {self.user.email} - {self.status}"
+
+
+# ============= ENHANCED MESSAGING SYSTEM =============
+
+class PrivateChat(models.Model):
+    """Private conversations between users - separate from product-based chats"""
+    
+    CHAT_TYPES = [
+        ('CLIENT_ADMIN', 'Client-Admin'),
+        ('STAFF_ADMIN', 'Staff-Admin'),
+        ('CLIENT_CLIENT', 'Client-Client'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    chat_type = models.CharField(max_length=20, choices=CHAT_TYPES)
+    participant_1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='private_chats_as_p1')
+    participant_2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='private_chats_as_p2')
+    initiated_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='initiated_private_chats')
+    subject = models.CharField(max_length=200, blank=True)
+    is_active = models.BooleanField(default=True)
+    last_message_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'private_chats'
+        unique_together = ['participant_1', 'participant_2', 'chat_type']
+        ordering = ['-last_message_at', '-updated_at']
+    
+    def __str__(self):
+        return f"{self.get_chat_type_display()}: {self.participant_1.email} - {self.participant_2.email}"
+    
+    def get_other_participant(self, user):
+        """Get the other participant in the chat"""
+        return self.participant_2 if self.participant_1 == user else self.participant_1
+    
+    @property
+    def last_message(self):
+        return self.private_messages.order_by('-created_at').first()
+
+
+class PrivateMessage(models.Model):
+    """Messages in private chats"""
+    
+    MESSAGE_TYPES = [
+        ('TEXT', 'Texte'),
+        ('IMAGE', 'Image'),
+        ('FILE', 'Fichier'),
+        ('SYSTEM', 'Message système'),
+        ('VOICE', 'Message vocal'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    private_chat = models.ForeignKey(PrivateChat, on_delete=models.CASCADE, related_name='private_messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_private_messages')
+    message_type = models.CharField(max_length=10, choices=MESSAGE_TYPES, default='TEXT')
+    content = models.TextField()
+    image = models.ImageField(upload_to='chat/private_images/', blank=True, null=True)
+    file = models.FileField(upload_to='chat/private_files/', blank=True, null=True)
+    voice_note = models.FileField(upload_to='chat/voice_notes/', blank=True, null=True)
+    is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'private_messages'
+        ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['private_chat', 'created_at']),
+            models.Index(fields=['sender', 'is_read']),
+        ]
+    
+    def __str__(self):
+        return f"Message privé de {self.sender.email} - {self.created_at}"
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Update last_message_at on the chat
+        self.private_chat.last_message_at = self.created_at
+        self.private_chat.save(update_fields=['last_message_at'])
+
+
+# Enhanced GroupChat with better admin controls
+def enhance_group_chat():
+    """
+    Add these fields to the existing GroupChat model:
+    - max_participants: IntegerField for limiting group size
+    - admin_only_creation: BooleanField to restrict who can create groups
+    - auto_delete_inactive: BooleanField for automatic cleanup
+    - tags: JSONField for categorizing groups
+    """
+    pass
+
+
+class GroupChatParticipant(models.Model):
+    """Track participant status in group chats"""
+    
+    ROLES = [
+        ('ADMIN', 'Administrateur'),
+        ('MODERATOR', 'Modérateur'),
+        ('MEMBER', 'Membre'),
+    ]
+    
+    STATUSES = [
+        ('ACTIVE', 'Actif'),
+        ('MUTED', 'Silencieux'),
+        ('BANNED', 'Banni'),
+        ('LEFT', 'Parti'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    group_chat = models.ForeignKey('backend.GroupChat', on_delete=models.CASCADE, related_name='participant_details')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_participations')
+    role = models.CharField(max_length=20, choices=ROLES, default='MEMBER')
+    status = models.CharField(max_length=20, choices=STATUSES, default='ACTIVE')
+    joined_at = models.DateTimeField(auto_now_add=True)
+    last_read_at = models.DateTimeField(null=True, blank=True)
+    muted_until = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'group_chat_participants'
+        unique_together = ['group_chat', 'user']
+        indexes = [
+            models.Index(fields=['group_chat', 'status']),
+            models.Index(fields=['user', 'status']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.email} - {self.group_chat.name} ({self.role})"
+    
+    @property
+    def unread_count(self):
+        """Count unread messages for this participant"""
+        if not self.last_read_at:
+            return self.group_chat.group_messages.count()
+        return self.group_chat.group_messages.filter(created_at__gt=self.last_read_at).count()
+
+
+class ChatSettings(models.Model):
+    """Global chat settings and preferences"""
+    
+    NOTIFICATION_TYPES = [
+        ('ALL', 'Toutes les notifications'),
+        ('MENTIONS_ONLY', 'Mentions uniquement'),
+        ('NONE', 'Aucune notification'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='chat_settings')
+    notification_preference = models.CharField(max_length=20, choices=NOTIFICATION_TYPES, default='ALL')
+    email_notifications = models.BooleanField(default=True)
+    show_online_status = models.BooleanField(default=True)
+    auto_delete_messages_days = models.IntegerField(default=0)  # 0 means never delete
+    blocked_users = models.ManyToManyField(User, related_name='blocked_by', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'chat_settings'
+        verbose_name = 'Paramètres de chat'
+        verbose_name_plural = 'Paramètres de chat'
+    
+    def __str__(self):
+        return f"Paramètres chat - {self.user.email}"
+
+
+class MessageReaction(models.Model):
+    """Reactions to messages"""
+    
+    REACTION_TYPES = [
+        ('LIKE', '👍'),
+        ('LOVE', '❤️'),
+        ('LAUGH', '😂'),
+        ('WOW', '😮'),
+        ('ANGRY', '😠'),
+        ('SAD', '😢'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='message_reactions')
+    # Can be either a private message or group message
+    private_message = models.ForeignKey(PrivateMessage, on_delete=models.CASCADE, null=True, blank=True, related_name='reactions')
+    group_message = models.ForeignKey('backend.GroupChatMessage', on_delete=models.CASCADE, null=True, blank=True, related_name='reactions')
+    reaction_type = models.CharField(max_length=10, choices=REACTION_TYPES)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'message_reactions'
+        unique_together = [
+            ['user', 'private_message'],
+            ['user', 'group_message']
+        ]
+        indexes = [
+            models.Index(fields=['private_message', 'reaction_type']),
+            models.Index(fields=['group_message', 'reaction_type']),
+        ]
+    
+    def __str__(self):
+        message_ref = self.private_message or self.group_message
+        return f"{self.user.email} - {self.get_reaction_type_display()} - {message_ref}"
+
+
+class OnlineStatus(models.Model):
+    """Track user online status for real-time features"""
+    
+    STATUSES = [
+        ('ONLINE', 'En ligne'),
+        ('AWAY', 'Absent'),
+        ('BUSY', 'Occupé'),
+        ('OFFLINE', 'Hors ligne'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='online_status')
+    status = models.CharField(max_length=10, choices=STATUSES, default='OFFLINE')
+    last_activity = models.DateTimeField(auto_now=True)
+    current_chat = models.ForeignKey(PrivateChat, on_delete=models.SET_NULL, null=True, blank=True, related_name='current_users')
+    current_group_chat = models.ForeignKey('backend.GroupChat', on_delete=models.SET_NULL, null=True, blank=True, related_name='current_users')
+    is_typing = models.BooleanField(default=False)
+    typing_in_chat = models.ForeignKey(PrivateChat, on_delete=models.SET_NULL, null=True, blank=True, related_name='typing_users')
+    typing_in_group = models.ForeignKey('backend.GroupChat', on_delete=models.SET_NULL, null=True, blank=True, related_name='typing_users')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'online_statuses'
+        verbose_name = 'Statut en ligne'
+        verbose_name_plural = 'Statuts en ligne'
+    
+    def __str__(self):
+        return f"{self.user.email} - {self.get_status_display()}"
+    
+    @property
+    def is_online(self):
+        from django.utils import timezone
+        # Consider user online if last activity was within 5 minutes
+        return self.status == 'ONLINE' and (timezone.now() - self.last_activity).seconds < 300

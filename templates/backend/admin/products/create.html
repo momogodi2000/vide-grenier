@@ -1,225 +1,410 @@
 {% extends 'backend/base/admin_base.html' %}
 {% load static %}
 
-{% block title %}Créer un Produit - Admin VGK{% endblock %}
+{% block title %}Créer un Produit - Admin{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <!-- Header -->
-    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center space-x-4">
-            <a href="{% url 'backend:admin_product_list' %}" class="p-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Créer un Produit</h1>
+            <p class="text-gray-600">Ajouter un nouveau produit à la plateforme</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <a href="{% url 'admin_panel:products' %}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Retour à la liste
             </a>
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Créer un Nouveau Produit</h1>
-                <p class="text-gray-500 dark:text-gray-400 mt-1">Ajouter un produit au stock administrateur</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Product Form -->
-    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl border border-gray-200 dark:border-gray-700">
-        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-                <i data-lucide="package-plus" class="w-5 h-5 mr-2 inline text-blue-500"></i>
-                Informations du Produit
-            </h2>
-        </div>
-
-        <form method="post" enctype="multipart/form-data" class="p-6 space-y-6">
-            {% csrf_token %}
-            
-            <!-- Basic Information -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="md:col-span-2">
-                    <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Titre du Produit *
-                    </label>
-                    <input type="text" id="title" name="title" required
-                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors"
-                           placeholder="Entrez le titre du produit">
-                </div>
-
-                <div>
-                    <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Catégorie *
-                    </label>
-                    <select id="category" name="category" required
-                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors">
-                        <option value="">Sélectionnez une catégorie</option>
-                        {% for category in categories %}
-                        <option value="{{ category.id }}">{{ category.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div>
-                    <label for="price" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Prix (FCFA) *
-                    </label>
-                    <input type="number" id="price" name="price" required min="1000" step="500"
-                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors"
-                           placeholder="ex: 50000">
-                </div>
-
-                <div>
-                    <label for="condition" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Condition *
-                    </label>
-                    <select id="condition" name="condition" required
-                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors">
-                        <option value="">Sélectionnez une condition</option>
-                        {% for condition_code, condition_label in conditions %}
-                        <option value="{{ condition_code }}">{{ condition_label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div>
-                    <label for="city" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Ville *
-                    </label>
-                    <select id="city" name="city" required
-                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors">
-                        <option value="">Sélectionnez une ville</option>
-                        {% for city_code, city_label in cities %}
-                        <option value="{{ city_code }}">{{ city_label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-
-            <!-- Description -->
-            <div>
-                <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Description *
-                </label>
-                <textarea id="description" name="description" rows="6" required
-                          class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors"
-                          placeholder="Décrivez en détail le produit, ses caractéristiques, son état, etc."></textarea>
-            </div>
-
-            <!-- Additional Information -->
-            <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    <i data-lucide="info" class="w-5 h-5 mr-2 inline text-blue-500"></i>
-                    Informations Supplémentaires
-                </h3>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="condition_notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Notes sur l'état
-                        </label>
-                        <textarea id="condition_notes" name="condition_notes" rows="3"
-                                  class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors"
-                                  placeholder="Informations supplémentaires sur l'état du produit"></textarea>
-                    </div>
-
-                    <div>
-                        <label for="warranty_info" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Informations de garantie
-                        </label>
-                        <textarea id="warranty_info" name="warranty_info" rows="3"
-                                  class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors"
-                                  placeholder="Garantie, service après-vente, etc."></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <a href="{% url 'backend:admin_product_list' %}" 
-                   class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    <i data-lucide="x" class="w-4 h-4 mr-2 inline"></i>
-                    Annuler
-                </a>
-                
-                <button type="submit" 
-                        class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                    <i data-lucide="save" class="w-4 h-4 mr-2 inline"></i>
-                    Créer le Produit
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <!-- Help Section -->
-    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6">
-        <div class="flex items-start space-x-3">
-            <i data-lucide="lightbulb" class="w-5 h-5 text-blue-500 mt-0.5"></i>
-            <div>
-                <h3 class="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-2">Conseils pour créer un produit</h3>
-                <ul class="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                    <li>• Utilisez un titre clair et descriptif</li>
-                    <li>• Choisissez la catégorie la plus appropriée</li>
-                    <li>• Soyez précis sur l'état du produit</li>
-                    <li>• Incluez tous les détails importants dans la description</li>
-                    <li>• Le produit sera automatiquement actif une fois créé</li>
-                </ul>
-            </div>
         </div>
     </div>
 </div>
 
+<!-- Form -->
+<div class="max-w-4xl mx-auto">
+    <form method="post" enctype="multipart/form-data" class="space-y-8">
+        {% csrf_token %}
+        
+        <!-- Basic Information -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-6">Informations de base</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Title Field -->
+                <div class="md:col-span-2">
+                    <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Titre du produit *
+                    </label>
+                    <input type="text" 
+                           name="{{ form.title.name }}" 
+                           id="{{ form.title.id_for_label }}"
+                           value="{{ form.title.value|default:'' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.title.errors %}border-red-500{% endif %}"
+                           placeholder="Ex: iPhone 12 Pro Max 128GB"
+                           required>
+                    {% if form.title.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Category Field -->
+                <div>
+                    <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Catégorie *
+                    </label>
+                    <select name="{{ form.category.name }}" 
+                            id="{{ form.category.id_for_label }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.category.errors %}border-red-500{% endif %}"
+                            required>
+                        <option value="">Sélectionner une catégorie</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}" {% if form.category.value == category.id %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    {% if form.category.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.category.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Price Field -->
+                <div>
+                    <label for="{{ form.price.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Prix (XAF) *
+                    </label>
+                    <input type="number" 
+                           name="{{ form.price.name }}" 
+                           id="{{ form.price.id_for_label }}"
+                           value="{{ form.price.value|default:'' }}"
+                           min="0"
+                           step="100"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.price.errors %}border-red-500{% endif %}"
+                           placeholder="Ex: 250000"
+                           required>
+                    {% if form.price.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.price.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Condition Field -->
+                <div>
+                    <label for="{{ form.condition.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        État *
+                    </label>
+                    <select name="{{ form.condition.name }}" 
+                            id="{{ form.condition.id_for_label }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.condition.errors %}border-red-500{% endif %}"
+                            required>
+                        <option value="">Sélectionner l'état</option>
+                        <option value="new" {% if form.condition.value == 'new' %}selected{% endif %}>Neuf</option>
+                        <option value="like_new" {% if form.condition.value == 'like_new' %}selected{% endif %}>Comme neuf</option>
+                        <option value="good" {% if form.condition.value == 'good' %}selected{% endif %}>Bon état</option>
+                        <option value="fair" {% if form.condition.value == 'fair' %}selected{% endif %}>État correct</option>
+                        <option value="poor" {% if form.condition.value == 'poor' %}selected{% endif %}>Mauvais état</option>
+                    </select>
+                    {% if form.condition.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.condition.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- City Field -->
+                <div>
+                    <label for="{{ form.city.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Ville *
+                    </label>
+                    <select name="{{ form.city.name }}" 
+                            id="{{ form.city.id_for_label }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.city.errors %}border-red-500{% endif %}"
+                            required>
+                        <option value="">Sélectionner une ville</option>
+                        <option value="Douala" {% if form.city.value == 'Douala' %}selected{% endif %}>Douala</option>
+                        <option value="Yaoundé" {% if form.city.value == 'Yaoundé' %}selected{% endif %}>Yaoundé</option>
+                        <option value="Bamenda" {% if form.city.value == 'Bamenda' %}selected{% endif %}>Bamenda</option>
+                        <option value="Bafoussam" {% if form.city.value == 'Bafoussam' %}selected{% endif %}>Bafoussam</option>
+                        <option value="Garoua" {% if form.city.value == 'Garoua' %}selected{% endif %}>Garoua</option>
+                        <option value="Maroua" {% if form.city.value == 'Maroua' %}selected{% endif %}>Maroua</option>
+                        <option value="Kribi" {% if form.city.value == 'Kribi' %}selected{% endif %}>Kribi</option>
+                        <option value="Buea" {% if form.city.value == 'Buea' %}selected{% endif %}>Buea</option>
+                        <option value="Bertoua" {% if form.city.value == 'Bertoua' %}selected{% endif %}>Bertoua</option>
+                        <option value="Ebolowa" {% if form.city.value == 'Ebolowa' %}selected{% endif %}>Ebolowa</option>
+                        <option value="Ngaoundéré" {% if form.city.value == 'Ngaoundéré' %}selected{% endif %}>Ngaoundéré</option>
+                        <option value="Kumba" {% if form.city.value == 'Kumba' %}selected{% endif %}>Kumba</option>
+                        <option value="Limbé" {% if form.city.value == 'Limbé' %}selected{% endif %}>Limbé</option>
+                        <option value="Edea" {% if form.city.value == 'Edea' %}selected{% endif %}>Edea</option>
+                        <option value="Kousséri" {% if form.city.value == 'Kousséri' %}selected{% endif %}>Kousséri</option>
+                        <option value="Mbalmayo" {% if form.city.value == 'Mbalmayo' %}selected{% endif %}>Mbalmayo</option>
+                        <option value="Bafang" {% if form.city.value == 'Bafang' %}selected{% endif %}>Bafang</option>
+                        <option value="Foumban" {% if form.city.value == 'Foumban' %}selected{% endif %}>Foumban</option>
+                        <option value="Autre" {% if form.city.value == 'Autre' %}selected{% endif %}>Autre</option>
+                    </select>
+                    {% if form.city.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.city.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Negotiable Field -->
+                <div class="flex items-center">
+                    <input type="checkbox" 
+                           name="{{ form.is_negotiable.name }}" 
+                           id="{{ form.is_negotiable.id_for_label }}"
+                           {% if form.is_negotiable.value %}checked{% endif %}
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <label for="{{ form.is_negotiable.id_for_label }}" class="ml-2 block text-sm text-gray-900">
+                        Prix négociable
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Description -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-6">Description</h2>
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Description détaillée *
+                </label>
+                <textarea name="{{ form.description.name }}" 
+                          id="{{ form.description.id_for_label }}"
+                          rows="6"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.description.errors %}border-red-500{% endif %}"
+                          placeholder="Décrivez votre produit en détail..."
+                          required>{{ form.description.value|default:'' }}</textarea>
+                {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-sm text-gray-500">Minimum 50 caractères</p>
+            </div>
+        </div>
+
+        <!-- Images -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-6">Images du produit</h2>
+            <div class="space-y-4">
+                <!-- Main Image -->
+                <div>
+                    <label for="main_image" class="block text-sm font-medium text-gray-700 mb-2">
+                        Image principale *
+                    </label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-gray-400 transition-colors">
+                        <div class="space-y-1 text-center">
+                            <i data-lucide="upload" class="mx-auto h-12 w-12 text-gray-400"></i>
+                            <div class="flex text-sm text-gray-600">
+                                <label for="main_image" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                    <span>Télécharger une image</span>
+                                    <input id="main_image" name="main_image" type="file" class="sr-only" accept="image/*" required>
+                                </label>
+                                <p class="pl-1">ou glisser-déposer</p>
+                            </div>
+                            <p class="text-xs text-gray-500">PNG, JPG, GIF jusqu'à 10MB</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Images -->
+                <div>
+                    <label for="additional_images" class="block text-sm font-medium text-gray-700 mb-2">
+                        Images supplémentaires
+                    </label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-gray-400 transition-colors">
+                        <div class="space-y-1 text-center">
+                            <i data-lucide="image" class="mx-auto h-12 w-12 text-gray-400"></i>
+                            <div class="flex text-sm text-gray-600">
+                                <label for="additional_images" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                    <span>Télécharger des images</span>
+                                    <input id="additional_images" name="additional_images" type="file" class="sr-only" accept="image/*" multiple>
+                                </label>
+                                <p class="pl-1">ou glisser-déposer</p>
+                            </div>
+                            <p class="text-xs text-gray-500">Jusqu'à 5 images supplémentaires</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Preview -->
+                <div id="image-preview" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 hidden">
+                    <!-- Preview images will be displayed here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Settings -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-6">Paramètres administrateur</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Seller Field -->
+                <div>
+                    <label for="seller" class="block text-sm font-medium text-gray-700 mb-2">
+                        Vendeur
+                    </label>
+                    <select name="seller" id="seller" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Sélectionner un vendeur</option>
+                        {% for user in users %}
+                            <option value="{{ user.id }}" {% if user.id == request.user.id %}selected{% endif %}>
+                                {{ user.get_full_name }} ({{ user.email }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Status Field -->
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
+                        Statut
+                    </label>
+                    <select name="status" id="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="active">Actif</option>
+                        <option value="pending">En attente</option>
+                        <option value="draft">Brouillon</option>
+                    </select>
+                </div>
+
+                <!-- Featured Field -->
+                <div class="flex items-center">
+                    <input type="checkbox" name="featured" id="featured" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <label for="featured" class="ml-2 block text-sm text-gray-900">
+                        Produit en vedette
+                    </label>
+                </div>
+
+                <!-- Approved Field -->
+                <div class="flex items-center">
+                    <input type="checkbox" name="approved" id="approved" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <label for="approved" class="ml-2 block text-sm text-gray-900">
+                        Approuvé automatiquement
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex justify-end space-x-3 pt-6">
+            <a href="{% url 'admin_panel:products' %}" 
+               class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                Annuler
+            </a>
+            <button type="submit" 
+                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                <i data-lucide="save" class="w-4 h-4 mr-2"></i>
+                Créer le produit
+            </button>
+        </div>
+    </form>
+</div>
+
 <script>
-// Form validation and enhancement
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('form');
-    const titleInput = document.getElementById('title');
-    const priceInput = document.getElementById('price');
-    const descriptionInput = document.getElementById('description');
-
-    // Real-time price formatting
-    priceInput.addEventListener('input', function() {
-        let value = this.value.replace(/\D/g, '');
-        if (value) {
-            this.value = parseInt(value).toLocaleString('fr-FR');
-        }
-    });
-
-    // Character count for description
-    const descriptionCounter = document.createElement('div');
-    descriptionCounter.className = 'text-sm text-gray-500 dark:text-gray-400 mt-1';
-    descriptionInput.parentNode.appendChild(descriptionCounter);
-
-    function updateDescriptionCounter() {
-        const current = descriptionInput.value.length;
-        const recommended = 200;
-        descriptionCounter.textContent = `${current} caractères (recommandé: ${recommended}+)`;
+// Image preview functionality
+function handleImageUpload(input, previewContainer) {
+    const files = input.files;
+    const preview = document.getElementById(previewContainer);
+    
+    if (files.length > 0) {
+        preview.classList.remove('hidden');
+        preview.innerHTML = '';
         
-        if (current < recommended) {
-            descriptionCounter.className = 'text-sm text-yellow-500 mt-1';
-        } else {
-            descriptionCounter.className = 'text-sm text-green-500 mt-1';
-        }
-    }
-
-    descriptionInput.addEventListener('input', updateDescriptionCounter);
-    updateDescriptionCounter();
-
-    // Form submission enhancement
-    form.addEventListener('submit', function(e) {
-        const submitButton = form.querySelector('button[type="submit"]');
-        const originalText = submitButton.innerHTML;
-        
-        submitButton.disabled = true;
-        submitButton.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 inline animate-spin"></i>Création en cours...';
-        
-        // Re-enable after a delay in case of error
-        setTimeout(() => {
-            if (submitButton.disabled) {
-                submitButton.disabled = false;
-                submitButton.innerHTML = originalText;
-                lucide.createIcons();
+        Array.from(files).forEach((file, index) => {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'w-full h-32 object-cover rounded-lg';
+                    img.alt = `Preview ${index + 1}`;
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
             }
-        }, 10000);
-    });
+        });
+    }
+}
 
-    // Initialize Lucide icons
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
+// Main image upload
+document.getElementById('main_image').addEventListener('change', function(e) {
+    handleImageUpload(e.target, 'image-preview');
+});
+
+// Additional images upload
+document.getElementById('additional_images').addEventListener('change', function(e) {
+    handleImageUpload(e.target, 'image-preview');
+});
+
+// Drag and drop functionality
+function setupDragAndDrop(inputId, previewId) {
+    const input = document.getElementById(inputId);
+    const container = input.closest('.border-dashed');
+    
+    container.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        container.classList.add('border-blue-400', 'bg-blue-50');
+    });
+    
+    container.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        container.classList.remove('border-blue-400', 'bg-blue-50');
+    });
+    
+    container.addEventListener('drop', function(e) {
+        e.preventDefault();
+        container.classList.remove('border-blue-400', 'bg-blue-50');
+        
+        const files = e.dataTransfer.files;
+        input.files = files;
+        handleImageUpload(input, previewId);
+    });
+}
+
+setupDragAndDrop('main_image', 'image-preview');
+setupDragAndDrop('additional_images', 'image-preview');
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const title = document.getElementById('{{ form.title.id_for_label }}').value.trim();
+    const description = document.getElementById('{{ form.description.id_for_label }}').value.trim();
+    const price = document.getElementById('{{ form.price.id_for_label }}').value;
+    const category = document.getElementById('{{ form.category.id_for_label }}').value;
+    const condition = document.getElementById('{{ form.condition.id_for_label }}').value;
+    const city = document.getElementById('{{ form.city.id_for_label }}').value;
+    const mainImage = document.getElementById('main_image').files[0];
+    
+    if (!title || title.length < 5) {
+        e.preventDefault();
+        alert('Le titre doit contenir au moins 5 caractères');
+        return false;
+    }
+    
+    if (!description || description.length < 50) {
+        e.preventDefault();
+        alert('La description doit contenir au moins 50 caractères');
+        return false;
+    }
+    
+    if (!price || price <= 0) {
+        e.preventDefault();
+        alert('Le prix doit être supérieur à 0');
+        return false;
+    }
+    
+    if (!category) {
+        e.preventDefault();
+        alert('Veuillez sélectionner une catégorie');
+        return false;
+    }
+    
+    if (!condition) {
+        e.preventDefault();
+        alert('Veuillez sélectionner l\'état du produit');
+        return false;
+    }
+    
+    if (!city) {
+        e.preventDefault();
+        alert('Veuillez sélectionner une ville');
+        return false;
+    }
+    
+    if (!mainImage) {
+        e.preventDefault();
+        alert('Veuillez télécharger une image principale');
+        return false;
     }
 });
 </script>

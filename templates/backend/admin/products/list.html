@@ -13,10 +13,10 @@
                 <p class="text-gray-600">Gérez tous les produits de la plateforme</p>
             </div>
             <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                <a href="{% url 'admin_panel:product_create' %}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
                     <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
                     Ajouter Produit
-                </button>
+                </a>
                 <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
                     <i data-lucide="download" class="w-4 h-4 mr-2"></i>
                     Exporter

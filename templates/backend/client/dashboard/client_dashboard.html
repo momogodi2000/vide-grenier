@@ -1,0 +1,503 @@
+{% extends "backend/base/client_base.html" %}
+{% load static %}
+
+{% block title %}Tableau de Bord Client{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-card {
+        transition: transform 0.2s;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .dashboard-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    .wallet-balance {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #28a745;
+    }
+    .quick-action {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.2s;
+    }
+    .quick-action:hover {
+        border-color: #007bff;
+        color: #007bff;
+        text-decoration: none;
+    }
+    .activity-item {
+        border-left: 3px solid #007bff;
+        padding-left: 1rem;
+        margin-bottom: 1rem;
+    }
+    .chart-container {
+        height: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card dashboard-card border-0 bg-gradient-primary text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-1">Bonjour, {{ user.get_full_name|default:user.username }} !</h2>
+                            <p class="mb-0 opacity-75">Bienvenue sur votre tableau de bord. Voici un aperçu de votre activité.</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="wallet-balance">{{ wallet_balance|floatformat:0 }} FCFA</div>
+                            <small class="opacity-75">Solde disponible</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-primary text-white me-3">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">{{ total_products }}</h3>
+                            <p class="text-muted mb-0">Produits</p>
+                            <small class="text-success">
+                                <i class="fas fa-eye"></i> {{ product_views_today }} vues aujourd'hui
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-success text-white me-3">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">{{ total_earned|floatformat:0 }}</h3>
+                            <p class="text-muted mb-0">FCFA Gagnés</p>
+                            <small class="text-info">
+                                <i class="fas fa-clock"></i> {{ pending_earnings|floatformat:0 }} en attente
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-warning text-white me-3">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">{{ total_purchases }}</h3>
+                            <p class="text-muted mb-0">Achats</p>
+                            <small class="text-muted">
+                                <i class="fas fa-money-bill"></i> {{ total_spent|floatformat:0 }} FCFA dépensés
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-info text-white me-3">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">{{ avg_product_rating }}</h3>
+                            <p class="text-muted mb-0">Note Moyenne</p>
+                            <small class="text-success">
+                                <i class="fas fa-percentage"></i> {{ conversion_rate }}% conversion
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-md-8">
+            <!-- Quick Actions -->
+            <div class="card dashboard-card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt text-warning me-2"></i>
+                        Actions Rapides
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="#" class="quick-action d-block text-center">
+                                <i class="fas fa-plus fa-2x mb-2"></i>
+                                <p class="mb-0">Ajouter Produit</p>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="#" class="quick-action d-block text-center">
+                                <i class="fas fa-wallet fa-2x mb-2"></i>
+                                <p class="mb-0">Gérer Wallet</p>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="#" class="quick-action d-block text-center">
+                                <i class="fas fa-search fa-2x mb-2"></i>
+                                <p class="mb-0">Parcourir</p>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="#" class="quick-action d-block text-center">
+                                <i class="fas fa-comments fa-2x mb-2"></i>
+                                <p class="mb-0">Messages</p>
+                                {% if quick_stats.new_messages > 0 %}
+                                    <span class="badge bg-danger">{{ quick_stats.new_messages }}</span>
+                                {% endif %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sales Analytics Chart -->
+            <div class="card dashboard-card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-area text-success me-2"></i>
+                        Évolution des Ventes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Products -->
+            <div class="card dashboard-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-boxes text-primary me-2"></i>
+                        Mes Produits Récents
+                    </h5>
+                    <a href="#" class="btn btn-outline-primary btn-sm">
+                        Voir tout
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_products %}
+                        <div class="row">
+                            {% for product in recent_products %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center p-2 border rounded">
+                                    {% if product.images.first %}
+                                        <img src="{{ product.images.first.image.url }}" 
+                                             class="rounded me-3" width="60" height="60" 
+                                             style="object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" 
+                                             style="width: 60px; height: 60px;">
+                                            <i class="fas fa-image text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">{{ product.title|truncatechars:25 }}</h6>
+                                        <p class="mb-0 text-primary">{{ product.price|floatformat:0 }} FCFA</p>
+                                        <small class="text-muted">{{ product.created_at|date:"d/m/Y" }}</small>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary" 
+                                                data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" 
+                                                   href="{% url 'client:product_detail' product.id %}">
+                                                <i class="fas fa-eye me-2"></i>Voir</a></li>
+                                            <li><a class="dropdown-item" 
+                                                   href="{% url 'client:product_edit' product.id %}">
+                                                <i class="fas fa-edit me-2"></i>Modifier</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center p-4">
+                            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                            <h6>Aucun produit encore</h6>
+                            <p class="text-muted">Ajoutez votre premier produit pour commencer à vendre.</p>
+                            <a href="#" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Ajouter un Produit
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-md-4">
+            <!-- Wallet Status -->
+            <div class="card dashboard-card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-wallet text-success me-2"></i>
+                        Statut du Wallet
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <div class="wallet-balance text-success">{{ wallet_balance|floatformat:0 }}</div>
+                        <p class="text-muted mb-2">FCFA Disponible</p>
+                        {% if pending_balance > 0 %}
+                            <small class="text-warning">
+                                <i class="fas fa-clock"></i> {{ pending_balance|floatformat:0 }} FCFA en attente
+                            </small>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="#}" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Ajouter des Fonds
+                        </a>
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="fas fa-history"></i> Historique
+                        </a>
+                    </div>
+
+                    {% if recent_transactions %}
+                        <h6 class="mt-4 mb-3">Transactions Récentes</h6>
+                        {% for transaction in recent_transactions %}
+                            <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                                <div>
+                                    <small class="fw-bold">{{ transaction.description|default:"Transaction" }}</small>
+                                    <br>
+                                    <small class="text-muted">{{ transaction.created_at|date:"d/m H:i" }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="{% if transaction.amount > 0 %}text-success{% else %}text-danger{% endif %}">
+                                        {% if transaction.amount > 0 %}+{% endif %}{{ transaction.amount|floatformat:0 }}
+                                    </span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            {% if recommendations %}
+            <div class="card dashboard-card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-lightbulb text-warning me-2"></i>
+                        Recommandations IA
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for recommendation in recommendations %}
+                        <div class="d-flex align-items-center mb-3">
+                            {% if recommendation.product.images.first %}
+                                <img src="{{ recommendation.product.images.first.image.url }}" 
+                                     class="rounded me-2" width="40" height="40" 
+                                     style="object-fit: cover;">
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">{{ recommendation.product.title|truncatechars:20 }}</h6>
+                                <small class="text-muted">{{ recommendation.product.price|floatformat:0 }} FCFA</small>
+                            </div>
+                            <a href="{% url 'backend:product_detail' recommendation.product.id %}" 
+                               class="btn btn-sm btn-outline-primary">Voir</a>
+                        </div>
+                    {% endfor %}
+                    <a href="{% url 'client:recommendations' %}" class="btn btn-sm btn-link">
+                        Voir toutes les recommandations
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Recent Activity -->
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clock text-info me-2"></i>
+                        Activité Récente
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_activities %}
+                        {% for activity in recent_activities %}
+                            <div class="activity-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>{{ activity.action }}</strong>
+                                        <p class="mb-1 text-muted">{{ activity.description }}</p>
+                                        <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                                    </div>
+                                    {% if activity.url %}
+                                        <a href="{{ activity.url }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">Aucune activité récente</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Sales Chart
+const ctx = document.getElementById('salesChart').getContext('2d');
+const salesChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [
+            {% for data in monthly_sales_data %}
+                '{{ data.month|date:"M Y" }}',
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Ventes',
+            data: [
+                {% for data in monthly_sales_data %}
+                    {{ data.total_sales|default:0 }},
+                {% endfor %}
+            ],
+            borderColor: '#007bff',
+            backgroundColor: 'rgba(0, 123, 255, 0.1)',
+            tension: 0.4,
+            fill: true
+        }, {
+            label: 'Revenus (FCFA)',
+            data: [
+                {% for data in monthly_sales_data %}
+                    {{ data.total_revenue|default:0 }},
+                {% endfor %}
+            ],
+            borderColor: '#28a745',
+            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+            tension: 0.4,
+            fill: true,
+            yAxisID: 'y1'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            mode: 'index',
+            intersect: false,
+        },
+        scales: {
+            y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+            },
+            y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                grid: {
+                    drawOnChartArea: false,
+                },
+            }
+        },
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            tooltip: {
+                mode: 'index',
+                intersect: false,
+            }
+        }
+    }
+});
+
+// Real-time updates every 30 seconds
+setInterval(function() {
+    fetch('/client/dashboard/stats/')
+        .then(response => response.json())
+        .then(data => {
+            // Update key metrics
+            if (data.new_messages !== undefined) {
+                const messagesBadge = document.querySelector('.badge.bg-danger');
+                if (data.new_messages > 0) {
+                    if (messagesBadge) {
+                        messagesBadge.textContent = data.new_messages;
+                    }
+                } else {
+                    if (messagesBadge) {
+                        messagesBadge.remove();
+                    }
+                }
+            }
+        })
+        .catch(error => console.log('Stats update failed:', error));
+}, 30000);
+
+// Welcome animation
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.dashboard-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

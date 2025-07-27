@@ -2,7 +2,8 @@
 
 from django.urls import path, include
 from django.views.decorators.csrf import csrf_exempt
-from . import views, views_admin, additional_views, views_client, views_staff
+from . import views, additional_views
+from .views_enhanced import DashboardRedirectView
 
 app_name = 'backend'
 
@@ -11,11 +12,11 @@ urlpatterns = [
     # Home page
     path('', views.HomeView.as_view(), name='home'),
     
-    # Dashboard redirector
-    path('dashboard/', views.DashboardView.as_view(), name='dashboard'),
-    path('dashboard/client/', views.DashboardView.as_view(), {'user_type': 'CLIENT'}, name='client_dashboard'),
-    path('dashboard/admin/', views.DashboardView.as_view(), {'user_type': 'ADMIN'}, name='admin_dashboard'),
-    path('dashboard/staff/', views.DashboardView.as_view(), {'user_type': 'STAFF'}, name='staff_dashboard'),
+    # Dashboard redirector (redirects to user-type-specific interfaces)
+    path('dashboard/', DashboardRedirectView.as_view(), name='dashboard'),
+    
+    # Newsletter subscription
+    path('api/newsletter/subscribe/', views.newsletter_subscribe, name='newsletter_subscribe'),
     
     # Static pages
     path('about/', additional_views.AboutView.as_view(), name='about'),
@@ -30,8 +31,6 @@ urlpatterns += [
     path('auth/register/', views.CustomSignupView.as_view(), name='register'),
     path('auth/login/', views.CustomLoginView.as_view(), name='login'),
     path('auth/logout/', views.CustomLogoutView.as_view(), name='logout'),
-    path('auth/profile/', views.ProfileView.as_view(), name='profile'),
-    path('auth/profile/edit/', views.ProfileEditView.as_view(), name='profile_edit'),
     path('auth/password-reset-request/', additional_views.PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('auth/password-reset-confirm/<str:token>/', additional_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('auth/verify-phone/', views.PhoneVerificationView.as_view(), name='verify_phone'),
@@ -171,96 +170,8 @@ urlpatterns += [
 ]
 
 # ============= ADMIN PANEL =============
-urlpatterns += [
-    # Main admin panel
-    path('admin-panel/', views_admin.admin_dashboard, name='admin_panel'),
-    
-    # User Management
-    path('admin-panel/users/', views_admin.AdminUserListView.as_view() 
-         if hasattr(views_admin, 'AdminUserListView') else views_admin.admin_user_list, 
-         name='admin_user_list'),
-    path('admin-panel/users/create/', views_admin.AdminUserCreateView.as_view() 
-         if hasattr(views_admin, 'AdminUserCreateView') else views_admin.admin_user_create, 
-         name='admin_user_create'),
-    path('admin-panel/users/<uuid:user_id>/', views_admin.AdminUserDetailView.as_view() 
-         if hasattr(views_admin, 'AdminUserDetailView') else views_admin.admin_user_detail, 
-         name='admin_user_detail'),
-    path('admin-panel/users/<uuid:user_id>/edit/', views_admin.AdminUserUpdateView.as_view() 
-         if hasattr(views_admin, 'AdminUserUpdateView') else views_admin.admin_user_edit, 
-         name='admin_user_edit'),
-    
-    # Product Management
-    path('admin-panel/products/', views_admin.AdminProductListView.as_view() 
-         if hasattr(views_admin, 'AdminProductListView') else views_admin.admin_product_list, 
-         name='admin_product_list'),
-    path('admin-panel/products/create/', views_admin.admin_product_create, name='admin_product_create'),
-    path('admin-panel/products/<uuid:product_id>/', views_admin.admin_product_detail, name='admin_product_detail'),
-    path('admin-panel/products/<uuid:product_id>/edit/', views_admin.admin_product_edit, name='admin_product_edit'),
-    
-    # Order Management
-    path('admin-panel/orders/', views_admin.AdminOrderListView.as_view() 
-         if hasattr(views_admin, 'AdminOrderListView') else views_admin.admin_order_list, 
-         name='admin_order_list'),
-    
-    # Payment Management
-    path('admin-panel/payments/', views_admin.AdminPaymentListView.as_view() 
-         if hasattr(views_admin, 'AdminPaymentListView') else views_admin.admin_payment_list, 
-         name='admin_payment_list'),
-    path('admin-panel/payments/<uuid:payment_id>/', views_admin.admin_payment_detail, name='admin_payment_detail'),
-    
-    # Stock Management
-    path('admin-panel/stock/', views_admin.AdminStockView.as_view() 
-         if hasattr(views_admin, 'AdminStockView') else views_admin.admin_stock_list, 
-         name='admin_stock_list'),
-    path('admin-panel/stock/add/', views_admin.AdminStockAddView.as_view() 
-         if hasattr(views_admin, 'AdminStockAddView') else views_admin.admin_stock_add, 
-         name='admin_stock_add'),
-    # Add URL for admin_stock pattern
-    path('admin-panel/stock/', views_admin.AdminStockView.as_view() 
-         if hasattr(views_admin, 'AdminStockView') else views_admin.admin_stock_list, 
-         name='admin_stock'),
-    
-    # Promotion Management
-    path('admin-panel/promotions/', views_admin.AdminPromotionListView.as_view() 
-         if hasattr(views_admin, 'AdminPromotionListView') else views_admin.admin_promotion_list, 
-         name='admin_promotion_list'),
-    path('admin-panel/promotions/create/', views_admin.admin_promotion_create, name='admin_promotion_create'),
-    path('admin-panel/promotions/<uuid:promotion_id>/edit/', views_admin.admin_promotion_edit, name='admin_promotion_edit'),
-    
-    # Loyalty Management
-    path('admin-panel/loyalty/', views_admin.AdminLoyaltyListView.as_view() 
-         if hasattr(views_admin, 'AdminLoyaltyListView') else views_admin.admin_loyalty_list, 
-         name='admin_loyalty_list'),
-    path('admin-panel/loyalty/create/', views_admin.admin_loyalty_create, name='admin_loyalty_create'),
-    path('admin-panel/loyalty/<uuid:loyalty_id>/edit/', views_admin.admin_loyalty_edit, name='admin_loyalty_edit'),
-    
-    # Newsletter Management
-    path('admin-panel/newsletter/', views_admin.AdminNewsletterListView.as_view() 
-         if hasattr(views_admin, 'AdminNewsletterListView') else views_admin.admin_dashboard, 
-         name='admin_newsletter_list'),
-    path('admin-panel/newsletter/create/', views_admin.admin_newsletter_create, name='admin_newsletter_create'),
-    path('admin-panel/newsletter/send/', views_admin.admin_newsletter_send 
-         if hasattr(views_admin, 'admin_newsletter_send') else views_admin.admin_newsletter_list, 
-         name='admin_newsletter_send'),
-    # Fix: Change admin_newsletter_sent to admin_newsletter_send
-    path('admin-panel/newsletter/send-email/', views_admin.admin_newsletter_send_email
-         if hasattr(views_admin, 'admin_newsletter_send_email') else views_admin.admin_newsletter_send, 
-         name='admin_newsletter_send'),
-    
-    # Notification Management
-    path('admin-panel/notifications/', views_admin.AdminNotificationListView.as_view() 
-         if hasattr(views_admin, 'AdminNotificationListView') else views_admin.admin_notification_create, 
-         name='admin_notification_list'),
-    path('admin-panel/notifications/create/', views_admin.admin_notification_create, name='admin_notification_create'),
-    path('admin-panel/notifications/bulk-action/', views_admin.admin_notification_bulk_action 
-         if hasattr(views_admin, 'admin_notification_bulk_action') else views_admin.admin_notification_create, 
-         name='admin_notification_bulk_send'),
-    
-    # Analytics
-    path('admin-panel/analytics/', views_admin.AdminAnalyticsView.as_view() 
-         if hasattr(views_admin, 'AdminAnalyticsView') else views_admin.admin_analytics, 
-         name='admin_analytics'),
-]
+# Admin URLs are now handled by backend/urls_admin.py
+# This section has been moved to avoid duplication
 
 # ============= AJAX ENDPOINTS =============
 urlpatterns += [
@@ -318,12 +229,16 @@ urlpatterns += [
 
 # ============= ENHANCED FEATURES =============
 # Include enhanced features URLs (client and staff)
+# ============= USER-TYPE-SPECIFIC ROUTES =============
 urlpatterns += [
-    # Enhanced client features
-    path('client/', include('backend.urls_enhanced', namespace='client')),
+    # ============= CLIENT URLS =============
+    path('client/', include('backend.urls_client', namespace='client')),
     
-    # Enhanced staff features
-    path('staff/', include('backend.urls_enhanced', namespace='staff')),
+    # ============= STAFF URLS =============
+    path('staff/', include('backend.urls_staff', namespace='staff')),
+    
+    # Admin interface (user_type = ADMIN)
+    path('admin-panel/', include('backend.urls_admin', namespace='admin_panel')),
 ]
 
 # ============= ERROR HANDLERS =============

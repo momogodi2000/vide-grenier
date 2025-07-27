@@ -1,0 +1,170 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Créer une Catégorie - Admin{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Créer une Catégorie</h1>
+            <p class="text-gray-600">Ajouter une nouvelle catégorie de produits</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <a href="{% url 'admin_panel:categories' %}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Retour à la liste
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Form -->
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-lg shadow p-6">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Name Field -->
+            <div>
+                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Nom de la catégorie *
+                </label>
+                <input type="text" 
+                       name="{{ form.name.name }}" 
+                       id="{{ form.name.id_for_label }}"
+                       value="{{ form.name.value|default:'' }}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.name.errors %}border-red-500{% endif %}"
+                       placeholder="Ex: Électronique, Vêtements, Livres..."
+                       required>
+                {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Description Field -->
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Description
+                </label>
+                <textarea name="{{ form.description.name }}" 
+                          id="{{ form.description.id_for_label }}"
+                          rows="4"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.description.errors %}border-red-500{% endif %}"
+                          placeholder="Description détaillée de la catégorie...">{{ form.description.value|default:'' }}</textarea>
+                {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Icon Field -->
+            <div>
+                <label for="{{ form.icon.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Icône
+                </label>
+                <input type="text" 
+                       name="{{ form.icon.name }}" 
+                       id="{{ form.icon.id_for_label }}"
+                       value="{{ form.icon.value|default:'' }}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.icon.errors %}border-red-500{% endif %}"
+                       placeholder="Ex: fas fa-mobile-alt, fas fa-tshirt...">
+                <p class="mt-1 text-sm text-gray-500">Utilisez les classes FontAwesome ou Lucide Icons</p>
+                {% if form.icon.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.icon.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Status Field -->
+            <div class="flex items-center">
+                <input type="checkbox" 
+                       name="{{ form.is_active.name }}" 
+                       id="{{ form.is_active.id_for_label }}"
+                       {% if form.is_active.value %}checked{% endif %}
+                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                <label for="{{ form.is_active.id_for_label }}" class="ml-2 block text-sm text-gray-900">
+                    Catégorie active
+                </label>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                <a href="{% url 'admin_panel:categories' %}" 
+                   class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                    Annuler
+                </a>
+                <button type="submit" 
+                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                    <i data-lucide="save" class="w-4 h-4 mr-2"></i>
+                    Créer la catégorie
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Icon Preview -->
+    <div class="mt-6 bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Aperçu des icônes populaires</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="text-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer" onclick="setIcon('fas fa-mobile-alt')">
+                <i class="fas fa-mobile-alt text-2xl text-blue-600 mb-2"></i>
+                <p class="text-sm text-gray-600">Mobile</p>
+            </div>
+            <div class="text-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer" onclick="setIcon('fas fa-tshirt')">
+                <i class="fas fa-tshirt text-2xl text-green-600 mb-2"></i>
+                <p class="text-sm text-gray-600">Vêtements</p>
+            </div>
+            <div class="text-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer" onclick="setIcon('fas fa-book')">
+                <i class="fas fa-book text-2xl text-purple-600 mb-2"></i>
+                <p class="text-sm text-gray-600">Livres</p>
+            </div>
+            <div class="text-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer" onclick="setIcon('fas fa-home')">
+                <i class="fas fa-home text-2xl text-orange-600 mb-2"></i>
+                <p class="text-sm text-gray-600">Maison</p>
+            </div>
+            <div class="text-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer" onclick="setIcon('fas fa-car')">
+                <i class="fas fa-car text-2xl text-red-600 mb-2"></i>
+                <p class="text-sm text-gray-600">Véhicules</p>
+            </div>
+            <div class="text-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer" onclick="setIcon('fas fa-gamepad')">
+                <i class="fas fa-gamepad text-2xl text-indigo-600 mb-2"></i>
+                <p class="text-sm text-gray-600">Jeux</p>
+            </div>
+            <div class="text-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer" onclick="setIcon('fas fa-dumbbell')">
+                <i class="fas fa-dumbbell text-2xl text-yellow-600 mb-2"></i>
+                <p class="text-sm text-gray-600">Sport</p>
+            </div>
+            <div class="text-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer" onclick="setIcon('fas fa-baby')">
+                <i class="fas fa-baby text-2xl text-pink-600 mb-2"></i>
+                <p class="text-sm text-gray-600">Enfants</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function setIcon(iconClass) {
+    document.getElementById('{{ form.icon.id_for_label }}').value = iconClass;
+}
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const nameField = document.getElementById('{{ form.name.id_for_label }}');
+    const name = nameField.value.trim();
+    
+    if (!name) {
+        e.preventDefault();
+        alert('Le nom de la catégorie est obligatoire');
+        nameField.focus();
+        return false;
+    }
+    
+    if (name.length < 2) {
+        e.preventDefault();
+        alert('Le nom de la catégorie doit contenir au moins 2 caractères');
+        nameField.focus();
+        return false;
+    }
+});
+</script>
+{% endblock %} 

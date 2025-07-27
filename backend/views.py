@@ -57,7 +57,7 @@ from .utils import (
 
 
 class HomeView(TemplateView):
-    template_name = 'backend/home.html'
+    template_name = 'backend/visitor/home.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -155,10 +155,26 @@ class HomeView(TemplateView):
 class CustomLoginView(LoginView):
     """Vue de connexion personnalisée"""
     form_class = CustomLoginForm
-    template_name = 'backend/auth/login.html'
+    template_name = 'backend/visitor/auth/login.html'
     
     def get_success_url(self):
-        return reverse_lazy('backend:dashboard')
+        """Redirect users to their appropriate dashboard based on user type"""
+        try:
+            user = self.request.user
+            
+            # Redirect to user-type-specific dashboard using direct paths
+            if user.user_type == 'CLIENT':
+                return '/client/'
+            elif user.user_type == 'STAFF':
+                return '/staff/'
+            elif user.user_type == 'ADMIN':
+                return '/admin-panel/'
+            else:
+                return reverse_lazy('backend:dashboard')
+        except Exception as e:
+            # If URL resolution fails, fallback to main dashboard
+            print(f"URL resolution error in CustomLoginView: {e}")
+            return reverse_lazy('backend:dashboard')
     
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -177,8 +193,26 @@ class CustomLoginView(LoginView):
 class CustomSignupView(CreateView):
     """Vue d'inscription personnalisée"""
     form_class = CustomSignupForm
-    template_name = 'backend/auth/register.html'
-    success_url = reverse_lazy('backend:dashboard')
+    template_name = 'backend/visitor/auth/register.html'
+    
+    def get_success_url(self):
+        """Redirect users to their appropriate dashboard based on user type"""
+        try:
+            user = self.request.user
+            
+            # Redirect to user-type-specific dashboard using direct paths
+            if user.user_type == 'CLIENT':
+                return '/client/'
+            elif user.user_type == 'STAFF':
+                return '/staff/'
+            elif user.user_type == 'ADMIN':
+                return '/admin-panel/'
+            else:
+                return reverse_lazy('backend:dashboard')
+        except Exception as e:
+            # If URL resolution fails, fallback to main dashboard
+            print(f"URL resolution error in CustomSignupView: {e}")
+            return reverse_lazy('backend:dashboard')
     
     def form_valid(self, form):
         user = form.save()
@@ -222,15 +256,15 @@ from decimal import Decimal
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     """Tableau de bord utilisateur personnalisé selon le type avec données réelles"""
-    template_name = 'backend/dashboard/dashboard.html'
+    template_name = 'backend/visitor/dashboard.html'
     
     def get_template_names(self):
         user_type = self.request.user.user_type
         if user_type == 'ADMIN':
             return ['backend/dashboard/admin_dashboard.html']
         elif user_type == 'STAFF':
-            return ['backend/dashboard/staff_dashboard.html']
-        return ['backend/dashboard/client_dashboard.html']
+            return ['backend/staff/dashboard.html']
+        return ['backend/client/dashboard.html']
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -704,7 +738,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 class ProductListView(ListView):
     """Liste des produits avec filtres et recherche"""
     model = Product
-    template_name = 'backend/products/list.html'
+    template_name = 'backend/client/products/list.html'
     context_object_name = 'products'
     paginate_by = 24
     
@@ -842,7 +876,7 @@ class ProductListView(ListView):
 class ProductDetailView(DetailView):
     """Détail d'un produit avec suggestions et achat public"""
     model = Product
-    template_name = 'backend/products/detail.html'
+    template_name = 'backend/client/products/detail.html'
     context_object_name = 'product'
     
     def get_object(self):
@@ -940,7 +974,7 @@ Merci!"""
 class PublicOrderCreateView(CreateView):
     """Commande publique avec paiement à la livraison"""
     model = Order
-    template_name = 'backend/orders/public_order.html'
+    template_name = 'backend/visitor/orders/public_order.html'
     fields = ['delivery_address', 'notes']
     
     def dispatch(self, request, *args, **kwargs):
@@ -1011,7 +1045,7 @@ class PublicOrderCreateView(CreateView):
 
 class PublicOrderSuccessView(TemplateView):
     """Page de confirmation de commande publique"""
-    template_name = 'backend/orders/public_success.html'
+    template_name = 'backend/visitor/orders/public_success.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1026,7 +1060,7 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
     """Création d'un nouveau produit"""
     model = Product
     form_class = ProductForm
-    template_name = 'backend/products/create.html'
+    template_name = 'backend/client/products/create.html'
     
     def form_valid(self, form):
         form.instance.seller = self.request.user
@@ -1055,7 +1089,7 @@ class ProductEditView(LoginRequiredMixin, UpdateView):
     """Modification d'un produit"""
     model = Product
     form_class = ProductForm
-    template_name = 'backend/products/edit.html'
+    template_name = 'backend/client/products/edit.html'
     
     def get_queryset(self):
         # Seul le propriétaire peut modifier
@@ -1068,7 +1102,7 @@ class ProductEditView(LoginRequiredMixin, UpdateView):
 class ProductDeleteView(LoginRequiredMixin, DeleteView):
     """Suppression d'un produit"""
     model = Product
-    template_name = 'backend/products/delete.html'
+    template_name = 'backend/client/products/delete.html'
     success_url = reverse_lazy('backend:dashboard')
     
     def get_queryset(self):
@@ -1079,7 +1113,7 @@ class ProductDeleteView(LoginRequiredMixin, DeleteView):
 class ProfileView(LoginRequiredMixin, DetailView):
     """Profil utilisateur"""
     model = User
-    template_name = 'backend/auth/profile.html'
+    template_name = 'backend/client/profile/profile.html'
     context_object_name = 'profile_user'
     
     def get_object(self):
@@ -1090,7 +1124,7 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
     """Modification du profil utilisateur"""
     model = User
     form_class = ProfileForm
-    template_name = 'backend/auth/profile_edit.html'
+    template_name = 'backend/client/profile/edit.html'
     success_url = reverse_lazy('backend:profile')
     
     def get_object(self):
@@ -1100,7 +1134,7 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
 class CategoryView(ListView):
     """Produits d'une catégorie"""
     model = Product
-    template_name = 'backend/categories/category.html'
+    template_name = 'backend/client/categories/detail.html'
     context_object_name = 'products'
     paginate_by = 24
     
@@ -1120,7 +1154,7 @@ class CategoryView(ListView):
 class CategoryListView(ListView):
     """Liste de toutes les catégories"""
     model = Category
-    template_name = 'backend/categories/list.html'
+    template_name = 'backend/client/categories/list.html'
     context_object_name = 'categories'
     
     def get_queryset(self):
@@ -1131,7 +1165,7 @@ class OrderCreateView(LoginRequiredMixin, CreateView):
     """Création d'une commande pour utilisateurs connectés"""
     model = Order
     form_class = OrderForm
-    template_name = 'backend/orders/create.html'
+    template_name = 'backend/client/orders/create.html'
     
     def dispatch(self, request, *args, **kwargs):
         self.product = get_object_or_404(Product, id=kwargs['product_id'], status='ACTIVE')
@@ -1180,7 +1214,7 @@ class OrderCreateView(LoginRequiredMixin, CreateView):
 class OrderDetailView(LoginRequiredMixin, DetailView):
     """Détail d'une commande"""
     model = Order
-    template_name = 'backend/orders/detail.html'
+    template_name = 'backend/client/orders/detail.html'
     context_object_name = 'order'
     
     def get_queryset(self):
@@ -1195,7 +1229,7 @@ class OrderDetailView(LoginRequiredMixin, DetailView):
 class OrderListView(LoginRequiredMixin, ListView):
     """Liste des commandes de l'utilisateur"""
     model = Order
-    template_name = 'backend/orders/list.html'
+    template_name = 'backend/client/orders/list.html'
     context_object_name = 'orders'
     paginate_by = 20
     
@@ -1207,7 +1241,7 @@ class OrderListView(LoginRequiredMixin, ListView):
 
 class PaymentView(LoginRequiredMixin, TemplateView):
     """Processus de paiement"""
-    template_name = 'backend/payments/payment.html'
+    template_name = 'backend/client/payments/payment.html'
     
     def dispatch(self, request, *args, **kwargs):
         self.order = get_object_or_404(
@@ -1257,21 +1291,21 @@ class PaymentView(LoginRequiredMixin, TemplateView):
 class PaymentSuccessView(LoginRequiredMixin, DetailView):
     """Page de succès du paiement"""
     model = Payment
-    template_name = 'backend/payments/success.html'
+    template_name = 'backend/client/payments/success.html'
     context_object_name = 'payment'
 
 
 class PaymentCancelView(LoginRequiredMixin, DetailView):
     """Page d'annulation du paiement"""
     model = Payment
-    template_name = 'backend/payments/cancel.html'
+    template_name = 'backend/client/payments/cancel.html'
     context_object_name = 'payment'
 
 
 class ChatListView(LoginRequiredMixin, ListView):
     """Liste des conversations"""
     model = Chat
-    template_name = 'backend/chat/list.html'
+    template_name = 'backend/client/chat/list.html'
     context_object_name = 'chats'
     paginate_by = 20
     
@@ -1285,7 +1319,7 @@ class ChatListView(LoginRequiredMixin, ListView):
 class ChatDetailView(LoginRequiredMixin, DetailView):
     """Détail d'une conversation avec messages"""
     model = Chat
-    template_name = 'backend/chat/detail.html'
+    template_name = 'backend/client/chat/detail.html'
     context_object_name = 'chat'
     
     def get_object(self):
@@ -1372,7 +1406,7 @@ class ChatCreateView(LoginRequiredMixin, CreateView):
 class GroupChatListView(LoginRequiredMixin, ListView):
     """Liste des conversations de groupe"""
     model = GroupChat
-    template_name = 'backend/chat/group_list.html'
+    template_name = 'backend/visitor/chat/group_list.html'
     context_object_name = 'group_chats'
     paginate_by = 20
     
@@ -1410,7 +1444,7 @@ class GroupChatListView(LoginRequiredMixin, ListView):
 class GroupChatDetailView(LoginRequiredMixin, DetailView):
     """Détail d'une conversation de groupe avec messages"""
     model = GroupChat
-    template_name = 'backend/chat/group_detail.html'
+    template_name = 'backend/visitor/chat/group_detail.html'
     context_object_name = 'group_chat'
     
     def get_object(self):
@@ -1490,7 +1524,7 @@ class GroupChatCreateView(LoginRequiredMixin, CreateView):
     """Créer une nouvelle conversation de groupe"""
     model = GroupChat
     form_class = GroupChatForm
-    template_name = 'backend/chat/group_create.html'
+    template_name = 'backend/visitor/chat/group_create.html'
     
     def form_valid(self, form):
         form.instance.creator = self.request.user
@@ -1636,7 +1670,7 @@ class ReviewCreateView(LoginRequiredMixin, CreateView):
     """Créer un avis après livraison"""
     model = Review
     form_class = ReviewForm
-    template_name = 'backend/reviews/create.html'
+    template_name = 'backend/client/reviews/create.html'
     
     def dispatch(self, request, *args, **kwargs):
         self.order = get_object_or_404(
@@ -1683,7 +1717,7 @@ class ReviewCreateView(LoginRequiredMixin, CreateView):
 class ReviewListView(ListView):
     """Liste des avis publics"""
     model = Review
-    template_name = 'backend/reviews/list.html'
+    template_name = 'backend/client/reviews/list.html'
     context_object_name = 'reviews'
     paginate_by = 20
     
@@ -1696,7 +1730,7 @@ class ReviewListView(ListView):
 class ReviewDetailView(DetailView):
     """Détail d'un avis public"""
     model = Review
-    template_name = 'backend/reviews/detail.html'
+    template_name = 'backend/client/reviews/detail.html'
     context_object_name = 'review'
     
     def get_queryset(self):
@@ -1706,7 +1740,7 @@ class ReviewDetailView(DetailView):
 class PickupPointListView(ListView):
     """Liste des points de retrait"""
     model = PickupPoint
-    template_name = 'backend/pickup/list.html'
+    template_name = 'backend/client/pickup/list.html'
     context_object_name = 'pickup_points'
     
     def get_queryset(self):
@@ -1716,7 +1750,7 @@ class PickupPointListView(ListView):
 class PickupPointDetailView(DetailView):
     """Détail d'un point de retrait"""
     model = PickupPoint
-    template_name = 'backend/pickup/detail.html'
+    template_name = 'backend/client/pickup/detail.html'
     context_object_name = 'pickup_point'
     
     def get_queryset(self):
@@ -1725,7 +1759,7 @@ class PickupPointDetailView(DetailView):
 
 class SearchView(TemplateView):
     """Recherche avancée avec suggestions"""
-    template_name = 'backend/search/results.html'
+    template_name = 'backend/client/search/results.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1785,12 +1819,12 @@ class SearchView(TemplateView):
 
 class AboutView(TemplateView):
     """Page À propos"""
-    template_name = 'backend/pages/about.html'
+    template_name = 'backend/visitor/pages/about.html'
 
 
 class ContactView(FormView):
     """Page de contact"""
-    template_name = 'backend/pages/contact.html'
+    template_name = 'backend/visitor/pages/contact.html'
     form_class = ContactForm
     success_url = reverse_lazy('backend:contact')
     
@@ -1819,22 +1853,22 @@ Message:
 
 class HelpView(TemplateView):
     """Page d'aide"""
-    template_name = 'backend/pages/help.html'
+    template_name = 'backend/visitor/pages/help.html'
 
 
 class TermsView(TemplateView):
     """Conditions d'utilisation"""
-    template_name = 'backend/pages/terms.html'
+    template_name = 'backend/visitor/pages/terms.html'
 
 
 class PrivacyView(TemplateView):
     """Politique de confidentialité"""
-    template_name = 'backend/pages/privacy.html'
+    template_name = 'backend/visitor/pages/privacy.html'
 
 
 class PhoneVerificationView(LoginRequiredMixin, TemplateView):
     """Vérification du numéro de téléphone"""
-    template_name = 'backend/auth/verify_phone.html'
+    template_name = 'backend/visitor/auth/verify_phone.html'
     
     def post(self, request):
         code = request.POST.get('verification_code')
@@ -2016,7 +2050,7 @@ import os
 class VisitorProductDetailView(DetailView):
     """Vue détaillée d'un produit pour les visiteurs avec options d'achat et panier"""
     model = Product
-    template_name = 'backend/products/visitor_detail.html'
+    template_name = 'backend/visitor/products/visitor_detail.html'
     context_object_name = 'product'
     
     def get_queryset(self):
@@ -2246,7 +2280,7 @@ def visitor_payment_process(request, order_id):
         
         if not phone_number:
             messages.error(request, 'Veuillez entrer votre numéro de téléphone.')
-            return render(request, 'backend/orders/visitor_payment.html', {'order': order})
+            return render(request, 'backend/visitor/orders/visitor_payment.html', {'order': order})
 
 
 # ============= VISITOR CART OPERATIONS =============
@@ -3246,7 +3280,7 @@ def visitor_order_create(request, product_id):
         'order': order,
         'product': order.product,
     }
-    return render(request, 'backend/orders/visitor_payment.html', context)
+    return render(request, 'backend/visitor/orders/visitor_payment.html', context)
 
 
 def visitor_order_success(request, order_id):
@@ -3264,7 +3298,7 @@ def visitor_order_success(request, order_id):
         'admin_whatsapp': admin_whatsapp,
         'whatsapp_url': f"https://wa.me/{admin_whatsapp}?text={whatsapp_message}",
     }
-    return render(request, 'backend/orders/visitor_success.html', context)
+    return render(request, 'backend/visitor/orders/visitor_success.html', context)
 
 
 def initiate_campay_payment(order, phone_number):
@@ -3560,6 +3594,58 @@ def handler500(request, *args, **argv):
 def handler403(request, exception=None):
     """Vue pour les erreurs 403 - Accès interdit"""
     return render(request, 'backend/errors/403.html', status=403)
+
+
+@csrf_exempt
+def newsletter_subscribe(request):
+    """Handle newsletter subscription via AJAX"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email', '').strip()
+            
+            if not email:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Adresse email requise'
+                })
+            
+            # Import here to avoid circular imports
+            from .models_newsletter import NewsletterSubscriber
+            
+            # Check if email already exists
+            if NewsletterSubscriber.objects.filter(email=email).exists():
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Cette adresse email est déjà abonnée'
+                })
+            
+            # Create new subscriber
+            subscriber = NewsletterSubscriber.objects.create(
+                email=email,
+                is_active=True
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Merci pour votre abonnement!'
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Données invalides'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'Erreur serveur: {str(e)}'
+            })
+    
+    return JsonResponse({
+        'success': False,
+        'error': 'Méthode non autorisée'
+    })
 
 
 

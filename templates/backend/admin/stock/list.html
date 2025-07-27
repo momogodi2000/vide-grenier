@@ -1,408 +1,466 @@
 {% extends 'backend/base/admin_base.html' %}
 {% load static %}
 
-{% block title %}Gestion du Stock - Administration - Vidé-Grenier Kamer{% endblock %}
-
-{% block additional_head %}
-<style>
-    .stock-card {
-        transition: all 0.3s ease;
-    }
-    
-    .stock-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    }
-    
-    .stock-low {
-        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-        border-left: 4px solid #ef4444;
-    }
-    
-    .stock-medium {
-        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-        border-left: 4px solid #f59e0b;
-    }
-    
-    .stock-high {
-        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-        border-left: 4px solid #22c55e;
-    }
-    
-    .sku-badge {
-        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    }
-    
-    .product-image {
-        width: 50px;
-        height: 50px;
-        object-fit: cover;
-        border-radius: 8px;
-    }
-
-    @media (min-width: 768px) {
-        .product-image {
-            width: 60px;
-            height: 60px;
-        }
-    }
-
-    @media (max-width: 640px) {
-        .stock-item-grid {
-            grid-template-columns: 1fr;
-            gap: 1rem;
-        }
-        
-        .quick-actions-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-        
-        .stats-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>
-{% endblock %}
+{% block title %}Gestion du Stock - Admin{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-    <div class="p-4 md:p-8">
-        <!-- Header -->
-        <div class="mb-6 md:mb-8">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Gestion du Stock</h1>
-                    <p class="text-gray-600 text-sm md:text-base">Gérez l'inventaire des produits en stock physique</p>
-                </div>
-                <div class="flex flex-wrap gap-2 md:gap-4">
-                    <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm md:text-base whitespace-nowrap">
-                        <i data-lucide="plus" class="w-4 h-4 inline mr-1 md:mr-2"></i>
-                        Ajouter au Stock
-                    </button>
-                    <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base whitespace-nowrap">
-                        <i data-lucide="scanner" class="w-4 h-4 inline mr-1 md:mr-2"></i>
-                        Scanner
-                    </button>
-                    <button class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm md:text-base whitespace-nowrap">
-                        <i data-lucide="download" class="w-4 h-4 inline mr-1 md:mr-2"></i>
-                        Export
-                    </button>
-                </div>
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Gestion du Stock</h1>
+            <p class="text-gray-600">Surveillance et contrôle du stock en temps réel</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <button onclick="refreshStock()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
+                Actualiser
+            </button>
+            <button onclick="exportStock()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+                Exporter
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Stock Overview Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="p-2 bg-blue-100 rounded-lg">
+                <i data-lucide="package" class="w-6 h-6 text-blue-600"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Total Produits</p>
+                <p class="text-2xl font-bold text-gray-900">{{ total_products }}</p>
             </div>
         </div>
-
-        <!-- Stats Cards -->
-        <div class="grid stats-grid gap-4 md:gap-6 mb-6 md:mb-8">
-            <div class="stock-card rounded-xl p-4 md:p-6 shadow">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-600 text-xs md:text-sm font-medium">Total Articles</p>
-                        <p class="text-xl md:text-3xl font-bold text-gray-900">1,247</p>
-                        <p class="text-green-600 text-xs md:text-sm font-medium">+23 cette semaine</p>
-                    </div>
-                    <div class="bg-blue-100 p-2 md:p-3 rounded-full">
-                        <i data-lucide="package" class="w-5 md:w-6 h-5 md:h-6 text-blue-600"></i>
-                    </div>
-                </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="p-2 bg-green-100 rounded-lg">
+                <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
             </div>
-
-            <div class="stock-card rounded-xl p-4 md:p-6 shadow">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-600 text-xs md:text-sm font-medium">Stock Faible</p>
-                        <p class="text-xl md:text-3xl font-bold text-red-600">23</p>
-                        <p class="text-red-600 text-xs md:text-sm font-medium">≤ 5 unités</p>
-                    </div>
-                    <div class="bg-red-100 p-2 md:p-3 rounded-full">
-                        <i data-lucide="alert-triangle" class="w-5 md:w-6 h-5 md:h-6 text-red-600"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="stock-card rounded-xl p-4 md:p-6 shadow">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-600 text-xs md:text-sm font-medium">Valeur Stock</p>
-                        <p class="text-xl md:text-3xl font-bold text-gray-900">2.8M FCFA</p>
-                        <p class="text-green-600 text-xs md:text-sm font-medium">+15% ce mois</p>
-                    </div>
-                    <div class="bg-green-100 p-2 md:p-3 rounded-full">
-                        <i data-lucide="trending-up" class="w-5 md:w-6 h-5 md:h-6 text-green-600"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="stock-card rounded-xl p-4 md:p-6 shadow">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-600 text-xs md:text-sm font-medium">Mouvements</p>
-                        <p class="text-xl md:text-3xl font-bold text-gray-900">47</p>
-                        <p class="text-blue-600 text-xs md:text-sm font-medium">32 entrées, 15 sorties</p>
-                    </div>
-                    <div class="bg-orange-100 p-2 md:p-3 rounded-full">
-                        <i data-lucide="arrow-up-down" class="w-5 md:w-6 h-5 md:h-6 text-orange-600"></i>
-                    </div>
-                </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">En Stock</p>
+                <p class="text-2xl font-bold text-gray-900">{{ in_stock_count }}</p>
             </div>
         </div>
-
-        <!-- Quick Actions -->
-        <div class="bg-white rounded-xl shadow p-4 md:p-6 mb-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-3 md:mb-4">Actions Rapides</h3>
-            <div class="grid quick-actions-grid gap-3 md:gap-4">
-                <button class="flex flex-col items-center p-3 md:p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
-                    <i data-lucide="plus-circle" class="w-6 md:w-8 h-6 md:h-8 text-green-600 mb-1 md:mb-2"></i>
-                    <span class="text-xs md:text-sm font-medium text-green-700">Réception</span>
-                </button>
-                <button class="flex flex-col items-center p-3 md:p-4 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
-                    <i data-lucide="minus-circle" class="w-6 md:w-8 h-6 md:h-8 text-red-600 mb-1 md:mb-2"></i>
-                    <span class="text-xs md:text-sm font-medium text-red-700">Sortie</span>
-                </button>
-                <button class="flex flex-col items-center p-3 md:p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
-                    <i data-lucide="refresh-cw" class="w-6 md:w-8 h-6 md:h-8 text-blue-600 mb-1 md:mb-2"></i>
-                    <span class="text-xs md:text-sm font-medium text-blue-700">Inventaire</span>
-                </button>
-                <button class="flex flex-col items-center p-3 md:p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors">
-                    <i data-lucide="map-pin" class="w-6 md:w-8 h-6 md:h-8 text-yellow-600 mb-1 md:mb-2"></i>
-                    <span class="text-xs md:text-sm font-medium text-yellow-700">Localiser</span>
-                </button>
-                <button class="flex flex-col items-center p-3 md:p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors">
-                    <i data-lucide="tag" class="w-6 md:w-8 h-6 md:h-8 text-purple-600 mb-1 md:mb-2"></i>
-                    <span class="text-xs md:text-sm font-medium text-purple-700">Étiqueter</span>
-                </button>
-                <button class="flex flex-col items-center p-3 md:p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
-                    <i data-lucide="file-text" class="w-6 md:w-8 h-6 md:h-8 text-gray-600 mb-1 md:mb-2"></i>
-                    <span class="text-xs md:text-sm font-medium text-gray-700">Rapport</span>
-                </button>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="p-2 bg-yellow-100 rounded-lg">
+                <i data-lucide="alert-triangle" class="w-6 h-6 text-yellow-600"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Stock Faible</p>
+                <p class="text-2xl font-bold text-gray-900">{{ low_stock_count }}</p>
             </div>
         </div>
-
-        <!-- Filters and Search -->
-        <div class="bg-white rounded-xl shadow p-4 md:p-6 mb-6">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 md:gap-4">
-                <div class="flex flex-col sm:flex-row gap-2 md:gap-3 w-full">
-                    <div class="relative flex-1">
-                        <input type="text" placeholder="Rechercher un produit..." 
-                               class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
-                        <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-gray-400"></i>
-                    </div>
-                    
-                    <select class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
-                        <option value="">Toutes catégories</option>
-                        <option value="ELECTRONICS">Électronique</option>
-                        <option value="FASHION">Mode</option>
-                        <option value="HOME">Maison</option>
-                    </select>
-                    
-                    <select class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
-                        <option value="">Tous statuts</option>
-                        <option value="AVAILABLE">Disponible</option>
-                        <option value="RESERVED">Réservé</option>
-                    </select>
-                </div>
-                
-                <div class="flex gap-2">
-                    <button class="p-2 text-gray-600 hover:text-gray-800 transition-colors">
-                        <i data-lucide="filter" class="w-4 h-4 md:w-5 md:h-5"></i>
-                    </button>
-                    <button class="p-2 text-gray-600 hover:text-gray-800 transition-colors">
-                        <i data-lucide="refresh-cw" class="w-4 h-4 md:w-5 md:h-5"></i>
-                    </button>
-                </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="p-2 bg-red-100 rounded-lg">
+                <i data-lucide="x-circle" class="w-6 h-6 text-red-600"></i>
             </div>
-        </div>
-
-        <!-- Stock Items -->
-        <div class="space-y-3 md:space-y-4">
-            <!-- Stock Item 1 - Low Stock -->
-            <div class="stock-low rounded-xl p-4 md:p-6 shadow">
-                <div class="grid stock-item-grid gap-4 md:gap-6">
-                    <div class="flex items-center gap-3 md:gap-4">
-                        <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100&h=100&fit=crop&crop=center" 
-                             alt="Casque Audio" class="product-image">
-                        <div>
-                            <div class="flex flex-wrap items-center gap-2 mb-1 md:mb-2">
-                                <h3 class="text-base md:text-lg font-semibold text-gray-900">Casque Audio Sony WH-1000XM4</h3>
-                                <span class="sku-badge text-white px-2 py-1 rounded-full text-xs md:text-sm font-medium">SKU: VGK-AUD-001</span>
-                            </div>
-                            <div class="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-600">
-                                <span class="flex items-center">
-                                    <i data-lucide="package" class="w-3 h-3 md:w-4 md:h-4 mr-1"></i>
-                                    Électronique
-                                </span>
-                                <span class="flex items-center">
-                                    <i data-lucide="map-pin" class="w-3 h-3 md:w-4 md:h-4 mr-1"></i>
-                                    Zone A - Étagère 1
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center justify-between md:justify-end gap-3 md:gap-6">
-                        <div class="text-center">
-                            <p class="text-xl md:text-2xl font-bold text-red-600">3</p>
-                            <p class="text-xs md:text-sm text-gray-600">Unités</p>
-                        </div>
-                        <div class="flex flex-col gap-1 md:gap-2">
-                            <span class="status-badge bg-red-100 text-red-800 rounded-full text-xs">Stock Faible</span>
-                            <span class="status-badge bg-green-100 text-green-800 rounded-full text-xs">Disponible</span>
-                        </div>
-                        <div class="flex gap-1 md:gap-2">
-                            <button class="p-1 md:p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors">
-                                <i data-lucide="eye" class="w-4 h-4"></i>
-                            </button>
-                            <button class="p-1 md:p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors">
-                                <i data-lucide="edit" class="w-4 h-4"></i>
-                            </button>
-                            <button class="p-1 md:p-2 text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded-lg transition-colors">
-                                <i data-lucide="plus" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Additional stock items would go here -->
-            <!-- ... -->
-        </div>
-
-        <!-- Pagination -->
-        <div class="mt-6 md:mt-8 bg-white rounded-xl shadow p-4 md:p-6">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div>
-                    <p class="text-xs md:text-sm text-gray-700">
-                        Affichage de <span class="font-medium">1</span> à <span class="font-medium">20</span> sur <span class="font-medium">1,247</span> articles
-                    </p>
-                </div>
-                <div>
-                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                        <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50">
-                            <i data-lucide="chevron-left" class="w-4 h-4 md:w-5 md:h-5"></i>
-                        </a>
-                        <a href="#" class="bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-3 md:px-4 py-2 border text-xs md:text-sm font-medium">1</a>
-                        <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-3 md:px-4 py-2 border text-xs md:text-sm font-medium">2</a>
-                        <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-3 md:px-4 py-2 border text-xs md:text-sm font-medium">3</a>
-                        <span class="relative inline-flex items-center px-3 md:px-4 py-2 border border-gray-300 bg-white text-xs md:text-sm font-medium text-gray-700">...</span>
-                        <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-3 md:px-4 py-2 border text-xs md:text-sm font-medium">63</a>
-                        <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50">
-                            <i data-lucide="chevron-right" class="w-4 h-4 md:w-5 md:h-5"></i>
-                        </a>
-                    </nav>
-                </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Rupture</p>
+                <p class="text-2xl font-bold text-gray-900">{{ out_of_stock_count }}</p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Stock Movement Modal -->
-<div id="stock-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-10 md:top-20 mx-auto p-4 md:p-5 border w-full md:w-96 shadow-lg rounded-md bg-white">
+<!-- Stock Alerts -->
+{% if stock_alerts %}
+<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+    <div class="flex">
+        <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-400 mt-0.5 mr-3"></i>
+        <div>
+            <h3 class="text-sm font-medium text-yellow-800">Alertes de Stock</h3>
+            <div class="mt-2 text-sm text-yellow-700">
+                <ul class="list-disc list-inside space-y-1">
+                    {% for alert in stock_alerts %}
+                        <li>{{ alert }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Filters and Search -->
+<div class="bg-white rounded-lg shadow mb-6">
+    <div class="p-6 border-b border-gray-200">
+        <div class="flex flex-col sm:flex-row gap-4">
+            <div class="flex-1">
+                <input type="text" id="search" placeholder="Rechercher un produit..." 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            <div class="flex gap-2">
+                <select id="stock-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Tous les stocks</option>
+                    <option value="in_stock">En stock</option>
+                    <option value="low_stock">Stock faible</option>
+                    <option value="out_of_stock">Rupture</option>
+                </select>
+                <select id="category-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Toutes les catégories</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stock Table -->
+<div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Produit
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Catégorie
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Stock Actuel
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Seuil d'Alerte
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Statut
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Dernière Mise à Jour
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for product in products %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            {% if product.image %}
+                                <img class="h-10 w-10 rounded-lg object-cover mr-3" src="{{ product.image.url }}" alt="{{ product.title }}">
+                            {% else %}
+                                <div class="h-10 w-10 rounded-lg bg-gray-200 flex items-center justify-center mr-3">
+                                    <i data-lucide="image" class="w-5 h-5 text-gray-400"></i>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">{{ product.title|truncatechars:40 }}</div>
+                                <div class="text-sm text-gray-500">{{ product.sku|default:"SKU-"|add:product.id }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ product.category.name }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">{{ product.stock_quantity|default:0 }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ product.stock_threshold|default:5 }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if product.stock_quantity > product.stock_threshold %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i>
+                                En stock
+                            </span>
+                        {% elif product.stock_quantity > 0 %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                <i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i>
+                                Stock faible
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <i data-lucide="x-circle" class="w-3 h-3 mr-1"></i>
+                                Rupture
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ product.updated_at|date:"d/m/Y H:i" }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <button onclick="updateStock('{{ product.id }}')" 
+                                    class="text-blue-600 hover:text-blue-900" title="Mettre à jour le stock">
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="viewStockHistory('{{ product.id }}')" 
+                                    class="text-green-600 hover:text-green-900" title="Historique">
+                                <i data-lucide="history" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="setStockAlert('{{ product.id }}')" 
+                                    class="text-yellow-600 hover:text-yellow-900" title="Configurer l'alerte">
+                                <i data-lucide="bell" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                        <i data-lucide="package" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                        <p class="text-lg font-medium">Aucun produit trouvé</p>
+                        <p class="text-sm">Aucun produit n'a encore été ajouté au stock</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+        <div class="flex-1 flex justify-between sm:hidden">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Précédent
+                </a>
+            {% endif %}
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Suivant
+                </a>
+            {% endif %}
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-gray-700">
+                    Affichage de <span class="font-medium">{{ page_obj.start_index }}</span> à <span class="font-medium">{{ page_obj.end_index }}</span> sur <span class="font-medium">{{ page_obj.paginator.count }}</span> résultats
+                </p>
+            </div>
+            <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        </a>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+                                {{ num }}
+                            </span>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <a href="?page={{ num }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                {{ num }}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Stock Update Modal -->
+<div id="stock-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div class="mt-3">
-            <div class="flex items-center justify-between mb-3 md:mb-4">
-                <h3 class="text-base md:text-lg font-medium text-gray-900">Mouvement de Stock</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
-                    <i data-lucide="x" class="w-5 h-5 md:w-6 md:h-6"></i>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Mettre à jour le stock</h3>
+                <button onclick="closeStockModal()" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-            
-            <form class="space-y-3 md:space-y-4">
+            <form id="stock-form" class="space-y-4">
                 <div>
-                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Type de mouvement</label>
-                    <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                        <option value="IN">Entrée en stock</option>
-                        <option value="OUT">Sortie de stock</option>
-                        <option value="MOVE">Déplacement</option>
-                    </select>
+                    <label for="stock-quantity" class="block text-sm font-medium text-gray-700 mb-2">Quantité</label>
+                    <input type="number" id="stock-quantity" name="quantity" min="0" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 </div>
-                
                 <div>
-                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Quantité</label>
-                    <input type="number" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    <label for="stock-threshold" class="block text-sm font-medium text-gray-700 mb-2">Seuil d'alerte</label>
+                    <input type="number" id="stock-threshold" name="threshold" min="0" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 </div>
-                
                 <div>
-                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Raison</label>
-                    <textarea rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="Motif du mouvement..."></textarea>
+                    <label for="stock-notes" class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                    <textarea id="stock-notes" name="notes" rows="3" 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
                 </div>
-                
-                <div class="flex justify-end gap-2 md:gap-3 pt-3 md:pt-4">
-                    <button type="button" onclick="closeModal()" class="px-3 md:px-4 py-2 text-xs md:text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeStockModal()" 
+                            class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
                         Annuler
                     </button>
-                    <button type="submit" class="px-3 md:px-4 py-2 text-xs md:text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
-                        Confirmer
+                    <button type="submit" 
+                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        Mettre à jour
                     </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block additional_scripts %}
 <script>
-    // Initialize Lucide icons
-    lucide.createIcons();
+let currentProductId = null;
 
-    // Modal functions
-    function openModal() {
-        document.getElementById('stock-modal').classList.remove('hidden');
-    }
-
-    function closeModal() {
-        document.getElementById('stock-modal').classList.add('hidden');
-    }
-
-    // Search functionality
-    document.querySelector('input[placeholder="Rechercher un produit..."]')?.addEventListener('input', function(e) {
-        console.log('Searching for:', e.target.value);
-    });
-
-    // Quick actions
-    document.querySelectorAll('.flex.flex-col.items-center').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const action = this.querySelector('span').textContent;
-            console.log('Quick action:', action);
-            if (action === 'Réception' || action === 'Sortie') {
-                openModal();
-            }
-        });
-    });
-
-    // Stock item actions
-    document.querySelectorAll('button[class*="text-orange-600"]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            openModal();
-        });
-    });
-
-    // Filter functionality
-    document.querySelectorAll('select').forEach(select => {
-        select.addEventListener('change', function(e) {
-            console.log('Filter changed:', e.target.value);
-        });
-    });
-
-    // Auto-refresh stock levels every 30 seconds
-    setInterval(() => {
-        console.log('Refreshing stock levels...');
-        // Add AJAX call to refresh stock data
-    }, 30000);
-
-    // Keyboard shortcuts
-    document.addEventListener('keydown', function(e) {
-        if (e.ctrlKey || e.metaKey) {
-            switch(e.key) {
-                case 'k':
-                    e.preventDefault();
-                    document.querySelector('input[placeholder="Rechercher un produit..."]')?.focus();
-                    break;
-                case 'n':
-                    e.preventDefault();
-                    console.log('New stock item');
-                    break;
-            }
+// Search functionality
+document.getElementById('search').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const productName = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
+        if (productName.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
         }
     });
+});
+
+// Stock filter
+document.getElementById('stock-filter').addEventListener('change', function(e) {
+    const status = e.target.value;
+    const rows = document.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const statusCell = row.querySelector('td:nth-child(5)');
+        if (!statusCell) return;
+        
+        const statusText = statusCell.textContent.toLowerCase();
+        if (status === '' || statusText.includes(status.replace('_', ' '))) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+// Category filter
+document.getElementById('category-filter').addEventListener('change', function(e) {
+    const category = e.target.value;
+    const rows = document.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const categoryCell = row.querySelector('td:nth-child(2)');
+        if (!categoryCell) return;
+        
+        const categoryText = categoryCell.textContent;
+        if (category === '' || categoryText.includes(category)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+function refreshStock() {
+    location.reload();
+}
+
+function exportStock() {
+    // Implement stock export functionality
+    alert('Fonctionnalité d\'export en cours de développement');
+}
+
+function updateStock(productId) {
+    currentProductId = productId;
+    
+    // Load current stock data
+    fetch(`/admin-panel/stock/${productId}/get/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('stock-quantity').value = data.quantity || 0;
+            document.getElementById('stock-threshold').value = data.threshold || 5;
+            document.getElementById('stock-modal').classList.remove('hidden');
+        });
+}
+
+function closeStockModal() {
+    document.getElementById('stock-modal').classList.add('hidden');
+    currentProductId = null;
+}
+
+function viewStockHistory(productId) {
+    // Implement stock history view
+    alert('Historique du stock pour le produit ' + productId);
+}
+
+function setStockAlert(productId) {
+    // Implement stock alert configuration
+    alert('Configuration d\'alerte pour le produit ' + productId);
+}
+
+// Stock form submission
+document.getElementById('stock-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    formData.append('quantity', document.getElementById('stock-quantity').value);
+    formData.append('threshold', document.getElementById('stock-threshold').value);
+    formData.append('notes', document.getElementById('stock-notes').value);
+    
+    fetch(`/admin-panel/stock/${currentProductId}/update/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeStockModal();
+            location.reload();
+        } else {
+            alert('Erreur lors de la mise à jour du stock');
+        }
+    });
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Auto-refresh stock data every 30 seconds
+setInterval(function() {
+    // Only refresh if no modal is open
+    if (document.getElementById('stock-modal').classList.contains('hidden')) {
+        // Refresh stock data without reloading the page
+        console.log('Auto-refreshing stock data...');
+    }
+}, 30000);
 </script>
 {% endblock %}

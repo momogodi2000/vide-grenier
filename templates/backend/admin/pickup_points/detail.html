@@ -1,0 +1,329 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Détails Point de Retrait - Admin{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{{ pickup_point.name }}</h1>
+            <p class="text-gray-600">Détails complets et gestion des commandes</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <a href="{% url 'admin_panel:pickup_point_edit' pickup_point.id %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                <i data-lucide="edit" class="w-4 h-4 mr-2"></i>
+                Modifier
+            </a>
+            <a href="{% url 'admin_panel:pickup_points' %}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Retour à la liste
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Main Content -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Basic Information -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Informations Générales</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-medium text-gray-900 mb-3">Coordonnées</h3>
+                    <div class="space-y-2">
+                        <div class="flex items-start">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-gray-400 mt-1 mr-2"></i>
+                            <div>
+                                <p class="text-gray-900">{{ pickup_point.address }}</p>
+                                <p class="text-sm text-gray-500">{{ pickup_point.city }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <i data-lucide="phone" class="w-4 h-4 text-gray-400 mr-2"></i>
+                            <span class="text-gray-900">{{ pickup_point.phone }}</span>
+                        </div>
+                        {% if pickup_point.email %}
+                        <div class="flex items-center">
+                            <i data-lucide="mail" class="w-4 h-4 text-gray-400 mr-2"></i>
+                            <span class="text-gray-900">{{ pickup_point.email }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="font-medium text-gray-900 mb-3">Statut et Capacité</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Statut:</span>
+                            <span class="px-2 py-1 text-xs font-medium rounded-full 
+                                {% if pickup_point.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                {% if pickup_point.is_active %}Actif{% else %}Inactif{% endif %}
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Capacité:</span>
+                            <span class="font-medium">{{ pickup_point.capacity|default:100 }} colis</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Temps de traitement:</span>
+                            <span class="font-medium">{{ pickup_point.processing_time|default:24 }}h</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Créé le:</span>
+                            <span class="font-medium">{{ pickup_point.created_at|date:"d/m/Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Operating Hours -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Heures d'Ouverture</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-medium text-gray-900 mb-2">Horaires normaux</h3>
+                    <p class="text-gray-600">{{ pickup_point.opening_hours|default:"Lundi - Vendredi: 8h00 - 18h00" }}</p>
+                </div>
+                {% if pickup_point.special_hours %}
+                <div>
+                    <h3 class="font-medium text-gray-900 mb-2">Horaires spéciaux</h3>
+                    <p class="text-gray-600">{{ pickup_point.special_hours }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Orders -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-medium text-gray-900">Commandes Récentes</h2>
+                <a href="{% url 'admin_panel:pickup_point_orders' pickup_point.id %}" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                    Voir toutes
+                </a>
+            </div>
+            
+            {% if recent_orders %}
+            <div class="space-y-4">
+                {% for order in recent_orders %}
+                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i data-lucide="package" class="w-5 h-5 text-blue-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900">#{{ order.order_number }}</p>
+                            <p class="text-sm text-gray-500">{{ order.customer.get_full_name }}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-medium text-gray-900">{{ order.total_amount|floatformat:0 }} XAF</p>
+                        <span class="px-2 py-1 text-xs font-medium rounded-full 
+                            {% if order.status == 'PENDING' %}bg-yellow-100 text-yellow-800
+                            {% elif order.status == 'CONFIRMED' %}bg-blue-100 text-blue-800
+                            {% elif order.status == 'PROCESSING' %}bg-purple-100 text-purple-800
+                            {% elif order.status == 'SHIPPED' %}bg-indigo-100 text-indigo-800
+                            {% elif order.status == 'DELIVERED' %}bg-green-100 text-green-800
+                            {% elif order.status == 'CANCELLED' %}bg-red-100 text-red-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ order.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <i data-lucide="package" class="w-12 h-12 text-gray-300 mx-auto mb-4"></i>
+                <p class="text-gray-500">Aucune commande récente</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Statistics Chart -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Statistiques d'Utilisation</h2>
+            <div class="h-64">
+                <canvas id="usageChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="lg:col-span-1 space-y-6">
+        <!-- Quick Stats -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Statistiques Rapides</h3>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                    <div>
+                        <p class="text-sm font-medium text-blue-900">Total Commandes</p>
+                        <p class="text-2xl font-bold text-blue-600">{{ pickup_point.total_orders|default:0 }}</p>
+                    </div>
+                    <i data-lucide="shopping-bag" class="w-8 h-8 text-blue-600"></i>
+                </div>
+                
+                <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <div>
+                        <p class="text-sm font-medium text-green-900">Terminées</p>
+                        <p class="text-2xl font-bold text-green-600">{{ pickup_point.completed_orders|default:0 }}</p>
+                    </div>
+                    <i data-lucide="check-circle" class="w-8 h-8 text-green-600"></i>
+                </div>
+                
+                <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                    <div>
+                        <p class="text-sm font-medium text-yellow-900">En attente</p>
+                        <p class="text-2xl font-bold text-yellow-600">{{ pickup_point.pending_orders|default:0 }}</p>
+                    </div>
+                    <i data-lucide="clock" class="w-8 h-8 text-yellow-600"></i>
+                </div>
+                
+                <div class="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                    <div>
+                        <p class="text-sm font-medium text-purple-900">Temps moyen</p>
+                        <p class="text-2xl font-bold text-purple-600">{{ pickup_point.avg_processing_time|default:0 }}h</p>
+                    </div>
+                    <i data-lucide="timer" class="w-8 h-8 text-purple-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Actions Rapides</h3>
+            <div class="space-y-3">
+                <button onclick="toggleStatus()" class="w-full {% if pickup_point.is_active %}bg-red-600 hover:bg-red-700{% else %}bg-green-600 hover:bg-green-700{% endif %} text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center">
+                    <i data-lucide="{% if pickup_point.is_active %}pause{% else %}play{% endif %}" class="w-4 h-4 mr-2"></i>
+                    {% if pickup_point.is_active %}Désactiver{% else %}Activer{% endif %}
+                </button>
+                <button onclick="viewOrders()" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                    <i data-lucide="list" class="w-4 h-4 mr-2"></i>
+                    Voir toutes les commandes
+                </button>
+                <button onclick="exportData()" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                    <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+                    Exporter les données
+                </button>
+                <button onclick="printDetails()" class="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center">
+                    <i data-lucide="printer" class="w-4 h-4 mr-2"></i>
+                    Imprimer
+                </button>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        {% if pickup_point.notes %}
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Notes</h3>
+            <p class="text-gray-600">{{ pickup_point.notes }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Map Preview -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Localisation</h3>
+            <div class="h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                <div class="text-center">
+                    <i data-lucide="map" class="w-12 h-12 text-gray-400 mx-auto mb-2"></i>
+                    <p class="text-sm text-gray-500">Carte non disponible</p>
+                    <p class="text-xs text-gray-400">{{ pickup_point.address }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Usage statistics chart
+const ctx = document.getElementById('usageChart').getContext('2d');
+const usageChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'],
+        datasets: [{
+            label: 'Commandes',
+            data: [12, 19, 15, 25, 22, 30],
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.1)'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+
+// Quick action functions
+function toggleStatus() {
+    if (confirm('Êtes-vous sûr de vouloir changer le statut de ce point de retrait ?')) {
+        fetch(`/admin-panel/pickup-points/${pickup_point.id}/toggle-status/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur lors du changement de statut');
+            }
+        });
+    }
+}
+
+function viewOrders() {
+    window.location.href = `{% url 'admin_panel:pickup_point_orders' pickup_point.id %}`;
+}
+
+function exportData() {
+    window.open(`/admin-panel/pickup-points/${pickup_point.id}/export/`, '_blank');
+}
+
+function printDetails() {
+    window.print();
+}
+
+// Utility function
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %} 

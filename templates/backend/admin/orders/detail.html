@@ -1,0 +1,458 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Détails de la Commande - Admin{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Commande #{{ order.order_number }}</h1>
+            <p class="text-gray-600">Détails complets et suivi en temps réel</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <button onclick="printOrder()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center">
+                <i data-lucide="printer" class="w-4 h-4 mr-2"></i>
+                Imprimer
+            </button>
+            <a href="{% url 'admin_panel:orders' %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Retour aux commandes
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Main Content -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Order Status -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-medium text-gray-900">Statut de la Commande</h2>
+                <span class="px-3 py-1 text-sm font-medium rounded-full 
+                    {% if order.status == 'PENDING' %}bg-yellow-100 text-yellow-800
+                    {% elif order.status == 'CONFIRMED' %}bg-blue-100 text-blue-800
+                    {% elif order.status == 'PROCESSING' %}bg-purple-100 text-purple-800
+                    {% elif order.status == 'SHIPPED' %}bg-indigo-100 text-indigo-800
+                    {% elif order.status == 'DELIVERED' %}bg-green-100 text-green-800
+                    {% elif order.status == 'CANCELLED' %}bg-red-100 text-red-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {{ order.get_status_display }}
+                </span>
+            </div>
+            
+            <!-- Status Timeline -->
+            <div class="relative">
+                <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                <div class="space-y-4">
+                    {% for status_update in order_status_history %}
+                    <div class="relative flex items-start">
+                        <div class="flex-shrink-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                            <i data-lucide="check" class="w-4 h-4 text-white"></i>
+                        </div>
+                        <div class="ml-4 flex-1">
+                            <p class="text-sm font-medium text-gray-900">{{ status_update.status_display }}</p>
+                            <p class="text-sm text-gray-500">{{ status_update.timestamp|date:"d/m/Y H:i" }}</p>
+                            {% if status_update.notes %}
+                                <p class="text-sm text-gray-600 mt-1">{{ status_update.notes }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Items -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Articles Commandés</h2>
+            <div class="space-y-4">
+                {% for item in order.items.all %}
+                <div class="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
+                    {% if item.product.image %}
+                        <img src="{{ item.product.image.url }}" alt="{{ item.product.title }}" class="w-16 h-16 object-cover rounded-lg">
+                    {% else %}
+                        <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                            <i data-lucide="image" class="w-8 h-8 text-gray-400"></i>
+                        </div>
+                    {% endif %}
+                    <div class="flex-1">
+                        <h3 class="font-medium text-gray-900">{{ item.product.title }}</h3>
+                        <p class="text-sm text-gray-500">{{ item.product.category.name }}</p>
+                        <p class="text-sm text-gray-500">Quantité: {{ item.quantity }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-medium text-gray-900">{{ item.total_price|floatformat:0 }} XAF</p>
+                        <p class="text-sm text-gray-500">{{ item.unit_price|floatformat:0 }} XAF/unité</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Payment Information -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Informations de Paiement</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-medium text-gray-900 mb-3">Détails du Paiement</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Méthode de paiement:</span>
+                            <span class="font-medium">{{ order.payment_method|default:"Non spécifié" }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Statut du paiement:</span>
+                            <span class="px-2 py-1 text-xs font-medium rounded-full 
+                                {% if order.payment_status == 'PENDING' %}bg-yellow-100 text-yellow-800
+                                {% elif order.payment_status == 'COMPLETED' %}bg-green-100 text-green-800
+                                {% elif order.payment_status == 'FAILED' %}bg-red-100 text-red-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ order.get_payment_status_display|default:"Non spécifié" }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">ID Transaction:</span>
+                            <span class="font-medium">{{ order.transaction_id|default:"Non disponible" }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Date de paiement:</span>
+                            <span class="font-medium">{{ order.payment_date|date:"d/m/Y H:i"|default:"Non payé" }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="font-medium text-gray-900 mb-3">Calcul des Frais</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Sous-total:</span>
+                            <span class="font-medium">{{ order.subtotal|floatformat:0 }} XAF</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Frais de livraison:</span>
+                            <span class="font-medium">{{ order.shipping_fee|floatformat:0 }} XAF</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Commission ({{ commission_rate }}%):</span>
+                            <span class="font-medium">{{ order.commission_amount|floatformat:0 }} XAF</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">TVA ({{ vat_rate }}%):</span>
+                            <span class="font-medium">{{ order.vat_amount|floatformat:0 }} XAF</span>
+                        </div>
+                        <div class="border-t pt-2">
+                            <div class="flex justify-between font-medium text-lg">
+                                <span>Total:</span>
+                                <span>{{ order.total_amount|floatformat:0 }} XAF</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delivery Information -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Informations de Livraison</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-medium text-gray-900 mb-3">Adresse de Livraison</h3>
+                    <div class="space-y-2">
+                        <p class="text-gray-900">{{ order.delivery_address.full_name }}</p>
+                        <p class="text-gray-600">{{ order.delivery_address.street_address }}</p>
+                        <p class="text-gray-600">{{ order.delivery_address.city }}, {{ order.delivery_address.postal_code }}</p>
+                        <p class="text-gray-600">{{ order.delivery_address.phone }}</p>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="font-medium text-gray-900 mb-3">Options de Livraison</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Méthode:</span>
+                            <span class="font-medium">{{ order.delivery_method|default:"Standard" }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Point de retrait:</span>
+                            <span class="font-medium">{{ order.pickup_point.name|default:"Livraison à domicile" }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Date estimée:</span>
+                            <span class="font-medium">{{ order.estimated_delivery_date|date:"d/m/Y"|default:"Non spécifiée" }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Numéro de suivi:</span>
+                            <span class="font-medium">{{ order.tracking_number|default:"Non disponible" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="lg:col-span-1 space-y-6">
+        <!-- Order Summary -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Résumé de la Commande</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Numéro:</span>
+                    <span class="font-medium">{{ order.order_number }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Date:</span>
+                    <span class="font-medium">{{ order.created_at|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Articles:</span>
+                    <span class="font-medium">{{ order.items.count }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Total:</span>
+                    <span class="font-medium text-lg">{{ order.total_amount|floatformat:0 }} XAF</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Information -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Informations Client</h3>
+            <div class="space-y-3">
+                <div>
+                    <p class="font-medium text-gray-900">{{ order.customer.get_full_name }}</p>
+                    <p class="text-sm text-gray-500">{{ order.customer.email }}</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Téléphone:</span>
+                        <span class="text-sm font-medium">{{ order.customer.phone|default:"Non renseigné" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Ville:</span>
+                        <span class="text-sm font-medium">{{ order.customer.city|default:"Non renseigné" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Membre depuis:</span>
+                        <span class="text-sm font-medium">{{ order.customer.date_joined|date:"d/m/Y" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Actions Rapides</h3>
+            <div class="space-y-3">
+                <button onclick="updateOrderStatus()" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                    <i data-lucide="edit" class="w-4 h-4 mr-2"></i>
+                    Mettre à jour le statut
+                </button>
+                <button onclick="contactCustomer()" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                    <i data-lucide="message-circle" class="w-4 h-4 mr-2"></i>
+                    Contacter le client
+                </button>
+                <button onclick="contactStaff()" class="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center">
+                    <i data-lucide="users" class="w-4 h-4 mr-2"></i>
+                    Contacter l'équipe
+                </button>
+                <button onclick="generateInvoice()" class="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center">
+                    <i data-lucide="file-text" class="w-4 h-4 mr-2"></i>
+                    Générer facture
+                </button>
+            </div>
+        </div>
+
+        <!-- Real-time Updates -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Mises à Jour en Temps Réel</h3>
+            <div id="real-time-updates" class="space-y-3 max-h-64 overflow-y-auto">
+                <!-- Updates will be loaded here -->
+            </div>
+            <div class="mt-4">
+                <label class="flex items-center">
+                    <input type="checkbox" id="auto-refresh" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <span class="ml-2 text-sm text-gray-900">Actualisation automatique</span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Update Modal -->
+<div id="status-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Mettre à jour le statut</h3>
+                <button onclick="closeStatusModal()" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="status-form" class="space-y-4">
+                <div>
+                    <label for="new-status" class="block text-sm font-medium text-gray-700 mb-2">Nouveau statut</label>
+                    <select id="new-status" name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="PENDING">En attente</option>
+                        <option value="CONFIRMED">Confirmée</option>
+                        <option value="PROCESSING">En traitement</option>
+                        <option value="SHIPPED">Expédiée</option>
+                        <option value="DELIVERED">Livrée</option>
+                        <option value="CANCELLED">Annulée</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="status-notes" class="block text-sm font-medium text-gray-700 mb-2">Notes (optionnel)</label>
+                    <textarea id="status-notes" name="notes" rows="3" 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Notes sur la mise à jour du statut..."></textarea>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeStatusModal()" 
+                            class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                        Annuler
+                    </button>
+                    <button type="submit" 
+                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        Mettre à jour
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let refreshInterval;
+
+// Initialize real-time updates
+function initializeRealTimeUpdates() {
+    loadRealTimeUpdates();
+    
+    if (document.getElementById('auto-refresh').checked) {
+        refreshInterval = setInterval(loadRealTimeUpdates, 30000); // Refresh every 30 seconds
+    }
+}
+
+// Load real-time updates
+function loadRealTimeUpdates() {
+    fetch(`/admin-panel/orders/${order.id}/updates/`)
+        .then(response => response.json())
+        .then(data => {
+            const updatesContainer = document.getElementById('real-time-updates');
+            updatesContainer.innerHTML = '';
+            
+            data.updates.forEach(update => {
+                const updateElement = createUpdateElement(update);
+                updatesContainer.appendChild(updateElement);
+            });
+        });
+}
+
+function createUpdateElement(update) {
+    const div = document.createElement('div');
+    div.className = 'flex items-start space-x-3 p-3 bg-gray-50 rounded-lg';
+    div.innerHTML = `
+        <div class="flex-shrink-0 w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
+        <div class="flex-1">
+            <p class="text-sm font-medium text-gray-900">${update.title}</p>
+            <p class="text-xs text-gray-500">${update.timestamp}</p>
+            ${update.description ? `<p class="text-xs text-gray-600 mt-1">${update.description}</p>` : ''}
+        </div>
+    `;
+    return div;
+}
+
+// Auto-refresh toggle
+document.getElementById('auto-refresh').addEventListener('change', function() {
+    if (this.checked) {
+        refreshInterval = setInterval(loadRealTimeUpdates, 30000);
+    } else {
+        clearInterval(refreshInterval);
+    }
+});
+
+// Status update modal
+function updateOrderStatus() {
+    document.getElementById('status-modal').classList.remove('hidden');
+}
+
+function closeStatusModal() {
+    document.getElementById('status-modal').classList.add('hidden');
+}
+
+// Status form submission
+document.getElementById('status-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    formData.append('order_id', '{{ order.id }}');
+    
+    fetch('/admin-panel/orders/update-status/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeStatusModal();
+            location.reload(); // Refresh page to show new status
+        } else {
+            alert('Erreur lors de la mise à jour du statut');
+        }
+    });
+});
+
+// Contact functions
+function contactCustomer() {
+    window.open(`/admin-panel/chat/${order.customer.id}/`, '_blank');
+}
+
+function contactStaff() {
+    // Implement staff contact functionality
+    alert('Fonctionnalité de contact équipe en cours de développement');
+}
+
+function generateInvoice() {
+    window.open(`/admin-panel/orders/${order.id}/invoice/`, '_blank');
+}
+
+function printOrder() {
+    window.print();
+}
+
+// Utility function
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeRealTimeUpdates();
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+    }
+});
+</script>
+{% endblock %} 

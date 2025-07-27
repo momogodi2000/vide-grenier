@@ -1,0 +1,543 @@
+{% extends "backend/base/staff_base.html" %}
+{% load static %}
+
+{% block title %}Tableau de Bord Inventaire - Staff{% endblock %}
+
+{% block extra_css %}
+<style>
+    .inventory-card {
+        transition: transform 0.2s;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .inventory-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    .stock-level {
+        width: 100%;
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .stock-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+    .alert-banner {
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+    .chart-container {
+        height: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="h3 mb-0">
+                <i class="fas fa-warehouse text-primary me-2"></i>
+                Tableau de Bord Inventaire
+            </h2>
+            <p class="text-muted mb-0">Gérez et surveillez votre inventaire en temps réel</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'staff:inventory_list' %}" class="btn btn-outline-primary">
+                <i class="fas fa-list"></i> Liste Complète
+            </a>
+            <a href="{% url 'staff:stock_receiving' %}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Recevoir Stock
+            </a>
+        </div>
+    </div>
+
+    <!-- Alerts Section -->
+    {% if stock_alerts %}
+    <div class="alert-banner">
+        <div class="alert alert-warning">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                <div>
+                    <h5 class="alert-heading mb-1">Alertes Stock</h5>
+                    <p class="mb-0">{{ stock_alerts|length }} alerte(s) nécessitent votre attention</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card inventory-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-primary text-white me-3">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">{{ total_products }}</h3>
+                            <p class="text-muted mb-0">Total Produits</p>
+                            <small class="text-success">
+                                <i class="fas fa-check"></i> {{ active_products }} actifs
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card inventory-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-warning text-white me-3">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">{{ low_stock_count }}</h3>
+                            <p class="text-muted mb-0">Stock Faible</p>
+                            <small class="text-warning">
+                                <i class="fas fa-arrow-down"></i> Moins de 5 unités
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card inventory-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-danger text-white me-3">
+                            <i class="fas fa-times-circle"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">{{ out_of_stock_count }}</h3>
+                            <p class="text-muted mb-0">Rupture Stock</p>
+                            <small class="text-danger">
+                                <i class="fas fa-ban"></i> 0 unité
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card inventory-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-success text-white me-3">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">{{ total_inventory_value|floatformat:0 }}</h3>
+                            <p class="text-muted mb-0">Valeur FCFA</p>
+                            <small class="text-success">
+                                <i class="fas fa-chart-line"></i> Inventaire total
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-md-8">
+            <!-- Stock Alerts -->
+            {% if stock_alerts %}
+            <div class="card inventory-card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bell text-warning me-2"></i>
+                        Alertes Stock Prioritaires
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for alert in stock_alerts %}
+                    <div class="alert alert-{{ alert.type }} d-flex align-items-center mb-2">
+                        <i class="fas fa-{% if alert.type == 'warning' %}exclamation-triangle{% else %}times-circle{% endif %} me-3"></i>
+                        <div class="flex-grow-1">
+                            <strong>{{ alert.message }}</strong>
+                        </div>
+                        <a href="{% url 'staff:inventory_list' %}?product={{ alert.product.id }}" 
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i> Voir
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Inventory Movements Chart -->
+            <div class="card inventory-card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-area text-info me-2"></i>
+                        Mouvements de Stock
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="inventoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Stock Changes -->
+            <div class="card inventory-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history text-secondary me-2"></i>
+                        Changements Récents
+                    </h5>
+                    <a href="{% url 'staff:inventory_movements' %}" class="btn btn-outline-primary btn-sm">
+                        Voir tout l'historique
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_stock_changes %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Produit</th>
+                                        <th>Action</th>
+                                        <th>Quantité</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for change in recent_stock_changes %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if change.images.first %}
+                                                    <img src="{{ change.images.first.image.url }}" 
+                                                         class="rounded me-2" width="40" height="40" 
+                                                         style="object-fit: cover;">
+                                                {% endif %}
+                                                <div>
+                                                    <strong>{{ change.title|truncatechars:30 }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ change.category.name }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">Mise à jour</span>
+                                        </td>
+                                        <td>
+                                            <strong>{{ change.stock_quantity }}</strong>
+                                        </td>
+                                        <td>{{ change.updated_at|date:"d/m/Y H:i" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center p-4">
+                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                            <h6>Aucun changement récent</h6>
+                            <p class="text-muted">Les modifications de stock apparaîtront ici.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-md-4">
+            <!-- Low Stock Products -->
+            <div class="card inventory-card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-arrow-down text-warning me-2"></i>
+                        Stock Faible
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if low_stock_products %}
+                        {% for product in low_stock_products %}
+                        <div class="d-flex align-items-center mb-3 p-2 border rounded">
+                            {% if product.images.first %}
+                                <img src="{{ product.images.first.image.url }}" 
+                                     class="rounded me-2" width="50" height="50" 
+                                     style="object-fit: cover;">
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ product.title|truncatechars:20 }}</h6>
+                                <p class="mb-1 text-primary">{{ product.price|floatformat:0 }} FCFA</p>
+                                <div class="stock-level">
+                                    <div class="stock-fill bg-warning" 
+                                         style="width: {{ product.stock_percentage|default:10 }}%"></div>
+                                </div>
+                                <small class="text-muted">{{ product.stock_quantity }} restant(s)</small>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary" 
+                                        data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" 
+                                           onclick="addStock('{{ product.id }}')">
+                                        <i class="fas fa-plus me-2"></i>Ajouter Stock</a></li>
+                                    <li><a class="dropdown-item" 
+                                           href="{% url 'admin_panel:product_detail' product.id %}">
+                                        <i class="fas fa-edit me-2"></i>Modifier</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center p-3">
+                            <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                            <p class="text-muted mb-0">Tous les produits ont un stock suffisant</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card inventory-card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt text-primary me-2"></i>
+                        Actions Rapides
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success" data-bs-toggle="modal" 
+                                data-bs-target="#quickReceiveModal">
+                            <i class="fas fa-plus"></i> Recevoir Stock Rapide
+                        </button>
+                        <button class="btn btn-warning" onclick="bulkUpdateStock()">
+                            <i class="fas fa-edit"></i> Mise à Jour Groupée
+                        </button>
+                        <button class="btn btn-info" onclick="generateStockReport()">
+                            <i class="fas fa-file-export"></i> Rapport de Stock
+                        </button>
+                        <button class="btn btn-secondary" onclick="scanProducts()">
+                            <i class="fas fa-barcode"></i> Scanner Produits
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stock Summary -->
+            <div class="card inventory-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-pie text-success me-2"></i>
+                        Résumé Stock
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-success">Stock Normal</span>
+                            <span>75%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-warning">Stock Faible</span>
+                            <span>20%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-warning" style="width: 20%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-danger">Rupture</span>
+                            <span>5%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-danger" style="width: 5%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Receive Stock Modal -->
+<div class="modal fade" id="quickReceiveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Recevoir Stock Rapide</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quickReceiveForm">
+                    <div class="mb-3">
+                        <label class="form-label">Rechercher Produit</label>
+                        <input type="text" class="form-control" id="productSearch" 
+                               placeholder="Nom du produit ou code-barres">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Quantité Reçue</label>
+                        <input type="number" class="form-control" id="quantityReceived" 
+                               min="1" placeholder="Nombre d'unités">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes (optionnel)</label>
+                        <textarea class="form-control" id="receiveNotes" rows="2" 
+                                  placeholder="Notes sur la réception..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-success" onclick="processQuickReceive()">
+                    <i class="fas fa-check"></i> Confirmer Réception
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Inventory movements chart
+const ctx = document.getElementById('inventoryChart').getContext('2d');
+const inventoryChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'],
+        datasets: [{
+            label: 'Entrées',
+            data: [65, 59, 80, 81, 56, 55],
+            borderColor: '#28a745',
+            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+            tension: 0.4,
+            fill: true
+        }, {
+            label: 'Sorties',
+            data: [28, 48, 40, 19, 86, 27],
+            borderColor: '#dc3545',
+            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top',
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Quick actions functions
+function addStock(productId) {
+    // Open add stock modal for specific product
+    document.getElementById('productSearch').value = productId;
+    const modal = new bootstrap.Modal(document.getElementById('quickReceiveModal'));
+    modal.show();
+}
+
+function processQuickReceive() {
+    const productSearch = document.getElementById('productSearch').value;
+    const quantity = document.getElementById('quantityReceived').value;
+    const notes = document.getElementById('receiveNotes').value;
+    
+    if (!productSearch || !quantity) {
+        alert('Veuillez remplir tous les champs obligatoires');
+        return;
+    }
+    
+    fetch('{% url "staff:receive_stock" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: JSON.stringify({
+            product: productSearch,
+            quantity: parseInt(quantity),
+            notes: notes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Stock reçu avec succès !');
+            location.reload();
+        } else {
+            alert('Erreur: ' + data.error);
+        }
+    });
+}
+
+function bulkUpdateStock() {
+    // Redirect to bulk update page
+    window.location.href = '{% url "staff:inventory_list" %}?action=bulk_update';
+}
+
+function generateStockReport() {
+    // Generate and download stock report
+    window.open('/staff/inventory/report/', '_blank');
+}
+
+function scanProducts() {
+    // Open barcode scanner
+    alert('Fonctionnalité de scanner à implémenter');
+}
+
+// Real-time stock updates
+setInterval(function() {
+    fetch('/staff/inventory/stats/')
+        .then(response => response.json())
+        .then(data => {
+            // Update key metrics
+            if (data.alerts) {
+                updateStockAlerts(data.alerts);
+            }
+        })
+        .catch(error => console.log('Update failed:', error));
+}, 60000); // Update every minute
+
+function updateStockAlerts(alerts) {
+    // Update stock alerts in real-time
+    const alertCount = alerts.length;
+    // Update UI with new alert count
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,525 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Points de Retrait - Admin{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Gestion des Points de Retrait</h1>
+            <p class="text-gray-600">Gérer les points de retrait pour les commandes</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <a href="{% url 'admin_panel:pickup_point_create' %}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                Nouveau Point de Retrait
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="p-2 bg-blue-100 rounded-lg">
+                <i data-lucide="map-pin" class="w-6 h-6 text-blue-600"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Total Points</p>
+                <p class="text-2xl font-bold text-gray-900">{{ pickup_points.count }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="p-2 bg-green-100 rounded-lg">
+                <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Actifs</p>
+                <p class="text-2xl font-bold text-gray-900">{{ active_pickup_points_count }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="p-2 bg-yellow-100 rounded-lg">
+                <i data-lucide="shopping-bag" class="w-6 h-6 text-yellow-600"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Commandes</p>
+                <p class="text-2xl font-bold text-gray-900">{{ total_orders }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="p-2 bg-purple-100 rounded-lg">
+                <i data-lucide="users" class="w-6 h-6 text-purple-600"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Villes</p>
+                <p class="text-2xl font-bold text-gray-900">{{ cities_count }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="bg-white rounded-lg shadow mb-6">
+    <div class="p-6 border-b border-gray-200">
+        <div class="flex flex-col sm:flex-row gap-4">
+            <div class="flex-1">
+                <input type="text" id="search" placeholder="Rechercher un point de retrait..." 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            <div class="flex gap-2">
+                <select id="city-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Toutes les villes</option>
+                    {% for city in cities %}
+                        <option value="{{ city }}">{{ city }}</option>
+                    {% endfor %}
+                </select>
+                <select id="status-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Tous les statuts</option>
+                    <option value="active">Actifs</option>
+                    <option value="inactive">Inactifs</option>
+                </select>
+                <button id="export-btn" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+                    Exporter
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pickup Points Table -->
+<div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <input type="checkbox" id="select-all" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Point de Retrait
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Adresse
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Contact
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Commandes
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Statut
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for pickup_point in pickup_points %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="checkbox" class="pickup-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" value="{{ pickup_point.id }}">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center mr-3">
+                                <i data-lucide="map-pin" class="w-5 h-5 text-blue-600"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">{{ pickup_point.name }}</div>
+                                <div class="text-sm text-gray-500">{{ pickup_point.city }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-900">{{ pickup_point.address|truncatechars:50 }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ pickup_point.phone }}</div>
+                        <div class="text-sm text-gray-500">{{ pickup_point.email }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ pickup_point.orders_count|default:0 }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if pickup_point.is_active %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i>
+                                Actif
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <i data-lucide="x-circle" class="w-3 h-3 mr-1"></i>
+                                Inactif
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <a href="{% url 'admin_panel:pickup_point_edit' pickup_point.id %}" 
+                               class="text-blue-600 hover:text-blue-900" title="Modifier">
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                            </a>
+                            <a href="#" onclick="viewPickupPoint('{{ pickup_point.id }}')" 
+                               class="text-green-600 hover:text-green-900" title="Voir détails">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </a>
+                            <button onclick="togglePickupPointStatus('{{ pickup_point.id }}')" 
+                                    class="{% if pickup_point.is_active %}text-yellow-600 hover:text-yellow-900{% else %}text-green-600 hover:text-green-900{% endif %}" 
+                                    title="{% if pickup_point.is_active %}Désactiver{% else %}Activer{% endif %}">
+                                <i data-lucide="{% if pickup_point.is_active %}pause{% else %}play{% endif %}" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="deletePickupPoint('{{ pickup_point.id }}')" 
+                                    class="text-red-600 hover:text-red-900" title="Supprimer">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                        <i data-lucide="map-pin-off" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                        <p class="text-lg font-medium">Aucun point de retrait trouvé</p>
+                        <p class="text-sm">Commencez par créer votre premier point de retrait</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+        <div class="flex-1 flex justify-between sm:hidden">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Précédent
+                </a>
+            {% endif %}
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Suivant
+                </a>
+            {% endif %}
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-gray-700">
+                    Affichage de <span class="font-medium">{{ page_obj.start_index }}</span> à <span class="font-medium">{{ page_obj.end_index }}</span> sur <span class="font-medium">{{ page_obj.paginator.count }}</span> résultats
+                </p>
+            </div>
+            <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        </a>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+                                {{ num }}
+                            </span>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <a href="?page={{ num }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                {{ num }}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Bulk Actions -->
+<div id="bulk-actions" class="fixed bottom-4 right-4 hidden">
+    <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-4">
+        <div class="flex items-center space-x-4">
+            <span class="text-sm text-gray-600">
+                <span id="selected-count">0</span> point(s) sélectionné(s)
+            </span>
+            <div class="flex space-x-2">
+                <button onclick="bulkActivate()" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
+                    Activer
+                </button>
+                <button onclick="bulkDeactivate()" class="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700">
+                    Désactiver
+                </button>
+                <button onclick="bulkDelete()" class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">
+                    Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pickup Point Detail Modal -->
+<div id="pickup-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Détails du Point de Retrait</h3>
+                <button onclick="closePickupModal()" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div id="pickup-details" class="space-y-3">
+                <!-- Pickup point details will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Search functionality
+document.getElementById('search').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const pickupName = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+        const pickupAddress = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+        if (pickupName.includes(searchTerm) || pickupAddress.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+// City filter
+document.getElementById('city-filter').addEventListener('change', function(e) {
+    const city = e.target.value;
+    const rows = document.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const cityCell = row.querySelector('td:nth-child(2)');
+        if (!cityCell) return;
+        
+        const cityText = cityCell.textContent;
+        if (city === '' || cityText.includes(city)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+// Status filter
+document.getElementById('status-filter').addEventListener('change', function(e) {
+    const status = e.target.value;
+    const rows = document.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const statusCell = row.querySelector('td:nth-child(6)');
+        if (!statusCell) return;
+        
+        const statusText = statusCell.textContent.toLowerCase();
+        if (status === '' || statusText.includes(status)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+// Select all functionality
+document.getElementById('select-all').addEventListener('change', function(e) {
+    const checkboxes = document.querySelectorAll('.pickup-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = e.target.checked;
+    });
+    updateBulkActions();
+});
+
+// Individual checkbox functionality
+document.querySelectorAll('.pickup-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', updateBulkActions);
+});
+
+function updateBulkActions() {
+    const checkedBoxes = document.querySelectorAll('.pickup-checkbox:checked');
+    const bulkActions = document.getElementById('bulk-actions');
+    const selectedCount = document.getElementById('selected-count');
+    
+    if (checkedBoxes.length > 0) {
+        bulkActions.classList.remove('hidden');
+        selectedCount.textContent = checkedBoxes.length;
+    } else {
+        bulkActions.classList.add('hidden');
+    }
+}
+
+function viewPickupPoint(pickupId) {
+    // Load pickup point details via AJAX
+    fetch(`/admin-panel/pickup-points/${pickupId}/`)
+        .then(response => response.json())
+        .then(data => {
+            const details = document.getElementById('pickup-details');
+            details.innerHTML = `
+                <div><strong>Nom:</strong> ${data.name}</div>
+                <div><strong>Adresse:</strong> ${data.address}</div>
+                <div><strong>Ville:</strong> ${data.city}</div>
+                <div><strong>Téléphone:</strong> ${data.phone}</div>
+                <div><strong>Email:</strong> ${data.email}</div>
+                <div><strong>Statut:</strong> ${data.is_active ? 'Actif' : 'Inactif'}</div>
+                <div><strong>Commandes:</strong> ${data.orders_count || 0}</div>
+            `;
+            document.getElementById('pickup-modal').classList.remove('hidden');
+        });
+}
+
+function closePickupModal() {
+    document.getElementById('pickup-modal').classList.add('hidden');
+}
+
+function togglePickupPointStatus(pickupId) {
+    fetch(`/admin-panel/pickup-points/${pickupId}/toggle-status/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erreur lors du changement de statut');
+        }
+    });
+}
+
+function deletePickupPoint(pickupId) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce point de retrait ?')) {
+        fetch(`/admin-panel/pickup-points/${pickupId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur lors de la suppression');
+            }
+        });
+    }
+}
+
+function bulkActivate() {
+    const checkedBoxes = document.querySelectorAll('.pickup-checkbox:checked');
+    const pickupIds = Array.from(checkedBoxes).map(cb => cb.value);
+    
+    if (confirm(`Activer ${pickupIds.length} point(s) de retrait ?`)) {
+        fetch('/admin-panel/pickup-points/bulk-activate/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ pickup_ids: pickupIds }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur lors de l\'activation en masse');
+            }
+        });
+    }
+}
+
+function bulkDeactivate() {
+    const checkedBoxes = document.querySelectorAll('.pickup-checkbox:checked');
+    const pickupIds = Array.from(checkedBoxes).map(cb => cb.value);
+    
+    if (confirm(`Désactiver ${pickupIds.length} point(s) de retrait ?`)) {
+        fetch('/admin-panel/pickup-points/bulk-deactivate/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ pickup_ids: pickupIds }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur lors de la désactivation en masse');
+            }
+        });
+    }
+}
+
+function bulkDelete() {
+    const checkedBoxes = document.querySelectorAll('.pickup-checkbox:checked');
+    const pickupIds = Array.from(checkedBoxes).map(cb => cb.value);
+    
+    if (confirm(`Supprimer ${pickupIds.length} point(s) de retrait ?`)) {
+        fetch('/admin-panel/pickup-points/bulk-delete/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ pickup_ids: pickupIds }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur lors de la suppression en masse');
+            }
+        });
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %} 

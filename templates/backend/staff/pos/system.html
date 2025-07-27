@@ -1,0 +1,576 @@
+{% extends "backend/base/staff_base.html" %}
+{% load static %}
+
+{% block title %}Système POS - Staff{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pos-container {
+        height: calc(100vh - 100px);
+    }
+    .product-grid {
+        height: 400px;
+        overflow-y: auto;
+    }
+    .product-card {
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 2px solid transparent;
+    }
+    .product-card:hover {
+        border-color: #007bff;
+        transform: translateY(-2px);
+    }
+    .cart-items {
+        height: 300px;
+        overflow-y: auto;
+    }
+    .calculator-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+    .calc-btn {
+        height: 60px;
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+    .payment-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    .total-display {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid pos-container">
+    <div class="row h-100">
+        <!-- Left Panel - Products -->
+        <div class="col-md-8">
+            <div class="card h-100">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-shopping-bag text-primary me-2"></i>
+                            Produits
+                        </h5>
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control" id="productSearch" 
+                                   placeholder="Rechercher un produit..." style="width: 300px;">
+                            <button class="btn btn-outline-primary" onclick="scanBarcode()">
+                                <i class="fas fa-barcode"></i> Scanner
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Category Tabs -->
+                    <ul class="nav nav-pills mb-3" id="categoryTabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" onclick="filterByCategory('all')">
+                                Tous
+                            </a>
+                        </li>
+                        {% for category in categories %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="filterByCategory('{{ category.id }}')">
+                                {{ category.name }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
+                    <!-- Products Grid -->
+                    <div class="product-grid">
+                        <div class="row" id="productsContainer">
+                            {% for product in featured_products %}
+                            <div class="col-md-3 mb-3 product-item" data-category="{{ product.category.id }}">
+                                <div class="card product-card h-100" onclick="addToCart('{{ product.id }}')">
+                                    {% if product.images.first %}
+                                        <img src="{{ product.images.first.image.url }}" 
+                                             class="card-img-top" style="height: 150px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                                             style="height: 150px;">
+                                            <i class="fas fa-image fa-3x text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title mb-1">{{ product.title|truncatechars:25 }}</h6>
+                                        <p class="card-text mb-1">
+                                            <strong class="text-primary">{{ product.price|floatformat:0 }} FCFA</strong>
+                                        </p>
+                                        <small class="text-muted">Stock: {{ product.stock_quantity }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Cart & Payment -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-shopping-cart text-success me-2"></i>
+                            Panier
+                        </h5>
+                        <button class="btn btn-outline-danger btn-sm" onclick="clearCart()">
+                            <i class="fas fa-trash"></i> Vider
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Cart Items -->
+                    <div class="cart-items p-3" id="cartItems">
+                        <div class="text-center text-muted" id="emptyCartMessage">
+                            <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                            <p>Panier vide</p>
+                        </div>
+                    </div>
+
+                    <!-- Cart Summary -->
+                    <div class="border-top p-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Sous-total:</span>
+                            <span id="subtotal">0 FCFA</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Taxe (18%):</span>
+                            <span id="tax">0 FCFA</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Remise:</span>
+                            <span id="discount">0 FCFA</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <strong>Total:</strong>
+                            <strong class="total-display" id="total">0 FCFA</strong>
+                        </div>
+                    </div>
+
+                    <!-- Payment Section -->
+                    <div class="payment-section m-3">
+                        <h6 class="mb-3">Méthode de Paiement</h6>
+                        <div class="btn-group w-100 mb-3" role="group">
+                            <input type="radio" class="btn-check" name="paymentMethod" 
+                                   id="cash" value="cash" checked>
+                            <label class="btn btn-outline-success" for="cash">
+                                <i class="fas fa-money-bill-wave"></i> Espèces
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="paymentMethod" 
+                                   id="card" value="card">
+                            <label class="btn btn-outline-primary" for="card">
+                                <i class="fas fa-credit-card"></i> Carte
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="paymentMethod" 
+                                   id="mobile" value="mobile">
+                            <label class="btn btn-outline-warning" for="mobile">
+                                <i class="fas fa-mobile-alt"></i> Mobile Money
+                            </label>
+                        </div>
+
+                        <!-- Cash Payment Calculator -->
+                        <div id="cashCalculator" class="mb-3">
+                            <label class="form-label">Montant reçu:</label>
+                            <input type="text" class="form-control form-control-lg text-center" 
+                                   id="amountReceived" placeholder="0" oninput="calculateChange()">
+                            <div class="mt-2">
+                                <small class="text-muted">Monnaie à rendre: </small>
+                                <strong id="changeAmount">0 FCFA</strong>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-success btn-lg" onclick="processPayment()" 
+                                    id="payButton" disabled>
+                                <i class="fas fa-check"></i> Valider la Vente
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="holdTransaction()">
+                                <i class="fas fa-pause"></i> Mettre en Attente
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Calculator -->
+                    <div class="border-top p-3" id="quickCalculator" style="display: none;">
+                        <h6>Calculatrice Rapide</h6>
+                        <div class="calculator-grid mb-3">
+                            <button class="btn btn-outline-secondary calc-btn" onclick="addToCalculator('7')">7</button>
+                            <button class="btn btn-outline-secondary calc-btn" onclick="addToCalculator('8')">8</button>
+                            <button class="btn btn-outline-secondary calc-btn" onclick="addToCalculator('9')">9</button>
+                            <button class="btn btn-outline-secondary calc-btn" onclick="addToCalculator('4')">4</button>
+                            <button class="btn btn-outline-secondary calc-btn" onclick="addToCalculator('5')">5</button>
+                            <button class="btn btn-outline-secondary calc-btn" onclick="addToCalculator('6')">6</button>
+                            <button class="btn btn-outline-secondary calc-btn" onclick="addToCalculator('1')">1</button>
+                            <button class="btn btn-outline-secondary calc-btn" onclick="addToCalculator('2')">2</button>
+                            <button class="btn btn-outline-secondary calc-btn" onclick="addToCalculator('3')">3</button>
+                            <button class="btn btn-outline-warning calc-btn" onclick="clearCalculator()">C</button>
+                            <button class="btn btn-outline-secondary calc-btn" onclick="addToCalculator('0')">0</button>
+                            <button class="btn btn-primary calc-btn" onclick="useCalculatorAmount()">OK</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sale Success Modal -->
+<div class="modal fade" id="saleSuccessModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Vente Réussie
+                </h5>
+            </div>
+            <div class="modal-body text-center">
+                <div id="saleDetails"></div>
+                <div class="mt-3">
+                    <button class="btn btn-primary me-2" onclick="printReceipt()">
+                        <i class="fas fa-print"></i> Imprimer Reçu
+                    </button>
+                    <button class="btn btn-success" onclick="newSale()">
+                        <i class="fas fa-plus"></i> Nouvelle Vente
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let cart = [];
+let calculatorValue = '';
+
+// Product search
+document.getElementById('productSearch').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const products = document.querySelectorAll('.product-item');
+    
+    products.forEach(product => {
+        const title = product.querySelector('.card-title').textContent.toLowerCase();
+        if (title.includes(searchTerm)) {
+            product.style.display = 'block';
+        } else {
+            product.style.display = 'none';
+        }
+    });
+});
+
+// Filter by category
+function filterByCategory(categoryId) {
+    const products = document.querySelectorAll('.product-item');
+    const tabs = document.querySelectorAll('#categoryTabs .nav-link');
+    
+    // Update active tab
+    tabs.forEach(tab => tab.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    products.forEach(product => {
+        if (categoryId === 'all' || product.dataset.category === categoryId) {
+            product.style.display = 'block';
+        } else {
+            product.style.display = 'none';
+        }
+    });
+}
+
+// Add to cart
+function addToCart(productId) {
+    // Find product in featured_products (this would be passed from Django context)
+    const productCard = document.querySelector(`[onclick="addToCart('${productId}')"]`);
+    const title = productCard.querySelector('.card-title').textContent;
+    const priceText = productCard.querySelector('.text-primary').textContent;
+    const price = parseInt(priceText.replace(/[^\d]/g, ''));
+    
+    // Check if product already in cart
+    const existingItem = cart.find(item => item.id === productId);
+    if (existingItem) {
+        existingItem.quantity++;
+    } else {
+        cart.push({
+            id: productId,
+            title: title,
+            price: price,
+            quantity: 1
+        });
+    }
+    
+    updateCartDisplay();
+    updatePayButton();
+}
+
+// Update cart display
+function updateCartDisplay() {
+    const cartContainer = document.getElementById('cartItems');
+    const emptyMessage = document.getElementById('emptyCartMessage');
+    
+    if (cart.length === 0) {
+        emptyMessage.style.display = 'block';
+        return;
+    }
+    
+    emptyMessage.style.display = 'none';
+    
+    let cartHTML = '';
+    let subtotal = 0;
+    
+    cart.forEach((item, index) => {
+        const itemTotal = item.price * item.quantity;
+        subtotal += itemTotal;
+        
+        cartHTML += `
+            <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                <div class="flex-grow-1">
+                    <strong>${item.title}</strong><br>
+                    <small class="text-muted">${item.price.toLocaleString()} FCFA × ${item.quantity}</small>
+                </div>
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-sm btn-outline-secondary me-1" 
+                            onclick="updateQuantity(${index}, -1)">-</button>
+                    <span class="mx-2">${item.quantity}</span>
+                    <button class="btn btn-sm btn-outline-secondary me-2" 
+                            onclick="updateQuantity(${index}, 1)">+</button>
+                    <button class="btn btn-sm btn-outline-danger" 
+                            onclick="removeFromCart(${index})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    cartContainer.innerHTML = cartHTML;
+    
+    // Update totals
+    const tax = Math.round(subtotal * 0.18);
+    const total = subtotal + tax;
+    
+    document.getElementById('subtotal').textContent = subtotal.toLocaleString() + ' FCFA';
+    document.getElementById('tax').textContent = tax.toLocaleString() + ' FCFA';
+    document.getElementById('total').textContent = total.toLocaleString() + ' FCFA';
+    
+    calculateChange();
+}
+
+// Update quantity
+function updateQuantity(index, change) {
+    cart[index].quantity += change;
+    if (cart[index].quantity <= 0) {
+        cart.splice(index, 1);
+    }
+    updateCartDisplay();
+    updatePayButton();
+}
+
+// Remove from cart
+function removeFromCart(index) {
+    cart.splice(index, 1);
+    updateCartDisplay();
+    updatePayButton();
+}
+
+// Clear cart
+function clearCart() {
+    if (confirm('Êtes-vous sûr de vouloir vider le panier ?')) {
+        cart = [];
+        updateCartDisplay();
+        updatePayButton();
+    }
+}
+
+// Calculate change
+function calculateChange() {
+    const totalText = document.getElementById('total').textContent;
+    const total = parseInt(totalText.replace(/[^\d]/g, '')) || 0;
+    const received = parseInt(document.getElementById('amountReceived').value.replace(/[^\d]/g, '')) || 0;
+    const change = received - total;
+    
+    document.getElementById('changeAmount').textContent = change >= 0 ? 
+        change.toLocaleString() + ' FCFA' : '0 FCFA';
+}
+
+// Update pay button state
+function updatePayButton() {
+    const payButton = document.getElementById('payButton');
+    payButton.disabled = cart.length === 0;
+}
+
+// Process payment
+function processPayment() {
+    if (cart.length === 0) {
+        alert('Le panier est vide');
+        return;
+    }
+    
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+    const total = parseInt(document.getElementById('total').textContent.replace(/[^\d]/g, ''));
+    
+    if (paymentMethod === 'cash') {
+        const received = parseInt(document.getElementById('amountReceived').value.replace(/[^\d]/g, '')) || 0;
+        if (received < total) {
+            alert('Montant insuffisant');
+            return;
+        }
+    }
+    
+    // Process the sale
+    fetch('{% url "staff:process_sale" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: JSON.stringify({
+            items: cart,
+            payment_method: paymentMethod,
+            total: total,
+            amount_received: document.getElementById('amountReceived').value
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSaleSuccess(data);
+        } else {
+            alert('Erreur lors du traitement de la vente: ' + data.error);
+        }
+    });
+}
+
+// Show sale success
+function showSaleSuccess(data) {
+    document.getElementById('saleDetails').innerHTML = `
+        <h4>Vente #${data.sale_id}</h4>
+        <p>Total: ${data.total} FCFA</p>
+        <p>Méthode: ${data.payment_method}</p>
+        ${data.change ? `<p>Monnaie: ${data.change} FCFA</p>` : ''}
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('saleSuccessModal'));
+    modal.show();
+}
+
+// Calculator functions
+function addToCalculator(digit) {
+    calculatorValue += digit;
+    document.getElementById('amountReceived').value = calculatorValue;
+    calculateChange();
+}
+
+function clearCalculator() {
+    calculatorValue = '';
+    document.getElementById('amountReceived').value = '';
+    calculateChange();
+}
+
+function useCalculatorAmount() {
+    document.getElementById('quickCalculator').style.display = 'none';
+}
+
+// Show/hide calculator
+document.getElementById('amountReceived').addEventListener('focus', function() {
+    document.getElementById('quickCalculator').style.display = 'block';
+});
+
+// New sale
+function newSale() {
+    cart = [];
+    calculatorValue = '';
+    document.getElementById('amountReceived').value = '';
+    updateCartDisplay();
+    updatePayButton();
+    
+    const modal = bootstrap.Modal.getInstance(document.getElementById('saleSuccessModal'));
+    modal.hide();
+}
+
+// Print receipt
+function printReceipt() {
+    window.print();
+}
+
+// Barcode scanner (placeholder)
+function scanBarcode() {
+    // This would integrate with a barcode scanner
+    const barcode = prompt('Entrez le code-barres:');
+    if (barcode) {
+        // Search for product by barcode and add to cart
+        alert('Fonctionnalité de scanner à implémenter');
+    }
+}
+
+// Hold transaction
+function holdTransaction() {
+    if (cart.length === 0) {
+        alert('Le panier est vide');
+        return;
+    }
+    
+    // Save transaction for later
+    localStorage.setItem('heldTransaction', JSON.stringify(cart));
+    clearCart();
+    alert('Transaction mise en attente');
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // F1 - New sale
+    if (e.key === 'F1') {
+        e.preventDefault();
+        newSale();
+    }
+    // F2 - Hold transaction
+    else if (e.key === 'F2') {
+        e.preventDefault();
+        holdTransaction();
+    }
+    // Enter - Process payment
+    else if (e.key === 'Enter' && !e.target.matches('input')) {
+        e.preventDefault();
+        processPayment();
+    }
+});
+
+// Load held transaction on page load
+window.addEventListener('load', function() {
+    const heldTransaction = localStorage.getItem('heldTransaction');
+    if (heldTransaction) {
+        cart = JSON.parse(heldTransaction);
+        updateCartDisplay();
+        updatePayButton();
+        localStorage.removeItem('heldTransaction');
+    }
+});
+
+// Today's sales counter
+document.addEventListener('DOMContentLoaded', function() {
+    // Update today's sales display
+    fetch('/staff/pos/todays-sales/')
+    .then(response => response.json())
+    .then(data => {
+        // Update UI with today's sales data
+    });
+});
+</script>
+{% endblock %} 

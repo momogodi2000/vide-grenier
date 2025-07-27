@@ -98,6 +98,23 @@ TEMPLATES = [
 WSGI_APPLICATION = 'vide.wsgi.application'
 ASGI_APPLICATION = 'vide.asgi.application'
 
+# Channels configuration
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
+
+# WebSocket settings
+WEBSOCKET_URL = '/ws/'
+WEBSOCKET_ORIGIN_WHITELIST = [
+    'localhost:8000',
+    '127.0.0.1:8000',
+]
+
 # Database
 DATABASES = {
     'default': {
@@ -203,7 +220,6 @@ AUTHENTICATION_BACKENDS = [
 SITE_ID = 1
 
 # Allauth settings
-# Allauth settings
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
@@ -211,6 +227,10 @@ ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_SESSION_REMEMBER = True
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
+
+# Custom Allauth adapters for user type redirects
+ACCOUNT_ADAPTER = 'backend.adapters.CustomAccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'backend.adapters.CustomSocialAccountAdapter'
 
 # Social providers (Google, Facebook)
 SOCIALACCOUNT_PROVIDERS = SOCIALACCOUNT_PROVIDERS

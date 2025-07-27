@@ -13,7 +13,7 @@
         </div>
         
         <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-            <a href="{% url 'backend:admin_analytics' %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center">
+            <a href="{% url 'admin_panel:analytics' %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center">
                 <i data-lucide="bar-chart-2" class="w-4 h-4 mr-2"></i>
                 Voir Analytiques
             </a>
@@ -110,35 +110,35 @@
         <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
             <h2 class="text-lg font-semibold text-gray-800 mb-4">Actions Rapides</h2>
             <div class="space-y-3">
-                <a href="{% url 'backend:admin_product_create' %}" class="flex items-center p-3 hover:bg-blue-50 rounded-lg transition">
+                <a href="{% url 'admin_panel:product_create' %}" class="flex items-center p-3 hover:bg-blue-50 rounded-lg transition">
                     <div class="bg-blue-100 p-2 rounded mr-3">
                         <i data-lucide="plus" class="w-5 h-5 text-blue-600"></i>
                     </div>
                     <span class="text-gray-700">Ajouter un produit</span>
                 </a>
                 
-                <a href="{% url 'backend:admin_user_create' %}" class="flex items-center p-3 hover:bg-blue-50 rounded-lg transition">
+                <a href="{% url 'admin_panel:user_create' %}" class="flex items-center p-3 hover:bg-blue-50 rounded-lg transition">
                     <div class="bg-green-100 p-2 rounded mr-3">
                         <i data-lucide="user-plus" class="w-5 h-5 text-green-600"></i>
                     </div>
                     <span class="text-gray-700">Créer un utilisateur</span>
                 </a>
                 
-                <a href="{% url 'backend:admin_newsletter_list' %}" class="flex items-center p-3 hover:bg-blue-50 rounded-lg transition">
+                <a href="{% url 'admin_panel:newsletter_list' %}" class="flex items-center p-3 hover:bg-blue-50 rounded-lg transition">
                     <div class="bg-purple-100 p-2 rounded mr-3">
                         <i data-lucide="mail" class="w-5 h-5 text-purple-600"></i>
                     </div>
                     <span class="text-gray-700">Envoyer newsletter</span>
                 </a>
                 
-                <a href="{% url 'backend:admin_notification_create' %}" class="flex items-center p-3 hover:bg-blue-50 rounded-lg transition">
+                <a href="{% url 'admin_panel:notification_create' %}" class="flex items-center p-3 hover:bg-blue-50 rounded-lg transition">
                     <div class="bg-amber-100 p-2 rounded mr-3">
                         <i data-lucide="bell" class="w-5 h-5 text-amber-600"></i>
                     </div>
                     <span class="text-gray-700">Créer notification</span>
                 </a>
                 
-                <a href="{% url 'backend:admin_stock_list' %}" class="flex items-center p-3 hover:bg-blue-50 rounded-lg transition">
+                <a href="{% url 'admin_panel:stock_list' %}" class="flex items-center p-3 hover:bg-blue-50 rounded-lg transition">
                     <div class="bg-red-100 p-2 rounded mr-3">
                         <i data-lucide="layers" class="w-5 h-5 text-red-600"></i>
                     </div>
@@ -164,7 +164,7 @@
                         </div>
                     </div>
                     <div>
-                        <a href="{% url 'backend:admin_product_detail' product_id=product.id %}" class="text-blue-600 hover:text-blue-800">
+                        <a href="{% url 'admin_panel:product_detail' pk=product.id %}" class="text-blue-600 hover:text-blue-800">
                             <i data-lucide="external-link" class="w-4 h-4"></i>
                         </a>
                     </div>
@@ -179,7 +179,7 @@
                 
                 {% if pending_moderations %}
                 <div class="mt-2 text-center">
-                    <a href="{% url 'backend:admin_product_list' %}?status=PENDING" class="text-sm text-blue-600 hover:underline">
+                    <a href="{% url 'admin_panel:products' %}?status=PENDING" class="text-sm text-blue-600 hover:underline">
                         Voir tous les éléments en attente
                     </a>
                 </div>
@@ -249,7 +249,7 @@
         <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
             <div class="flex items-center justify-between p-6 border-b border-gray-200">
                 <h2 class="text-lg font-semibold text-gray-800">Commandes Récentes</h2>
-                <a href="{% url 'backend:admin_order_list' %}" class="text-sm text-blue-600 hover:underline">Voir tout</a>
+                <a href="{% url 'admin_panel:orders' %}" class="text-sm text-blue-600 hover:underline">Voir tout</a>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -303,7 +303,7 @@
         <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
             <div class="flex items-center justify-between p-6 border-b border-gray-200">
                 <h2 class="text-lg font-semibold text-gray-800">Utilisateurs Récents</h2>
-                <a href="{% url 'backend:admin_user_list' %}" class="text-sm text-blue-600 hover:underline">Voir tout</a>
+                <a href="{% url 'admin_panel:users' %}" class="text-sm text-blue-600 hover:underline">Voir tout</a>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">

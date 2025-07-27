@@ -1,0 +1,99 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Supprimer Produit - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-lg shadow-lg p-8">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="alert-triangle" class="w-8 h-8 text-red-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">Confirmer la suppression</h1>
+            <p class="text-gray-600">Êtes-vous sûr de vouloir supprimer ce produit ?</p>
+        </div>
+
+        <div class="bg-gray-50 rounded-lg p-6 mb-8">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Informations du produit</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <span class="text-gray-600">Titre:</span>
+                    <p class="font-semibold">{{ product.title }}</p>
+                </div>
+                <div>
+                    <span class="text-gray-600">Prix:</span>
+                    <p class="font-semibold">{{ product.price|floatformat:0 }} FCFA</p>
+                </div>
+                <div>
+                    <span class="text-gray-600">Catégorie:</span>
+                    <p class="font-semibold">{{ product.category.name }}</p>
+                </div>
+                <div>
+                    <span class="text-gray-600">Vendeur:</span>
+                    <p class="font-semibold">{{ product.seller.get_full_name|default:product.seller.email }}</p>
+                </div>
+                <div>
+                    <span class="text-gray-600">Statut:</span>
+                    <p class="font-semibold {% if product.status == 'ACTIVE' %}text-green-600{% elif product.status == 'PENDING' %}text-yellow-600{% else %}text-red-600{% endif %}">
+                        {{ product.get_status_display }}
+                    </p>
+                </div>
+                <div>
+                    <span class="text-gray-600">Date de création:</span>
+                    <p class="font-semibold">{{ product.created_at|date:"d/m/Y H:i" }}</p>
+                </div>
+            </div>
+            
+            {% if product.description %}
+            <div class="mt-4">
+                <span class="text-gray-600">Description:</span>
+                <p class="font-semibold mt-1">{{ product.description|truncatewords:20 }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i data-lucide="alert-circle" class="w-5 h-5 text-red-400"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">Attention</h3>
+                    <div class="mt-2 text-sm text-red-700">
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>Cette action est irréversible</li>
+                            <li>Toutes les données associées à ce produit seront supprimées</li>
+                            <li>Les images, avis et commandes liées seront également supprimées</li>
+                            <li>Cette action ne peut pas être annulée</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button type="submit" class="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors font-semibold">
+                    <i data-lucide="trash-2" class="w-4 h-4 mr-2"></i>
+                    Confirmer la suppression
+                </button>
+                <a href="{% url 'admin_panel:product_detail' product.id %}" class="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors font-semibold text-center">
+                    <i data-lucide="x" class="w-4 h-4 mr-2"></i>
+                    Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Prevent accidental form submission
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (!confirm('Êtes-vous absolument sûr de vouloir supprimer ce produit ? Cette action est irréversible.')) {
+            e.preventDefault();
+        }
+    });
+</script>
+{% endblock %} 

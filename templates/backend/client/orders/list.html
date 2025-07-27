@@ -1,0 +1,450 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mes commandes - Vidé-Grenier Kamer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .order-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    .order-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+    }
+    .status-badge {
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .status-pending { background-color: #fbbf24; color: white; }
+    .status-paid { background-color: #3b82f6; color: white; }
+    .status-processing { background-color: #8b5cf6; color: white; }
+    .status-shipped { background-color: #06b6d4; color: white; }
+    .status-delivered { background-color: #10b981; color: white; }
+    .status-cancelled { background-color: #ef4444; color: white; }
+    .status-refunded { background-color: #6b7280; color: white; }
+    
+    .filter-tabs {
+        border-bottom: 2px solid #e5e7eb;
+    }
+    .filter-tab {
+        padding: 12px 24px;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+    .filter-tab.active {
+        border-bottom-color: #667eea;
+        color: #667eea;
+        font-weight: 600;
+    }
+    .filter-tab:hover {
+        color: #667eea;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <div class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+                <a href="{% url 'backend:dashboard' %}" class="hover:text-gray-700">Dashboard</a>
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                <span class="text-purple-600 font-medium">Mes commandes</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <h1 class="text-3xl font-bold text-gray-900">
+                    <i data-lucide="shopping-bag" class="w-8 h-8 inline mr-3 text-purple-600"></i>
+                    Mes commandes
+                </h1>
+                <div class="flex items-center space-x-4">
+                    <div class="bg-white rounded-lg px-4 py-2 shadow-sm">
+                        <span class="text-sm text-gray-600">Total: </span>
+                        <span class="font-bold text-lg text-purple-600">{{ orders.count }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="bg-white rounded-lg shadow-sm mb-6">
+            <div class="filter-tabs flex space-x-0 overflow-x-auto">
+                <div class="filter-tab active" data-filter="all">
+                    <i data-lucide="list" class="w-4 h-4 inline mr-2"></i>
+                    Toutes ({{ orders.count }})
+                </div>
+                <div class="filter-tab" data-filter="PENDING">
+                    <i data-lucide="clock" class="w-4 h-4 inline mr-2"></i>
+                    En attente
+                </div>
+                <div class="filter-tab" data-filter="PAID">
+                    <i data-lucide="check-circle" class="w-4 h-4 inline mr-2"></i>
+                    Payées
+                </div>
+                <div class="filter-tab" data-filter="SHIPPED">
+                    <i data-lucide="truck" class="w-4 h-4 inline mr-2"></i>
+                    Expédiées
+                </div>
+                <div class="filter-tab" data-filter="DELIVERED">
+                    <i data-lucide="package-check" class="w-4 h-4 inline mr-2"></i>
+                    Livrées
+                </div>
+                <div class="filter-tab" data-filter="CANCELLED">
+                    <i data-lucide="x-circle" class="w-4 h-4 inline mr-2"></i>
+                    Annulées
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Sort -->
+        <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+                <div class="flex-1 max-w-md">
+                    <div class="relative">
+                        <input type="text" id="search-orders" placeholder="Rechercher par numéro, produit ou vendeur..." 
+                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <i data-lucide="search" class="w-5 h-5 text-gray-400 absolute left-3 top-2.5"></i>
+                    </div>
+                </div>
+                <div class="flex space-x-3">
+                    <select id="sort-orders" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        <option value="-created_at">Plus récentes</option>
+                        <option value="created_at">Plus anciennes</option>
+                        <option value="-total_amount">Prix décroissant</option>
+                        <option value="total_amount">Prix croissant</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders List -->
+        {% if orders %}
+        <div id="orders-container" class="space-y-6">
+            {% for order in orders %}
+            <div class="order-card p-6" data-status="{{ order.status }}" data-order-number="{{ order.order_number }}" data-product="{{ order.product.title|lower }}" data-seller="{{ order.product.seller.first_name }} {{ order.product.seller.last_name }}">
+                <!-- Order Header -->
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                            #{{ order.order_number|slice:"-4:" }}
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">
+                                Commande #{{ order.order_number }}
+                            </h3>
+                            <p class="text-sm text-gray-500">
+                                Passée le {{ order.created_at|date:"d F Y à H:i" }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="status-badge status-{{ order.status|lower }}">
+                            {{ order.get_status_display }}
+                        </span>
+                        <div class="text-right">
+                            <p class="text-lg font-bold text-gray-900">
+                                {{ order.total_amount|floatformat:0 }} FCFA
+                            </p>
+                            <p class="text-sm text-gray-500">
+                                {{ order.get_payment_method_display }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Content -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Product Info -->
+                    <div class="md:col-span-2">
+                        <div class="flex space-x-4">
+                            {% if order.product.images.first %}
+                            <div class="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                                <img src="{{ order.product.images.first.image.url }}" 
+                                     alt="{{ order.product.title }}" 
+                                     class="w-full h-full object-cover">
+                            </div>
+                            {% else %}
+                            <div class="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="image" class="w-8 h-8 text-gray-400"></i>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-gray-900 mb-2">
+                                    <a href="{% url 'backend:product_detail' slug=order.product.slug %}" 
+                                       class="hover:text-purple-600 transition-colors">
+                                        {{ order.product.title }}
+                                    </a>
+                                </h4>
+                                <div class="space-y-1 text-sm text-gray-600">
+                                    <div class="flex items-center">
+                                        <i data-lucide="user" class="w-4 h-4 mr-2"></i>
+                                        <span>{{ order.product.seller.first_name }} {{ order.product.seller.last_name }}</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i data-lucide="tag" class="w-4 h-4 mr-2"></i>
+                                        <span>{{ order.product.get_condition_display }}</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i data-lucide="truck" class="w-4 h-4 mr-2"></i>
+                                        <span>{{ order.get_delivery_method_display }}</span>
+                                    </div>
+                                </div>
+                                {% if order.notes %}
+                                <div class="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-600">
+                                    <strong>Notes:</strong> {{ order.notes|truncatechars:100 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Actions -->
+                    <div class="space-y-3">
+                        <a href="{% url 'backend:order_detail' pk=order.id %}" 
+                           class="w-full bg-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center">
+                            <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
+                            Voir détails
+                        </a>
+                        
+                        {% if order.status == 'PENDING' and order.buyer == request.user %}
+                        <a href="{% url 'backend:payment' order_id=order.id %}" 
+                           class="w-full bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center">
+                            <i data-lucide="credit-card" class="w-4 h-4 mr-2"></i>
+                            Payer maintenant
+                        </a>
+                        {% endif %}
+                        
+                        {% if order.status == 'DELIVERED' and order.buyer == request.user %}
+                        {% if not order.review %}
+                        <a href="{% url 'backend:review_create' order_id=order.id %}" 
+                           class="w-full bg-yellow-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-yellow-700 transition-colors flex items-center justify-center">
+                            <i data-lucide="star" class="w-4 h-4 mr-2"></i>
+                            Laisser un avis
+                        </a>
+                        {% else %}
+                        <div class="w-full bg-gray-100 text-gray-600 py-2 px-4 rounded-lg font-medium text-center">
+                            <i data-lucide="check-circle" class="w-4 h-4 inline mr-2"></i>
+                            Avis donné
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                        
+                        {% if order.product.seller == request.user and order.status in 'PAID,PROCESSING' %}
+                        <button onclick="updateOrderStatus('{{ order.id }}', 'SHIPPED')" 
+                                class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center">
+                            <i data-lucide="truck" class="w-4 h-4 mr-2"></i>
+                            Marquer expédié
+                        </button>
+                        {% endif %}
+                        
+                        {% if order.status in 'PENDING,PAID' and order.buyer == request.user %}
+                        <button onclick="cancelOrder('{{ order.id }}')" 
+                                class="w-full bg-red-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center">
+                            <i data-lucide="x-circle" class="w-4 h-4 mr-2"></i>
+                            Annuler
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Order Timeline -->
+                {% if order.status != 'PENDING' %}
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h5 class="font-medium text-gray-900 mb-3">Suivi de commande</h5>
+                    <div class="flex items-center space-x-4 text-sm">
+                        <div class="flex items-center text-green-600">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-1"></i>
+                            <span>Commande passée</span>
+                        </div>
+                        {% if order.status != 'CANCELLED' %}
+                        <div class="w-8 h-0.5 bg-gray-300"></div>
+                        <div class="flex items-center {% if order.status in 'PAID,PROCESSING,SHIPPED,DELIVERED' %}text-green-600{% else %}text-gray-400{% endif %}">
+                            <i data-lucide="{% if order.status in 'PAID,PROCESSING,SHIPPED,DELIVERED' %}check-circle{% else %}circle{% endif %}" class="w-4 h-4 mr-1"></i>
+                            <span>Paiement confirmé</span>
+                        </div>
+                        <div class="w-8 h-0.5 bg-gray-300"></div>
+                        <div class="flex items-center {% if order.status in 'SHIPPED,DELIVERED' %}text-green-600{% else %}text-gray-400{% endif %}">
+                            <i data-lucide="{% if order.status in 'SHIPPED,DELIVERED' %}check-circle{% else %}circle{% endif %}" class="w-4 h-4 mr-1"></i>
+                            <span>Expédié</span>
+                        </div>
+                        <div class="w-8 h-0.5 bg-gray-300"></div>
+                        <div class="flex items-center {% if order.status == 'DELIVERED' %}text-green-600{% else %}text-gray-400{% endif %}">
+                            <i data-lucide="{% if order.status == 'DELIVERED' %}check-circle{% else %}circle{% endif %}" class="w-4 h-4 mr-1"></i>
+                            <span>Livré</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="mt-8 flex justify-center">
+            <nav class="flex items-center space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" 
+                   class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                    Précédent
+                </a>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <span class="px-3 py-2 text-sm font-medium text-white bg-purple-600 border border-purple-600 rounded-md">
+                    {{ num }}
+                </span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}" 
+                   class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                    {{ num }}
+                </a>
+                {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" 
+                   class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                    Suivant
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-16">
+            <div class="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+                <i data-lucide="shopping-bag" class="w-12 h-12 text-gray-400"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">Aucune commande trouvée</h3>
+            <p class="text-gray-600 mb-6">Vous n'avez encore passé aucune commande.</p>
+            <a href="{% url 'backend:product_list' %}" 
+               class="inline-flex items-center px-6 py-3 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors">
+                <i data-lucide="shopping-cart" class="w-5 h-5 mr-2"></i>
+                Découvrir les produits
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filter functionality
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    const orderCards = document.querySelectorAll('.order-card');
+    const searchInput = document.getElementById('search-orders');
+    const sortSelect = document.getElementById('sort-orders');
+
+    // Filter by status
+    filterTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            filterTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filter = this.dataset.filter;
+            filterOrders(filter);
+        });
+    });
+
+    // Search functionality
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        orderCards.forEach(card => {
+            const orderNumber = card.dataset.orderNumber.toLowerCase();
+            const product = card.dataset.product;
+            const seller = card.dataset.seller.toLowerCase();
+            
+            if (orderNumber.includes(query) || product.includes(query) || seller.includes(query)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+
+    // Sort functionality
+    sortSelect.addEventListener('change', function() {
+        // This would typically reload the page with the sort parameter
+        const currentUrl = new URL(window.location);
+        currentUrl.searchParams.set('sort', this.value);
+        window.location.href = currentUrl.toString();
+    });
+
+    function filterOrders(status) {
+        orderCards.forEach(card => {
+            if (status === 'all' || card.dataset.status === status) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+});
+
+// Order actions
+function updateOrderStatus(orderId, newStatus) {
+    if (confirm('Êtes-vous sûr de vouloir mettre à jour le statut de cette commande ?')) {
+        fetch(`/ajax/order/${orderId}/update-status/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                status: newStatus
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur lors de la mise à jour: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Erreur de connexion');
+            console.error('Error:', error);
+        });
+    }
+}
+
+function cancelOrder(orderId) {
+    if (confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
+        fetch(`/ajax/order/${orderId}/cancel/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur lors de l\'annulation: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Erreur de connexion');
+            console.error('Error:', error);
+        });
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,259 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Rejeter Produit - Admin{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Rejeter Produit</h1>
+            <p class="text-gray-600">Fournir un feedback détaillé pour le rejet</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <a href="{% url 'admin_panel:products' %}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Retour aux produits
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Product Summary -->
+<div class="bg-white rounded-lg shadow p-6 mb-8">
+    <h2 class="text-lg font-medium text-gray-900 mb-4">Résumé du Produit</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+            <h3 class="font-medium text-gray-900">{{ product.title }}</h3>
+            <p class="text-sm text-gray-600">{{ product.category.name }}</p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-600">Prix: <span class="font-medium">{{ product.price|floatformat:0 }} XAF</span></p>
+            <p class="text-sm text-gray-600">Vendeur: <span class="font-medium">{{ product.seller.get_full_name }}</span></p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-600">Soumis le: <span class="font-medium">{{ product.created_at|date:"d/m/Y" }}</span></p>
+            <p class="text-sm text-gray-600">Statut: <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">En attente</span></p>
+        </div>
+    </div>
+</div>
+
+<!-- Rejection Form -->
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-lg shadow p-6">
+        <form method="post" id="rejection-form">
+            {% csrf_token %}
+            
+            <!-- Rejection Categories -->
+            <div class="mb-8">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Catégorie de Rejet</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="radio" name="rejection_category" value="inappropriate_content" class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300">
+                        <div class="ml-3">
+                            <span class="text-sm font-medium text-gray-900">Contenu inapproprié</span>
+                            <p class="text-xs text-gray-500">Contenu offensant, illégal ou non conforme</p>
+                        </div>
+                    </label>
+                    
+                    <label class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="radio" name="rejection_category" value="poor_quality" class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300">
+                        <div class="ml-3">
+                            <span class="text-sm font-medium text-gray-900">Qualité insuffisante</span>
+                            <p class="text-xs text-gray-500">Images floues, description incomplète</p>
+                        </div>
+                    </label>
+                    
+                    <label class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="radio" name="rejection_category" value="wrong_category" class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300">
+                        <div class="ml-3">
+                            <span class="text-sm font-medium text-gray-900">Mauvaise catégorie</span>
+                            <p class="text-xs text-gray-500">Produit classé dans la mauvaise catégorie</p>
+                        </div>
+                    </label>
+                    
+                    <label class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="radio" name="rejection_category" value="duplicate" class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300">
+                        <div class="ml-3">
+                            <span class="text-sm font-medium text-gray-900">Produit en double</span>
+                            <p class="text-xs text-gray-500">Produit déjà publié par le même vendeur</p>
+                        </div>
+                    </label>
+                    
+                    <label class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="radio" name="rejection_category" value="pricing_issue" class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300">
+                        <div class="ml-3">
+                            <span class="text-sm font-medium text-gray-900">Problème de prix</span>
+                            <p class="text-xs text-gray-500">Prix non réaliste ou non conforme</p>
+                        </div>
+                    </label>
+                    
+                    <label class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="radio" name="rejection_category" value="other" class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300">
+                        <div class="ml-3">
+                            <span class="text-sm font-medium text-gray-900">Autre raison</span>
+                            <p class="text-xs text-gray-500">Autre raison non listée ci-dessus</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Detailed Reason -->
+            <div class="mb-8">
+                <label for="detailed_reason" class="block text-sm font-medium text-gray-700 mb-2">
+                    Raison détaillée du rejet *
+                </label>
+                <textarea id="detailed_reason" name="detailed_reason" rows="6" required
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          placeholder="Expliquez en détail pourquoi ce produit est rejeté. Cette information sera envoyée au vendeur..."></textarea>
+                <p class="mt-1 text-sm text-gray-500">Minimum 20 caractères</p>
+            </div>
+
+            <!-- Suggestions for Improvement -->
+            <div class="mb-8">
+                <label for="suggestions" class="block text-sm font-medium text-gray-700 mb-2">
+                    Suggestions d'amélioration (optionnel)
+                </label>
+                <textarea id="suggestions" name="suggestions" rows="4"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Suggérez des améliorations que le vendeur pourrait apporter..."></textarea>
+            </div>
+
+            <!-- Email Notification Settings -->
+            <div class="mb-8">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Notification</h3>
+                <div class="space-y-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="send_email" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <span class="ml-2 text-sm text-gray-900">Envoyer un email de notification au vendeur</span>
+                    </label>
+                    
+                    <label class="flex items-center">
+                        <input type="checkbox" name="allow_resubmission" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <span class="ml-2 text-sm text-gray-900">Autoriser la nouvelle soumission après correction</span>
+                    </label>
+                    
+                    <label class="flex items-center">
+                        <input type="checkbox" name="send_guidelines" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <span class="ml-2 text-sm text-gray-900">Inclure les directives de publication</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Admin Notes -->
+            <div class="mb-8">
+                <label for="admin_notes" class="block text-sm font-medium text-gray-700 mb-2">
+                    Notes administrateur (interne)
+                </label>
+                <textarea id="admin_notes" name="admin_notes" rows="3"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Notes internes pour l'équipe (non visibles par le vendeur)..."></textarea>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                <a href="{% url 'admin_panel:products' %}" 
+                   class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                    Annuler
+                </a>
+                <button type="submit" 
+                        class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center">
+                    <i data-lucide="x" class="w-4 h-4 mr-2"></i>
+                    Rejeter le produit
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Rejection Guidelines -->
+    <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h3 class="text-lg font-medium text-blue-900 mb-4">Directives de Rejet</h3>
+        <div class="space-y-3 text-sm text-blue-800">
+            <div class="flex items-start">
+                <i data-lucide="info" class="w-4 h-4 mt-0.5 mr-2 text-blue-600"></i>
+                <p>Assurez-vous que votre raison de rejet est claire et constructive.</p>
+            </div>
+            <div class="flex items-start">
+                <i data-lucide="info" class="w-4 h-4 mt-0.5 mr-2 text-blue-600"></i>
+                <p>Fournissez des suggestions spécifiques pour aider le vendeur à améliorer son produit.</p>
+            </div>
+            <div class="flex items-start">
+                <i data-lucide="info" class="w-4 h-4 mt-0.5 mr-2 text-blue-600"></i>
+                <p>Le vendeur recevra une copie de votre feedback détaillé.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-fill detailed reason based on category selection
+document.querySelectorAll('input[name="rejection_category"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const detailedReason = document.getElementById('detailed_reason');
+        const suggestions = document.getElementById('suggestions');
+        
+        const reasons = {
+            'inappropriate_content': 'Ce produit contient du contenu inapproprié qui ne respecte pas nos directives de la communauté.',
+            'poor_quality': 'La qualité des images et/ou de la description ne répond pas à nos standards de qualité.',
+            'wrong_category': 'Ce produit est classé dans une catégorie qui ne correspond pas à sa nature.',
+            'duplicate': 'Ce produit semble être un doublon d\'une publication existante.',
+            'pricing_issue': 'Le prix demandé ne semble pas réaliste pour ce type de produit.',
+            'other': ''
+        };
+        
+        const suggestions_text = {
+            'inappropriate_content': 'Veuillez vous assurer que votre contenu respecte nos directives de la communauté.',
+            'poor_quality': 'Améliorez la qualité des photos et ajoutez une description plus détaillée.',
+            'wrong_category': 'Veuillez sélectionner la catégorie appropriée pour votre produit.',
+            'duplicate': 'Vérifiez si vous n\'avez pas déjà publié ce produit.',
+            'pricing_issue': 'Vérifiez les prix du marché pour ce type de produit.',
+            'other': ''
+        };
+        
+        if (this.value in reasons) {
+            detailedReason.value = reasons[this.value];
+            suggestions.value = suggestions_text[this.value];
+        }
+    });
+});
+
+// Form validation
+document.getElementById('rejection-form').addEventListener('submit', function(e) {
+    const category = document.querySelector('input[name="rejection_category"]:checked');
+    const reason = document.getElementById('detailed_reason').value.trim();
+    
+    if (!category) {
+        e.preventDefault();
+        alert('Veuillez sélectionner une catégorie de rejet.');
+        return false;
+    }
+    
+    if (reason.length < 20) {
+        e.preventDefault();
+        alert('La raison détaillée doit contenir au moins 20 caractères.');
+        return false;
+    }
+    
+    if (!confirm('Êtes-vous sûr de vouloir rejeter ce produit ? Cette action ne peut pas être annulée.')) {
+        e.preventDefault();
+        return false;
+    }
+});
+
+// Character counter for detailed reason
+document.getElementById('detailed_reason').addEventListener('input', function() {
+    const length = this.value.length;
+    const minLength = 20;
+    const counter = this.parentNode.querySelector('p');
+    
+    if (length < minLength) {
+        counter.textContent = `Minimum ${minLength} caractères (${length}/${minLength})`;
+        counter.className = 'mt-1 text-sm text-red-500';
+    } else {
+        counter.textContent = `${length} caractères`;
+        counter.className = 'mt-1 text-sm text-green-500';
+    }
+});
+</script>
+{% endblock %} 

@@ -9,7 +9,7 @@ from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator
 from django.db.models import Q, Count, Sum, Avg, F, Case, When, IntegerField
 from django.utils.decorators import method_decorator
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView, View
 from django.urls import reverse_lazy
 from django.core.exceptions import PermissionDenied
 from django.views.decorators.csrf import csrf_exempt
@@ -79,6 +79,15 @@ except ImportError:
 
 User = get_user_model()
 
+# ============ DEBUG VIEW ============
+def admin_debug_view(request):
+    """Debug view to test URL resolution"""
+    return HttpResponse("Admin debug view working!")
+
+def admin_test_profile_view(request):
+    """Test profile view to verify URL resolution"""
+    return HttpResponse("Admin profile view working!")
+
 # ============ USER FORMS ============
 class AdminUserCreateForm(forms.ModelForm):
     """Form for creating new users"""
@@ -141,7 +150,7 @@ class AdminUserEditForm(forms.ModelForm):
 # ============ UTILITY FUNCTIONS ============
 def is_admin(user):
     """Check if user is admin/staff"""
-    return user.is_staff or user.is_superuser
+    return user.is_staff or user.is_superuser or getattr(user, 'user_type', None) == 'ADMIN'
 
 def admin_required(view_func):
     """Decorator to require admin access"""
@@ -152,6 +161,11 @@ def admin_required(view_func):
             raise PermissionDenied
         return view_func(request, *args, **kwargs)
     return wrapper
+
+class AdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Mixin to ensure user is admin"""
+    def test_func(self):
+        return is_admin(self.request.user)
 
 def get_admin_stats():
     """Get admin dashboard statistics"""
@@ -985,7 +999,6 @@ def admin_quick_action(request):
             'success': False,
             'message': str(e)
         })
-print(f"Error calculating stats: {e}")
     
 from datetime import timedelta
 
@@ -1005,6 +1018,8 @@ def admin_dashboard(request):
         'recent_orders': [],
         'pending_moderations': [],
         'analytics': {},
+        'unread_notifications_count': 0,
+        'unread_messages_count': 0,
     }
     
     if MAIN_MODELS_AVAILABLE:
@@ -1024,6 +1039,23 @@ def admin_dashboard(request):
                 'city_stats': get_city_statistics(),
                 'payment_methods': get_payment_methods_stats(),
             }
+            
+            # Calculate notification and message counts
+            try:
+                context['unread_notifications_count'] = Notification.objects.filter(
+                    recipient=request.user,
+                    is_read=False
+                ).count()
+            except:
+                context['unread_notifications_count'] = 0
+                
+            try:
+                context['unread_messages_count'] = Message.objects.filter(
+                    recipient=request.user,
+                    is_read=False
+                ).count()
+            except:
+                context['unread_messages_count'] = 0
             
         except Exception as e:
             print(f"Error loading dashboard data: {e}")
@@ -1233,7 +1265,7 @@ class AdminUserDetailView(DetailView):
     model = User
     template_name = 'backend/admin/users/detail.html'
     context_object_name = 'user_detail'
-    pk_url_kwarg = 'user_id'
+    pk_url_kwarg = 'pk'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1274,7 +1306,7 @@ class AdminUserCreateView(CreateView):
     model = User
     form_class = AdminUserCreateForm
     template_name = 'backend/admin/users/create.html'
-    success_url = reverse_lazy('backend:admin_user_list')
+    success_url = reverse_lazy('admin_panel:users')
     
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -1294,10 +1326,10 @@ class AdminUserUpdateView(UpdateView):
     model = User
     form_class = AdminUserEditForm
     template_name = 'backend/admin/users/edit.html'
-    pk_url_kwarg = 'user_id'
+    pk_url_kwarg = 'pk'
     
     def get_success_url(self):
-        return reverse_lazy('backend:admin_user_detail', kwargs={'user_id': self.object.pk})
+        return reverse_lazy('admin_panel:user_detail', kwargs={'pk': self.object.pk})
     
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -2642,16 +2674,31 @@ class AdminStockView(ListView):
         if MAIN_MODELS_AVAILABLE:
             try:
                 context.update({
-                    'total_stock': Product.objects.filter(seller__user_type='ADMIN').count(),
-                    'active_stock': Product.objects.filter(
-                        seller__user_type='ADMIN',
-                        status='ACTIVE'
+                    'total_products': Product.objects.count(),
+                    'in_stock_count': Product.objects.filter(stock_quantity__gt=0).count(),
+                    'low_stock_count': Product.objects.filter(
+                        stock_quantity__gt=0, 
+                        stock_quantity__lte=F('stock_threshold')
                     ).count(),
-                    'low_stock': Product.objects.filter(
-                        seller__user_type='ADMIN',
-                        status='ACTIVE'
-                    ).count(),  # Placeholder
+                    'out_of_stock_count': Product.objects.filter(stock_quantity=0).count(),
+                    'categories': Category.objects.all(),
                 })
+                
+                # Generate stock alerts
+                stock_alerts = []
+                low_stock_products = Product.objects.filter(
+                    stock_quantity__gt=0, 
+                    stock_quantity__lte=F('stock_threshold')
+                )[:5]
+                for product in low_stock_products:
+                    stock_alerts.append(f"Stock faible pour {product.title} ({product.stock_quantity} restant)")
+                
+                out_of_stock_products = Product.objects.filter(stock_quantity=0)[:5]
+                for product in out_of_stock_products:
+                    stock_alerts.append(f"Rupture de stock pour {product.title}")
+                
+                context['stock_alerts'] = stock_alerts
+                
             except Exception as e:
                 print(f"Error loading stock stats: {e}")
         
@@ -3367,3 +3414,1513 @@ def send_visitor_payment_confirmation(order):
     except Exception as e:
         print(f"Error sending visitor payment confirmation: {e}")
         return False
+
+# ============= MISSING ADMIN VIEWS =============
+# These views are referenced in urls_admin.py but were missing
+
+class AdminReportsView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/reports/reports.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if MAIN_MODELS_AVAILABLE:
+            context['total_users'] = User.objects.count()
+            context['total_products'] = Product.objects.count()
+            context['total_orders'] = Order.objects.count()
+            context['total_revenue'] = Payment.objects.filter(status='COMPLETED').aggregate(Sum('amount'))['amount__sum'] or 0
+        return context
+
+class ExportReportsView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/reports/export.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminUserDeleteView(AdminRequiredMixin, DeleteView):
+    model = User
+    template_name = 'backend/admin/users/delete.html'
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('admin_panel:users')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user'] = self.get_object()
+        return context
+
+class AdminUserBulkActionsView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/users/bulk_actions.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminProductCreateView(AdminRequiredMixin, CreateView):
+    model = Product
+    template_name = 'backend/admin/products/create.html'
+    fields = ['title', 'description', 'category', 'price', 'condition', 'city', 'is_negotiable']
+    success_url = reverse_lazy('admin_panel:products')
+    
+    def form_valid(self, form):
+        form.instance.seller = self.request.user
+        return super().form_valid(form)
+
+class AdminProductDetailView(AdminRequiredMixin, DetailView):
+    model = Product
+    template_name = 'backend/admin/products/detail.html'
+    context_object_name = 'product'
+    pk_url_kwarg = 'pk'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminProductUpdateView(AdminRequiredMixin, UpdateView):
+    model = Product
+    template_name = 'backend/admin/products/edit.html'
+    fields = ['title', 'description', 'category', 'price', 'condition', 'city', 'is_negotiable']
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('admin_panel:products')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminProductDeleteView(AdminRequiredMixin, DeleteView):
+    model = Product
+    template_name = 'backend/admin/products/delete.html'
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('admin_panel:products')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminProductBulkActionsView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/products/bulk_actions.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminProductApproveView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/products/approve.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['product'] = get_object_or_404(Product, pk=self.kwargs['pk'])
+        return context
+
+class AdminProductRejectView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/products/reject.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['product'] = get_object_or_404(Product, pk=self.kwargs['pk'])
+        return context
+
+class AdminOrderDetailView(AdminRequiredMixin, DetailView):
+    model = Order
+    template_name = 'backend/admin/orders/detail.html'
+    context_object_name = 'order'
+    pk_url_kwarg = 'pk'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminOrderUpdateView(AdminRequiredMixin, UpdateView):
+    model = Order
+    template_name = 'backend/admin/orders/edit.html'
+    fields = ['status', 'delivery_address', 'notes']
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('admin_panel:orders')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminOrderCancelView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/orders/cancel.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['order'] = get_object_or_404(Order, pk=self.kwargs['pk'])
+        return context
+
+class ExportOrdersView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/orders/export.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminOrderBulkActionsView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/orders/bulk_actions.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminPaymentsView(AdminRequiredMixin, ListView):
+    model = Payment
+    template_name = 'backend/admin/payments/list.html'
+    context_object_name = 'payments'
+    paginate_by = 25
+    
+    def get_queryset(self):
+        return Payment.objects.all().order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class PaymentDetailView(AdminRequiredMixin, DetailView):
+    model = Payment
+    template_name = 'backend/admin/payments/detail.html'
+    context_object_name = 'payment'
+    pk_url_kwarg = 'pk'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminPaymentRefundView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/payments/refund.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['payment'] = get_object_or_404(Payment, pk=self.kwargs['pk'])
+        return context
+
+class ExportPaymentsView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/payments/export.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminPaymentBulkActionsView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/payments/bulk_actions.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class StockAddView(AdminRequiredMixin, CreateView):
+    model = AdminStock
+    template_name = 'backend/admin/stock/add.html'
+    fields = ['product', 'quantity', 'location', 'notes']
+    success_url = reverse_lazy('admin_panel:stock')
+    
+    def form_valid(self, form):
+        form.instance.added_by = self.request.user
+        return super().form_valid(form)
+
+class StockListView(AdminRequiredMixin, ListView):
+    model = AdminStock
+    template_name = 'backend/admin/stock/list.html'
+    context_object_name = 'stock_items'
+    paginate_by = 25
+    
+    def get_queryset(self):
+        return AdminStock.objects.all().order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminStockEditView(AdminRequiredMixin, UpdateView):
+    model = AdminStock
+    template_name = 'backend/admin/stock/edit.html'
+    fields = ['product', 'quantity', 'location', 'notes']
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('admin_panel:stock')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminStockDeleteView(AdminRequiredMixin, DeleteView):
+    model = AdminStock
+    template_name = 'backend/admin/stock/delete.html'
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('admin_panel:stock')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminStockImportView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/stock/import.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminStockExportView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/stock/export.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminStockMovementsView(AdminRequiredMixin, ListView):
+    model = AdminStock
+    template_name = 'backend/admin/stock/movements.html'
+    context_object_name = 'movements'
+    paginate_by = 25
+    
+    def get_queryset(self):
+        return AdminStock.objects.all().order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class PromotionsView(AdminRequiredMixin, ListView):
+    template_name = 'backend/admin/promotions/list.html'
+    context_object_name = 'promotions'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        # Return empty list since we don't have Promotion model yet
+        return []
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class PromotionCreateView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/promotions/create.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class PromotionEditView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/promotions/edit.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class PromotionDeleteView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/promotions/delete.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class PromotionActivateView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/promotions/activate.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class PromotionDeactivateView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/promotions/deactivate.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NewsletterView(AdminRequiredMixin, ListView):
+    template_name = 'backend/admin/newsletter/list.html'
+    context_object_name = 'newsletters'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        if NEWSLETTER_MODELS_AVAILABLE:
+            return Newsletter.objects.all().order_by('-created_at')
+        return []
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NewsletterCreateView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/newsletter/create.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NewsletterListView(AdminRequiredMixin, ListView):
+    template_name = 'backend/admin/newsletter/list.html'
+    context_object_name = 'newsletters'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        if NEWSLETTER_MODELS_AVAILABLE:
+            return Newsletter.objects.all().order_by('-created_at')
+        return []
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NewsletterSentView(AdminRequiredMixin, ListView):
+    template_name = 'backend/admin/newsletter/sent.html'
+    context_object_name = 'newsletters'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        if NEWSLETTER_MODELS_AVAILABLE:
+            return Newsletter.objects.filter(sent=True).order_by('-sent_at')
+        return []
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NewsletterEditView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/newsletter/edit.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NewsletterDeleteView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/newsletter/delete.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NewsletterSendView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/newsletter/send.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NewsletterSubscribersView(AdminRequiredMixin, ListView):
+    template_name = 'backend/admin/newsletter/subscribers.html'
+    context_object_name = 'subscribers'
+    paginate_by = 50
+    
+    def get_queryset(self):
+        if NEWSLETTER_MODELS_AVAILABLE:
+            return NewsletterSubscriber.objects.all().order_by('-subscribed_at')
+        return []
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminNotificationsView(AdminRequiredMixin, ListView):
+    template_name = 'backend/admin/notifications/list.html'
+    context_object_name = 'notifications'
+    paginate_by = 25
+    
+    def get_queryset(self):
+        return Notification.objects.all().order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NotificationCreateView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/notifications/create.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NotificationListView(AdminRequiredMixin, ListView):
+    template_name = 'backend/admin/notifications/list.html'
+    context_object_name = 'notifications'
+    paginate_by = 25
+    
+    def get_queryset(self):
+        return Notification.objects.all().order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NotificationEditView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/notifications/edit.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NotificationDeleteView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/notifications/delete.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NotificationSendView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/notifications/send.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NotificationBulkSendView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/notifications/bulk_send.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class LoyaltyView(AdminRequiredMixin, ListView):
+    template_name = 'backend/admin/loyalty/list.html'
+    context_object_name = 'loyalty_programs'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        # Return empty list since we don't have LoyaltyProgram model yet
+        return []
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class LoyaltyCreateView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/loyalty/create.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class LoyaltyEditView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/loyalty/edit.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class LoyaltyListView(AdminRequiredMixin, ListView):
+    template_name = 'backend/admin/loyalty/list.html'
+    context_object_name = 'loyalty_programs'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        # Return empty list since we don't have LoyaltyProgram model yet
+        return []
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class LoyaltyDeleteView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/loyalty/delete.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class LoyaltyPointsView(AdminRequiredMixin, ListView):
+    model = User
+    template_name = 'backend/admin/loyalty/points.html'
+    context_object_name = 'users'
+    paginate_by = 50
+    
+    def get_queryset(self):
+        return User.objects.filter(loyalty_points__gt=0).order_by('-loyalty_points')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class LoyaltyRewardsView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/loyalty/rewards.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminChatsView(AdminRequiredMixin, ListView):
+    model = Chat
+    template_name = 'backend/admin/chats/list.html'
+    context_object_name = 'chats'
+    paginate_by = 25
+    
+    def get_queryset(self):
+        return Chat.objects.all().order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminChatDetailView(AdminRequiredMixin, DetailView):
+    model = Chat
+    template_name = 'backend/admin/chats/detail.html'
+    context_object_name = 'chat'
+    pk_url_kwarg = 'pk'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminChatReplyView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/chats/reply.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['chat'] = get_object_or_404(Chat, pk=self.kwargs['pk'])
+        return context
+
+class AdminChatBulkActionsView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/chats/bulk_actions.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class SystemSettingsView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/settings/system.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Add default settings if they don't exist
+        context['settings'] = {
+            'site_name': 'Vidé-Grenier Kamer',
+            'site_description': 'Plateforme de vente et d\'achat d\'articles d\'occasion',
+            'site_url': 'https://vide-grenier-kamer.com',
+            'contact_email': 'contact@vide-grenier-kamer.com',
+            'timezone': 'Africa/Douala',
+            'language': 'fr',
+            'currency': 'XAF',
+            'maintenance_mode': False,
+            'session_timeout': 30,
+            'max_login_attempts': 5,
+            'require_email_verification': True,
+            'require_phone_verification': False,
+            'password_min_length': 8,
+            'require_strong_password': True,
+            'enable_captcha': False,
+            'enable_2fa': False,
+            'smtp_host': 'smtp.gmail.com',
+            'smtp_port': 587,
+            'smtp_username': '',
+            'smtp_password': '',
+            'smtp_use_tls': True,
+            'email_from_name': 'Vidé-Grenier Kamer',
+            'email_from_address': 'noreply@vide-grenier-kamer.com',
+            'email_reply_to': 'support@vide-grenier-kamer.com',
+            'enable_mobile_money': True,
+            'enable_bank_transfer': True,
+            'enable_cash_on_delivery': True,
+            'enable_paypal': False,
+            'commission_rate': 5.0,
+            'minimum_commission': 100,
+            'maximum_commission': 5000,
+            'email_order_confirmation': True,
+            'email_payment_confirmation': True,
+            'email_product_approval': True,
+            'email_newsletter': True,
+            'push_new_products': True,
+            'push_price_drops': True,
+            'push_order_updates': True,
+            'push_chat_messages': True,
+        }
+        return context
+
+class BackupView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/settings/backup.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class LogsView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/settings/logs.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class SecuritySettingsView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/settings/security.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class EmailSettingsView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/settings/email.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class PaymentSettingsView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/settings/payment.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NotificationSettingsView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/settings/notification.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminProfileView(AdminRequiredMixin, DetailView):
+    model = User
+    template_name = 'backend/admin/profile/profile.html'
+    context_object_name = 'profile_user'
+    
+    def get_object(self):
+        return self.request.user
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminProfileEditView(AdminRequiredMixin, UpdateView):
+    model = User
+    template_name = 'backend/admin/profile/edit.html'
+    fields = ['first_name', 'last_name', 'email', 'phone', 'city']
+    success_url = reverse_lazy('admin_panel:profile')
+    
+    def get_object(self):
+        return self.request.user
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminChangePasswordView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/profile/change_password.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class CommissionManagementView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/commissions/list.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminCommissionView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/commissions/list.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['commissions'] = []  # Placeholder
+        return context
+
+class CalculateCommissionsView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/commissions/calculate.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class CommissionPayoutView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/commissions/payout.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class CommissionHistoryView(AdminRequiredMixin, ListView):
+    template_name = 'backend/admin/commissions/history.html'
+    context_object_name = 'commissions'
+    paginate_by = 25
+    
+    def get_queryset(self):
+        # Return empty list since we don't have Commission model yet
+        return []
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class WithdrawalManagementView(AdminRequiredMixin, ListView):
+    template_name = 'backend/admin/withdrawals/list.html'
+    context_object_name = 'withdrawals'
+    paginate_by = 25
+    
+    def get_queryset(self):
+        # Return empty list since we don't have Withdrawal model yet
+        return []
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class ApproveWithdrawalView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/withdrawals/approve.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class RejectWithdrawalView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/withdrawals/reject.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class WithdrawalDetailView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/withdrawals/detail.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class WithdrawalBulkActionsView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/withdrawals/bulk_actions.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminCategoryListView(AdminRequiredMixin, ListView):
+    model = Category
+    template_name = 'backend/admin/categories/list.html'
+    context_object_name = 'categories'
+    paginate_by = 25
+    
+    def get_queryset(self):
+        return Category.objects.all().order_by('name')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['active_categories_count'] = Category.objects.filter(is_active=True).count()
+        context['total_products'] = Product.objects.count()
+        context['popular_categories_count'] = Category.objects.annotate(
+            product_count=Count('product')
+        ).filter(product_count__gt=0).count()
+        return context
+
+class AdminCategoryCreateView(AdminRequiredMixin, CreateView):
+    model = Category
+    template_name = 'backend/admin/categories/create.html'
+    fields = ['name', 'description', 'icon', 'is_active']
+    success_url = reverse_lazy('admin_panel:categories')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminCategoryEditView(AdminRequiredMixin, UpdateView):
+    model = Category
+    template_name = 'backend/admin/categories/edit.html'
+    fields = ['name', 'description', 'icon', 'is_active']
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('admin_panel:categories')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminCategoryDeleteView(AdminRequiredMixin, DeleteView):
+    model = Category
+    template_name = 'backend/admin/categories/delete.html'
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('admin_panel:categories')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminPickupPointListView(AdminRequiredMixin, ListView):
+    model = PickupPoint
+    template_name = 'backend/admin/pickup_points/list.html'
+    context_object_name = 'pickup_points'
+    paginate_by = 25
+    
+    def get_queryset(self):
+        return PickupPoint.objects.all().order_by('name')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['active_pickup_points_count'] = PickupPoint.objects.filter(is_active=True).count()
+        context['total_orders'] = Order.objects.count()
+        context['cities_count'] = PickupPoint.objects.values('city').distinct().count()
+        context['cities'] = PickupPoint.objects.values_list('city', flat=True).distinct()
+        return context
+
+class AdminPickupPointCreateView(AdminRequiredMixin, CreateView):
+    model = PickupPoint
+    template_name = 'backend/admin/pickup_points/create.html'
+    fields = ['name', 'address', 'city', 'phone', 'email', 'is_active']
+    success_url = reverse_lazy('admin_panel:pickup_points')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminPickupPointEditView(AdminRequiredMixin, UpdateView):
+    model = PickupPoint
+    template_name = 'backend/admin/pickup_points/edit.html'
+    fields = ['name', 'address', 'city', 'phone', 'email', 'is_active']
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('admin_panel:pickup_points')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminPickupPointDeleteView(AdminRequiredMixin, DeleteView):
+    model = PickupPoint
+    template_name = 'backend/admin/pickup_points/delete.html'
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('admin_panel:pickup_points')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminReviewListView(AdminRequiredMixin, ListView):
+    model = Review
+    template_name = 'backend/admin/reviews/list.html'
+    context_object_name = 'reviews'
+    paginate_by = 25
+    
+    def get_queryset(self):
+        return Review.objects.all().order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['approved_reviews_count'] = Review.objects.filter(is_approved=True).count()
+        context['pending_reviews_count'] = Review.objects.filter(is_approved__isnull=True).count()
+        context['rejected_reviews_count'] = Review.objects.filter(is_rejected=True).count()
+        return context
+
+class AdminReviewDetailView(AdminRequiredMixin, DetailView):
+    model = Review
+    template_name = 'backend/admin/reviews/detail.html'
+    context_object_name = 'review'
+    pk_url_kwarg = 'pk'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class AdminReviewApproveView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/reviews/approve.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['review'] = get_object_or_404(Review, pk=self.kwargs['pk'])
+        return context
+
+class AdminReviewRejectView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/reviews/reject.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['review'] = get_object_or_404(Review, pk=self.kwargs['pk'])
+        return context
+
+class AdminReviewDeleteView(AdminRequiredMixin, DeleteView):
+    model = Review
+    template_name = 'backend/admin/reviews/delete.html'
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('admin_panel:reviews')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class ProductReportsView(AdminRequiredMixin, ListView):
+    model = Product
+    template_name = 'backend/admin/reports/products.html'
+    context_object_name = 'products'
+    paginate_by = 25
+    
+    def get_queryset(self):
+        return Product.objects.all().order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class UserReportsView(AdminRequiredMixin, ListView):
+    model = User
+    template_name = 'backend/admin/reports/users.html'
+    context_object_name = 'users'
+    paginate_by = 25
+    
+    def get_queryset(self):
+        return User.objects.all().order_by('-date_joined')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class OrderReportsView(AdminRequiredMixin, ListView):
+    model = Order
+    template_name = 'backend/admin/reports/orders.html'
+    context_object_name = 'orders'
+    paginate_by = 25
+    
+    def get_queryset(self):
+        return Order.objects.all().order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class FinancialReportsView(AdminRequiredMixin, ListView):
+    model = Payment
+    template_name = 'backend/admin/reports/financial.html'
+    context_object_name = 'payments'
+    paginate_by = 25
+    
+    def get_queryset(self):
+        return Payment.objects.all().order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class DashboardStatsAPIView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/api/dashboard_stats.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class UserStatsAPIView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/api/user_stats.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class OrderStatsAPIView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/api/order_stats.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class RevenueStatsAPIView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/api/revenue_stats.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class MaintenanceModeView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/utility/maintenance.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class EnableMaintenanceView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/utility/enable_maintenance.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class DisableMaintenanceView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/utility/disable_maintenance.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class ClearCacheView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/utility/clear_cache.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class DatabaseBackupView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/utility/database_backup.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class DatabaseRestoreView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/utility/database_restore.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+# Product Approval/Rejection Views
+class ProductApprovalView(AdminRequiredMixin, DetailView):
+    model = Product
+    template_name = 'backend/admin/products/approve.html'
+    context_object_name = 'product'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['product_approval_logs'] = self.get_approval_logs()
+        return context
+    
+    def get_approval_logs(self):
+        # Get approval history for this product
+        return []  # Implement approval log model
+
+class ProductRejectionView(AdminRequiredMixin, DetailView):
+    model = Product
+    template_name = 'backend/admin/products/reject.html'
+    context_object_name = 'product'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['rejection_reasons'] = self.get_rejection_reasons()
+        return context
+    
+    def get_rejection_reasons(self):
+        return [
+            'Contenu inapproprié',
+            'Qualité insuffisante',
+            'Mauvaise catégorie',
+            'Produit en double',
+            'Problème de prix',
+            'Autre raison'
+        ]
+
+class ProductContactSellerView(AdminRequiredMixin, DetailView):
+    model = Product
+    template_name = 'backend/admin/products/contact_seller.html'
+    context_object_name = 'product'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['chat_messages'] = self.get_chat_messages()
+        return context
+    
+    def get_chat_messages(self):
+        # Get chat messages between admin and seller
+        return []
+
+# Order Processing Views
+class OrderDetailView(AdminRequiredMixin, DetailView):
+    model = Order
+    template_name = 'backend/admin/orders/detail.html'
+    context_object_name = 'order'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['order_status_history'] = self.get_status_history()
+        context['commission_rate'] = 5.0  # 5% commission
+        context['vat_rate'] = 19.25  # 19.25% VAT
+        context['recent_orders'] = self.get_recent_orders()
+        return context
+    
+    def get_status_history(self):
+        # Get order status change history
+        return []
+    
+    def get_recent_orders(self):
+        return Order.objects.filter(
+            items__product__seller=self.object.items.first().product.seller
+        ).exclude(id=self.object.id).order_by('-created_at')[:5]
+
+class OrderProcessingView(AdminRequiredMixin, UpdateView):
+    model = Order
+    template_name = 'backend/admin/orders/processing.html'
+    fields = ['status', 'tracking_number', 'estimated_delivery_date']
+    
+    def get_success_url(self):
+        return reverse_lazy('admin_panel:order_detail', kwargs={'pk': self.object.pk})
+
+# Pickup Point Management Views
+class PickupPointEditView(AdminRequiredMixin, UpdateView):
+    model = PickupPoint
+    template_name = 'backend/admin/pickup_points/edit.html'
+    fields = ['name', 'address', 'city', 'phone', 'email', 'is_active', 'opening_hours', 'special_hours', 'capacity', 'processing_time', 'notes']
+    
+    def get_success_url(self):
+        return reverse_lazy('admin_panel:pickup_point_detail', kwargs={'pk': self.object.pk})
+
+class PickupPointDetailView(AdminRequiredMixin, DetailView):
+    model = PickupPoint
+    template_name = 'backend/admin/pickup_points/detail.html'
+    context_object_name = 'pickup_point'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['recent_orders'] = self.get_recent_orders()
+        context['total_orders'] = self.get_total_orders()
+        context['completed_orders'] = self.get_completed_orders()
+        context['pending_orders'] = self.get_pending_orders()
+        context['avg_processing_time'] = self.get_avg_processing_time()
+        return context
+    
+    def get_recent_orders(self):
+        return Order.objects.filter(
+            pickup_point=self.object
+        ).order_by('-created_at')[:5]
+    
+    def get_total_orders(self):
+        return Order.objects.filter(pickup_point=self.object).count()
+    
+    def get_completed_orders(self):
+        return Order.objects.filter(
+            pickup_point=self.object,
+            status='DELIVERED'
+        ).count()
+    
+    def get_pending_orders(self):
+        return Order.objects.filter(
+            pickup_point=self.object,
+            status__in=['PENDING', 'CONFIRMED', 'PROCESSING']
+        ).count()
+    
+    def get_avg_processing_time(self):
+        # Calculate average processing time
+        return 24  # Default 24 hours
+
+# Additional Admin Views for New Features
+class OrderStatusUpdateView(AdminRequiredMixin, View):
+    """AJAX view for updating order status"""
+    
+    def post(self, request, pk):
+        try:
+            order = Order.objects.get(id=pk)
+            new_status = request.POST.get('status')
+            notes = request.POST.get('notes', '')
+            
+            if new_status:
+                order.status = new_status
+                order.save()
+                
+                # Send email notification if requested
+                if request.POST.get('send_email'):
+                    from .email_service import email_service
+                    email_service.send_delivery_status_email(order, new_status)
+                
+                return JsonResponse({'success': True, 'message': 'Status updated successfully'})
+            else:
+                return JsonResponse({'success': False, 'message': 'Status is required'})
+                
+        except Order.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Order not found'})
+
+class PickupPointToggleStatusView(AdminRequiredMixin, View):
+    """Toggle pickup point status"""
+    
+    def post(self, request, pk):
+        try:
+            pickup_point = PickupPoint.objects.get(id=pk)
+            pickup_point.is_active = not pickup_point.is_active
+            pickup_point.save()
+            
+            return JsonResponse({
+                'success': True, 
+                'is_active': pickup_point.is_active,
+                'message': f'Pickup point {"activated" if pickup_point.is_active else "deactivated"}'
+            })
+        except PickupPoint.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Pickup point not found'})
+
+class StockCalculateView(AdminRequiredMixin, View):
+    """Calculate stock status for all products"""
+    
+    def post(self, request):
+        try:
+            from .stock_calculator import stock_calculator
+            
+            products = Product.objects.all()
+            results = []
+            
+            for product in products:
+                stock_status = stock_calculator.calculate_stock_status(product)
+                results.append(stock_status)
+            
+            return JsonResponse({
+                'success': True,
+                'results': results,
+                'message': f'Stock calculated for {len(results)} products'
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+
+class StockAlertsView(AdminRequiredMixin, ListView):
+    """View for stock alerts"""
+    model = Product
+    template_name = 'backend/admin/stock/alerts.html'
+    context_object_name = 'alerts'
+    
+    def get_queryset(self):
+        from .stock_calculator import stock_calculator
+        
+        products = Product.objects.all()
+        alerts = []
+        
+        for product in products:
+            stock_status = stock_calculator.calculate_stock_status(product)
+            if stock_status['alerts']:
+                alerts.extend(stock_status['alerts'])
+        
+        return alerts
+
+class CommissionCalculateView(AdminRequiredMixin, View):
+    """Calculate commissions for all sellers"""
+    
+    def post(self, request):
+        try:
+            from .commission_manager import commission_manager
+            
+            start_date = request.POST.get('start_date')
+            end_date = request.POST.get('end_date')
+            
+            if start_date and end_date:
+                start_date = datetime.strptime(start_date, '%Y-%m-%d')
+                end_date = datetime.strptime(end_date, '%Y-%m-%d')
+            else:
+                end_date = timezone.now()
+                start_date = end_date - timedelta(days=30)
+            
+            commission_data = commission_manager.calculate_all_commissions(start_date, end_date)
+            
+            return JsonResponse({
+                'success': True,
+                'data': commission_data,
+                'message': f'Commissions calculated for {commission_data["total_sellers"]} sellers'
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+
+class CommissionPayoutView(AdminRequiredMixin, View):
+    """Process commission payout"""
+    
+    def post(self, request):
+        try:
+            from .commission_manager import commission_manager
+            
+            seller_id = request.POST.get('seller_id')
+            amount = Decimal(request.POST.get('amount', 0))
+            payment_method = request.POST.get('payment_method', 'bank_transfer')
+            
+            seller = User.objects.get(id=seller_id)
+            result = commission_manager.process_commission_payout(seller, amount, payment_method)
+            
+            return JsonResponse(result)
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+
+class CommissionReportView(AdminRequiredMixin, View):
+    """Generate commission report"""
+    
+    def get(self, request):
+        try:
+            from .commission_manager import commission_manager
+            
+            start_date = request.GET.get('start_date')
+            end_date = request.GET.get('end_date')
+            
+            if start_date and end_date:
+                start_date = datetime.strptime(start_date, '%Y-%m-%d')
+                end_date = datetime.strptime(end_date, '%Y-%m-%d')
+            else:
+                end_date = timezone.now()
+                start_date = end_date - timedelta(days=30)
+            
+            report = commission_manager.generate_commission_report(start_date, end_date)
+            
+            return JsonResponse({
+                'success': True,
+                'report': report
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+
+class AdminChatListView(AdminRequiredMixin, ListView):
+    """List all chats for admin"""
+    model = Chat
+    template_name = 'backend/admin/chats/list.html'
+    context_object_name = 'chats'
+    
+    def get_queryset(self):
+        return Chat.objects.filter(participants__is_staff=True).distinct().order_by('-last_activity')
+
+class AdminChatDetailView(AdminRequiredMixin, DetailView):
+    """Chat detail view for admin"""
+    model = User
+    template_name = 'backend/admin/chats/detail.html'
+    context_object_name = 'user'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Get or create chat between admin and user
+        chat, created = Chat.objects.get_or_create(
+            chat_type='private',
+            participants__in=[self.request.user, self.object]
+        )
+        context['chat'] = chat
+        context['messages'] = chat.messages.all().order_by('created_at')
+        return context
+
+class AdminChatMessagesView(AdminRequiredMixin, View):
+    """Get chat messages via AJAX"""
+    
+    def get(self, request, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+            chat, created = Chat.objects.get_or_create(
+                chat_type='private',
+                participants__in=[request.user, user]
+            )
+            
+            messages = chat.messages.all().order_by('created_at')
+            message_data = []
+            
+            for message in messages:
+                message_data.append({
+                    'id': message.id,
+                    'content': message.content,
+                    'sender_id': message.sender.id,
+                    'sender_name': message.sender.get_full_name(),
+                    'timestamp': message.created_at.isoformat(),
+                    'is_admin': message.sender.is_staff
+                })
+            
+            return JsonResponse({
+                'success': True,
+                'messages': message_data
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+
+class AdminChatSendView(AdminRequiredMixin, View):
+    """Send chat message via AJAX"""
+    
+    def post(self, request, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+            content = request.POST.get('content', '').strip()
+            
+            if not content:
+                return JsonResponse({'success': False, 'message': 'Message content is required'})
+            
+            chat, created = Chat.objects.get_or_create(
+                chat_type='private',
+                participants__in=[request.user, user]
+            )
+            
+            message = Message.objects.create(
+                chat=chat,
+                sender=request.user,
+                content=content
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message_id': message.id,
+                'timestamp': message.created_at.isoformat()
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+
+class AdminEmailSendView(AdminRequiredMixin, View):
+    """Send email via admin interface"""
+    
+    def post(self, request):
+        try:
+            from .email_service import email_service
+            
+            to_email = request.POST.get('to_email')
+            subject = request.POST.get('subject')
+            message = request.POST.get('message')
+            
+            if not all([to_email, subject, message]):
+                return JsonResponse({'success': False, 'message': 'All fields are required'})
+            
+            success = email_service.send_email(
+                to_email=to_email,
+                subject=subject,
+                html_content=message,
+                text_content=message
+            )
+            
+            return JsonResponse({
+                'success': success,
+                'message': 'Email sent successfully' if success else 'Failed to send email'
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+
+class AdminEmailTemplatesView(AdminRequiredMixin, TemplateView):
+    """Email templates management"""
+    template_name = 'backend/admin/email/templates.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['templates'] = self.get_email_templates()
+        return context
+    
+    def get_email_templates(self):
+        return [
+            {
+                'name': 'Order Confirmation',
+                'subject': 'Confirmation de commande #{order_number}',
+                'template': 'emails/order_confirmation.html'
+            },
+            {
+                'name': 'Product Approval',
+                'subject': 'Votre produit a été approuvé',
+                'template': 'emails/product_approval.html'
+            },
+            {
+                'name': 'Product Rejection',
+                'subject': 'Votre produit a été rejeté',
+                'template': 'emails/product_rejection.html'
+            }
+        ]
+
+# Category Management Views
+class CategoryCreateView(AdminRequiredMixin, CreateView):
+    model = Category
+    template_name = 'backend/admin/categories/create.html'
+    fields = ['name', 'description', 'icon', 'is_active']
+    
+    def get_success_url(self):
+        return reverse_lazy('admin_panel:categories')
+
+class CategoryEditView(AdminRequiredMixin, UpdateView):
+    model = Category
+    template_name = 'backend/admin/categories/edit.html'
+    fields = ['name', 'description', 'icon', 'is_active']
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['category'] = self.object
+        return context
+    
+    def get_success_url(self):
+        return reverse_lazy('admin_panel:categories')
+
+class CategoryDeleteView(AdminRequiredMixin, DeleteView):
+    model = Category
+    template_name = 'backend/admin/categories/delete.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['other_categories'] = Category.objects.exclude(id=self.object.id)
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        product_action = request.POST.get('product_action')
+        new_category_id = request.POST.get('new_category')
+        
+        if product_action == 'move' and new_category_id:
+            # Move products to new category
+            new_category = Category.objects.get(id=new_category_id)
+            self.object.product_set.update(category=new_category)
+        elif product_action == 'delete':
+            # Delete all products in this category
+            self.object.product_set.delete()
+        
+        return super().post(request, *args, **kwargs)
+    
+    def get_success_url(self):
+        return reverse_lazy('admin_panel:categories')

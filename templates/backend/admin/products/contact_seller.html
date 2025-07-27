@@ -1,0 +1,439 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Contacter le Vendeur - Admin{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Contacter le Vendeur</h1>
+            <p class="text-gray-600">Communiquer avec {{ product.seller.get_full_name }} au sujet de "{{ product.title }}"</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <a href="{% url 'admin_panel:products' %}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Retour aux produits
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Contact Methods -->
+    <div class="lg:col-span-2">
+        <!-- Tabs -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="flex space-x-8 px-6" aria-label="Tabs">
+                    <button id="chat-tab" class="tab-button active py-4 px-1 border-b-2 border-blue-500 font-medium text-sm text-blue-600">
+                        <i data-lucide="message-circle" class="w-4 h-4 inline mr-2"></i>
+                        Chat en direct
+                    </button>
+                    <button id="email-tab" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700">
+                        <i data-lucide="mail" class="w-4 h-4 inline mr-2"></i>
+                        Email
+                    </button>
+                    <button id="phone-tab" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700">
+                        <i data-lucide="phone" class="w-4 h-4 inline mr-2"></i>
+                        Téléphone
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Chat Tab Content -->
+        <div id="chat-content" class="tab-content">
+            <div class="bg-white rounded-lg shadow">
+                <!-- Chat Header -->
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            {% if product.seller.profile_picture %}
+                                <img src="{{ product.seller.profile_picture.url }}" alt="{{ product.seller.get_full_name }}" class="w-10 h-10 rounded-full mr-3">
+                            {% else %}
+                                <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mr-3">
+                                    <i data-lucide="user" class="w-5 h-5 text-gray-600"></i>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900">{{ product.seller.get_full_name }}</h3>
+                                <p class="text-sm text-gray-500">
+                                    <span id="chat-status" class="inline-flex items-center">
+                                        <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                                        En ligne
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="startVideoCall()" class="p-2 text-gray-400 hover:text-gray-600">
+                                <i data-lucide="video" class="w-5 h-5"></i>
+                            </button>
+                            <button onclick="startVoiceCall()" class="p-2 text-gray-400 hover:text-gray-600">
+                                <i data-lucide="phone" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Messages -->
+                <div id="chat-messages" class="h-96 overflow-y-auto p-6 space-y-4">
+                    <!-- Messages will be loaded here -->
+                </div>
+
+                <!-- Chat Input -->
+                <div class="px-6 py-4 border-t border-gray-200">
+                    <form id="chat-form" class="flex space-x-3">
+                        <div class="flex-1">
+                            <input type="text" id="chat-input" placeholder="Tapez votre message..." 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Tab Content -->
+        <div id="email-content" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow p-6">
+                <form id="email-form" method="post">
+                    {% csrf_token %}
+                    <div class="space-y-6">
+                        <div>
+                            <label for="email-subject" class="block text-sm font-medium text-gray-700 mb-2">Sujet</label>
+                            <input type="text" id="email-subject" name="subject" required
+                                   value="À propos de votre produit: {{ product.title }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+
+                        <div>
+                            <label for="email-message" class="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                            <textarea id="email-message" name="message" rows="8" required
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                      placeholder="Rédigez votre message..."></textarea>
+                        </div>
+
+                        <div class="flex items-center space-x-4">
+                            <label class="flex items-center">
+                                <input type="checkbox" name="include_product_details" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <span class="ml-2 text-sm text-gray-900">Inclure les détails du produit</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="send_copy" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <span class="ml-2 text-sm text-gray-900">Recevoir une copie</span>
+                            </label>
+                        </div>
+
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" onclick="saveDraft()" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                                Sauvegarder brouillon
+                            </button>
+                            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                Envoyer l'email
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Phone Tab Content -->
+        <div id="phone-content" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="phone" class="w-10 h-10 text-green-600"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Appeler {{ product.seller.get_full_name }}</h3>
+                    <p class="text-gray-600 mb-6">{{ product.seller.phone|default:"Numéro non disponible" }}</p>
+                    
+                    <div class="space-y-3">
+                        <button onclick="callSeller()" class="w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                            <i data-lucide="phone" class="w-5 h-5 mr-2"></i>
+                            Appeler maintenant
+                        </button>
+                        <button onclick="scheduleCall()" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                            <i data-lucide="calendar" class="w-5 h-5 mr-2"></i>
+                            Programmer un appel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="lg:col-span-1">
+        <!-- Seller Information -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Informations du Vendeur</h3>
+            <div class="space-y-4">
+                <div class="flex items-center">
+                    {% if product.seller.profile_picture %}
+                        <img src="{{ product.seller.profile_picture.url }}" alt="{{ product.seller.get_full_name }}" class="w-12 h-12 rounded-full mr-3">
+                    {% else %}
+                        <div class="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center mr-3">
+                            <i data-lucide="user" class="w-6 h-6 text-gray-600"></i>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h4 class="font-medium text-gray-900">{{ product.seller.get_full_name }}</h4>
+                        <p class="text-sm text-gray-500">{{ product.seller.email }}</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Téléphone:</span>
+                        <span class="text-sm font-medium">{{ product.seller.phone|default:"Non renseigné" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Ville:</span>
+                        <span class="text-sm font-medium">{{ product.seller.city|default:"Non renseigné" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Score de confiance:</span>
+                        <span class="text-sm font-medium">{{ product.seller.trust_score|default:0 }}/100</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Membre depuis:</span>
+                        <span class="text-sm font-medium">{{ product.seller.date_joined|date:"d/m/Y" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Information -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Produit Concerné</h3>
+            <div class="space-y-3">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.title }}" class="w-full h-32 object-cover rounded-lg">
+                {% endif %}
+                <h4 class="font-medium text-gray-900">{{ product.title }}</h4>
+                <p class="text-sm text-gray-600">{{ product.category.name }}</p>
+                <p class="text-sm font-medium text-gray-900">{{ product.price|floatformat:0 }} XAF</p>
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium 
+                    {% if product.status == 'PENDING' %}bg-yellow-100 text-yellow-800
+                    {% elif product.status == 'APPROVED' %}bg-green-100 text-green-800
+                    {% elif product.status == 'REJECTED' %}bg-red-100 text-red-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {{ product.get_status_display }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Actions Rapides</h3>
+            <div class="space-y-3">
+                <button onclick="approveProduct()" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                    <i data-lucide="check" class="w-4 h-4 mr-2"></i>
+                    Approuver le produit
+                </button>
+                <button onclick="rejectProduct()" class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center">
+                    <i data-lucide="x" class="w-4 h-4 mr-2"></i>
+                    Rejeter le produit
+                </button>
+                <button onclick="requestChanges()" class="w-full bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors flex items-center justify-center">
+                    <i data-lucide="edit" class="w-4 h-4 mr-2"></i>
+                    Demander des modifications
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Tab functionality
+document.querySelectorAll('.tab-button').forEach(button => {
+    button.addEventListener('click', function() {
+        // Remove active class from all tabs
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active', 'border-blue-500', 'text-blue-600');
+            btn.classList.add('border-transparent', 'text-gray-500');
+        });
+        
+        // Add active class to clicked tab
+        this.classList.add('active', 'border-blue-500', 'text-blue-600');
+        this.classList.remove('border-transparent', 'text-gray-500');
+        
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+        
+        // Show corresponding content
+        const tabId = this.id;
+        if (tabId === 'chat-tab') {
+            document.getElementById('chat-content').classList.remove('hidden');
+            loadChatMessages();
+        } else if (tabId === 'email-tab') {
+            document.getElementById('email-content').classList.remove('hidden');
+        } else if (tabId === 'phone-tab') {
+            document.getElementById('phone-content').classList.remove('hidden');
+        }
+    });
+});
+
+// Chat functionality
+function loadChatMessages() {
+    const messagesContainer = document.getElementById('chat-messages');
+    // Load chat messages via AJAX
+    fetch(`/admin-panel/chat/${product.seller.id}/messages/`)
+        .then(response => response.json())
+        .then(data => {
+            messagesContainer.innerHTML = '';
+            data.messages.forEach(message => {
+                const messageElement = createMessageElement(message);
+                messagesContainer.appendChild(messageElement);
+            });
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+}
+
+function createMessageElement(message) {
+    const div = document.createElement('div');
+    div.className = `flex ${message.is_admin ? 'justify-end' : 'justify-start'}`;
+    div.innerHTML = `
+        <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${message.is_admin ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}">
+            <p class="text-sm">${message.content}</p>
+            <p class="text-xs ${message.is_admin ? 'text-blue-200' : 'text-gray-500'} mt-1">${message.timestamp}</p>
+        </div>
+    `;
+    return div;
+}
+
+// Chat form submission
+document.getElementById('chat-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    
+    if (message) {
+        sendChatMessage(message);
+        input.value = '';
+    }
+});
+
+function sendChatMessage(content) {
+    fetch(`/admin-panel/chat/${product.seller.id}/send/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify({ content: content })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadChatMessages();
+        }
+    });
+}
+
+// Email form submission
+document.getElementById('email-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    
+    fetch(`/admin-panel/email/send/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Email envoyé avec succès!');
+            this.reset();
+        } else {
+            alert('Erreur lors de l\'envoi de l\'email');
+        }
+    });
+}
+
+// Phone functionality
+function callSeller() {
+    const phone = '{{ product.seller.phone }}';
+    if (phone) {
+        window.open(`tel:${phone}`, '_blank');
+    } else {
+        alert('Numéro de téléphone non disponible');
+    }
+}
+
+function scheduleCall() {
+    // Implement call scheduling
+    alert('Fonctionnalité de programmation d\'appel en cours de développement');
+}
+
+// Product actions
+function approveProduct() {
+    if (confirm('Êtes-vous sûr de vouloir approuver ce produit ?')) {
+        window.location.href = `{% url 'admin_panel:product_approve' product.id %}`;
+    }
+}
+
+function rejectProduct() {
+    if (confirm('Êtes-vous sûr de vouloir rejeter ce produit ?')) {
+        window.location.href = `{% url 'admin_panel:product_reject' product.id %}`;
+    }
+}
+
+function requestChanges() {
+    if (confirm('Êtes-vous sûr de vouloir demander des modifications ?')) {
+        window.location.href = `{% url 'admin_panel:product_request_changes' product.id %}`;
+    }
+}
+
+// Utility functions
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function saveDraft() {
+    const subject = document.getElementById('email-subject').value;
+    const message = document.getElementById('email-message').value;
+    
+    localStorage.setItem('email_draft_subject', subject);
+    localStorage.setItem('email_draft_message', message);
+    alert('Brouillon sauvegardé');
+}
+
+// Load draft on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const draftSubject = localStorage.getItem('email_draft_subject');
+    const draftMessage = localStorage.getItem('email_draft_message');
+    
+    if (draftSubject) {
+        document.getElementById('email-subject').value = draftSubject;
+    }
+    if (draftMessage) {
+        document.getElementById('email-message').value = draftMessage;
+    }
+});
+
+// Initialize chat on page load
+loadChatMessages();
+</script>
+{% endblock %} 

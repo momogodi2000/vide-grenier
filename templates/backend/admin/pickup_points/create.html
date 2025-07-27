@@ -1,0 +1,246 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Créer un Point de Retrait - Admin{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Créer un Point de Retrait</h1>
+            <p class="text-gray-600">Ajouter un nouveau point de retrait pour les commandes</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <a href="{% url 'admin_panel:pickup_points' %}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Retour à la liste
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Form -->
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-lg shadow p-6">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Name Field -->
+            <div>
+                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Nom du point de retrait *
+                </label>
+                <input type="text" 
+                       name="{{ form.name.name }}" 
+                       id="{{ form.name.id_for_label }}"
+                       value="{{ form.name.value|default:'' }}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.name.errors %}border-red-500{% endif %}"
+                       placeholder="Ex: Centre Commercial Central, Station Service Total..."
+                       required>
+                {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Address Field -->
+            <div>
+                <label for="{{ form.address.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Adresse complète *
+                </label>
+                <textarea name="{{ form.address.name }}" 
+                          id="{{ form.address.id_for_label }}"
+                          rows="3"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.address.errors %}border-red-500{% endif %}"
+                          placeholder="Adresse complète du point de retrait..."
+                          required>{{ form.address.value|default:'' }}</textarea>
+                {% if form.address.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.address.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- City Field -->
+            <div>
+                <label for="{{ form.city.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Ville *
+                </label>
+                <select name="{{ form.city.name }}" 
+                        id="{{ form.city.id_for_label }}"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.city.errors %}border-red-500{% endif %}"
+                        required>
+                    <option value="">Sélectionner une ville</option>
+                    <option value="Douala" {% if form.city.value == 'Douala' %}selected{% endif %}>Douala</option>
+                    <option value="Yaoundé" {% if form.city.value == 'Yaoundé' %}selected{% endif %}>Yaoundé</option>
+                    <option value="Bamenda" {% if form.city.value == 'Bamenda' %}selected{% endif %}>Bamenda</option>
+                    <option value="Bafoussam" {% if form.city.value == 'Bafoussam' %}selected{% endif %}>Bafoussam</option>
+                    <option value="Garoua" {% if form.city.value == 'Garoua' %}selected{% endif %}>Garoua</option>
+                    <option value="Maroua" {% if form.city.value == 'Maroua' %}selected{% endif %}>Maroua</option>
+                    <option value="Kribi" {% if form.city.value == 'Kribi' %}selected{% endif %}>Kribi</option>
+                    <option value="Kribi" {% if form.city.value == 'Kribi' %}selected{% endif %}>Kribi</option>
+                    <option value="Buea" {% if form.city.value == 'Buea' %}selected{% endif %}>Buea</option>
+                    <option value="Bertoua" {% if form.city.value == 'Bertoua' %}selected{% endif %}>Bertoua</option>
+                    <option value="Ebolowa" {% if form.city.value == 'Ebolowa' %}selected{% endif %}>Ebolowa</option>
+                    <option value="Ngaoundéré" {% if form.city.value == 'Ngaoundéré' %}selected{% endif %}>Ngaoundéré</option>
+                    <option value="Kumba" {% if form.city.value == 'Kumba' %}selected{% endif %}>Kumba</option>
+                    <option value="Limbé" {% if form.city.value == 'Limbé' %}selected{% endif %}>Limbé</option>
+                    <option value="Edea" {% if form.city.value == 'Edea' %}selected{% endif %}>Edea</option>
+                    <option value="Kousséri" {% if form.city.value == 'Kousséri' %}selected{% endif %}>Kousséri</option>
+                    <option value="Mbalmayo" {% if form.city.value == 'Mbalmayo' %}selected{% endif %}>Mbalmayo</option>
+                    <option value="Bafang" {% if form.city.value == 'Bafang' %}selected{% endif %}>Bafang</option>
+                    <option value="Foumban" {% if form.city.value == 'Foumban' %}selected{% endif %}>Foumban</option>
+                    <option value="Kribi" {% if form.city.value == 'Kribi' %}selected{% endif %}>Kribi</option>
+                    <option value="Autre" {% if form.city.value == 'Autre' %}selected{% endif %}>Autre</option>
+                </select>
+                {% if form.city.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.city.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Phone Field -->
+            <div>
+                <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Téléphone *
+                </label>
+                <input type="tel" 
+                       name="{{ form.phone.name }}" 
+                       id="{{ form.phone.id_for_label }}"
+                       value="{{ form.phone.value|default:'' }}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.phone.errors %}border-red-500{% endif %}"
+                       placeholder="Ex: +237 6XX XXX XXX"
+                       required>
+                {% if form.phone.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.phone.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Email Field -->
+            <div>
+                <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                </label>
+                <input type="email" 
+                       name="{{ form.email.name }}" 
+                       id="{{ form.email.id_for_label }}"
+                       value="{{ form.email.value|default:'' }}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.email.errors %}border-red-500{% endif %}"
+                       placeholder="Ex: contact@point-retrait.com">
+                {% if form.email.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Status Field -->
+            <div class="flex items-center">
+                <input type="checkbox" 
+                       name="{{ form.is_active.name }}" 
+                       id="{{ form.is_active.id_for_label }}"
+                       {% if form.is_active.value %}checked{% endif %}
+                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                <label for="{{ form.is_active.id_for_label }}" class="ml-2 block text-sm text-gray-900">
+                    Point de retrait actif
+                </label>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                <a href="{% url 'admin_panel:pickup_points' %}" 
+                   class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                    Annuler
+                </a>
+                <button type="submit" 
+                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                    <i data-lucide="save" class="w-4 h-4 mr-2"></i>
+                    Créer le point de retrait
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Information Card -->
+    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <div class="flex items-start">
+            <i data-lucide="info" class="w-5 h-5 text-blue-600 mt-0.5 mr-3"></i>
+            <div>
+                <h3 class="text-lg font-medium text-blue-900 mb-2">Informations importantes</h3>
+                <ul class="text-sm text-blue-800 space-y-1">
+                    <li>• Le point de retrait sera visible pour les clients lors de la commande</li>
+                    <li>• Assurez-vous que les informations de contact sont correctes</li>
+                    <li>• L'adresse doit être précise pour faciliter la localisation</li>
+                    <li>• Seuls les points de retrait actifs seront proposés aux clients</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const nameField = document.getElementById('{{ form.name.id_for_label }}');
+    const addressField = document.getElementById('{{ form.address.id_for_label }}');
+    const cityField = document.getElementById('{{ form.city.id_for_label }}');
+    const phoneField = document.getElementById('{{ form.phone.id_for_label }}');
+    
+    const name = nameField.value.trim();
+    const address = addressField.value.trim();
+    const city = cityField.value;
+    const phone = phoneField.value.trim();
+    
+    if (!name) {
+        e.preventDefault();
+        alert('Le nom du point de retrait est obligatoire');
+        nameField.focus();
+        return false;
+    }
+    
+    if (!address) {
+        e.preventDefault();
+        alert('L\'adresse est obligatoire');
+        addressField.focus();
+        return false;
+    }
+    
+    if (!city) {
+        e.preventDefault();
+        alert('La ville est obligatoire');
+        cityField.focus();
+        return false;
+    }
+    
+    if (!phone) {
+        e.preventDefault();
+        alert('Le téléphone est obligatoire');
+        phoneField.focus();
+        return false;
+    }
+    
+    // Basic phone validation for Cameroon
+    const phoneRegex = /^(\+237|237)?[6-9][0-9]{8}$/;
+    if (!phoneRegex.test(phone.replace(/\s/g, ''))) {
+        e.preventDefault();
+        alert('Veuillez entrer un numéro de téléphone camerounais valide');
+        phoneField.focus();
+        return false;
+    }
+});
+
+// Auto-format phone number
+document.getElementById('{{ form.phone.id_for_label }}').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    
+    if (value.startsWith('237')) {
+        value = value.substring(3);
+    }
+    
+    if (value.length > 0 && !value.startsWith('6') && !value.startsWith('7') && !value.startsWith('8') && !value.startsWith('9')) {
+        value = '6' + value;
+    }
+    
+    if (value.length > 0) {
+        value = '+237 ' + value;
+    }
+    
+    e.target.value = value;
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,174 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Supprimer Catégorie - Admin{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Supprimer Catégorie</h1>
+            <p class="text-gray-600">Confirmer la suppression de la catégorie</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <a href="{% url 'admin_panel:categories' %}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Retour à la liste
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation -->
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="alert-triangle" class="w-8 h-8 text-red-600"></i>
+            </div>
+            <h2 class="text-xl font-medium text-gray-900 mb-2">Êtes-vous sûr ?</h2>
+            <p class="text-gray-600">Cette action ne peut pas être annulée.</p>
+        </div>
+
+        <!-- Category Information -->
+        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+            <h3 class="font-medium text-gray-900 mb-3">Informations de la catégorie</h3>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Nom:</span>
+                    <span class="font-medium">{{ category.name }}</span>
+                </div>
+                {% if category.description %}
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Description:</span>
+                    <span class="font-medium">{{ category.description }}</span>
+                </div>
+                {% endif %}
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Statut:</span>
+                    <span class="px-2 py-1 text-xs font-medium rounded-full {% if category.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                        {% if category.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Produits:</span>
+                    <span class="font-medium">{{ category.product_set.count }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warning -->
+        {% if category.product_set.count > 0 %}
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <div class="flex">
+                <i data-lucide="alert-circle" class="w-5 h-5 text-yellow-600 mt-0.5 mr-3"></i>
+                <div>
+                    <h3 class="text-sm font-medium text-yellow-800">Attention</h3>
+                    <p class="text-sm text-yellow-700 mt-1">
+                        Cette catégorie contient {{ category.product_set.count }} produit(s). 
+                        La suppression de la catégorie affectera ces produits.
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Action Options -->
+        <div class="space-y-4">
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                
+                {% if category.product_set.count > 0 %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Que faire des produits de cette catégorie ?
+                    </label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="radio" name="product_action" value="delete" class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300">
+                            <span class="ml-2 text-sm text-gray-900">Supprimer tous les produits</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="product_action" value="move" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                            <span class="ml-2 text-sm text-gray-900">Déplacer vers une autre catégorie</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="move-options" class="hidden">
+                    <label for="new_category" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nouvelle catégorie
+                    </label>
+                    <select name="new_category" id="new_category" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Sélectionner une catégorie</option>
+                        {% for cat in other_categories %}
+                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <!-- Confirmation Checkbox -->
+                <div class="flex items-center">
+                    <input type="checkbox" id="confirm_delete" required class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                    <label for="confirm_delete" class="ml-2 block text-sm text-gray-900">
+                        Je confirme que je veux supprimer cette catégorie
+                    </label>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                    <a href="{% url 'admin_panel:categories' %}" 
+                       class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                        Annuler
+                    </a>
+                    <button type="submit" 
+                            class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center"
+                            disabled>
+                        <i data-lucide="trash-2" class="w-4 h-4 mr-2"></i>
+                        Supprimer la catégorie
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Handle product action radio buttons
+document.querySelectorAll('input[name="product_action"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const moveOptions = document.getElementById('move-options');
+        if (this.value === 'move') {
+            moveOptions.classList.remove('hidden');
+        } else {
+            moveOptions.classList.add('hidden');
+        }
+    });
+});
+
+// Handle confirmation checkbox
+document.getElementById('confirm_delete').addEventListener('change', function() {
+    const submitButton = document.querySelector('button[type="submit"]');
+    submitButton.disabled = !this.checked;
+});
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const productAction = document.querySelector('input[name="product_action"]:checked');
+    const newCategory = document.getElementById('new_category');
+    
+    if (productAction && productAction.value === 'move' && !newCategory.value) {
+        e.preventDefault();
+        alert('Veuillez sélectionner une nouvelle catégorie pour déplacer les produits.');
+        return false;
+    }
+    
+    if (!confirm('Êtes-vous absolument sûr de vouloir supprimer cette catégorie ? Cette action est irréversible.')) {
+        e.preventDefault();
+        return false;
+    }
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,315 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Modifier Point de Retrait - Admin{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Modifier Point de Retrait</h1>
+            <p class="text-gray-600">Modifier les informations du point de retrait</p>
+        </div>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <a href="{% url 'admin_panel:pickup_points' %}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Retour à la liste
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Form -->
+<div class="max-w-4xl mx-auto">
+    <form method="post" class="space-y-8">
+        {% csrf_token %}
+        
+        <!-- Basic Information -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-6">Informations de Base</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Name Field -->
+                <div class="md:col-span-2">
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nom du point de retrait *
+                    </label>
+                    <input type="text" 
+                           name="{{ form.name.name }}" 
+                           id="{{ form.name.id_for_label }}"
+                           value="{{ form.name.value|default:pickup_point.name }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.name.errors %}border-red-500{% endif %}"
+                           placeholder="Ex: Centre Commercial Central, Station Service Total..."
+                           required>
+                    {% if form.name.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Address Field -->
+                <div class="md:col-span-2">
+                    <label for="{{ form.address.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Adresse complète *
+                    </label>
+                    <textarea name="{{ form.address.name }}" 
+                              id="{{ form.address.id_for_label }}"
+                              rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.address.errors %}border-red-500{% endif %}"
+                              placeholder="Adresse complète du point de retrait..."
+                              required>{{ form.address.value|default:pickup_point.address }}</textarea>
+                    {% if form.address.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.address.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- City Field -->
+                <div>
+                    <label for="{{ form.city.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Ville *
+                    </label>
+                    <select name="{{ form.city.name }}" 
+                            id="{{ form.city.id_for_label }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.city.errors %}border-red-500{% endif %}"
+                            required>
+                        <option value="">Sélectionner une ville</option>
+                        <option value="Douala" {% if form.city.value == 'Douala' or pickup_point.city == 'Douala' %}selected{% endif %}>Douala</option>
+                        <option value="Yaoundé" {% if form.city.value == 'Yaoundé' or pickup_point.city == 'Yaoundé' %}selected{% endif %}>Yaoundé</option>
+                        <option value="Bamenda" {% if form.city.value == 'Bamenda' or pickup_point.city == 'Bamenda' %}selected{% endif %}>Bamenda</option>
+                        <option value="Bafoussam" {% if form.city.value == 'Bafoussam' or pickup_point.city == 'Bafoussam' %}selected{% endif %}>Bafoussam</option>
+                        <option value="Garoua" {% if form.city.value == 'Garoua' or pickup_point.city == 'Garoua' %}selected{% endif %}>Garoua</option>
+                        <option value="Maroua" {% if form.city.value == 'Maroua' or pickup_point.city == 'Maroua' %}selected{% endif %}>Maroua</option>
+                        <option value="Kribi" {% if form.city.value == 'Kribi' or pickup_point.city == 'Kribi' %}selected{% endif %}>Kribi</option>
+                        <option value="Buea" {% if form.city.value == 'Buea' or pickup_point.city == 'Buea' %}selected{% endif %}>Buea</option>
+                        <option value="Bertoua" {% if form.city.value == 'Bertoua' or pickup_point.city == 'Bertoua' %}selected{% endif %}>Bertoua</option>
+                        <option value="Ebolowa" {% if form.city.value == 'Ebolowa' or pickup_point.city == 'Ebolowa' %}selected{% endif %}>Ebolowa</option>
+                        <option value="Ngaoundéré" {% if form.city.value == 'Ngaoundéré' or pickup_point.city == 'Ngaoundéré' %}selected{% endif %}>Ngaoundéré</option>
+                        <option value="Kumba" {% if form.city.value == 'Kumba' or pickup_point.city == 'Kumba' %}selected{% endif %}>Kumba</option>
+                        <option value="Limbé" {% if form.city.value == 'Limbé' or pickup_point.city == 'Limbé' %}selected{% endif %}>Limbé</option>
+                        <option value="Edea" {% if form.city.value == 'Edea' or pickup_point.city == 'Edea' %}selected{% endif %}>Edea</option>
+                        <option value="Kousséri" {% if form.city.value == 'Kousséri' or pickup_point.city == 'Kousséri' %}selected{% endif %}>Kousséri</option>
+                        <option value="Mbalmayo" {% if form.city.value == 'Mbalmayo' or pickup_point.city == 'Mbalmayo' %}selected{% endif %}>Mbalmayo</option>
+                        <option value="Bafang" {% if form.city.value == 'Bafang' or pickup_point.city == 'Bafang' %}selected{% endif %}>Bafang</option>
+                        <option value="Foumban" {% if form.city.value == 'Foumban' or pickup_point.city == 'Foumban' %}selected{% endif %}>Foumban</option>
+                        <option value="Autre" {% if form.city.value == 'Autre' or pickup_point.city == 'Autre' %}selected{% endif %}>Autre</option>
+                    </select>
+                    {% if form.city.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.city.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Phone Field -->
+                <div>
+                    <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Téléphone *
+                    </label>
+                    <input type="tel" 
+                           name="{{ form.phone.name }}" 
+                           id="{{ form.phone.id_for_label }}"
+                           value="{{ form.phone.value|default:pickup_point.phone }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.phone.errors %}border-red-500{% endif %}"
+                           placeholder="Ex: +237 6XX XXX XXX"
+                           required>
+                    {% if form.phone.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.phone.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Email Field -->
+                <div>
+                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Email
+                    </label>
+                    <input type="email" 
+                           name="{{ form.email.name }}" 
+                           id="{{ form.email.id_for_label }}"
+                           value="{{ form.email.value|default:pickup_point.email }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.email.errors %}border-red-500{% endif %}"
+                           placeholder="Ex: contact@point-retrait.com">
+                    {% if form.email.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Status Field -->
+                <div class="flex items-center">
+                    <input type="checkbox" 
+                           name="{{ form.is_active.name }}" 
+                           id="{{ form.is_active.id_for_label }}"
+                           {% if form.is_active.value or pickup_point.is_active %}checked{% endif %}
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <label for="{{ form.is_active.id_for_label }}" class="ml-2 block text-sm text-gray-900">
+                        Point de retrait actif
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Operating Hours -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-6">Heures d'Ouverture</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="opening_hours" class="block text-sm font-medium text-gray-700 mb-2">Heures d'ouverture</label>
+                    <input type="text" 
+                           name="opening_hours" 
+                           id="opening_hours"
+                           value="{{ pickup_point.opening_hours|default:'Lundi - Vendredi: 8h00 - 18h00' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Ex: Lundi - Vendredi: 8h00 - 18h00">
+                </div>
+                <div>
+                    <label for="special_hours" class="block text-sm font-medium text-gray-700 mb-2">Heures spéciales</label>
+                    <input type="text" 
+                           name="special_hours" 
+                           id="special_hours"
+                           value="{{ pickup_point.special_hours|default:'Samedi: 9h00 - 16h00' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Ex: Samedi: 9h00 - 16h00">
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-6">Informations Supplémentaires</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="capacity" class="block text-sm font-medium text-gray-700 mb-2">Capacité de stockage</label>
+                    <input type="number" 
+                           name="capacity" 
+                           id="capacity"
+                           value="{{ pickup_point.capacity|default:100 }}"
+                           min="1"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Nombre de colis maximum">
+                </div>
+                <div>
+                    <label for="processing_time" class="block text-sm font-medium text-gray-700 mb-2">Temps de traitement (heures)</label>
+                    <input type="number" 
+                           name="processing_time" 
+                           id="processing_time"
+                           value="{{ pickup_point.processing_time|default:24 }}"
+                           min="1"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Heures nécessaires pour traiter">
+                </div>
+                <div class="md:col-span-2">
+                    <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                    <textarea name="notes" 
+                              id="notes"
+                              rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Notes supplémentaires sur ce point de retrait...">{{ pickup_point.notes|default:'' }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-6">Statistiques d'Utilisation</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                    <p class="text-2xl font-bold text-blue-600">{{ pickup_point.total_orders|default:0 }}</p>
+                    <p class="text-sm text-gray-600">Commandes totales</p>
+                </div>
+                <div class="text-center p-4 bg-green-50 rounded-lg">
+                    <p class="text-2xl font-bold text-green-600">{{ pickup_point.completed_orders|default:0 }}</p>
+                    <p class="text-sm text-gray-600">Commandes terminées</p>
+                </div>
+                <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                    <p class="text-2xl font-bold text-yellow-600">{{ pickup_point.pending_orders|default:0 }}</p>
+                    <p class="text-sm text-gray-600">En attente</p>
+                </div>
+                <div class="text-center p-4 bg-purple-50 rounded-lg">
+                    <p class="text-2xl font-bold text-purple-600">{{ pickup_point.avg_processing_time|default:0 }}h</p>
+                    <p class="text-sm text-gray-600">Temps moyen</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex justify-end space-x-3 pt-6">
+            <a href="{% url 'admin_panel:pickup_points' %}" 
+               class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                Annuler
+            </a>
+            <button type="submit" 
+                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                <i data-lucide="save" class="w-4 h-4 mr-2"></i>
+                Enregistrer les modifications
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+// Auto-format phone number
+document.getElementById('{{ form.phone.id_for_label }}').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    
+    if (value.startsWith('237')) {
+        value = value.substring(3);
+    }
+    
+    if (value.length > 0 && !value.startsWith('6') && !value.startsWith('7') && !value.startsWith('8') && !value.startsWith('9')) {
+        value = '6' + value;
+    }
+    
+    if (value.length > 0) {
+        value = '+237 ' + value;
+    }
+    
+    e.target.value = value;
+});
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const nameField = document.getElementById('{{ form.name.id_for_label }}');
+    const addressField = document.getElementById('{{ form.address.id_for_label }}');
+    const cityField = document.getElementById('{{ form.city.id_for_label }}');
+    const phoneField = document.getElementById('{{ form.phone.id_for_label }}');
+    
+    const name = nameField.value.trim();
+    const address = addressField.value.trim();
+    const city = cityField.value;
+    const phone = phoneField.value.trim();
+    
+    if (!name) {
+        e.preventDefault();
+        alert('Le nom du point de retrait est obligatoire');
+        nameField.focus();
+        return false;
+    }
+    
+    if (!address) {
+        e.preventDefault();
+        alert('L\'adresse est obligatoire');
+        addressField.focus();
+        return false;
+    }
+    
+    if (!city) {
+        e.preventDefault();
+        alert('La ville est obligatoire');
+        cityField.focus();
+        return false;
+    }
+    
+    if (!phone) {
+        e.preventDefault();
+        alert('Le téléphone est obligatoire');
+        phoneField.focus();
+        return false;
+    }
+    
+    // Basic phone validation for Cameroon
+    const phoneRegex = /^(\+237|237)?[6-9][0-9]{8}$/;
+    if (!phoneRegex.test(phone.replace(/\s/g, ''))) {
+        e.preventDefault();
+        alert('Veuillez entrer un numéro de téléphone camerounais valide');
+        phoneField.focus();
+        return false;
+    }
+});
+</script>
+{% endblock %} 

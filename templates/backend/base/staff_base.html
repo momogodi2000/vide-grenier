@@ -16,135 +16,700 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
-    <!-- Custom Styles -->
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        code, pre { font-family: 'JetBrains Mono', monospace; }
-        .staff-card { @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow; }
-        .task-item { @apply flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors; }
-        .priority-high { @apply border-l-4 border-red-500 bg-red-50; }
-        .priority-medium { @apply border-l-4 border-yellow-500 bg-yellow-50; }
-        .priority-low { @apply border-l-4 border-green-500 bg-green-50; }
-        .status-badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium; }
-        .status-pending { @apply bg-yellow-100 text-yellow-800; }
-        .status-processing { @apply bg-blue-100 text-blue-800; }
-        .status-completed { @apply bg-green-100 text-green-800; }
-        .sidebar-link { @apply flex items-center text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg px-4 py-2 my-1 transition-all duration-300; }
-        .sidebar-link.active { @apply text-blue-700 bg-blue-50 font-medium; }
-        .sidebar-icon { @apply w-5 h-5 mr-3; }
-    </style>
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif'],
+                        'mono': ['JetBrains Mono', 'Monaco', 'monospace'],
+                    },
+                    colors: {
+                        'cameroon': {
+                            'green': '#00823A',
+                            'red': '#D32F2F',
+                            'yellow': '#FFD23F',
+                        },
+                        'vgk': {
+                            'primary': '#16a34a',
+                            'secondary': '#dc2626',
+                            'accent': '#f59e0b',
+                            'dark': '#1f2937',
+                        },
+                        'staff': {
+                            'primary': '#8b5cf6',
+                            'secondary': '#f59e0b',
+                            'accent': '#06b6d4',
+                        }
+                    },
+                    backdropBlur: {
+                        'xs': '2px',
+                    },
+                    animation: {
+                        'slide-in': 'slideIn 0.3s ease-out',
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'bounce-in': 'bounceIn 0.6s ease-out',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                    }
+                }
+            }
+        }
+    </script>
     
-    {% block additional_head %}{% endblock %}
+    <style>
+        /* Enhanced Base Styles */
+        * {
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        
+        /* Modern Card Styles */
+        .stats-card { 
+            @apply bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 backdrop-blur-sm; 
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
+        }
+        
+        .dark .stats-card {
+            background: linear-gradient(135deg, rgba(31,41,55,0.9) 0%, rgba(31,41,55,0.7) 100%);
+        }
+        
+        /* Staff-themed Metric Cards */
+        .metric-card { 
+            @apply bg-gradient-to-br text-white rounded-2xl p-6 relative overflow-hidden transform hover:scale-110 transition-all duration-500 shadow-2xl backdrop-blur-md border border-white/20; 
+            background: linear-gradient(135deg, rgba(139,92,246,0.8) 0%, rgba(245,158,11,0.9) 100%);
+        }
+        
+        .metric-card::before { 
+            content: ''; 
+            @apply absolute -top-10 -right-10 w-32 h-32 bg-white bg-opacity-10 rounded-full transform rotate-45 blur-xl; 
+        }
+        
+        .metric-card::after {
+            content: '';
+            @apply absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent;
+        }
+        
+        /* Enhanced Sidebar with Staff Theme */
+        .sidebar-link { 
+            @apply flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gradient-to-r hover:from-purple-50 hover:to-orange-50 dark:hover:from-gray-700 dark:hover:to-gray-600 hover:text-purple-700 dark:hover:text-purple-400 transition-all duration-300 group relative overflow-hidden; 
+        }
+        
+        .sidebar-link::before {
+            content: '';
+            @apply absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-purple-500 to-orange-500 transform scale-y-0 transition-transform duration-300 origin-center;
+        }
+        
+        .sidebar-link:hover::before {
+            @apply scale-y-100;
+        }
+        
+        .sidebar-link.active { 
+            @apply bg-gradient-to-r from-purple-100 to-orange-100 dark:from-purple-900/50 dark:to-orange-900/50 text-purple-700 dark:text-purple-400 font-semibold shadow-lg border-l-4 border-purple-500; 
+        }
+        
+        /* Modern Navigation */
+        .navbar-glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .dark .navbar-glass {
+            background: rgba(17, 24, 39, 0.95);
+            border-bottom: 1px solid rgba(75, 85, 99, 0.2);
+        }
+        
+        /* Enhanced Notifications */
+        .notification-badge { 
+            @apply absolute -top-2 -right-2 h-6 w-6 rounded-full bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs flex items-center justify-center animate-pulse shadow-lg font-semibold; 
+        }
+
+        /* Mobile Sidebar */
+        .mobile-sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+        }
+        
+        .dark .mobile-sidebar {
+            background: rgba(17, 24, 39, 0.95);
+        }
+        
+        .mobile-sidebar.open {
+            transform: translateX(0);
+        }
+
+        /* Enhanced Dropdown */
+        .dropdown {
+            @apply absolute right-0 mt-3 w-80 bg-white/95 dark:bg-gray-800/95 rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 z-50 transform opacity-0 scale-95 transition-all duration-300 backdrop-blur-xl border border-white/20 dark:border-gray-700/50;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .dropdown.show {
+            @apply opacity-100 scale-100;
+        }
+
+        /* Custom Scrollbars */
+        .dropdown::-webkit-scrollbar,
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .dropdown::-webkit-scrollbar-track,
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(241, 245, 249, 0.5);
+            border-radius: 3px;
+        }
+
+        .dropdown::-webkit-scrollbar-thumb,
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #8b5cf6, #f59e0b);
+            border-radius: 3px;
+        }
+
+        /* Enhanced User Avatar */
+        .user-avatar {
+            @apply w-10 h-10 bg-gradient-to-br from-purple-500 via-purple-600 to-orange-700 rounded-xl flex items-center justify-center text-white font-bold shadow-lg transform hover:scale-110 transition-all duration-300;
+        }
+
+        /* Profile Dropdown Items */
+        .profile-dropdown-item {
+            @apply flex items-center px-5 py-4 text-sm text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-700 dark:hover:to-gray-600 transition-all duration-200 cursor-pointer relative overflow-hidden;
+        }
+
+        .profile-dropdown-item::before {
+            content: '';
+            @apply absolute left-0 top-0 w-0 h-full bg-gradient-to-r from-purple-500 to-orange-500 transition-all duration-300;
+        }
+
+        .profile-dropdown-item:hover::before {
+            @apply w-1;
+        }
+
+        /* Enhanced Icons */
+        .sidebar-icon {
+            @apply w-5 h-5 mr-3 text-gray-500 dark:text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-all duration-300 transform group-hover:scale-110;
+        }
+
+        .sidebar-link.active .sidebar-icon {
+            @apply text-purple-600 dark:text-purple-400;
+        }
+
+        /* Staff Theme Toggle Button */
+        .theme-toggle {
+            @apply relative w-14 h-8 bg-gray-300 dark:bg-gray-600 rounded-full transition-colors duration-300 cursor-pointer;
+        }
+
+        .theme-toggle::before {
+            content: '';
+            @apply absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 transform;
+        }
+
+        .dark .theme-toggle::before {
+            @apply translate-x-6 bg-yellow-400;
+        }
+
+        /* Enhanced Animations */
+        @keyframes slideIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(-20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(-10px) scale(0.95); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+
+        @keyframes bounceIn {
+            0% { 
+                opacity: 0; 
+                transform: scale(0.3) translateY(-50px); 
+            }
+            50% { 
+                opacity: 1; 
+                transform: scale(1.05) translateY(-10px); 
+            }
+            70% { 
+                transform: scale(0.9) translateY(0); 
+            }
+            100% { 
+                opacity: 1; 
+                transform: scale(1) translateY(0); 
+            }
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+            }
+            to {
+                box-shadow: 0 0 30px rgba(139, 92, 246, 0.8);
+            }
+        }
+
+        .glow-effect {
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        /* Loading States */
+        .loading-shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        .dark .loading-shimmer {
+            background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+            background-size: 200% 100%;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        {% block extra_css %}{% endblock %}
+    </style>
 </head>
-<body class="h-full">
+<body class="h-full bg-gray-50 dark:bg-gray-900 transition-colors duration-300" x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }" x-init="$watch('darkMode', val => { localStorage.setItem('darkMode', val); val ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark') })" :class="{ 'dark': darkMode }">
     <div class="min-h-full">
-        <!-- Navigation Header -->
-        <nav class="bg-white shadow-sm border-b border-gray-200">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Mobile menu overlay -->
+        <div id="mobile-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden lg:hidden transition-opacity duration-300"></div>
+
+        <!-- Enhanced Navigation Header -->
+        <nav class="navbar-glass shadow-xl border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-30">
+            <div class="mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
                     <div class="flex items-center">
-                        <img class="h-8 w-auto" src="https://via.placeholder.com/120x40/22c55e/ffffff?text=VGK" alt="VGK">
-                        <span class="ml-3 text-xl font-bold text-gray-900">Staff Panel</span>
-                        <span class="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                            {% if request.user.pickup_point %}{{ request.user.pickup_point.name }}{% else %}Point Retrait{% endif %}
-                        </span>
+                        <!-- Mobile menu button -->
+                        <button id="mobile-menu-btn" class="p-3 rounded-xl text-gray-400 hover:text-gray-500 hover:bg-gray-100/80 dark:hover:bg-gray-700/80 lg:hidden transition-all duration-200 transform hover:scale-110">
+                            <i data-lucide="menu" class="w-6 h-6"></i>
+                        </button>
+                        
+                        <div class="flex-shrink-0 flex items-center ml-2 lg:ml-0">
+                            <div class="h-12 w-auto bg-gradient-to-br from-purple-600 via-purple-700 to-orange-800 text-white px-5 py-2 rounded-xl font-bold shadow-lg transform hover:scale-105 transition-all duration-300 glow-effect">
+                                <div class="flex items-center space-x-1">
+                                    <i data-lucide="store" class="w-5 h-5"></i>
+                                    <span>VGK</span>
+                                </div>
+                            </div>
+                            <span class="ml-4 text-xl font-bold text-gray-900 dark:text-white hidden sm:block">Espace Staff</span>
+                        </div>
                     </div>
                     
-                    <div class="flex items-center space-x-4">
-                        <!-- Quick Actions -->
-                        <button class="p-2 text-gray-400 hover:text-green-600 transition-colors" title="Scanner QR Code">
+                    <div class="flex items-center space-x-3">
+                        <!-- Enhanced Time & Date -->
+                        <div class="text-sm text-gray-600 dark:text-gray-300 hidden md:block bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-4 py-2 rounded-xl shadow-md border border-gray-200/50 dark:border-gray-700/50">
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="clock" class="w-4 h-4 text-purple-500"></i>
+                                <div id="current-time" class="font-medium"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Theme Toggle -->
+                        <button @click="darkMode = !darkMode" class="p-3 rounded-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-700 transition-all duration-300 shadow-md border border-gray-200/50 dark:border-gray-700/50 transform hover:scale-110">
+                            <i data-lucide="sun" class="w-5 h-5 text-yellow-500 dark:hidden"></i>
+                            <i data-lucide="moon" class="w-5 h-5 text-purple-400 hidden dark:block"></i>
+                        </button>
+                        
+                        <!-- Enhanced Notifications -->
+                        <button class="p-3 text-gray-400 hover:text-gray-500 hover:bg-white/80 dark:hover:bg-gray-700/80 rounded-xl relative transition-all duration-300 transform hover:scale-110 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
+                            <i data-lucide="bell-ring" class="w-6 h-6"></i>
+                            {% if unread_notifications_count > 0 %}
+                            <span class="notification-badge">{{ unread_notifications_count }}</span>
+                            {% endif %}
+                        </button>
+                        
+                        <!-- Enhanced Messages -->
+                        <a href="{% url 'backend:chat_list' %}" class="p-3 text-gray-400 hover:text-gray-500 hover:bg-white/80 dark:hover:bg-gray-700/80 rounded-xl relative transition-all duration-300 transform hover:scale-110 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
+                            <i data-lucide="message-square-heart" class="w-6 h-6"></i>
+                            {% if unread_messages_count > 0 %}
+                            <span class="notification-badge">{{ unread_messages_count }}</span>
+                            {% endif %}
+                        </a>
+                        
+                        <!-- QR Scanner Quick Access -->
+                        <button class="p-3 text-gray-400 hover:text-gray-500 hover:bg-white/80 dark:hover:bg-gray-700/80 rounded-xl relative transition-all duration-300 transform hover:scale-110 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
                             <i data-lucide="qr-code" class="w-6 h-6"></i>
                         </button>
                         
-                        <button class="p-2 text-gray-400 hover:text-blue-600 transition-colors relative" title="Notifications">
-                            <i data-lucide="bell" class="w-6 h-6"></i>
-                            <span class="absolute top-0 right-0 block h-3 w-3 rounded-full bg-red-400"></span>
-                        </button>
-                        
-                        <!-- Profile -->
-                        <div class="flex items-center space-x-3">
-                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                                {% if request.user.first_name %}{{ request.user.first_name|first|upper }}{% else %}{{ request.user.email|first|upper }}{% endif %}
-                            </div>
-                            <div class="hidden md:flex flex-col">
-                                <span class="text-sm font-medium text-gray-900">
-                                    {% if request.user.get_full_name %}{{ request.user.get_full_name }}{% else %}{{ request.user.email }}{% endif %}
-                                </span>
-                                <span class="text-xs text-gray-500">Staff</span>
-                            </div>
-                        </div>
+                    <!-- Profile Dropdown Section -->
+<div class="relative ml-3" x-data="{ open: false }">
+    <button @click="open = !open" class="flex items-center space-x-2 p-2 rounded-xl hover:bg-white/80 dark:hover:bg-gray-700/80 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500/50">
+        <div class="user-avatar">
+            {{ user.first_name.0|upper|default:"S" }}
+        </div>
+        <div class="text-left hidden md:block">
+            <div class="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[120px]">{{ user.get_full_name|default:"Staff VGK" }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px]">{{ user.email|default:"staff@videgrenierkamer.com" }}</div>
+        </div>
+        <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500 dark:text-gray-400 hidden md:block transition-transform duration-200" :class="{ 'transform rotate-180': open }"></i>
+    </button>
+
+    <!-- Dropdown Menu -->
+    <div x-show="open" 
+         @click.away="open = false"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="dropdown origin-top-right right-0 mt-2"
+         style="display: none;">
+        
+        <!-- User Info -->
+        <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center space-x-3">
+                <div class="user-avatar">
+                    {{ user.first_name.0|upper|default:"S" }}
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ user.get_full_name|default:"Staff VGK" }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ user.email|default:"staff@videgrenierkamer.com" }}</p>
+                    <div class="flex items-center mt-2">
+                        <span class="h-2 w-2 rounded-full bg-purple-500 mr-2"></span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">En service</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Button -->
+        <a href="{% url 'staff:profile' %}" class="profile-dropdown-item group">
+            <i data-lucide="user" class="w-5 h-5 mr-3 text-gray-500 dark:text-gray-400 group-hover:text-purple-500"></i>
+            <span>Mon Profil</span>
+            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+        </a>
+
+        <!-- Point de Retrait Info -->
+        <div class="profile-dropdown-item">
+            <i data-lucide="map-pin" class="w-5 h-5 mr-3 text-gray-500 dark:text-gray-400"></i>
+            <span>{% if user.pickup_point %}{{ user.pickup_point.name }}{% else %}Point de Retrait{% endif %}</span>
+        </div>
+
+        <!-- Divider -->
+        <div class="border-t border-gray-200 dark:border-gray-700"></div>
+
+        <!-- Logout Button -->
+        <a href="{% url 'backend:logout' %}" class="profile-dropdown-item group text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
+            <i data-lucide="log-out" class="w-5 h-5 mr-3 text-red-500"></i>
+            <span>Déconnexion</span>
+            <i data-lucide="chevron-right" class="w-4 h-4 ml-auto text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+        </a>
+    </div>
+</div>
                     </div>
                 </div>
             </div>
         </nav>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <!-- Main Content Grid with Sidebar -->
-            <div class="flex flex-col md:flex-row">
-                <!-- Sidebar for Staff -->
-                <div class="w-full md:w-64 shrink-0 mb-8 md:mr-8">
-                    <div class="bg-white shadow-sm rounded-xl p-4 sticky top-4">
-                        <h3 class="font-medium text-lg text-gray-900 mb-4">Menu Staff</h3>
-                        <div class="space-y-1">
-                            <a href="{% url 'backend:staff_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'staff_dashboard' %}active{% endif %}">
+        <div class="flex">
+            <!-- Enhanced Mobile Sidebar -->
+            <div id="mobile-sidebar" class="fixed inset-y-0 left-0 z-50 w-72 mobile-sidebar lg:hidden shadow-2xl">
+                <div class="flex flex-col h-full pt-6 pb-4 overflow-y-auto custom-scrollbar">
+                    <div class="flex items-center justify-between px-6 mb-8">
+                        <div class="flex items-center">
+                            <div class="h-12 w-auto bg-gradient-to-br from-purple-600 via-purple-700 to-orange-800 text-white px-4 py-2 rounded-xl font-bold shadow-lg glow-effect">
+                                <div class="flex items-center space-x-1">
+                                    <i data-lucide="store" class="w-5 h-5"></i>
+                                    <span>VGK</span>
+                                </div>
+                            </div>
+                            <span class="ml-3 text-lg font-bold text-gray-900 dark:text-white">Staff</span>
+                        </div>
+                        <button id="mobile-close-btn" class="p-2 rounded-xl text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 transform hover:scale-110">
+                            <i data-lucide="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                    
+                <!-- Mobile Navigation Links -->
+                <nav class="flex-1 px-4 space-y-2" id="mobile-nav-links">
+                    <a href="{% url 'staff:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                        <i data-lucide="layout-dashboard" class="sidebar-icon"></i>
+                        <span>Tableau de bord</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <a href="{% url 'staff:qr_scanner' %}" class="sidebar-link {% if request.resolver_match.url_name == 'qr_scanner' %}active{% endif %}">
+                        <i data-lucide="qr-code" class="sidebar-icon"></i>
+                        <span>Scanner QR Code</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <a href="{% url 'staff:pickups' %}" class="sidebar-link {% if request.resolver_match.url_name == 'pickups' %}active{% endif %}">
+                        <i data-lucide="package" class="sidebar-icon"></i>
+                        <span>Retrait Colis</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <a href="{% url 'staff:search_order' %}" class="sidebar-link {% if request.resolver_match.url_name == 'search_order' %}active{% endif %}">
+                        <i data-lucide="search" class="sidebar-icon"></i>
+                        <span>Recherche Commande</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <a href="{% url 'staff:orders' %}" class="sidebar-link {% if request.resolver_match.url_name == 'orders' %}active{% endif %}">
+                        <i data-lucide="list-checks" class="sidebar-icon"></i>
+                        <span>Historique Retraits</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <a href="{% url 'staff:clients' %}" class="sidebar-link {% if request.resolver_match.url_name == 'clients' %}active{% endif %}">
+                        <i data-lucide="users" class="sidebar-icon"></i>
+                        <span>Gestion Clients</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <a href="{% url 'staff:chats' %}" class="sidebar-link {% if request.resolver_match.url_name == 'chats' %}active{% endif %}">
+                        <i data-lucide="message-circle" class="sidebar-icon"></i>
+                        <span>Messages</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <a href="{% url 'staff:reports' %}" class="sidebar-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+                        <i data-lucide="bar-chart-3" class="sidebar-icon"></i>
+                        <span>Statistiques</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                    <a href="{% url 'staff:profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                        <i data-lucide="user" class="sidebar-icon"></i>
+                        <span>Mon Profil</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                </nav>
+                </div>
+            </div>
+
+            <!-- Enhanced Desktop Sidebar -->
+                <div class="hidden lg:flex lg:w-72 lg:flex-col lg:fixed lg:inset-y-0 lg:top-16">
+                    <div class="flex flex-col flex-grow pt-6 pb-4 overflow-y-auto bg-white/95 dark:bg-gray-800/95 border-r border-gray-200/50 dark:border-gray-700/50 custom-scrollbar backdrop-blur-xl">
+                        <nav class="flex-1 px-4 space-y-2" id="desktop-nav-links">
+                            <a href="{% url 'staff:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                                 <i data-lucide="layout-dashboard" class="sidebar-icon"></i>
                                 <span>Tableau de bord</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                             </a>
-                            <a href="#" class="sidebar-link">
+                            <a href="{% url 'staff:qr_scanner' %}" class="sidebar-link {% if request.resolver_match.url_name == 'qr_scanner' %}active{% endif %}">
                                 <i data-lucide="qr-code" class="sidebar-icon"></i>
-                                <span>Scanner Code</span>
+                                <span>Scanner QR Code</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                             </a>
-                            <a href="#" class="sidebar-link">
+                            <a href="{% url 'staff:pickups' %}" class="sidebar-link {% if request.resolver_match.url_name == 'pickups' %}active{% endif %}">
                                 <i data-lucide="package" class="sidebar-icon"></i>
-                                <span>Retrait colis</span>
+                                <span>Retrait Colis</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                             </a>
-                            <a href="#" class="sidebar-link">
+                            <a href="{% url 'staff:search_order' %}" class="sidebar-link {% if request.resolver_match.url_name == 'search_order' %}active{% endif %}">
                                 <i data-lucide="search" class="sidebar-icon"></i>
-                                <span>Recherche commande</span>
+                                <span>Recherche Commande</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                             </a>
-                            <a href="#" class="sidebar-link">
+                            <a href="{% url 'staff:orders' %}" class="sidebar-link {% if request.resolver_match.url_name == 'orders' %}active{% endif %}">
                                 <i data-lucide="list-checks" class="sidebar-icon"></i>
-                                <span>Historique retraits</span>
+                                <span>Historique Retraits</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                             </a>
-                            <a href="{% url 'backend:profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                            <a href="{% url 'staff:clients' %}" class="sidebar-link {% if request.resolver_match.url_name == 'clients' %}active{% endif %}">
+                                <i data-lucide="users" class="sidebar-icon"></i>
+                                <span>Gestion Clients</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="{% url 'staff:chats' %}" class="sidebar-link {% if request.resolver_match.url_name == 'chats' %}active{% endif %}">
+                                <i data-lucide="message-circle" class="sidebar-icon"></i>
+                                <span>Messages</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="{% url 'staff:reports' %}" class="sidebar-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+                                <i data-lucide="bar-chart-3" class="sidebar-icon"></i>
+                                <span>Statistiques</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="{% url 'staff:profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
                                 <i data-lucide="user" class="sidebar-icon"></i>
-                                <span>Mon profil</span>
+                                <span>Mon Profil</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                             </a>
+                        </nav>
+                    </div>
+                </div>
+
+            <!-- Enhanced Main Content -->
+            <div class="flex-1 lg:ml-72">
+                <main class="flex-1 relative overflow-y-auto focus:outline-none">
+                    <div class="py-8">
+                        <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+                            {% block content %}
+                            <!-- Content will be inserted here by child templates -->
+                            {% endblock %}
                         </div>
                     </div>
-                </div>
-
-                <!-- Main Content Area -->
-                <div class="flex-1">
-                    {% block content %}{% endblock %}
-                </div>
+                </main>
             </div>
         </div>
-
-        <!-- Footer -->
-        <footer class="bg-white border-t border-gray-200 py-6 mt-12">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex flex-col md:flex-row justify-between items-center">
-                    <div class="mb-4 md:mb-0">
-                        <p class="text-sm text-gray-600">&copy; {% now "Y" %} Vidé-Grenier Kamer. Tous droits réservés.</p>
-                    </div>
-                    <div class="flex space-x-6">
-                        <a href="{% url 'backend:help' %}" class="text-sm text-gray-500 hover:text-blue-600">Aide</a>
-                        <a href="#" class="text-sm text-gray-500 hover:text-blue-600">Support</a>
-                        <a href="#" class="text-sm text-gray-500 hover:text-blue-600">Contact</a>
-                    </div>
-                </div>
-            </div>
-        </footer>
     </div>
 
-    <!-- Initialize icons -->
+    <!-- Enhanced JavaScript -->
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            lucide.createIcons();
-        });
-    </script>
+        // Enhanced Time Update with more details
+        function updateTime() {
+            const timeElement = document.getElementById('current-time');
+            if (!timeElement) return;
+            
+            const now = new Date();
+            const timeString = now.toLocaleString('fr-FR', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            timeElement.textContent = timeString;
+        }
 
-    {% block scripts %}{% endblock %}
+        // Enhanced Mobile Menu with better animations
+        function setupMobileMenu() {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileCloseBtn = document.getElementById('mobile-close-btn');
+            const mobileSidebar = document.getElementById('mobile-sidebar');
+            const mobileOverlay = document.getElementById('mobile-overlay');
+
+            function openMobileMenu() {
+                mobileSidebar.classList.add('open');
+                mobileOverlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                
+                // Add stagger animation to menu items
+                const menuItems = mobileSidebar.querySelectorAll('.sidebar-link');
+                menuItems.forEach((item, index) => {
+                    item.style.opacity = '0';
+                    item.style.transform = 'translateX(-20px)';
+                    setTimeout(() => {
+                        item.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                        item.style.opacity = '1';
+                        item.style.transform = 'translateX(0)';
+                    }, index * 50);
+                });
+            }
+
+            function closeMobileMenu() {
+                mobileSidebar.classList.remove('open');
+                mobileOverlay.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', openMobileMenu);
+            if (mobileCloseBtn) mobileCloseBtn.addEventListener('click', closeMobileMenu);
+            if (mobileOverlay) mobileOverlay.addEventListener('click', closeMobileMenu);
+
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 1024) {
+                    closeMobileMenu();
+                }
+            });
+        }
+
+        // Enhanced Sidebar Link Interactions
+        function enhanceSidebarLinks() {
+            const sidebarLinks = document.querySelectorAll('.sidebar-link');
+            
+            sidebarLinks.forEach(link => {
+                link.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateX(8px)';
+                });
+                
+                link.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateX(0)';
+                });
+                
+                link.addEventListener('click', function(e) {
+                    // Add ripple effect
+                    const ripple = document.createElement('span');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.position = 'absolute';
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = x + 'px';
+                    ripple.style.top = y + 'px';
+                    ripple.style.background = 'rgba(139, 92, 246, 0.3)';
+                    ripple.style.borderRadius = '50%';
+                    ripple.style.transform = 'scale(0)';
+                    ripple.style.animation = 'ripple 0.6s ease-out';
+                    ripple.style.pointerEvents = 'none';
+                    
+                    this.style.position = 'relative';
+                    this.style.overflow = 'hidden';
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+        }
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Alpine.js dark mode
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.documentElement.classList.add('dark');
+            }
+            
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+            
+            setupMobileMenu();
+            enhanceSidebarLinks();
+            
+            updateTime();
+            setInterval(updateTime, 1000); // Update every second
+            
+            console.log('🚀 Enhanced VGK Staff Panel initialized successfully');
+        });
+
+        // Enhanced keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Escape key functionality
+            if (e.key === 'Escape') {
+                const mobileSidebar = document.getElementById('mobile-sidebar');
+                const mobileOverlay = document.getElementById('mobile-overlay');
+                
+                if (mobileSidebar?.classList.contains('open')) {
+                    mobileSidebar.classList.remove('open');
+                    mobileOverlay.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+            }
+        });
+
+        // Add ripple animation styles
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        {% block extra_js %}{% endblock %}
+    </script>
 </body>
 </html> 

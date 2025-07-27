@@ -58,3 +58,26 @@ docs/_build/
 
 # PyCharm
 .idea/
+
+
+# Database
+db.sqlite3
+*.sqlite3
+
+# Node modules
+node_modules/
+package-lock.json
+
+# Temporary scripts
+*_fix.py
+*_diagnostic.py
+setup_*.py
+dev.py
+build.py
+analyze_*.py
+install_*.py
+
+# Documentation (optional)
+FIXES_*.md
+ENHANCED_*.md
+IMPLEMENTATION_*.md

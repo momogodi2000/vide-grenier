@@ -1,0 +1,342 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Mon Profil - Admin VGK{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in">
+    <!-- Profile Header -->
+    <div class="bg-gradient-to-r from-green-500 via-green-600 to-green-700 rounded-2xl p-8 mb-8 text-white relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-white bg-opacity-10 rounded-full transform translate-x-32 -translate-y-32 blur-3xl"></div>
+        <div class="relative z-10">
+            <div class="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
+                <div class="relative">
+                    {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" alt="Photo de profil" class="w-24 h-24 rounded-2xl border-4 border-white/30 shadow-lg">
+                    {% else %}
+                        <div class="w-24 h-24 bg-white/20 rounded-2xl border-4 border-white/30 flex items-center justify-center text-3xl font-bold backdrop-blur-sm">
+                            {{ user.first_name.0|upper|default:"A" }}
+                        </div>
+                    {% endif %}
+                    <div class="absolute -bottom-2 -right-2 w-6 h-6 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
+                </div>
+                
+                <div class="flex-1">
+                    <h1 class="text-3xl font-bold mb-2">{{ user.get_full_name|default:"Admin VGK" }}</h1>
+                    <p class="text-green-100 text-lg mb-1">{{ user.email }}</p>
+                    <p class="text-green-200 mb-3">{{ user.phone|default:"Téléphone non renseigné" }}</p>
+                    
+                    <div class="flex flex-wrap gap-3">
+                        <span class="px-3 py-1 bg-white/20 rounded-full text-sm font-medium backdrop-blur-sm">
+                            <i data-lucide="shield" class="w-4 h-4 inline mr-1"></i>
+                            Administrateur Principal
+                        </span>
+                        <span class="px-3 py-1 bg-white/20 rounded-full text-sm font-medium backdrop-blur-sm">
+                            <i data-lucide="map-pin" class="w-4 h-4 inline mr-1"></i>
+                            {{ user.get_city_display|default:"Ville non renseignée" }}
+                        </span>
+                        {% if user.is_verified %}
+                        <span class="px-3 py-1 bg-green-500/30 rounded-full text-sm font-medium backdrop-blur-sm">
+                            <i data-lucide="shield-check" class="w-4 h-4 inline mr-1"></i>
+                            Vérifié
+                        </span>
+                        {% endif %}
+                        <span class="px-3 py-1 bg-white/20 rounded-full text-sm font-medium backdrop-blur-sm">
+                            <i data-lucide="calendar" class="w-4 h-4 inline mr-1"></i>
+                            Depuis {{ user.date_joined|date:'d/m/Y' }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <a href="{% url 'admin_panel:profile_edit' %}" class="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-xl transition-all duration-300 flex items-center space-x-2 backdrop-blur-sm">
+                        <i data-lucide="edit-3" class="w-5 h-5"></i>
+                        <span>Modifier</span>
+                    </a>
+                    <a href="{% url 'admin_panel:change_password' %}" class="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-xl transition-all duration-300 flex items-center space-x-2 backdrop-blur-sm">
+                        <i data-lucide="lock" class="w-5 h-5"></i>
+                        <span>Mot de passe</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Column - Profile Info -->
+        <div class="lg:col-span-2 space-y-8">
+            <!-- Personal Information -->
+            <div class="stats-card">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+                        <i data-lucide="user" class="w-6 h-6 mr-3 text-green-500"></i>
+                        Informations Personnelles
+                    </h2>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Prénom</label>
+                        <p class="text-lg font-medium text-gray-900 dark:text-white">{{ user.first_name|default:"Non renseigné" }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Nom</label>
+                        <p class="text-lg font-medium text-gray-900 dark:text-white">{{ user.last_name|default:"Non renseigné" }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Email</label>
+                        <p class="text-lg font-medium text-gray-900 dark:text-white">{{ user.email }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Téléphone</label>
+                        <p class="text-lg font-medium text-gray-900 dark:text-white">{{ user.phone|default:"Non renseigné" }}</p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Adresse</label>
+                        <p class="text-lg font-medium text-gray-900 dark:text-white">{{ user.address|default:"Non renseignée" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Statistics -->
+            <div class="stats-card">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+                        <i data-lucide="bar-chart-3" class="w-6 h-6 mr-3 text-green-500"></i>
+                        Statistiques Administratives
+                    </h2>
+                    <a href="{% url 'admin_panel:analytics' %}" class="px-4 py-2 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/30 transition-all duration-300">
+                        Voir analytics
+                    </a>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Utilisateurs totaux</label>
+                        <p class="text-2xl font-bold text-blue-500">{{ admin_stats.total_users|default:"0" }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Produits actifs</label>
+                        <p class="text-2xl font-bold text-green-500">{{ admin_stats.active_products|default:"0" }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Commandes aujourd'hui</label>
+                        <p class="text-2xl font-bold text-orange-500">{{ admin_stats.orders_today|default:"0" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent System Activity -->
+            <div class="stats-card">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+                        <i data-lucide="activity" class="w-6 h-6 mr-3 text-green-500"></i>
+                        Activité Système Récente
+                    </h2>
+                </div>
+                
+                <div class="space-y-4">
+                    {% for activity in recent_activities %}
+                    <div class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-4">
+                            <i data-lucide="{{ activity.icon }}" class="w-5 h-5 text-green-600 dark:text-green-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-900 dark:text-white">{{ activity.description }}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ activity.timestamp|timesince }} ago</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-8">
+                        <i data-lucide="clock" class="w-12 h-12 text-gray-400 mx-auto mb-4"></i>
+                        <p class="text-gray-500 dark:text-gray-400">Aucune activité récente</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Stats & Quick Actions -->
+        <div class="space-y-8">
+            <!-- Admin Stats -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="metric-card">
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between mb-2">
+                            <i data-lucide="users" class="w-8 h-8"></i>
+                        </div>
+                        <p class="text-3xl font-bold mb-1">{{ admin_stats.total_users|default:"0" }}</p>
+                        <p class="text-sm opacity-90">Utilisateurs</p>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between mb-2">
+                            <i data-lucide="package" class="w-8 h-8"></i>
+                        </div>
+                        <p class="text-3xl font-bold mb-1">{{ admin_stats.total_products|default:"0" }}</p>
+                        <p class="text-sm opacity-90">Produits</p>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between mb-2">
+                            <i data-lucide="shopping-cart" class="w-8 h-8"></i>
+                        </div>
+                        <p class="text-3xl font-bold mb-1">{{ admin_stats.total_orders|default:"0" }}</p>
+                        <p class="text-sm opacity-90">Commandes</p>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between mb-2">
+                            <i data-lucide="credit-card" class="w-8 h-8"></i>
+                        </div>
+                        <p class="text-3xl font-bold mb-1">{{ admin_stats.total_revenue|default:"0" }}k</p>
+                        <p class="text-sm opacity-90">Revenus (XAF)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="stats-card">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                    <i data-lucide="zap" class="w-5 h-5 mr-2 text-green-500"></i>
+                    Actions Rapides
+                </h3>
+                
+                <div class="space-y-3">
+                    <a href="{% url 'admin_panel:users' %}" class="flex items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-xl hover:bg-green-100 dark:hover:bg-green-900/30 transition-all duration-300 group">
+                        <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
+                            <i data-lucide="users" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">Gérer utilisateurs</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Voir tous les utilisateurs</p>
+                        </div>
+                    </a>
+                    
+                    <a href="{% url 'admin_panel:products' %}" class="flex items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-300 group">
+                        <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
+                            <i data-lucide="package" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">Gérer produits</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Approuver/modérer</p>
+                        </div>
+                    </a>
+                    
+                    <a href="{% url 'admin_panel:orders' %}" class="flex items-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-all duration-300 group">
+                        <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
+                            <i data-lucide="shopping-cart" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">Suivi commandes</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Voir toutes les commandes</p>
+                        </div>
+                    </a>
+                    
+                    <a href="{% url 'admin_panel:analytics' %}" class="flex items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-all duration-300 group">
+                        <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
+                            <i data-lucide="bar-chart-3" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">Analytics</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Statistiques détaillées</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- System Status -->
+            <div class="stats-card">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                    <i data-lucide="server" class="w-5 h-5 mr-2 text-green-500"></i>
+                    Statut du Système
+                </h3>
+                
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                        <div class="flex items-center">
+                            <i data-lucide="database" class="w-5 h-5 text-gray-500 mr-3"></i>
+                            <span class="text-sm font-medium">Base de données</span>
+                        </div>
+                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Opérationnelle</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                        <div class="flex items-center">
+                            <i data-lucide="mail" class="w-5 h-5 text-gray-500 mr-3"></i>
+                            <span class="text-sm font-medium">Service Email</span>
+                        </div>
+                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Actif</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                        <div class="flex items-center">
+                            <i data-lucide="credit-card" class="w-5 h-5 text-gray-500 mr-3"></i>
+                            <span class="text-sm font-medium">Paiements</span>
+                        </div>
+                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Fonctionnel</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Security -->
+            <div class="stats-card">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                    <i data-lucide="shield" class="w-5 h-5 mr-2 text-green-500"></i>
+                    Sécurité du Compte
+                </h3>
+                
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                        <div class="flex items-center">
+                            <i data-lucide="mail" class="w-5 h-5 text-gray-500 mr-3"></i>
+                            <span class="text-sm font-medium">Email</span>
+                        </div>
+                        {% if user.is_verified %}
+                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Vérifié</span>
+                        {% else %}
+                        <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">Non vérifié</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                        <div class="flex items-center">
+                            <i data-lucide="phone" class="w-5 h-5 text-gray-500 mr-3"></i>
+                            <span class="text-sm font-medium">Téléphone</span>
+                        </div>
+                        {% if user.phone_verified %}
+                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Vérifié</span>
+                        {% else %}
+                        <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">Non vérifié</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                        <div class="flex items-center">
+                            <i data-lucide="lock" class="w-5 h-5 text-gray-500 mr-3"></i>
+                            <span class="text-sm font-medium">Dernière connexion</span>
+                        </div>
+                        <span class="text-xs text-gray-500">{{ user.last_login|date:'d/m/Y H:i'|default:"Jamais" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+});
+</script>
+{% endblock %} 
