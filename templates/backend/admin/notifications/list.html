@@ -274,7 +274,7 @@ function sendBulkNotifications() {
     selectedIds.forEach(id => formData.append('notification_ids', id));
     formData.append('action', action);
     
-    fetch("{% url 'backend:admin_notification_bulk_send' %}", {
+    fetch("{% url 'admin_panel:notification_bulk_send' %}", {
         method: 'POST',
         headers: {
             'X-CSRFToken': getCookie('csrftoken')
@@ -323,7 +323,7 @@ function deleteNotification(notificationId) {
     formData.append('notification_ids', notificationId);
     formData.append('action', 'delete');
     
-    fetch("{% url 'backend:admin_notification_bulk_send' %}", {
+    fetch("{% url 'admin_panel:notification_bulk_send' %}", {
         method: 'POST',
         headers: {
             'X-CSRFToken': getCookie('csrftoken')

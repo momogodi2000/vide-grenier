@@ -4194,7 +4194,7 @@ class AdminCategoryListView(AdminRequiredMixin, ListView):
         context['active_categories_count'] = Category.objects.filter(is_active=True).count()
         context['total_products'] = Product.objects.count()
         context['popular_categories_count'] = Category.objects.annotate(
-            product_count=Count('product')
+            product_count=Count('products')
         ).filter(product_count__gt=0).count()
         return context
 
@@ -4288,9 +4288,10 @@ class AdminReviewListView(AdminRequiredMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['approved_reviews_count'] = Review.objects.filter(is_approved=True).count()
-        context['pending_reviews_count'] = Review.objects.filter(is_approved__isnull=True).count()
-        context['rejected_reviews_count'] = Review.objects.filter(is_rejected=True).count()
+        # Since Review model doesn't have approval fields, we'll use is_verified instead
+        context['verified_reviews_count'] = Review.objects.filter(is_verified=True).count()
+        context['unverified_reviews_count'] = Review.objects.filter(is_verified=False).count()
+        context['total_reviews_count'] = Review.objects.count()
         return context
 
 class AdminReviewDetailView(AdminRequiredMixin, DetailView):
