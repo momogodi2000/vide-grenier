@@ -46,6 +46,7 @@ urlpatterns = [
     path('orders/', views_admin.AdminOrderListView.as_view(), name='orders'),
     path('orders/<uuid:pk>/', views_admin.OrderDetailView.as_view(), name='order_detail'),
     path('orders/<uuid:pk>/process/', views_admin.OrderProcessingView.as_view(), name='order_process'),
+    path('orders/<uuid:pk>/delete/', views_admin.AdminOrderDeleteView.as_view(), name='order_delete'),
     path('orders/<uuid:pk>/update-status/', views_admin.OrderStatusUpdateView.as_view(), name='order_update_status'),
     path('orders/export/', views_admin.ExportOrdersView.as_view(), name='export_orders'),
     path('orders/bulk-actions/', views_admin.AdminOrderBulkActionsView.as_view(), name='order_bulk_actions'),
@@ -53,6 +54,7 @@ urlpatterns = [
     # ============= PAYMENT MANAGEMENT =============
     path('payments/', views_admin.AdminPaymentsView.as_view(), name='payments'),
     path('payments/<uuid:pk>/', views_admin.PaymentDetailView.as_view(), name='payment_detail'),
+    path('payments/<uuid:pk>/update-status/', views_admin.admin_payment_update_status, name='payment_update_status'),
     path('payments/<uuid:pk>/refund/', views_admin.AdminPaymentRefundView.as_view(), name='payment_refund'),
     path('payments/export/', views_admin.ExportPaymentsView.as_view(), name='export_payments'),
     path('payments/bulk-actions/', views_admin.AdminPaymentBulkActionsView.as_view(), name='payment_bulk_actions'),
@@ -80,6 +82,7 @@ urlpatterns = [
     
     # ============= NEWSLETTER MANAGEMENT =============
     path('newsletter/', views_admin.NewsletterView.as_view(), name='newsletter'),
+    path('newsletters/', views_admin.NewsletterView.as_view(), name='newsletters'),
     path('newsletter/create/', views_admin.NewsletterCreateView.as_view(), name='newsletter_create'),
     path('newsletter/list/', views_admin.NewsletterListView.as_view(), name='newsletter_list'),
     path('newsletter/sent/', views_admin.NewsletterSentView.as_view(), name='newsletter_sent'),

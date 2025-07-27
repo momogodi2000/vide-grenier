@@ -242,7 +242,7 @@
                 </div>
                 <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
             </a>
-            <a href="{% url 'backend:admin_user_list' %}" class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                            <a href="{% url 'admin_panel:users' %}" class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
                 <div class="flex items-center">
                     <i data-lucide="user-plus" class="w-5 h-5 text-blue-600 mr-3"></i>
                     <span class="text-sm font-medium">Gérer Utilisateurs</span>
@@ -333,7 +333,7 @@
             {% empty %}
             <p class="text-gray-500 text-sm">Aucune commande urgente</p>
             {% endfor %}
-            <a href="{% url 'backend:admin_order_list' %}" class="w-full mt-3 text-center py-2 text-sm text-green-600 hover:bg-green-50 rounded block">
+                            <a href="{% url 'admin_panel:orders' %}" class="w-full mt-3 text-center py-2 text-sm text-green-600 hover:bg-green-50 rounded block">
                 Voir toutes les commandes
             </a>
         </div>
@@ -429,7 +429,7 @@
 <div class="stats-card">
     <div class="flex items-center justify-between mb-6">
         <h3 class="text-lg font-semibold text-gray-900">Activités Récentes</h3>
-        <a href="{% url 'backend:admin_analytics' %}" class="text-sm text-green-600 hover:text-green-800">Voir tout</a>
+                        <a href="{% url 'admin_panel:analytics' %}" class="text-sm text-green-600 hover:text-green-800">Voir tout</a>
     </div>
     <div class="flow-root">
         <ul class="-mb-8">
@@ -489,7 +489,7 @@ function exportReport() {
     
     // Redirect to export URL
     setTimeout(() => {
-        window.location.href = '{% url "backend:admin_analytics" %}?export=pdf';
+                    window.location.href = '{% url "admin_panel:analytics" %}?export=pdf';
     }, 1000);
 }
 

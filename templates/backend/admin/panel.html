@@ -154,7 +154,7 @@
     <div class="dashboard-card rounded-xl shadow-lg p-6">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-bold text-gray-900">Utilisateurs Récents</h2>
-            <a href="{% url 'backend:admin_user_list' %}" class="text-blue-600 hover:text-blue-800 text-sm">Voir tout</a>
+                            <a href="{% url 'admin_panel:users' %}" class="text-blue-600 hover:text-blue-800 text-sm">Voir tout</a>
         </div>
         <div class="space-y-4">
             {% for user in recent_users|slice:":5" %}
@@ -182,7 +182,7 @@
     <div class="dashboard-card rounded-xl shadow-lg p-6">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-bold text-gray-900">Modérations en Attente</h2>
-            <a href="{% url 'backend:admin_product_list' %}?status=DRAFT" class="text-blue-600 hover:text-blue-800 text-sm">Voir tout</a>
+                            <a href="{% url 'admin_panel:products' %}?status=DRAFT" class="text-blue-600 hover:text-blue-800 text-sm">Voir tout</a>
         </div>
         <div class="space-y-4">
             {% for product in pending_moderations|slice:":5" %}
@@ -216,19 +216,19 @@
 <div class="mt-8 bg-white rounded-xl shadow-lg p-6">
     <h2 class="text-xl font-bold text-gray-900 mb-4">Accès Rapide</h2>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <a href="{% url 'backend:admin_user_create' %}" class="flex items-center justify-center space-x-2 bg-blue-50 text-blue-700 px-4 py-3 rounded-lg hover:bg-blue-100 transition-colors">
+                        <a href="{% url 'admin_panel:user_create' %}" class="flex items-center justify-center space-x-2 bg-blue-50 text-blue-700 px-4 py-3 rounded-lg hover:bg-blue-100 transition-colors">
             <i data-lucide="user-plus" class="w-5 h-5"></i>
             <span>Nouvel Utilisateur</span>
         </a>
-        <a href="{% url 'backend:admin_product_create' %}" class="flex items-center justify-center space-x-2 bg-green-50 text-green-700 px-4 py-3 rounded-lg hover:bg-green-100 transition-colors">
+                        <a href="{% url 'admin_panel:product_create' %}" class="flex items-center justify-center space-x-2 bg-green-50 text-green-700 px-4 py-3 rounded-lg hover:bg-green-100 transition-colors">
             <i data-lucide="plus-circle" class="w-5 h-5"></i>
             <span>Nouveau Produit</span>
         </a>
-        <a href="{% url 'backend:admin_newsletter_create' %}" class="flex items-center justify-center space-x-2 bg-purple-50 text-purple-700 px-4 py-3 rounded-lg hover:bg-purple-100 transition-colors">
+                        <a href="{% url 'admin_panel:newsletter_create' %}" class="flex items-center justify-center space-x-2 bg-purple-50 text-purple-700 px-4 py-3 rounded-lg hover:bg-purple-100 transition-colors">
             <i data-lucide="mail" class="w-5 h-5"></i>
             <span>Newsletter</span>
         </a>
-        <a href="{% url 'backend:admin_analytics' %}" class="flex items-center justify-center space-x-2 bg-orange-50 text-orange-700 px-4 py-3 rounded-lg hover:bg-orange-100 transition-colors">
+                        <a href="{% url 'admin_panel:analytics' %}" class="flex items-center justify-center space-x-2 bg-orange-50 text-orange-700 px-4 py-3 rounded-lg hover:bg-orange-100 transition-colors">
             <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
             <span>Analytics</span>
         </a>

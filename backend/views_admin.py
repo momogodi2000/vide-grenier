@@ -4827,6 +4827,21 @@ class OrderProcessingView(AdminRequiredMixin, UpdateView):
     def get_success_url(self):
         return reverse_lazy('admin_panel:order_detail', kwargs={'pk': self.object.pk})
 
+class AdminOrderDeleteView(AdminRequiredMixin, DeleteView):
+    model = Order
+    template_name = 'backend/admin/orders/delete.html'
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('admin_panel:orders')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+    
+    def delete(self, request, *args, **kwargs):
+        order = self.get_object()
+        messages.success(request, f'Commande "{order.order_number}" supprimée avec succès!')
+        return super().delete(request, *args, **kwargs)
+
 # Pickup Point Management Views
 class PickupPointEditView(AdminRequiredMixin, UpdateView):
     model = PickupPoint

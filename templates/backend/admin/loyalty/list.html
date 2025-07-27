@@ -197,7 +197,7 @@
                             <button onclick="adjustPoints({{ user.id }}, 'subtract')" class="text-red-600 hover:text-red-900">
                                 <i data-lucide="minus-circle" class="w-5 h-5"></i>
                             </button>
-                            <a href="{% url 'backend:admin_user_detail' user.id %}" class="text-blue-600 hover:text-blue-900">
+                            <a href="{% url 'admin_panel:user_detail' user.id %}" class="text-blue-600 hover:text-blue-900">
                                 <i data-lucide="eye" class="w-5 h-5"></i>
                             </a>
                         </div>

@@ -104,6 +104,7 @@
 {% block content %}
     <!-- Main Content -->
     <div class="p-4 md:p-8">
+        {% csrf_token %}
         <!-- Header -->
         <div class="mb-6 md:mb-8">
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -149,23 +150,33 @@
 
         <!-- Orders List -->
         <div class="space-y-6">
-            <!-- Order 2 -->
-            <div class="order-card order-pending rounded-xl p-4 md:p-6 shadow-lg">
+            {% for order in orders %}
+            <div class="order-card order-{{ order.status|lower }} rounded-xl p-4 md:p-6 shadow-lg">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                     <div class="flex items-center gap-3 md:gap-4">
                         <div class="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-xs md:text-base">
-                            #1455
+                            #{{ order.order_number|default:order.id|slice:":8" }}
                         </div>
                         <div>
-                            <h3 class="text-base md:text-lg font-semibold text-gray-900">Commande #1455</h3>
-                            <p class="text-xs md:text-sm text-gray-500">Passée le 22 juillet 2025 à 12:20</p>
+                            <h3 class="text-base md:text-lg font-semibold text-gray-900">Commande #{{ order.order_number|default:order.id|slice:":8" }}</h3>
+                            <p class="text-xs md:text-sm text-gray-500">Passée le {{ order.created_at|date:"d/m/Y à H:i" }}</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 md:gap-3">
-                        <span class="status-pending text-white px-2 py-1 md:px-3 md:py-1 rounded-full text-xs md:text-sm font-medium whitespace-nowrap">EN ATTENTE</span>
+                        <span class="status-{{ order.status|lower }} text-white px-2 py-1 md:px-3 md:py-1 rounded-full text-xs md:text-sm font-medium whitespace-nowrap">
+                            {{ order.get_status_display|upper }}
+                        </span>
                         <div class="text-right">
-                            <p class="text-base md:text-lg font-bold text-gray-900">8,500 FCFA</p>
-                            <p class="text-xs md:text-sm text-gray-500">En attente de paiement</p>
+                            <p class="text-base md:text-lg font-bold text-gray-900">{{ order.total_amount|floatformat:0 }} FCFA</p>
+                            <p class="text-xs md:text-sm text-gray-500">
+                                {% if order.status == 'PENDING' %}En attente de paiement
+                                {% elif order.status == 'CONFIRMED' %}Paiement confirmé
+                                {% elif order.status == 'PROCESSING' %}En traitement
+                                {% elif order.status == 'SHIPPED' %}Expédiée
+                                {% elif order.status == 'DELIVERED' %}Livrée
+                                {% elif order.status == 'CANCELLED' %}Annulée
+                                {% else %}{{ order.get_status_display }}{% endif %}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -177,20 +188,24 @@
                         <div class="space-y-1 md:space-y-2">
                             <div class="flex items-center gap-2">
                                 <i data-lucide="user" class="w-3 h-3 md:w-4 md:h-4 text-gray-400"></i>
-                                <span class="text-xs md:text-sm">Claire Tchoumba</span>
+                                <span class="text-xs md:text-sm">{{ order.buyer.get_full_name|default:order.buyer.email }}</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <i data-lucide="mail" class="w-3 h-3 md:w-4 md:h-4 text-gray-400"></i>
-                                <span class="text-xs md:text-sm">claire.bafoussam@gmail.com</span>
+                                <span class="text-xs md:text-sm">{{ order.buyer.email }}</span>
                             </div>
+                            {% if order.buyer.phone %}
                             <div class="flex items-center gap-2">
                                 <i data-lucide="phone" class="w-3 h-3 md:w-4 md:h-4 text-gray-400"></i>
-                                <span class="text-xs md:text-sm">+237 695 789 012</span>
+                                <span class="text-xs md:text-sm">{{ order.buyer.phone }}</span>
                             </div>
+                            {% endif %}
+                            {% if order.buyer.city %}
                             <div class="flex items-center gap-2">
                                 <i data-lucide="map-pin" class="w-3 h-3 md:w-4 md:h-4 text-gray-400"></i>
-                                <span class="text-xs md:text-sm">Bafoussam, Cameroun</span>
+                                <span class="text-xs md:text-sm">{{ order.buyer.get_city_display|default:order.buyer.city }}</span>
                             </div>
+                            {% endif %}
                         </div>
                     </div>
                     
@@ -198,14 +213,22 @@
                     <div>
                         <h4 class="font-semibold text-gray-900 mb-2 text-sm md:text-base">Produit</h4>
                         <div class="flex items-start gap-3">
-                            <img src="https://images.unsplash.com/photo-1441986300917-64674bd47e52?w=60&h=60&fit=crop&crop=center" 
-                                 alt="Produit" class="w-10 h-10 md:w-12 md:h-12 rounded-lg object-cover">
+                            {% if order.product.image %}
+                                <img src="{{ order.product.image.url }}" 
+                                     alt="{{ order.product.title }}" class="w-10 h-10 md:w-12 md:h-12 rounded-lg object-cover">
+                            {% else %}
+                                <div class="w-10 h-10 md:w-12 md:h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="image" class="w-5 h-5 text-gray-400"></i>
+                                </div>
+                            {% endif %}
                             <div>
-                                <p class="text-xs md:text-sm font-medium text-gray-900">L'Art de la Guerre - Sun Tzu</p>
-                                <p class="text-2xs md:text-xs text-gray-500">Vendu par: Librairie Centrale</p>
+                                <p class="text-xs md:text-sm font-medium text-gray-900">{{ order.product.title }}</p>
+                                <p class="text-2xs md:text-xs text-gray-500">Vendu par: {{ order.product.seller.get_full_name|default:order.product.seller.email }}</p>
                                 <div class="flex items-center gap-2 md:gap-4 mt-1">
-                                    <span class="text-2xs md:text-xs bg-purple-100 text-purple-800 px-1 py-0.5 md:px-2 md:py-1 rounded">Livres</span>
-                                    <span class="text-2xs md:text-xs bg-green-100 text-green-800 px-1 py-0.5 md:px-2 md:py-1 rounded">Neuf</span>
+                                    {% if order.product.category %}
+                                    <span class="text-2xs md:text-xs bg-purple-100 text-purple-800 px-1 py-0.5 md:px-2 md:py-1 rounded">{{ order.product.category.name }}</span>
+                                    {% endif %}
+                                    <span class="text-2xs md:text-xs bg-green-100 text-green-800 px-1 py-0.5 md:px-2 md:py-1 rounded">{{ order.product.get_condition_display }}</span>
                                 </div>
                             </div>
                         </div>
@@ -219,14 +242,18 @@
                                 <div class="w-3 h-3 md:w-4 md:h-4 bg-green-500 rounded-full relative z-10"></div>
                                 <div>
                                     <p class="text-xs md:text-sm font-medium text-gray-900">Commande créée</p>
-                                    <p class="text-2xs md:text-xs text-gray-500">22/07/2025 - 12:20</p>
+                                    <p class="text-2xs md:text-xs text-gray-500">{{ order.created_at|date:"d/m/Y - H:i" }}</p>
                                 </div>
                             </div>
                             <div class="timeline-item flex items-center gap-3">
-                                <div class="w-3 h-3 md:w-4 md:h-4 bg-yellow-400 rounded-full relative z-10"></div>
+                                <div class="w-3 h-3 md:w-4 md:h-4 {% if order.status == 'PENDING' %}bg-yellow-400{% elif order.status == 'CONFIRMED' %}bg-blue-400{% elif order.status == 'PROCESSING' %}bg-purple-400{% elif order.status == 'SHIPPED' %}bg-indigo-400{% elif order.status == 'DELIVERED' %}bg-green-400{% else %}bg-gray-400{% endif %} rounded-full relative z-10"></div>
                                 <div>
-                                    <p class="text-xs md:text-sm font-medium text-gray-900">En attente de paiement</p>
-                                    <p class="text-2xs md:text-xs text-gray-500">En cours...</p>
+                                    <p class="text-xs md:text-sm font-medium text-gray-900">{{ order.get_status_display }}</p>
+                                    <p class="text-2xs md:text-xs text-gray-500">
+                                        {% if order.status == 'PENDING' %}En cours...
+                                        {% elif order.status == 'DELIVERED' %}Terminé
+                                        {% else %}En traitement{% endif %}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -234,37 +261,46 @@
                 </div>
                 
                 <div class="mt-4 md:mt-6 pt-3 md:pt-4 border-t border-gray-200">
+                    {% if order.status == 'PENDING' %}
                     <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-2 md:p-3 mb-3 md:mb-4">
                         <div class="flex items-center gap-2">
                             <i data-lucide="clock" class="w-3 h-3 md:w-4 md:h-4 text-yellow-600"></i>
-                            <span class="text-xs md:text-sm text-yellow-700 font-medium">Attention: Paiement en attente depuis 4h</span>
+                            <span class="text-xs md:text-sm text-yellow-700 font-medium">Attention: Paiement en attente</span>
                         </div>
                     </div>
+                    {% endif %}
                     <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
                         <div class="flex items-center gap-2">
                             <i data-lucide="map-pin" class="w-3 h-3 md:w-4 md:h-4 text-gray-400"></i>
-                            <span class="text-xs md:text-sm text-gray-600">Point de retrait: Centre Commercial Bafoussam</span>
+                            <span class="text-xs md:text-sm text-gray-600">
+                                {% if order.pickup_point %}Point de retrait: {{ order.pickup_point.name }}
+                                {% else %}Livraison à domicile{% endif %}
+                            </span>
                         </div>
                         <div class="flex flex-wrap gap-1 md:gap-2 w-full md:w-auto">
-                            <button class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 py-1 px-2 md:py-2 md:px-3 rounded-lg transition-colors text-xs md:text-sm font-medium whitespace-nowrap">
+                            <a href="{% url 'admin_panel:order_detail' order.id %}" class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 py-1 px-2 md:py-2 md:px-3 rounded-lg transition-colors text-xs md:text-sm font-medium whitespace-nowrap">
                                 <i data-lucide="eye" class="w-3 h-3 md:w-4 md:h-4 inline mr-0.5 md:mr-1"></i>
                                 Voir détails
-                            </button>
-                            <button class="text-orange-600 hover:text-orange-800 hover:bg-orange-50 py-1 px-2 md:py-2 md:px-3 rounded-lg transition-colors text-xs md:text-sm font-medium whitespace-nowrap">
-                                <i data-lucide="bell" class="w-3 h-3 md:w-4 md:h-4 inline mr-0.5 md:mr-1"></i>
-                                Relancer
-                            </button>
-                            <button class="text-red-600 hover:text-red-800 hover:bg-red-50 py-1 px-2 md:py-2 md:px-3 rounded-lg transition-colors text-xs md:text-sm font-medium whitespace-nowrap">
-                                <i data-lucide="x" class="w-3 h-3 md:w-4 md:h-4 inline mr-0.5 md:mr-1"></i>
-                                Annuler
+                            </a>
+                            <a href="{% url 'admin_panel:order_process' order.id %}" class="text-orange-600 hover:text-orange-800 hover:bg-orange-50 py-1 px-2 md:py-2 md:px-3 rounded-lg transition-colors text-xs md:text-sm font-medium whitespace-nowrap">
+                                <i data-lucide="edit" class="w-3 h-3 md:w-4 md:h-4 inline mr-0.5 md:mr-1"></i>
+                                Traiter
+                            </a>
+                            <button onclick="deleteOrder('{{ order.id }}')" class="text-red-600 hover:text-red-800 hover:bg-red-50 py-1 px-2 md:py-2 md:px-3 rounded-lg transition-colors text-xs md:text-sm font-medium whitespace-nowrap">
+                                <i data-lucide="trash-2" class="w-3 h-3 md:w-4 md:h-4 inline mr-0.5 md:mr-1"></i>
+                                Supprimer
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Additional order cards would go here -->
-            <!-- ... -->
+            {% empty %}
+            <div class="bg-white rounded-xl p-8 text-center">
+                <i data-lucide="package" class="w-16 h-16 text-gray-400 mx-auto mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune commande trouvée</h3>
+                <p class="text-gray-500">Il n'y a actuellement aucune commande à afficher.</p>
+            </div>
+            {% endfor %}
         </div>
 
         <!-- Pagination -->
@@ -329,6 +365,31 @@
                 }
             });
         });
+
+        // Delete order function
+        function deleteOrder(orderId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cette commande ? Cette action est irréversible.')) {
+                fetch(`/admin-panel/orders/${orderId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Commande supprimée avec succès!');
+                        location.reload();
+                    } else {
+                        alert('Erreur lors de la suppression de la commande');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Une erreur est survenue');
+                });
+            }
+        }
 
         // Status update functions
         function updateOrderStatus(orderId, status) {
