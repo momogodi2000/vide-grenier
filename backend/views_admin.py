@@ -3476,7 +3476,7 @@ class AdminProductForm(forms.ModelForm):
     
     class Meta:
         model = Product
-        fields = ['title', 'description', 'category', 'price', 'condition', 'city', 'is_negotiable', 'status']
+        fields = ['title', 'description', 'category', 'price', 'condition', 'city', 'is_negotiable']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'}),
             'description': forms.Textarea(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent', 'rows': 4}),
@@ -3484,7 +3484,6 @@ class AdminProductForm(forms.ModelForm):
             'price': forms.NumberInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent', 'min': '1000', 'step': '100'}),
             'condition': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'}),
             'city': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'}),
-            'status': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'}),
         }
 
 class AdminProductCreateView(AdminRequiredMixin, CreateView):
@@ -3500,13 +3499,11 @@ class AdminProductCreateView(AdminRequiredMixin, CreateView):
                 context['categories'] = Category.objects.filter(is_active=True).order_by('name')
                 context['conditions'] = Product.CONDITIONS
                 context['cities'] = User.CITIES
-                context['users'] = User.objects.filter(is_active=True).order_by('first_name', 'last_name')
             except Exception as e:
                 print(f"Error loading form context: {e}")
                 context['categories'] = []
                 context['conditions'] = []
                 context['cities'] = []
-                context['users'] = []
         return context
     
     def form_valid(self, form):
@@ -3514,6 +3511,10 @@ class AdminProductCreateView(AdminRequiredMixin, CreateView):
         product = form.save(commit=False)
         product.seller = self.request.user
         product.source = 'ADMIN'
+        product.status = 'ACTIVE'  # Admin products are automatically active
+        product.is_approved = True  # Admin products are automatically approved
+        product.approved_at = timezone.now()
+        product.approved_by = self.request.user
         product.save()
         
         # Handle primary image
@@ -3536,6 +3537,7 @@ class AdminProductCreateView(AdminRequiredMixin, CreateView):
                 order=i
             )
         
+        messages.success(self.request, f'Produit "{product.title}" créé avec succès!')
         return super().form_valid(form)
 
 class AdminProductDetailView(AdminRequiredMixin, DetailView):
@@ -3607,6 +3609,7 @@ class AdminProductUpdateView(AdminRequiredMixin, UpdateView):
                     order=i
                 )
         
+        messages.success(self.request, f'Produit "{product.title}" mis à jour avec succès!')
         return super().form_valid(form)
 
 class AdminProductDeleteView(AdminRequiredMixin, DeleteView):
