@@ -120,7 +120,9 @@ class Product(models.Model):
     
     STATUSES = [
         ('DRAFT', 'Brouillon'),
+        ('PENDING', 'En attente d\'approbation'),
         ('ACTIVE', 'Actif'),
+        ('REJECTED', 'Rejeté'),
         ('SOLD', 'Vendu'),
         ('RESERVED', 'Réservé'),
         ('EXPIRED', 'Expiré'),
@@ -145,6 +147,15 @@ class Product(models.Model):
     is_featured = models.BooleanField(default=False)
     is_premium = models.BooleanField(default=False)
     expires_at = models.DateTimeField(null=True, blank=True)
+    
+    # Approval fields
+    is_approved = models.BooleanField(default=False)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_products')
+    rejected_at = models.DateTimeField(null=True, blank=True)
+    rejected_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='rejected_products')
+    rejection_reason = models.CharField(max_length=200, blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -156,6 +167,21 @@ class Product(models.Model):
     
     def __str__(self):
         return self.title
+    
+    def save(self, *args, **kwargs):
+        # Auto-generate slug if not provided
+        if not self.slug:
+            from django.utils.text import slugify
+            base_slug = slugify(self.title)
+            self.slug = base_slug
+            
+            # Ensure uniqueness
+            counter = 1
+            while Product.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
+                self.slug = f"{base_slug}-{counter}"
+                counter += 1
+        
+        super().save(*args, **kwargs)
     
     def get_absolute_url(self):
         return reverse('backend:product_detail', kwargs={'slug': self.slug})

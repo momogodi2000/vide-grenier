@@ -17,6 +17,13 @@
                     <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
                     Ajouter Produit
                 </a>
+                <a href="{% url 'admin_panel:pending_products' %}" class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors flex items-center justify-center">
+                    <i data-lucide="clock" class="w-4 h-4 mr-2"></i>
+                    Produits en attente
+                    {% if pending_products > 0 %}
+                        <span class="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">{{ pending_products }}</span>
+                    {% endif %}
+                </a>
                 <button onclick="exportProducts()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
                     <i data-lucide="download" class="w-4 h-4 mr-2"></i>
                     Exporter

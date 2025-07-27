@@ -2053,6 +2053,21 @@ class VisitorProductDetailView(DetailView):
     template_name = 'backend/visitor/products/visitor_detail.html'
     context_object_name = 'product'
     
+    def get_object(self):
+        # Try to get by slug first, then by pk
+        if 'slug' in self.kwargs:
+            return get_object_or_404(
+                Product.objects.filter(status='ACTIVE').select_related('category', 'seller').prefetch_related('images'),
+                slug=self.kwargs['slug']
+            )
+        elif 'pk' in self.kwargs:
+            return get_object_or_404(
+                Product.objects.filter(status='ACTIVE').select_related('category', 'seller').prefetch_related('images'),
+                pk=self.kwargs['pk']
+            )
+        else:
+            raise Http404("Product not found")
+    
     def get_queryset(self):
         return Product.objects.filter(status='ACTIVE').select_related(
             'category', 'seller'

@@ -60,6 +60,7 @@ urlpatterns += [
     
     # Visitor-specific product routes
     path('visitor/product/<slug:slug>/', views.VisitorProductDetailView.as_view(), name='visitor_product_detail'),
+    path('visitor/product/id/<uuid:pk>/', views.VisitorProductDetailView.as_view(), name='visitor_product_detail_pk'),
     
     # Visitor cart operations
     path('visitor/cart/add/<uuid:product_id>/', views.visitor_add_to_cart, name='visitor_add_to_cart'),

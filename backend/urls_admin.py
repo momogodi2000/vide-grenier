@@ -36,6 +36,11 @@ urlpatterns = [
     path('products/<uuid:pk>/reject/', views_admin.ProductRejectionView.as_view(), name='product_reject'),
     path('products/<uuid:pk>/contact-seller/', views_admin.ProductContactSellerView.as_view(), name='product_contact_seller'),
     
+    # ============= PENDING PRODUCTS APPROVAL =============
+    path('products/pending/', views_admin.AdminPendingProductsView.as_view(), name='pending_products'),
+    path('products/<uuid:pk>/approval/', views_admin.AdminProductApprovalView.as_view(), name='product_approval'),
+    path('products/<uuid:pk>/approve-action/', views_admin.admin_product_approve_action, name='product_approve_action'),
+    
     # ============= ORDER MANAGEMENT =============
     path('orders/', views_admin.AdminOrderListView.as_view(), name='orders'),
     path('orders/<uuid:pk>/', views_admin.OrderDetailView.as_view(), name='order_detail'),

@@ -1,0 +1,207 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Approbation du produit - {{ product.title }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Approbation du produit</h1>
+            <p class="text-gray-600 mt-2">
+                Examiner et approuver/rejeter le produit soumis
+            </p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'admin_panel:pending_products' %}" 
+               class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4 inline mr-2"></i>
+                Retour aux produits en attente
+            </a>
+        </div>
+    </div>
+
+    <!-- Product Details -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Product Images -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Images du produit</h2>
+                
+                {% if product.images.all %}
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {% for image in product.images.all %}
+                        <div class="relative">
+                            <img src="{{ image.image.url }}" 
+                                 alt="{{ product.title }}" 
+                                 class="w-full h-48 object-cover rounded-lg">
+                            {% if image.is_primary %}
+                                <span class="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                                    Principal
+                                </span>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-12">
+                        <i data-lucide="image" class="mx-auto h-12 w-12 text-gray-400"></i>
+                        <p class="mt-2 text-sm text-gray-500">Aucune image disponible</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Product Info & Actions -->
+        <div class="space-y-6">
+            <!-- Product Information -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Informations du produit</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Titre</label>
+                        <p class="mt-1 text-sm text-gray-900">{{ product.title }}</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Description</label>
+                        <p class="mt-1 text-sm text-gray-900">{{ product.description|linebreaks }}</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Prix</label>
+                            <p class="mt-1 text-sm text-gray-900">{{ product.price|floatformat:0 }} XAF</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">État</label>
+                            <p class="mt-1 text-sm text-gray-900">{{ product.get_condition_display }}</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Catégorie</label>
+                            <p class="mt-1 text-sm text-gray-900">{{ product.category.name }}</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Ville</label>
+                            <p class="mt-1 text-sm text-gray-900">{{ product.get_city_display }}</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Négociable</label>
+                        <p class="mt-1 text-sm text-gray-900">
+                            {% if product.is_negotiable %}
+                                <span class="text-green-600">Oui</span>
+                            {% else %}
+                                <span class="text-red-600">Non</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seller Information -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Informations du vendeur</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Nom complet</label>
+                        <p class="mt-1 text-sm text-gray-900">{{ product.seller.get_full_name }}</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Email</label>
+                        <p class="mt-1 text-sm text-gray-900">{{ product.seller.email }}</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Téléphone</label>
+                        <p class="mt-1 text-sm text-gray-900">{{ product.seller.phone|default:"Non renseigné" }}</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Date de soumission</label>
+                        <p class="mt-1 text-sm text-gray-900">{{ product.created_at|date:"d/m/Y H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Approval Actions -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Actions d'approbation</h2>
+                
+                <form method="post" action="{% url 'admin_panel:product_approve_action' product.pk %}" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <!-- Approval Reason -->
+                    <div>
+                        <label for="reason" class="block text-sm font-medium text-gray-700 mb-2">
+                            Raison (pour rejet)
+                        </label>
+                        <select name="reason" id="reason" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Sélectionner une raison (optionnel)</option>
+                            {% for reason_code, reason_label in approval_reasons %}
+                                <option value="{{ reason_code }}">{{ reason_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex space-x-3">
+                        <button type="submit" name="action" value="approve" 
+                                class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                            <i data-lucide="check" class="w-4 h-4 inline mr-2"></i>
+                            Approuver
+                        </button>
+                        
+                        <button type="submit" name="action" value="reject" 
+                                class="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                            <i data-lucide="x" class="w-4 h-4 inline mr-2"></i>
+                            Rejeter
+                        </button>
+                    </div>
+                    
+                    <div class="text-xs text-gray-500">
+                        <p><strong>Approuver :</strong> Le produit sera visible sur la plateforme</p>
+                        <p><strong>Rejeter :</strong> Le produit sera masqué et le vendeur sera notifié</p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+    
+    // Show confirmation dialog for reject action
+    document.querySelector('button[value="reject"]').addEventListener('click', function(e) {
+        const reason = document.getElementById('reason').value;
+        if (!reason) {
+            e.preventDefault();
+            alert('Veuillez sélectionner une raison pour le rejet.');
+            return false;
+        }
+        
+        if (!confirm('Êtes-vous sûr de vouloir rejeter ce produit ? Cette action enverra un email au vendeur.')) {
+            e.preventDefault();
+            return false;
+        }
+    });
+    
+    // Show confirmation dialog for approve action
+    document.querySelector('button[value="approve"]').addEventListener('click', function(e) {
+        if (!confirm('Êtes-vous sûr de vouloir approuver ce produit ? Il sera immédiatement visible sur la plateforme.')) {
+            e.preventDefault();
+            return false;
+        }
+    });
+</script>
+{% endblock %} 

@@ -96,11 +96,11 @@
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.condition.errors %}border-red-500{% endif %}"
                             required>
                         <option value="">Sélectionner l'état</option>
-                        <option value="new" {% if form.condition.value == 'new' %}selected{% endif %}>Neuf</option>
-                        <option value="like_new" {% if form.condition.value == 'like_new' %}selected{% endif %}>Comme neuf</option>
-                        <option value="good" {% if form.condition.value == 'good' %}selected{% endif %}>Bon état</option>
-                        <option value="fair" {% if form.condition.value == 'fair' %}selected{% endif %}>État correct</option>
-                        <option value="poor" {% if form.condition.value == 'poor' %}selected{% endif %}>Mauvais état</option>
+                        {% for condition_code, condition_label in conditions %}
+                            <option value="{{ condition_code }}" {% if form.condition.value == condition_code %}selected{% endif %}>
+                                {{ condition_label }}
+                            </option>
+                        {% endfor %}
                     </select>
                     {% if form.condition.errors %}
                         <p class="mt-1 text-sm text-red-600">{{ form.condition.errors.0 }}</p>
@@ -117,25 +117,11 @@
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {% if form.city.errors %}border-red-500{% endif %}"
                             required>
                         <option value="">Sélectionner une ville</option>
-                        <option value="Douala" {% if form.city.value == 'Douala' %}selected{% endif %}>Douala</option>
-                        <option value="Yaoundé" {% if form.city.value == 'Yaoundé' %}selected{% endif %}>Yaoundé</option>
-                        <option value="Bamenda" {% if form.city.value == 'Bamenda' %}selected{% endif %}>Bamenda</option>
-                        <option value="Bafoussam" {% if form.city.value == 'Bafoussam' %}selected{% endif %}>Bafoussam</option>
-                        <option value="Garoua" {% if form.city.value == 'Garoua' %}selected{% endif %}>Garoua</option>
-                        <option value="Maroua" {% if form.city.value == 'Maroua' %}selected{% endif %}>Maroua</option>
-                        <option value="Kribi" {% if form.city.value == 'Kribi' %}selected{% endif %}>Kribi</option>
-                        <option value="Buea" {% if form.city.value == 'Buea' %}selected{% endif %}>Buea</option>
-                        <option value="Bertoua" {% if form.city.value == 'Bertoua' %}selected{% endif %}>Bertoua</option>
-                        <option value="Ebolowa" {% if form.city.value == 'Ebolowa' %}selected{% endif %}>Ebolowa</option>
-                        <option value="Ngaoundéré" {% if form.city.value == 'Ngaoundéré' %}selected{% endif %}>Ngaoundéré</option>
-                        <option value="Kumba" {% if form.city.value == 'Kumba' %}selected{% endif %}>Kumba</option>
-                        <option value="Limbé" {% if form.city.value == 'Limbé' %}selected{% endif %}>Limbé</option>
-                        <option value="Edea" {% if form.city.value == 'Edea' %}selected{% endif %}>Edea</option>
-                        <option value="Kousséri" {% if form.city.value == 'Kousséri' %}selected{% endif %}>Kousséri</option>
-                        <option value="Mbalmayo" {% if form.city.value == 'Mbalmayo' %}selected{% endif %}>Mbalmayo</option>
-                        <option value="Bafang" {% if form.city.value == 'Bafang' %}selected{% endif %}>Bafang</option>
-                        <option value="Foumban" {% if form.city.value == 'Foumban' %}selected{% endif %}>Foumban</option>
-                        <option value="Autre" {% if form.city.value == 'Autre' %}selected{% endif %}>Autre</option>
+                        {% for city_code, city_label in cities %}
+                            <option value="{{ city_code }}" {% if form.city.value == city_code %}selected{% endif %}>
+                                {{ city_label }}
+                            </option>
+                        {% endfor %}
                     </select>
                     {% if form.city.errors %}
                         <p class="mt-1 text-sm text-red-600">{{ form.city.errors.0 }}</p>
@@ -182,42 +168,48 @@
             <div class="space-y-4">
                 <!-- Main Image -->
                 <div>
-                    <label for="main_image" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="{{ form.primary_image.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
                         Image principale *
                     </label>
                     <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-gray-400 transition-colors">
                         <div class="space-y-1 text-center">
                             <i data-lucide="upload" class="mx-auto h-12 w-12 text-gray-400"></i>
                             <div class="flex text-sm text-gray-600">
-                                <label for="main_image" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                <label for="{{ form.primary_image.id_for_label }}" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
                                     <span>Télécharger une image</span>
-                                    <input id="main_image" name="main_image" type="file" class="sr-only" accept="image/*" required>
+                                    {{ form.primary_image }}
                                 </label>
                                 <p class="pl-1">ou glisser-déposer</p>
                             </div>
                             <p class="text-xs text-gray-500">PNG, JPG, GIF jusqu'à 10MB</p>
                         </div>
                     </div>
+                    {% if form.primary_image.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.primary_image.errors.0 }}</p>
+                    {% endif %}
                 </div>
 
                 <!-- Additional Images -->
                 <div>
-                    <label for="additional_images" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="{{ form.additional_images.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
                         Images supplémentaires
                     </label>
                     <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-gray-400 transition-colors">
                         <div class="space-y-1 text-center">
                             <i data-lucide="image" class="mx-auto h-12 w-12 text-gray-400"></i>
                             <div class="flex text-sm text-gray-600">
-                                <label for="additional_images" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                <label for="{{ form.additional_images.id_for_label }}" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
                                     <span>Télécharger des images</span>
-                                    <input id="additional_images" name="additional_images" type="file" class="sr-only" accept="image/*" multiple>
+                                    {{ form.additional_images }}
                                 </label>
                                 <p class="pl-1">ou glisser-déposer</p>
                             </div>
                             <p class="text-xs text-gray-500">Jusqu'à 5 images supplémentaires</p>
                         </div>
                     </div>
+                    {% if form.additional_images.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.additional_images.errors.0 }}</p>
+                    {% endif %}
                 </div>
 
                 <!-- Image Preview -->

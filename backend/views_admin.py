@@ -3455,14 +3455,87 @@ class AdminUserBulkActionsView(AdminRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         return context
 
+class AdminProductForm(forms.ModelForm):
+    """Custom form for admin product creation with image handling"""
+    primary_image = forms.ImageField(
+        label='Image principale',
+        required=False,
+        widget=forms.ClearableFileInput(attrs={
+            'class': 'block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100',
+            'accept': 'image/*'
+        })
+    )
+    additional_images = forms.FileField(
+        label='Images supplémentaires',
+        required=False,
+        widget=forms.FileInput(attrs={
+            'class': 'block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100',
+            'accept': 'image/*'
+        })
+    )
+    
+    class Meta:
+        model = Product
+        fields = ['title', 'description', 'category', 'price', 'condition', 'city', 'is_negotiable', 'status']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'}),
+            'description': forms.Textarea(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent', 'rows': 4}),
+            'category': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'}),
+            'price': forms.NumberInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent', 'min': '1000', 'step': '100'}),
+            'condition': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'}),
+            'city': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'}),
+            'status': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'}),
+        }
+
 class AdminProductCreateView(AdminRequiredMixin, CreateView):
     model = Product
+    form_class = AdminProductForm
     template_name = 'backend/admin/products/create.html'
-    fields = ['title', 'description', 'category', 'price', 'condition', 'city', 'is_negotiable']
     success_url = reverse_lazy('admin_panel:products')
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if MAIN_MODELS_AVAILABLE:
+            try:
+                context['categories'] = Category.objects.filter(is_active=True).order_by('name')
+                context['conditions'] = Product.CONDITIONS
+                context['cities'] = User.CITIES
+                context['users'] = User.objects.filter(is_active=True).order_by('first_name', 'last_name')
+            except Exception as e:
+                print(f"Error loading form context: {e}")
+                context['categories'] = []
+                context['conditions'] = []
+                context['cities'] = []
+                context['users'] = []
+        return context
+    
     def form_valid(self, form):
-        form.instance.seller = self.request.user
+        # Save the product first
+        product = form.save(commit=False)
+        product.seller = self.request.user
+        product.source = 'ADMIN'
+        product.save()
+        
+        # Handle primary image
+        if self.request.FILES.get('primary_image'):
+            primary_image = self.request.FILES['primary_image']
+            ProductImage.objects.create(
+                product=product,
+                image=primary_image,
+                is_primary=True,
+                order=0
+            )
+        
+        # Handle additional images
+        additional_images = self.request.FILES.getlist('additional_images')
+        for i, image_file in enumerate(additional_images, start=1):
+            ProductImage.objects.create(
+                product=product,
+                image=image_file,
+                is_primary=False,
+                order=i
+            )
+        
         return super().form_valid(form)
 
 class AdminProductDetailView(AdminRequiredMixin, DetailView):
@@ -3477,14 +3550,64 @@ class AdminProductDetailView(AdminRequiredMixin, DetailView):
 
 class AdminProductUpdateView(AdminRequiredMixin, UpdateView):
     model = Product
+    form_class = AdminProductForm
     template_name = 'backend/admin/products/edit.html'
-    fields = ['title', 'description', 'category', 'price', 'condition', 'city', 'is_negotiable']
     pk_url_kwarg = 'pk'
     success_url = reverse_lazy('admin_panel:products')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        if MAIN_MODELS_AVAILABLE:
+            try:
+                context['categories'] = Category.objects.filter(is_active=True).order_by('name')
+                context['conditions'] = Product.CONDITIONS
+                context['cities'] = User.CITIES
+                context['users'] = User.objects.filter(is_active=True).order_by('first_name', 'last_name')
+                # Get existing images
+                context['existing_images'] = self.object.images.all().order_by('order')
+            except Exception as e:
+                print(f"Error loading form context: {e}")
+                context['categories'] = []
+                context['conditions'] = []
+                context['cities'] = []
+                context['users'] = []
+                context['existing_images'] = []
         return context
+    
+    def form_valid(self, form):
+        # Save the product first
+        product = form.save()
+        
+        # Handle primary image
+        if self.request.FILES.get('primary_image'):
+            # Remove existing primary image
+            ProductImage.objects.filter(product=product, is_primary=True).update(is_primary=False)
+            
+            primary_image = self.request.FILES['primary_image']
+            ProductImage.objects.create(
+                product=product,
+                image=primary_image,
+                is_primary=True,
+                order=0
+            )
+        
+        # Handle additional images
+        additional_images = self.request.FILES.getlist('additional_images')
+        if additional_images:
+            # Get the highest order number
+            max_order = ProductImage.objects.filter(product=product).aggregate(
+                max_order=models.Max('order')
+            )['max_order'] or 0
+            
+            for i, image_file in enumerate(additional_images, start=max_order + 1):
+                ProductImage.objects.create(
+                    product=product,
+                    image=image_file,
+                    is_primary=False,
+                    order=i
+                )
+        
+        return super().form_valid(form)
 
 class AdminProductDeleteView(AdminRequiredMixin, DeleteView):
     model = Product
@@ -3503,6 +3626,48 @@ class AdminProductBulkActionsView(AdminRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         return context
 
+class AdminPendingProductsView(AdminRequiredMixin, ListView):
+    """Admin view for managing pending products that need approval"""
+    model = Product
+    template_name = 'backend/admin/products/pending.html'
+    context_object_name = 'pending_products'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        if MAIN_MODELS_AVAILABLE:
+            return Product.objects.filter(
+                status='PENDING',
+                seller__user_type='CLIENT'
+            ).select_related('seller', 'category').prefetch_related('images').order_by('-created_at')
+        return Product.objects.none()
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if MAIN_MODELS_AVAILABLE:
+            context['pending_count'] = Product.objects.filter(status='PENDING').count()
+            context['total_products'] = Product.objects.count()
+        return context
+
+class AdminProductApprovalView(AdminRequiredMixin, DetailView):
+    """Admin view for approving/rejecting a specific product"""
+    model = Product
+    template_name = 'backend/admin/products/approval.html'
+    context_object_name = 'product'
+    pk_url_kwarg = 'pk'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if MAIN_MODELS_AVAILABLE:
+            context['approval_reasons'] = [
+                ('APPROVED', 'Approuvé - Produit conforme'),
+                ('REJECTED_INAPPROPRIATE', 'Rejeté - Contenu inapproprié'),
+                ('REJECTED_QUALITY', 'Rejeté - Qualité insuffisante'),
+                ('REJECTED_DESCRIPTION', 'Rejeté - Description incomplète'),
+                ('REJECTED_PRICE', 'Rejeté - Prix non conforme'),
+                ('REJECTED_OTHER', 'Rejeté - Autre raison')
+            ]
+        return context
+
 class AdminProductApproveView(AdminRequiredMixin, TemplateView):
     template_name = 'backend/admin/products/approve.html'
     
@@ -3518,6 +3683,106 @@ class AdminProductRejectView(AdminRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context['product'] = get_object_or_404(Product, pk=self.kwargs['pk'])
         return context
+
+@admin_required
+@require_http_methods(["POST"])
+def admin_product_approve_action(request, product_id):
+    """Handle product approval action"""
+    try:
+        product = get_object_or_404(Product, pk=product_id)
+        action = request.POST.get('action')
+        reason = request.POST.get('reason', '')
+        
+        if action == 'approve':
+            product.status = 'ACTIVE'
+            product.is_approved = True
+            product.approved_at = timezone.now()
+            product.approved_by = request.user
+            product.save()
+            
+            # Send approval email
+            try:
+                send_product_approval_email(product, approved=True)
+                messages.success(request, f'Produit "{product.title}" approuvé avec succès. Email envoyé au vendeur.')
+            except Exception as e:
+                messages.warning(request, f'Produit approuvé mais erreur lors de l\'envoi de l\'email: {e}')
+                
+        elif action == 'reject':
+            product.status = 'REJECTED'
+            product.is_approved = False
+            product.rejected_at = timezone.now()
+            product.rejected_by = request.user
+            product.rejection_reason = reason
+            product.save()
+            
+            # Send rejection email
+            try:
+                send_product_approval_email(product, approved=False, reason=reason)
+                messages.success(request, f'Produit "{product.title}" rejeté. Email envoyé au vendeur.')
+            except Exception as e:
+                messages.warning(request, f'Produit rejeté mais erreur lors de l\'envoi de l\'email: {e}')
+        
+        return redirect('admin_panel:pending_products')
+        
+    except Exception as e:
+        messages.error(request, f'Erreur lors du traitement: {e}')
+        return redirect('admin_panel:pending_products')
+
+def send_product_approval_email(product, approved=True, reason=''):
+    """Send email notification to seller about product approval/rejection"""
+    try:
+        subject = f'Votre produit "{product.title}" a été {"approuvé" if approved else "rejeté"}'
+        
+        if approved:
+            message = f"""
+            Bonjour {product.seller.get_full_name()},
+            
+            Votre produit "{product.title}" a été approuvé et est maintenant visible sur notre plateforme.
+            
+            Détails du produit:
+            - Titre: {product.title}
+            - Prix: {product.price} XAF
+            - Catégorie: {product.category.name}
+            
+            Vous pouvez maintenant recevoir des commandes pour ce produit.
+            
+            Merci d'utiliser notre plateforme!
+            L'équipe Vidé-Grenier
+            """
+        else:
+            message = f"""
+            Bonjour {product.seller.get_full_name()},
+            
+            Votre produit "{product.title}" a été rejeté.
+            
+            Raison: {reason}
+            
+            Détails du produit:
+            - Titre: {product.title}
+            - Prix: {product.price} XAF
+            - Catégorie: {product.category.name}
+            
+            Vous pouvez modifier votre produit et le soumettre à nouveau pour approbation.
+            
+            Merci de votre compréhension.
+            L'équipe Vidé-Grenier
+            """
+        
+        # Send email using Django's email system
+        from django.core.mail import send_mail
+        from django.conf import settings
+        
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[product.seller.email],
+            fail_silently=False,
+        )
+        
+    except Exception as e:
+        print(f"Error sending product approval email: {e}")
+        # Don't raise the exception to avoid breaking the approval process
 
 class AdminOrderDetailView(AdminRequiredMixin, DetailView):
     model = Order

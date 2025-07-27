@@ -231,10 +231,17 @@
                             </button>
                             {% endif %}
                             
-                            <a href="{% url 'backend:visitor_product_detail' slug=product.slug %}" 
-                               class="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium text-center">
-                                Voir détails
-                            </a>
+                            {% if product.slug %}
+                                <a href="{% url 'backend:visitor_product_detail' slug=product.slug %}" 
+                                   class="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium text-center">
+                                    Voir détails
+                                </a>
+                            {% else %}
+                                <a href="{% url 'backend:visitor_product_detail_pk' pk=product.id %}" 
+                                   class="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium text-center">
+                                    Voir détails
+                                </a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
