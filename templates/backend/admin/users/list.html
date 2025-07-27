@@ -93,10 +93,10 @@
             <p class="text-gray-600">Gérez tous les utilisateurs de la plateforme Vidé-Grenier Kamer</p>
         </div>
         <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-            <button onclick="openUserModal()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+            <a href="{% url 'admin_panel:user_create' %}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
                 <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i>
                 Ajouter Utilisateur
-            </button>
+            </a>
             <button onclick="exportUsers()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
                 <i data-lucide="download" class="w-4 h-4 mr-2"></i>
                 Exporter
@@ -370,12 +370,12 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div class="flex items-center space-x-2">
-                            <button onclick="viewUser({{ user.id }})" class="text-blue-600 hover:text-blue-900 transition-colors" title="Voir détails">
+                            <a href="{% url 'admin_panel:user_detail' user.id %}" class="text-blue-600 hover:text-blue-900 transition-colors" title="Voir détails">
                                 <i data-lucide="eye" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="editUser({{ user.id }})" class="text-yellow-600 hover:text-yellow-900 transition-colors" title="Modifier">
+                            </a>
+                            <a href="{% url 'admin_panel:user_edit' user.id %}" class="text-yellow-600 hover:text-yellow-900 transition-colors" title="Modifier">
                                 <i data-lucide="edit" class="w-4 h-4"></i>
-                            </button>
+                            </a>
                             {% if user.is_active %}
                                 <button onclick="suspendUser({{ user.id }})" class="text-orange-600 hover:text-orange-900 transition-colors" title="Suspendre">
                                     <i data-lucide="user-minus" class="w-4 h-4"></i>
@@ -390,15 +390,15 @@
                                     <i data-lucide="more-horizontal" class="w-4 h-4"></i>
                                 </button>
                                 <div id="userDropdown{{ user.id }}" class="dropdown-menu absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10 hidden">
-                                    <a href="#" onclick="viewUserOrders({{ user.id }})" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                    <a href="{% url 'admin_panel:orders' %}?user_id={{ user.id }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                                         <i data-lucide="shopping-cart" class="w-4 h-4 mr-2 inline"></i>Voir commandes
                                     </a>
                                     {% if user.user_type == 'seller' %}
-                                        <a href="#" onclick="viewUserProducts({{ user.id }})" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <a href="{% url 'admin_panel:products' %}?seller_id={{ user.id }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                                             <i data-lucide="package" class="w-4 h-4 mr-2 inline"></i>Voir produits
                                         </a>
                                     {% endif %}
-                                    <a href="#" onclick="viewUserChats({{ user.id }})" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                    <a href="{% url 'admin_panel:chats' %}?user_id={{ user.id }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                                         <i data-lucide="message-circle" class="w-4 h-4 mr-2 inline"></i>Voir conversations
                                     </a>
                                     <a href="#" onclick="sendNotification({{ user.id }})" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
@@ -409,7 +409,7 @@
                                         <i data-lucide="log-in" class="w-4 h-4 mr-2 inline"></i>Se connecter en tant que
                                     </a>
                                     <div class="border-t border-gray-100"></div>
-                                    <a href="#" onclick="deleteUser({{ user.id }})" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                    <a href="{% url 'admin_panel:user_delete' user.id %}" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                                         <i data-lucide="trash-2" class="w-4 h-4 mr-2 inline"></i>Supprimer
                                     </a>
                                 </div>
@@ -813,11 +813,11 @@ function loadUserData(userId) {
 }
 
 function viewUser(userId) {
-    window.open(`/admin-panel/users/${userId}/`, '_blank');
+    window.location.href = `/admin-panel/users/${userId}/`;
 }
 
 function editUser(userId) {
-    openUserModal(userId);
+    window.location.href = `/admin-panel/users/${userId}/edit/`;
 }
 
 function suspendUser(userId) {
@@ -1039,7 +1039,7 @@ function refreshTable() {
 }
 
 function exportUsers() {
-    window.open('/admin-panel/export/users/', '_blank');
+    window.location.href = '/admin-panel/export/users/';
 }
 
 function getCsrfToken() {
