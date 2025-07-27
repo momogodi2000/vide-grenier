@@ -3621,6 +3621,33 @@ class AdminProductDeleteView(AdminRequiredMixin, DeleteView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         return context
+    
+    def delete(self, request, *args, **kwargs):
+        product = self.get_object()
+        messages.success(request, f'Produit "{product.title}" supprimé avec succès!')
+        return super().delete(request, *args, **kwargs)
+
+@admin_required
+@require_http_methods(["POST"])
+def admin_product_delete_ajax(request, product_id):
+    """AJAX endpoint for deleting products"""
+    try:
+        product = get_object_or_404(Product, pk=product_id)
+        product_title = product.title
+        product.delete()
+        
+        # Add success message for non-AJAX requests
+        messages.success(request, f'Produit "{product_title}" supprimé avec succès!')
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Produit "{product_title}" supprimé avec succès'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erreur lors de la suppression: {str(e)}'
+        })
 
 class AdminProductBulkActionsView(AdminRequiredMixin, TemplateView):
     template_name = 'backend/admin/products/bulk_actions.html'

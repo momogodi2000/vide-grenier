@@ -2,6 +2,8 @@
 {% load static %}
 {% load humanize %}
 
+{% csrf_token %}
+
 {% block title %}Gestion des Produits - Admin{% endblock %}
 
 {% block content %}
@@ -109,21 +111,21 @@
                     <input type="text" name="search" id="search" value="{{ search }}" 
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                            placeholder="Nom, description, vendeur...">
-                </div>
-
+            </div>
+            
                 <!-- Status Filter -->
                 <div>
                     <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
                     <select name="status" id="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">Tous les statuts</option>
+                <option value="">Tous les statuts</option>
                         {% for status_code, status_name in product_statuses %}
                             <option value="{{ status_code }}" {% if status_filter == status_code %}selected{% endif %}>{{ status_name }}</option>
                         {% endfor %}
-                    </select>
+            </select>
                 </div>
-
+                
                 <!-- Source Filter -->
-                <div>
+                    <div>
                     <label for="source" class="block text-sm font-medium text-gray-700 mb-1">Source</label>
                     <select name="source" id="source" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <option value="">Toutes les sources</option>
@@ -132,7 +134,7 @@
                         {% endfor %}
                     </select>
                 </div>
-
+                
                 <!-- Category Filter -->
                 <div>
                     <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
@@ -142,8 +144,8 @@
                             <option value="{{ category.id }}" {% if category_filter == category.id|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
                         {% endfor %}
                     </select>
-                </div>
             </div>
+        </div>
 
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
                 <div class="flex space-x-2">
@@ -201,7 +203,7 @@
                         <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 {% if product.main_image %}
-                                    <img class="h-10 w-10 rounded-lg object-cover mr-4" 
+                                <img class="h-10 w-10 rounded-lg object-cover mr-4" 
                                          src="{{ product.main_image.image.url }}" 
                                          alt="{{ product.title }}">
                                 {% else %}
@@ -228,7 +230,7 @@
                         </td>
                         <td class="px-4 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
                             {% if product.status == 'ACTIVE' %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                     Actif
                                 </span>
                             {% elif product.status == 'DRAFT' %}
@@ -246,33 +248,54 @@
                             {% else %}
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                                     {{ product.get_status_display }}
-                                </span>
+                            </span>
                             {% endif %}
                         </td>
                         <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
                             {{ product.created_at|date:"d/m/Y" }}
                         </td>
                         <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div class="flex items-center space-x-2">
-                                <a href="{% url 'admin_panel:product_detail' product.id %}" class="text-blue-600 hover:text-blue-900 p-1" title="Voir détails">
-                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                            <div class="flex items-center space-x-1">
+                                <!-- View Details -->
+                                <a href="{% url 'admin_panel:product_detail' product.id %}" 
+                                   class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors" 
+                                   title="Voir les détails du produit">
+                                    <i data-lucide="eye" class="w-3 h-3 mr-1"></i>
+                                    Voir
                                 </a>
-                                <a href="{% url 'admin_panel:product_edit' product.id %}" class="text-yellow-600 hover:text-yellow-900 p-1" title="Modifier">
-                                    <i data-lucide="edit" class="w-4 h-4"></i>
+                                
+                                <!-- Edit Product -->
+                                <a href="{% url 'admin_panel:product_edit' product.id %}" 
+                                   class="inline-flex items-center px-2 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 transition-colors" 
+                                   title="Modifier le produit">
+                                    <i data-lucide="edit" class="w-3 h-3 mr-1"></i>
+                                    Modifier
                                 </a>
-                                {% if product.status == 'DRAFT' %}
-                                    <a href="{% url 'admin_panel:product_approve' product.id %}" class="text-green-600 hover:text-green-900 p-1" title="Approuver">
-                                        <i data-lucide="check" class="w-4 h-4"></i>
-                                    </a>
-                                    <a href="{% url 'admin_panel:product_reject' product.id %}" class="text-red-600 hover:text-red-900 p-1" title="Rejeter">
-                                        <i data-lucide="x" class="w-4 h-4"></i>
+                                
+                                <!-- Approve/Reject for PENDING products -->
+                                {% if product.status == 'PENDING' %}
+                                    <a href="{% url 'admin_panel:product_approval' product.id %}" 
+                                       class="inline-flex items-center px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-md hover:bg-green-200 transition-colors" 
+                                       title="Approuver ou rejeter le produit">
+                                        <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i>
+                                        Approuver
                                     </a>
                                 {% endif %}
-                                <a href="{% url 'admin_panel:product_contact_seller' product.id %}" class="text-purple-600 hover:text-purple-900 p-1" title="Contacter vendeur">
-                                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                                
+                                <!-- Contact Seller -->
+                                <a href="{% url 'admin_panel:product_contact_seller' product.id %}" 
+                                   class="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-700 bg-purple-100 rounded-md hover:bg-purple-200 transition-colors" 
+                                   title="Contacter le vendeur">
+                                    <i data-lucide="message-circle" class="w-3 h-3 mr-1"></i>
+                                    Contact
                                 </a>
-                                <button onclick="deleteProduct('{{ product.id }}')" class="text-red-600 hover:text-red-900 p-1" title="Supprimer">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                
+                                <!-- Delete Product -->
+                                <button onclick="deleteProduct('{{ product.id }}')" 
+                                        class="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors" 
+                                        title="Supprimer le produit">
+                                    <i data-lucide="trash-2" class="w-3 h-3 mr-1"></i>
+                                    Supprimer
                                 </button>
                             </div>
                         </td>
@@ -304,8 +327,8 @@
         <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
             {% if page_obj.has_previous %}
                 <a href="?page=1{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if source_filter %}&source={{ source_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
-                </a>
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </a>
             {% endif %}
             
             {% for num in page_obj.paginator.page_range %}
@@ -318,8 +341,8 @@
             
             {% if page_obj.has_next %}
                 <a href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if source_filter %}&source={{ source_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                </a>
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </a>
             {% endif %}
         </nav>
     </div>
@@ -332,18 +355,18 @@
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Actions Groupées</h3>
                 <div class="space-y-3">
                     <button onclick="bulkAction('approve')" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                        <i data-lucide="check" class="w-4 h-4 inline mr-2"></i>
+                            <i data-lucide="check" class="w-4 h-4 inline mr-2"></i>
                         Approuver sélectionnés
-                    </button>
+                        </button>
                     <button onclick="bulkAction('reject')" class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
                         <i data-lucide="x" class="w-4 h-4 inline mr-2"></i>
                         Rejeter sélectionnés
-                    </button>
+                        </button>
                     <button onclick="bulkAction('delete')" class="w-full bg-red-800 text-white px-4 py-2 rounded-lg hover:bg-red-900 transition-colors">
-                        <i data-lucide="trash-2" class="w-4 h-4 inline mr-2"></i>
+                            <i data-lucide="trash-2" class="w-4 h-4 inline mr-2"></i>
                         Supprimer sélectionnés
-                    </button>
-                </div>
+                        </button>
+                    </div>
                 <div class="mt-4 flex justify-end">
                     <button onclick="closeBulkActions()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
                         Annuler
@@ -355,7 +378,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+    <script>
     // Select all functionality
     document.getElementById('selectAll').addEventListener('change', function() {
         const checkboxes = document.querySelectorAll('.product-checkbox');
@@ -450,7 +473,7 @@
 
     function deleteProduct(productId) {
         if (confirm('Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.')) {
-            fetch(`/admin-panel/products/${productId}/delete/`, {
+            fetch(`/admin-panel/products/${productId}/delete-ajax/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -490,5 +513,5 @@
             notification.remove();
         }, 3000);
     }
-</script>
+    </script>
 {% endblock %}
