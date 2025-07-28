@@ -1,0 +1,246 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Envoyer la Campagne - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Envoyer la Campagne</h1>
+                <p class="text-gray-600 mt-2">Confirmez l'envoi de cette campagne</p>
+            </div>
+            <a href="{% url 'admin_panel:newsletter_campaign_detail' campaign.pk %}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition">
+                <i data-lucide="arrow-left" class="inline w-4 h-4 mr-2"></i>Retour
+            </a>
+        </div>
+    </div>
+
+    <!-- Campaign Information -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Informations de la Campagne</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                <p class="text-gray-900">{{ campaign.name|default:"Sans nom" }}</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Sujet</label>
+                <p class="text-gray-900">{{ campaign.subject|default:"-" }}</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <p class="text-gray-900">{{ campaign.campaign_type|default:"-" }}</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Date de création</label>
+                <p class="text-gray-900">{{ campaign.created_at|date:"d/m/Y H:i"|default:"-" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Preview -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Aperçu de l'Email</h2>
+        
+        <div class="border rounded-lg p-4 bg-gray-50">
+            <div class="mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Sujet: {{ campaign.subject|default:"-" }}</h3>
+            </div>
+            
+            <div class="prose max-w-none">
+                {% if campaign.html_content %}
+                    {{ campaign.html_content|safe }}
+                {% else %}
+                    <p class="whitespace-pre-wrap">{{ campaign.message|default:"-" }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sending Options -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Options d'envoi</h2>
+        
+        <form method="post" id="sendForm">
+            {% csrf_token %}
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Destinataires</label>
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <p class="text-sm text-blue-800">
+                            <i data-lucide="users" class="inline w-4 h-4 mr-1"></i>
+                            <strong>{{ campaign.recipient_count|default:0 }}</strong> abonnés actifs recevront cette campagne
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="track_opens" {% if campaign.track_opens %}checked{% endif %} class="mr-2">
+                            <span class="text-sm font-medium text-gray-700">Suivre les ouvertures</span>
+                        </label>
+                    </div>
+                    
+                    <div>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="track_clicks" {% if campaign.track_clicks %}checked{% endif %} class="mr-2">
+                            <span class="text-sm font-medium text-gray-700">Suivre les clics</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="send_test" id="sendTest" class="mr-2">
+                        <span class="text-sm font-medium text-gray-700">Envoyer un email de test d'abord</span>
+                    </label>
+                </div>
+                
+                <div id="testEmailInput" class="ml-6 hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email de test</label>
+                    <input type="email" name="test_email" placeholder="test@example.com" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Confirmation -->
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <i data-lucide="alert-circle" class="w-6 h-6 text-yellow-400"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-yellow-800">Confirmation requise</h3>
+                <div class="mt-2 text-sm text-yellow-700">
+                    <p>Une fois envoyée, cette campagne ne pourra plus être modifiée. Assurez-vous que le contenu est correct avant de confirmer l'envoi.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex items-center justify-between">
+        <a href="{% url 'admin_panel:newsletter_campaign_detail' campaign.pk %}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition">
+            Annuler
+        </a>
+        
+        <div class="flex space-x-3">
+            <button type="button" id="previewBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+                <i data-lucide="eye" class="inline w-4 h-4 mr-2"></i>Aperçu complet
+            </button>
+            
+            <button type="submit" form="sendForm" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition">
+                <i data-lucide="send" class="inline w-4 h-4 mr-2"></i>Envoyer la campagne
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">Aperçu complet de la campagne</h3>
+                    <button type="button" id="closePreview" class="text-gray-500 hover:text-gray-700">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div id="previewContent" class="border rounded-lg p-4 bg-gray-50">
+                    <!-- Preview content will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+    
+    // Form functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const sendTestCheckbox = document.getElementById('sendTest');
+        const testEmailInput = document.getElementById('testEmailInput');
+        const previewBtn = document.getElementById('previewBtn');
+        const previewModal = document.getElementById('previewModal');
+        const closePreview = document.getElementById('closePreview');
+        const previewContent = document.getElementById('previewContent');
+        const sendForm = document.getElementById('sendForm');
+        
+        // Handle test email checkbox
+        sendTestCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                testEmailInput.classList.remove('hidden');
+            } else {
+                testEmailInput.classList.add('hidden');
+            }
+        });
+        
+        // Preview functionality
+        previewBtn.addEventListener('click', function() {
+            const subject = '{{ campaign.subject|default:"" }}';
+            const message = '{{ campaign.message|default:"" }}';
+            const htmlContent = '{{ campaign.html_content|default:"" }}';
+            
+            let preview = `<h2>Sujet: ${subject}</h2>`;
+            if (htmlContent) {
+                preview += htmlContent;
+            } else {
+                preview += `<p>${message.replace(/\n/g, '<br>')}</p>`;
+            }
+            
+            previewContent.innerHTML = preview;
+            previewModal.classList.remove('hidden');
+        });
+        
+        // Close preview modal
+        closePreview.addEventListener('click', function() {
+            previewModal.classList.add('hidden');
+        });
+        
+        // Close modal when clicking outside
+        previewModal.addEventListener('click', function(e) {
+            if (e.target === previewModal) {
+                previewModal.classList.add('hidden');
+            }
+        });
+        
+        // Form validation
+        sendForm.addEventListener('submit', function(e) {
+            if (sendTestCheckbox.checked) {
+                const testEmail = document.querySelector('input[name="test_email"]').value;
+                if (!testEmail) {
+                    e.preventDefault();
+                    alert('Veuillez saisir un email de test.');
+                    return;
+                }
+            }
+            
+            if (!confirm('Êtes-vous sûr de vouloir envoyer cette campagne ?')) {
+                e.preventDefault();
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = e.submitter;
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i data-lucide="loader-2" class="inline w-4 h-4 mr-2 animate-spin"></i>Envoi en cours...';
+            }
+        });
+    });
+</script>
+{% endblock %} 

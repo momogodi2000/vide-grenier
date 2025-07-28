@@ -1,0 +1,110 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Supprimer la Campagne - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Supprimer la Campagne</h1>
+                <p class="text-gray-600 mt-2">Confirmez la suppression de cette campagne</p>
+            </div>
+            <a href="{% url 'admin_panel:newsletter_campaign_detail' campaign.pk %}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition">
+                <i data-lucide="arrow-left" class="inline w-4 h-4 mr-2"></i>Retour
+            </a>
+        </div>
+    </div>
+
+    <!-- Warning Message -->
+    <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <i data-lucide="alert-triangle" class="w-6 h-6 text-red-400"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">Attention</h3>
+                <div class="mt-2 text-sm text-red-700">
+                    <p>Cette action est irréversible. La suppression de cette campagne supprimera également toutes les statistiques associées.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campaign Information -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Informations de la Campagne</h2>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                <p class="text-gray-900">{{ campaign.name|default:"Sans nom" }}</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Sujet</label>
+                <p class="text-gray-900">{{ campaign.subject|default:"-" }}</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                    {% if campaign.status == 'DRAFT' %}bg-yellow-100 text-yellow-800
+                    {% elif campaign.status == 'SENT' %}bg-green-100 text-green-800
+                    {% elif campaign.status == 'SCHEDULED' %}bg-blue-100 text-blue-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {% if campaign.status == 'DRAFT' %}
+                        <i data-lucide="edit" class="w-3 h-3 mr-1"></i>Brouillon
+                    {% elif campaign.status == 'SENT' %}
+                        <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i>Envoyée
+                    {% elif campaign.status == 'SCHEDULED' %}
+                        <i data-lucide="clock" class="w-3 h-3 mr-1"></i>Programmée
+                    {% else %}
+                        {{ campaign.status }}
+                    {% endif %}
+                </span>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Date de création</label>
+                <p class="text-gray-900">{{ campaign.created_at|date:"d/m/Y H:i"|default:"-" }}</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Destinataires</label>
+                <p class="text-gray-900">{{ campaign.recipient_count|default:0 }} abonnés</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Form -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="mb-6">
+                <label class="flex items-center">
+                    <input type="checkbox" name="confirm_delete" required class="mr-2">
+                    <span class="text-sm font-medium text-gray-700">Je confirme que je veux supprimer cette campagne</span>
+                </label>
+            </div>
+            
+            <div class="flex items-center justify-between">
+                <a href="{% url 'admin_panel:newsletter_campaign_detail' campaign.pk %}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition">
+                    Annuler
+                </a>
+                
+                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition">
+                    <i data-lucide="trash-2" class="inline w-4 h-4 mr-2"></i>Supprimer définitivement
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    lucide.createIcons();
+</script>
+{% endblock %} 
