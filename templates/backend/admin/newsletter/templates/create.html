@@ -1,0 +1,163 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Créer un Template - VGK Admin{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Créer un Template</h1>
+        <p class="text-gray-600">Créez un nouveau modèle d'email pour vos campagnes</p>
+    </div>
+
+    <!-- Template Form -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Basic Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nom du Template *
+                    </label>
+                    <input type="text" id="name" name="name" required
+                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Ex: Newsletter Promo">
+                </div>
+                
+                <div>
+                    <label for="template_type" class="block text-sm font-medium text-gray-700 mb-2">
+                        Type de Template
+                    </label>
+                    <select id="template_type" name="template_type"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        {% for value, label in template_types %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Subject Template -->
+            <div>
+                <label for="subject_template" class="block text-sm font-medium text-gray-700 mb-2">
+                    Template du Sujet *
+                </label>
+                <input type="text" id="subject_template" name="subject_template" required
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       placeholder="Ex: {{name}}, découvrez nos nouvelles offres !">
+                <p class="mt-1 text-sm text-gray-500">
+                    Utilisez {{variable}} pour insérer des variables dynamiques
+                </p>
+            </div>
+
+            <!-- Content Template -->
+            <div>
+                <label for="content_template" class="block text-sm font-medium text-gray-700 mb-2">
+                    Template du Contenu (Texte) *
+                </label>
+                <textarea id="content_template" name="content_template" rows="8" required
+                          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Contenu de l'email en texte simple..."></textarea>
+            </div>
+
+            <!-- HTML Template -->
+            <div>
+                <label for="html_template" class="block text-sm font-medium text-gray-700 mb-2">
+                    Template HTML (Optionnel)
+                </label>
+                <textarea id="html_template" name="html_template" rows="12"
+                          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                          placeholder="<html><body><h1>Bonjour {{name}}</h1>...</body></html>"></textarea>
+                <p class="mt-1 text-sm text-gray-500">
+                    Version HTML de l'email. Si vide, le contenu texte sera utilisé.
+                </p>
+            </div>
+
+            <!-- Variables -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Variables Disponibles
+                </label>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div class="flex items-center space-x-2">
+                            <code class="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">{{name}}</code>
+                            <span class="text-sm text-gray-600">Nom</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <code class="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">{{email}}</code>
+                            <span class="text-sm text-gray-600">Email</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <code class="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">{{city}}</code>
+                            <span class="text-sm text-gray-600">Ville</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <code class="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">{{unsubscribe_url}}</code>
+                            <span class="text-sm text-gray-600">Désabonnement</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Aperçu
+                </label>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <div class="mb-2">
+                        <strong>Sujet:</strong> <span id="preview-subject" class="text-gray-600">Aperçu du sujet...</span>
+                    </div>
+                    <div>
+                        <strong>Contenu:</strong>
+                        <div id="preview-content" class="mt-2 p-3 bg-white border rounded text-sm text-gray-600">
+                            Aperçu du contenu...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="flex justify-end space-x-3">
+                <a href="{% url 'admin_panel:newsletter_templates' %}" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition-colors">
+                    Annuler
+                </a>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                    Créer le Template
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const subjectInput = document.getElementById('subject_template');
+    const contentInput = document.getElementById('content_template');
+    const previewSubject = document.getElementById('preview-subject');
+    const previewContent = document.getElementById('preview-content');
+    
+    function updatePreview() {
+        // Update subject preview
+        let subject = subjectInput.value || 'Aperçu du sujet...';
+        subject = subject.replace(/\{\{(\w+)\}\}/g, '<span class="bg-yellow-200 px-1 rounded">$1</span>');
+        previewSubject.innerHTML = subject;
+        
+        // Update content preview
+        let content = contentInput.value || 'Aperçu du contenu...';
+        content = content.replace(/\{\{(\w+)\}\}/g, '<span class="bg-yellow-200 px-1 rounded">$1</span>');
+        previewContent.innerHTML = content.replace(/\n/g, '<br>');
+    }
+    
+    subjectInput.addEventListener('input', updatePreview);
+    contentInput.addEventListener('input', updatePreview);
+    
+    // Initial preview
+    updatePreview();
+});
+</script>
+{% endblock %} 

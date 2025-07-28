@@ -207,6 +207,7 @@ def get_admin_stats():
             stats['newsletter_subscribers'] = NewsletterSubscriber.objects.filter(is_active=True).count()
         except Exception as e:
             print(f"Error calculating newsletter stats: {e}")
+            stats['newsletter_subscribers'] = 0
     
     return stats
 
@@ -4007,14 +4008,13 @@ class PromotionDeactivateView(AdminRequiredMixin, TemplateView):
 
 class NewsletterView(AdminRequiredMixin, ListView):
     template_name = 'backend/admin/newsletter/list.html'
-    context_object_name = 'newsletters'
+    context_object_name = 'subscribers'
     paginate_by = 20
     
     def get_queryset(self):
         if NEWSLETTER_MODELS_AVAILABLE:
-            # Use the enhanced NewsletterCampaign model instead of legacy Newsletter
-            from .models_newsletter import NewsletterCampaign
-            return NewsletterCampaign.objects.all().order_by('-created_at')
+            from .models_newsletter import NewsletterSubscriber
+            return NewsletterSubscriber.objects.all().order_by('-subscribed_at')
         return []
     
     def get_context_data(self, **kwargs):
@@ -4103,6 +4103,40 @@ class NewsletterSubscribersView(AdminRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         return context
+
+@admin_required
+@require_http_methods(["DELETE", "POST"])
+def admin_newsletter_subscriber_delete(request, subscriber_id):
+    """Delete newsletter subscriber"""
+    try:
+        if NEWSLETTER_MODELS_AVAILABLE:
+            from .models_newsletter import NewsletterSubscriber
+            subscriber = get_object_or_404(NewsletterSubscriber, id=subscriber_id)
+            subscriber_email = subscriber.email
+            subscriber.delete()
+            
+            if request.method == 'POST':
+                messages.success(request, f'Abonné "{subscriber_email}" supprimé avec succès!')
+                return redirect('admin_panel:newsletter')
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Abonné "{subscriber_email}" supprimé avec succès!'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'Modèles de newsletter non disponibles'
+            })
+    except Exception as e:
+        if request.method == 'POST':
+            messages.error(request, f'Erreur lors de la suppression: {e}')
+            return redirect('admin_panel:newsletter')
+        
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        })
 
 class AdminNotificationsView(AdminRequiredMixin, ListView):
     template_name = 'backend/admin/notifications/list.html'

@@ -1,0 +1,233 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Newsletter Dashboard - VGK Admin{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Newsletter Dashboard</h1>
+        <p class="text-gray-600">Gestion complète du système de newsletter</p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total Subscribers -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Abonnés</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.total_subscribers|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Subscribers -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Abonnés Actifs</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.active_subscribers|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Campaigns -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Campagnes</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.total_campaigns|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sent Campaigns -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-orange-100 text-orange-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Campagnes Envoyées</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.sent_campaigns|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <a href="{% url 'admin_panel:newsletter_campaign_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg p-6 text-center transition-colors">
+            <svg class="w-8 h-8 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            <h3 class="text-lg font-semibold mb-2">Créer une Campagne</h3>
+            <p class="text-blue-100">Lancer une nouvelle campagne de newsletter</p>
+        </a>
+
+        <a href="{% url 'admin_panel:newsletter_subscribers_enhanced' %}" class="bg-green-600 hover:bg-green-700 text-white rounded-lg p-6 text-center transition-colors">
+            <svg class="w-8 h-8 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+            <h3 class="text-lg font-semibold mb-2">Gérer les Abonnés</h3>
+            <p class="text-green-100">Voir et exporter la liste des abonnés</p>
+        </a>
+
+        <a href="{% url 'admin_panel:newsletter_analytics' %}" class="bg-purple-600 hover:bg-purple-700 text-white rounded-lg p-6 text-center transition-colors">
+            <svg class="w-8 h-8 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <h3 class="text-lg font-semibold mb-2">Analytics</h3>
+            <p class="text-purple-100">Analyser les performances des campagnes</p>
+        </a>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Recent Campaigns -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Campagnes Récentes</h3>
+            </div>
+            <div class="p-6">
+                {% if recent_campaigns %}
+                    <div class="space-y-4">
+                        {% for campaign in recent_campaigns %}
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <h4 class="font-medium text-gray-900">{{ campaign.name }}</h4>
+                                <p class="text-sm text-gray-600">{{ campaign.subject }}</p>
+                                <p class="text-xs text-gray-500">{{ campaign.created_at|date:"d/m/Y H:i" }}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                    {% if campaign.status == 'SENT' %}bg-green-100 text-green-800
+                                    {% elif campaign.status == 'DRAFT' %}bg-gray-100 text-gray-800
+                                    {% elif campaign.status == 'SCHEDULED' %}bg-blue-100 text-blue-800
+                                    {% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ campaign.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-4 text-center">
+                        <a href="{% url 'admin_panel:newsletter_campaigns' %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            Voir toutes les campagnes →
+                        </a>
+                    </div>
+                {% else %}
+                    <p class="text-gray-500 text-center py-8">Aucune campagne récente</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Subscribers -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Nouveaux Abonnés</h3>
+            </div>
+            <div class="p-6">
+                {% if recent_subscribers %}
+                    <div class="space-y-4">
+                        {% for subscriber in recent_subscribers %}
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <h4 class="font-medium text-gray-900">{{ subscriber.email }}</h4>
+                                {% if subscriber.name %}
+                                    <p class="text-sm text-gray-600">{{ subscriber.name }}</p>
+                                {% endif %}
+                                {% if subscriber.city %}
+                                    <p class="text-xs text-gray-500">{{ subscriber.get_city_display }}</p>
+                                {% endif %}
+                                <p class="text-xs text-gray-500">{{ subscriber.subscribed_at|date:"d/m/Y H:i" }}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                    Actif
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-4 text-center">
+                        <a href="{% url 'admin_panel:newsletter_subscribers_enhanced' %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            Voir tous les abonnés →
+                        </a>
+                    </div>
+                {% else %}
+                    <p class="text-gray-500 text-center py-8">Aucun nouvel abonné</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Growth Chart -->
+    <div class="mt-8 bg-white rounded-lg shadow">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Croissance des Abonnés (30 derniers jours)</h3>
+        </div>
+        <div class="p-6">
+            <canvas id="growthChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js for growth chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('growthChart').getContext('2d');
+    const growthData = {{ growth_data|safe }};
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: growthData.map(item => item.date),
+            datasets: [{
+                label: 'Nouveaux Abonnés',
+                data: growthData.map(item => item.subscribers),
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 

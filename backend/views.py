@@ -3637,11 +3637,14 @@ def handler403(request, exception=None):
 
 @csrf_exempt
 def newsletter_subscribe(request):
-    """Handle newsletter subscription via AJAX"""
+    """Enhanced newsletter subscription via AJAX with advanced features"""
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             email = data.get('email', '').strip()
+            name = data.get('name', '').strip()
+            city = data.get('city', '').strip()
+            preferences = data.get('preferences', {})
             
             if not email:
                 return JsonResponse({
@@ -3653,21 +3656,63 @@ def newsletter_subscribe(request):
             from .models_newsletter import NewsletterSubscriber
             
             # Check if email already exists
-            if NewsletterSubscriber.objects.filter(email=email).exists():
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Cette adresse email est déjà abonnée'
-                })
+            existing_subscriber = NewsletterSubscriber.objects.filter(email=email).first()
             
-            # Create new subscriber
+            if existing_subscriber:
+                # Update existing subscriber if they were unsubscribed
+                if not existing_subscriber.is_active:
+                    existing_subscriber.is_active = True
+                    existing_subscriber.unsubscribed_at = None
+                    if name:
+                        existing_subscriber.name = name
+                    if city:
+                        existing_subscriber.city = city
+                    if preferences:
+                        existing_subscriber.preferences.update(preferences)
+                    existing_subscriber.save()
+                    
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Merci pour votre réabonnement!'
+                    })
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Cette adresse email est déjà abonnée'
+                    })
+            
+            # Create new subscriber with enhanced data
             subscriber = NewsletterSubscriber.objects.create(
                 email=email,
+                name=name,
+                city=city,
+                preferences=preferences,
                 is_active=True
             )
             
+            # Send welcome email if configured
+            try:
+                from .newsletter_email_service import newsletter_email_service
+                from .models_newsletter import NewsletterTemplate
+                
+                # Try to send welcome email using template
+                welcome_template = NewsletterTemplate.objects.filter(
+                    template_type='WELCOME',
+                    is_active=True
+                ).first()
+                
+                if welcome_template:
+                    newsletter_email_service.send_template_email(
+                        template=welcome_template,
+                        subscribers=[subscriber],
+                        variables={'name': name or 'Abonné', 'email': email}
+                    )
+            except Exception as e:
+                logger.warning(f"Failed to send welcome email: {str(e)}")
+            
             return JsonResponse({
                 'success': True,
-                'message': 'Merci pour votre abonnement!'
+                'message': 'Merci pour votre abonnement! Vous recevrez bientôt nos meilleures offres.'
             })
             
         except json.JSONDecodeError:
@@ -3676,9 +3721,10 @@ def newsletter_subscribe(request):
                 'error': 'Données invalides'
             })
         except Exception as e:
+            logger.error(f"Newsletter subscription error: {str(e)}")
             return JsonResponse({
                 'success': False,
-                'error': f'Erreur serveur: {str(e)}'
+                'error': 'Erreur serveur, veuillez réessayer plus tard'
             })
     
     return JsonResponse({

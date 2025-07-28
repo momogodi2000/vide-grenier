@@ -1,0 +1,151 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Importer des Abonnés - VGK Admin{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Importer des Abonnés</h1>
+        <p class="text-gray-600">Importez des abonnés depuis un fichier Excel</p>
+    </div>
+
+    <!-- Import Form -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- File Upload -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Fichier Excel (.xlsx ou .xls)
+                </label>
+                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-gray-400 transition-colors">
+                    <div class="space-y-1 text-center">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <div class="flex text-sm text-gray-600">
+                            <label for="file" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                <span>Télécharger un fichier</span>
+                                <input id="file" name="file" type="file" class="sr-only" accept=".xlsx,.xls" required>
+                            </label>
+                            <p class="pl-1">ou glisser-déposer</p>
+                        </div>
+                        <p class="text-xs text-gray-500">Excel jusqu'à 10MB</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 class="text-sm font-medium text-blue-800 mb-2">Instructions d'import</h3>
+                <div class="text-sm text-blue-700 space-y-1">
+                    <p><strong>Colonnes requises:</strong></p>
+                    <ul class="list-disc list-inside ml-4 space-y-1">
+                        <li><code>email</code> - Adresse email (obligatoire)</li>
+                        <li><code>name</code> - Nom complet (optionnel)</li>
+                        <li><code>phone</code> - Numéro de téléphone (optionnel)</li>
+                        <li><code>city</code> - Ville (optionnel)</li>
+                    </ul>
+                    <p class="mt-2"><strong>Format attendu:</strong></p>
+                    <ul class="list-disc list-inside ml-4">
+                        <li>Première ligne = en-têtes des colonnes</li>
+                        <li>Une ligne par abonné</li>
+                        <li>Emails en minuscules automatiquement</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Template Download -->
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h3 class="text-sm font-medium text-gray-800 mb-2">Télécharger un modèle</h3>
+                <p class="text-sm text-gray-600 mb-3">Utilisez ce modèle Excel pour formater vos données correctement.</p>
+                <a href="{% url 'admin_panel:newsletter_subscribers_export' %}?template=1" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Télécharger le modèle
+                </a>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex justify-end space-x-3">
+                <a href="{% url 'admin_panel:newsletter_subscribers_enhanced' %}" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition-colors">
+                    Annuler
+                </a>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                    Importer les Abonnés
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Recent Imports -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Imports Récents</h3>
+        </div>
+        <div class="p-6">
+            <div class="text-center text-gray-500 py-8">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <p class="mt-2 text-sm">Aucun import récent</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('file');
+    const dropZone = document.querySelector('.border-dashed');
+    
+    // File drag and drop
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.classList.add('border-blue-400', 'bg-blue-50');
+    });
+    
+    dropZone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('border-blue-400', 'bg-blue-50');
+    });
+    
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('border-blue-400', 'bg-blue-50');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            updateFileName(files[0].name);
+        }
+    });
+    
+    // File input change
+    fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            updateFileName(e.target.files[0].name);
+        }
+    });
+    
+    function updateFileName(fileName) {
+        const dropZone = document.querySelector('.border-dashed');
+        dropZone.innerHTML = `
+            <div class="space-y-1 text-center">
+                <svg class="mx-auto h-12 w-12 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div class="text-sm text-gray-600">
+                    <p class="font-medium text-green-600">${fileName}</p>
+                    <p class="text-xs text-gray-500">Fichier sélectionné</p>
+                </div>
+            </div>
+        `;
+    }
+});
+</script>
+{% endblock %} 
