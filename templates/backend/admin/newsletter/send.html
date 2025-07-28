@@ -1,0 +1,257 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Envoyer Newsletter - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Envoyer une Newsletter</h1>
+                <p class="text-gray-600 mt-2">Envoyez des emails aux abonnés de votre newsletter</p>
+            </div>
+            <a href="{% url 'admin_panel:newsletter' %}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition">
+                <i data-lucide="arrow-left" class="inline w-4 h-4 mr-2"></i>Retour
+            </a>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+                <div class="px-4 py-3 rounded-lg mb-3 {% if message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Send Form -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <form method="post" id="newsletterForm">
+            {% csrf_token %}
+            
+            <!-- Recipients Section -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Destinataires</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Send to specific recipient -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Destinataire spécifique
+                        </label>
+                        <input type="email" name="recipient" value="{{ request.GET.recipient|default:'' }}" 
+                               placeholder="email@example.com" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <p class="text-sm text-gray-500 mt-1">Laissez vide pour envoyer à tous les abonnés</p>
+                    </div>
+                    
+                    <!-- Send to all subscribers -->
+                    <div class="flex items-center">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="send_to_all" id="sendToAll" class="mr-2">
+                            <span class="text-sm font-medium text-gray-700">Envoyer à tous les abonnés actifs</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Subscriber count -->
+                <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                    <p class="text-sm text-blue-800">
+                        <i data-lucide="users" class="inline w-4 h-4 mr-1"></i>
+                        <strong>{{ total_subscribers|default:0 }}</strong> abonnés actifs disponibles
+                    </p>
+                </div>
+            </div>
+
+            <!-- Email Content -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Contenu de l'email</h3>
+                
+                <div class="space-y-4">
+                    <!-- Subject -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Sujet <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="subject" required 
+                               placeholder="Sujet de votre newsletter" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <!-- Message -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Message <span class="text-red-500">*</span>
+                        </label>
+                        <textarea name="message" rows="8" required 
+                                  placeholder="Contenu de votre newsletter..." 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    </div>
+                    
+                    <!-- HTML Content -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Contenu HTML (optionnel)
+                        </label>
+                        <textarea name="html_content" rows="6" 
+                                  placeholder="<html><body><h1>Titre</h1><p>Contenu HTML...</p></body></html>" 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"></textarea>
+                        <p class="text-sm text-gray-500 mt-1">Laissez vide pour utiliser le message texte simple</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Send Options -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Options d'envoi</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="track_opens" checked class="mr-2">
+                            <span class="text-sm font-medium text-gray-700">Suivre les ouvertures</span>
+                        </label>
+                    </div>
+                    
+                    <div>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="track_clicks" checked class="mr-2">
+                            <span class="text-sm font-medium text-gray-700">Suivre les clics</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                <div class="flex space-x-3">
+                    <button type="button" id="previewBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition">
+                        <i data-lucide="eye" class="inline w-4 h-4 mr-2"></i>Aperçu
+                    </button>
+                    <button type="button" id="saveDraftBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition">
+                        <i data-lucide="save" class="inline w-4 h-4 mr-2"></i>Sauvegarder brouillon
+                    </button>
+                </div>
+                
+                <button type="submit" id="sendBtn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition">
+                    <i data-lucide="send" class="inline w-4 h-4 mr-2"></i>Envoyer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">Aperçu de l'email</h3>
+                    <button type="button" id="closePreview" class="text-gray-500 hover:text-gray-700">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div id="previewContent" class="border rounded-lg p-4 bg-gray-50">
+                    <!-- Preview content will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+    
+    // Form validation and preview functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('newsletterForm');
+        const sendToAllCheckbox = document.getElementById('sendToAll');
+        const recipientInput = document.querySelector('input[name="recipient"]');
+        const previewBtn = document.getElementById('previewBtn');
+        const previewModal = document.getElementById('previewModal');
+        const closePreview = document.getElementById('closePreview');
+        const previewContent = document.getElementById('previewContent');
+        
+        // Handle send to all checkbox
+        sendToAllCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                recipientInput.value = '';
+                recipientInput.disabled = true;
+            } else {
+                recipientInput.disabled = false;
+            }
+        });
+        
+        // Preview functionality
+        previewBtn.addEventListener('click', function() {
+            const subject = document.querySelector('input[name="subject"]').value;
+            const message = document.querySelector('textarea[name="message"]').value;
+            const htmlContent = document.querySelector('textarea[name="html_content"]').value;
+            
+            if (!subject || !message) {
+                alert('Veuillez remplir le sujet et le message pour voir l\'aperçu.');
+                return;
+            }
+            
+            let preview = `<h2>${subject}</h2>`;
+            if (htmlContent) {
+                preview += htmlContent;
+            } else {
+                preview += `<p>${message.replace(/\n/g, '<br>')}</p>`;
+            }
+            
+            previewContent.innerHTML = preview;
+            previewModal.classList.remove('hidden');
+        });
+        
+        // Close preview modal
+        closePreview.addEventListener('click', function() {
+            previewModal.classList.add('hidden');
+        });
+        
+        // Close modal when clicking outside
+        previewModal.addEventListener('click', function(e) {
+            if (e.target === previewModal) {
+                previewModal.classList.add('hidden');
+            }
+        });
+        
+        // Form validation
+        form.addEventListener('submit', function(e) {
+            const subject = document.querySelector('input[name="subject"]').value;
+            const message = document.querySelector('textarea[name="message"]').value;
+            const recipient = recipientInput.value;
+            
+            if (!subject || !message) {
+                e.preventDefault();
+                alert('Veuillez remplir le sujet et le message.');
+                return;
+            }
+            
+            if (!sendToAllCheckbox.checked && !recipient) {
+                e.preventDefault();
+                alert('Veuillez spécifier un destinataire ou cocher "Envoyer à tous les abonnés".');
+                return;
+            }
+            
+            // Confirm before sending
+            if (!confirm('Êtes-vous sûr de vouloir envoyer cette newsletter ?')) {
+                e.preventDefault();
+                return;
+            }
+            
+            // Show loading state
+            const sendBtn = document.getElementById('sendBtn');
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i data-lucide="loader-2" class="inline w-4 h-4 mr-2 animate-spin"></i>Envoi en cours...';
+        });
+    });
+</script>
+{% endblock %} 

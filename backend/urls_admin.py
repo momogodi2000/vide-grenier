@@ -94,6 +94,34 @@ urlpatterns = [
     path('newsletter/subscribers/', views_admin.NewsletterSubscribersView.as_view(), name='newsletter_subscribers'),
     path('newsletter/subscriber/<uuid:subscriber_id>/delete/', views_admin.admin_newsletter_subscriber_delete, name='newsletter_subscriber_delete'),
     
+    # Newsletter Campaigns
+    path('newsletter/campaigns/', views_admin.NewsletterCampaignListView.as_view(), name='newsletter_campaigns'),
+    path('newsletter/campaigns/create/', views_admin.NewsletterCampaignCreateView.as_view(), name='newsletter_campaign_create'),
+    path('newsletter/campaigns/<uuid:pk>/', views_admin.NewsletterCampaignDetailView.as_view(), name='newsletter_campaign_detail'),
+    path('newsletter/campaigns/<uuid:pk>/edit/', views_admin.NewsletterCampaignEditView.as_view(), name='newsletter_campaign_edit'),
+    path('newsletter/campaigns/<uuid:pk>/delete/', views_admin.NewsletterCampaignDeleteView.as_view(), name='newsletter_campaign_delete'),
+    path('newsletter/campaigns/<uuid:pk>/send/', views_admin.NewsletterCampaignSendView.as_view(), name='newsletter_campaign_send'),
+    
+    # Newsletter Templates
+    path('newsletter/templates/', views_admin.NewsletterTemplateListView.as_view(), name='newsletter_templates'),
+    path('newsletter/templates/create/', views_admin.NewsletterTemplateCreateView.as_view(), name='newsletter_template_create'),
+    path('newsletter/templates/<uuid:pk>/', views_admin.NewsletterTemplateDetailView.as_view(), name='newsletter_template_detail'),
+    path('newsletter/templates/<uuid:pk>/edit/', views_admin.NewsletterTemplateEditView.as_view(), name='newsletter_template_edit'),
+    path('newsletter/templates/<uuid:pk>/delete/', views_admin.NewsletterTemplateDeleteView.as_view(), name='newsletter_template_delete'),
+    
+    # Newsletter Scheduled
+    path('newsletter/scheduled/', views_admin.NewsletterScheduledListView.as_view(), name='newsletter_scheduled'),
+    path('newsletter/scheduled/create/', views_admin.NewsletterScheduledCreateView.as_view(), name='newsletter_scheduled_create'),
+    path('newsletter/scheduled/<uuid:pk>/', views_admin.NewsletterScheduledDetailView.as_view(), name='newsletter_scheduled_detail'),
+    path('newsletter/scheduled/<uuid:pk>/edit/', views_admin.NewsletterScheduledEditView.as_view(), name='newsletter_scheduled_edit'),
+    path('newsletter/scheduled/<uuid:pk>/delete/', views_admin.NewsletterScheduledDeleteView.as_view(), name='newsletter_scheduled_delete'),
+    
+    # Newsletter Analytics
+    path('newsletter/analytics/', views_admin.NewsletterAnalyticsView.as_view(), name='newsletter_analytics'),
+    
+    # Newsletter Subscribers Import
+    path('newsletter/subscribers/import/', views_admin.NewsletterSubscribersImportView.as_view(), name='newsletter_subscribers_import'),
+    
     # ============= ENHANCED NEWSLETTER SYSTEM =============
     path('newsletter/dashboard/', newsletter_admin.newsletter_dashboard, name='newsletter_dashboard'),
     path('newsletter/campaigns/', newsletter_admin.NewsletterCampaignListView.as_view, name='newsletter_campaigns'),

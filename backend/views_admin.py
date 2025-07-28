@@ -4020,13 +4020,15 @@ class NewsletterView(AdminRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if NEWSLETTER_MODELS_AVAILABLE:
-            from .models_newsletter import NewsletterCampaign, NewsletterSubscriber
+            from .models_newsletter import NewsletterCampaign, NewsletterSubscriber, NewsletterTemplate, ScheduledNewsletter
             context.update({
                 'total_campaigns': NewsletterCampaign.objects.count(),
                 'sent_campaigns': NewsletterCampaign.objects.filter(status='SENT').count(),
                 'draft_campaigns': NewsletterCampaign.objects.filter(status='DRAFT').count(),
                 'scheduled_campaigns': NewsletterCampaign.objects.filter(status='SCHEDULED').count(),
                 'total_subscribers': NewsletterSubscriber.objects.filter(is_active=True).count(),
+                'total_templates': NewsletterTemplate.objects.filter(is_active=True).count(),
+                'scheduled_campaigns': ScheduledNewsletter.objects.filter(is_active=True).count(),
             })
         return context
 
@@ -4137,6 +4139,160 @@ def admin_newsletter_subscriber_delete(request, subscriber_id):
             'success': False,
             'message': str(e)
         })
+
+# ============ NEWSLETTER CAMPAIGNS ============
+class NewsletterCampaignListView(AdminRequiredMixin, ListView):
+    template_name = 'backend/admin/newsletter/campaigns/list.html'
+    context_object_name = 'campaigns'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        if NEWSLETTER_MODELS_AVAILABLE:
+            from .models_newsletter import NewsletterCampaign
+            return NewsletterCampaign.objects.all().order_by('-created_at')
+        return []
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if NEWSLETTER_MODELS_AVAILABLE:
+            from .models_newsletter import NewsletterCampaign
+            context.update({
+                'total_campaigns': NewsletterCampaign.objects.count(),
+                'draft_campaigns': NewsletterCampaign.objects.filter(status='DRAFT').count(),
+                'sent_campaigns': NewsletterCampaign.objects.filter(status='SENT').count(),
+            })
+        return context
+
+class NewsletterCampaignCreateView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/newsletter/campaigns/create.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NewsletterCampaignDetailView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/newsletter/campaigns/detail.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NewsletterCampaignEditView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/newsletter/campaigns/edit.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NewsletterCampaignDeleteView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/newsletter/campaigns/delete.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NewsletterCampaignSendView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/newsletter/campaigns/send.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+# ============ NEWSLETTER TEMPLATES ============
+class NewsletterTemplateListView(AdminRequiredMixin, ListView):
+    template_name = 'backend/admin/newsletter/templates/list.html'
+    context_object_name = 'templates'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        if NEWSLETTER_MODELS_AVAILABLE:
+            from .models_newsletter import NewsletterTemplate
+            return NewsletterTemplate.objects.all().order_by('name')
+        return []
+
+class NewsletterTemplateCreateView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/newsletter/templates/create.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NewsletterTemplateDetailView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/newsletter/templates/detail.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NewsletterTemplateEditView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/newsletter/templates/edit.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NewsletterTemplateDeleteView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/newsletter/templates/delete.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+# ============ NEWSLETTER SCHEDULED ============
+class NewsletterScheduledListView(AdminRequiredMixin, ListView):
+    template_name = 'backend/admin/newsletter/scheduled/list.html'
+    context_object_name = 'scheduled'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        if NEWSLETTER_MODELS_AVAILABLE:
+            from .models_newsletter import ScheduledNewsletter
+            return ScheduledNewsletter.objects.all().order_by('next_send_date')
+        return []
+
+class NewsletterScheduledCreateView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/newsletter/scheduled/create.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NewsletterScheduledDetailView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/newsletter/scheduled/detail.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NewsletterScheduledEditView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/newsletter/scheduled/edit.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class NewsletterScheduledDeleteView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/newsletter/scheduled/delete.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+# ============ NEWSLETTER ANALYTICS ============
+class NewsletterAnalyticsView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/newsletter/analytics.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+# ============ NEWSLETTER SUBSCRIBERS IMPORT ============
+class NewsletterSubscribersImportView(AdminRequiredMixin, TemplateView):
+    template_name = 'backend/admin/newsletter/subscribers/import.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
 
 class AdminNotificationsView(AdminRequiredMixin, ListView):
     template_name = 'backend/admin/notifications/list.html'
