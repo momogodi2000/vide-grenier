@@ -446,16 +446,11 @@ class GroupChatForm(forms.ModelForm):
     
     class Meta:
         model = GroupChat
-        fields = ['name', 'description', 'type']
+        fields = ['name', 'type']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Nom du groupe'
-            }),
-            'description': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Description du groupe (optionnel)'
             }),
             'type': forms.Select(attrs={
                 'class': 'form-control'
@@ -494,7 +489,6 @@ class GroupChatForm(forms.ModelForm):
         self.helper.form_class = 'group-chat-form'
         self.helper.layout = Layout(
             Field('name', css_class='form-group'),
-            Field('description', css_class='form-group'),
             Field('type', css_class='form-group'),
             Field('selected_participants', css_class='form-group'),
             FormActions(

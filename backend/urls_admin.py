@@ -1,6 +1,7 @@
 # backend/urls_admin.py - COMPLETE ADMIN-SPECIFIC URLs FOR VGK
 from django.urls import path, include
 from . import views_admin
+from . import newsletter_admin
 
 app_name = 'admin_panel'
 
@@ -91,6 +92,22 @@ urlpatterns = [
     path('newsletter/<uuid:pk>/send/', views_admin.NewsletterSendView.as_view(), name='newsletter_send'),
     path('newsletter/send/', views_admin.NewsletterSendView.as_view(), name='admin_newsletter_send'),
     path('newsletter/subscribers/', views_admin.NewsletterSubscribersView.as_view(), name='newsletter_subscribers'),
+    
+    # ============= ENHANCED NEWSLETTER SYSTEM =============
+    path('newsletter/dashboard/', newsletter_admin.newsletter_dashboard, name='newsletter_dashboard'),
+    path('newsletter/campaigns/', newsletter_admin.NewsletterCampaignListView.as_view(), name='newsletter_campaigns'),
+    path('newsletter/campaigns/create/', newsletter_admin.NewsletterCampaignCreateView.as_view(), name='newsletter_campaign_create'),
+    path('newsletter/campaigns/<uuid:pk>/', newsletter_admin.NewsletterCampaignDetailView.as_view(), name='newsletter_campaign_detail'),
+    path('newsletter/campaigns/<uuid:pk>/edit/', newsletter_admin.NewsletterCampaignUpdateView.as_view(), name='newsletter_campaign_edit'),
+    path('newsletter/campaigns/<uuid:campaign_id>/send/', newsletter_admin.send_campaign, name='newsletter_campaign_send'),
+    path('newsletter/campaigns/<uuid:campaign_id>/schedule/', newsletter_admin.schedule_campaign, name='newsletter_campaign_schedule'),
+    path('newsletter/subscribers/enhanced/', newsletter_admin.NewsletterSubscriberListView.as_view(), name='newsletter_subscribers_enhanced'),
+    path('newsletter/subscribers/export/', newsletter_admin.export_subscribers, name='newsletter_subscribers_export'),
+    path('newsletter/templates/', newsletter_admin.NewsletterTemplateListView.as_view(), name='newsletter_templates'),
+    path('newsletter/templates/create/', newsletter_admin.NewsletterTemplateCreateView.as_view(), name='newsletter_template_create'),
+    path('newsletter/scheduled/', newsletter_admin.ScheduledNewsletterListView.as_view(), name='newsletter_scheduled'),
+    path('newsletter/analytics/', newsletter_admin.newsletter_analytics, name='newsletter_analytics'),
+    path('newsletter/webhook/', newsletter_admin.newsletter_webhook, name='newsletter_webhook'),
     
     # ============= NOTIFICATION MANAGEMENT =============
     path('notifications/', views_admin.AdminNotificationsView.as_view(), name='notifications'),

@@ -1,4 +1,4 @@
-# vide/settings/base.py
+# vide/settings/base.py - OPTIMIZED VERSION
 import os
 from pathlib import Path
 
@@ -28,7 +28,23 @@ VGK_SETTINGS = {
     'ADMIN_WHATSAPP': '237694638412',
     'COMPANY_NAME': 'Vidé-Grenier Kamer',
     'COMPANY_EMAIL': 'support@videgrenier-kamer.com',
-    'COMPANY_PHONE': '+237 694 63 84 12'
+    'COMPANY_PHONE': '+237 694 63 84 12',
+    'COMMISSION_RATE': 0.08,  # 8% commission
+    'CDN_URL': config('CDN_URL', default=''),  # CDN URL for static files
+    'MIN_PRODUCT_PRICE': 100,  # Minimum product price in FCFA
+    'MAX_PRODUCT_PRICE': 10000000,  # Maximum product price in FCFA
+    'DELIVERY_COST_DOUALA_YAOUNDE': 2000,  # Delivery cost for Douala and Yaounde
+    'DELIVERY_COST_OTHER_CITIES': 5000,  # Delivery cost for other cities
+    'PICKUP_POINTS': {
+        'DOUALA': [
+            {'name': 'Point de retrait Douala Centre', 'address': 'Centre-ville, Douala'},
+            {'name': 'Point de retrait Douala Akwa', 'address': 'Akwa, Douala'},
+        ],
+        'YAOUNDE': [
+            {'name': 'Point de retrait Yaounde Centre', 'address': 'Centre-ville, Yaounde'},
+            {'name': 'Point de retrait Yaounde Bastos', 'address': 'Bastos, Yaounde'},
+        ]
+    }
 }
 
 # Application definition
@@ -41,7 +57,7 @@ DJANGO_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'django.contrib.humanize',
-
+    'django.contrib.postgres',  # PostgreSQL specific features
 ]
 
 THIRD_PARTY_APPS = [
@@ -53,7 +69,6 @@ THIRD_PARTY_APPS = [
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.facebook',
     # 'channels',  # Commented out to avoid dependency
-    'crispy_forms',
     # 'crispy_tailwind',  # Commented out to avoid dependency
 ]
 
@@ -74,6 +89,8 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Performance monitoring middleware
+    'backend.views.PerformanceMiddleware',
 ]
 
 ROOT_URLCONF = 'vide.urls'
@@ -115,7 +132,7 @@ WEBSOCKET_ORIGIN_WHITELIST = [
     '127.0.0.1:8000',
 ]
 
-# Database
+# Database - OPTIMIZED CONFIGURATION
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -124,32 +141,68 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD', default='root'),
         'HOST': config('DB_HOST', default='localhost'),
         'PORT': config('DB_PORT', default='5432'),
+        # Database optimization settings
+        'OPTIONS': {
+            'MAX_CONNS': 20,  # Maximum connections
+            'CONN_MAX_AGE': 600,  # Connection lifetime (10 minutes)
+            'OPTIONS': {
+                'sslmode': 'require' if not DEBUG else 'disable',
+            },
+        },
+        # Connection pooling
+        'CONN_HEALTH_CHECKS': True,
+        'ATOMIC_REQUESTS': False,  # Disable for better performance
     }
 }
 
-# Redis Configuration
+# Redis Configuration - OPTIMIZED
 REDIS_URL = config('REDIS_URL', default='redis://localhost:6379/0')
 
-# Channels
-# CHANNEL_LAYERS = {
-#     'default': {
-#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-#         'CONFIG': {
-#             'hosts': [REDIS_URL],
-#         },
-#     },
-# }
-
-# Cache
+# Enhanced Cache Configuration
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
         'LOCATION': REDIS_URL,
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        }
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 50,
+                'retry_on_timeout': True,
+            },
+            'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
+            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+            'IGNORE_EXCEPTIONS': True,
+        },
+        'TIMEOUT': 300,  # 5 minutes default
+        'KEY_PREFIX': 'vgk',
+        'VERSION': 1,
+    },
+    'session': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL + '/1',  # Separate database for sessions
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'TIMEOUT': 1500,  # 25 minutes for sessions
+        'KEY_PREFIX': 'vgk_session',
+    },
+    'long_term': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL + '/2',  # Separate database for long-term cache
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'TIMEOUT': 3600,  # 1 hour for long-term cache
+        'KEY_PREFIX': 'vgk_long',
     }
 }
+
+# Session Configuration - OPTIMIZED
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'session'
+SESSION_COOKIE_AGE = 1500  # 25 minutes
+SESSION_SAVE_EVERY_REQUEST = False
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -176,15 +229,15 @@ TIME_ZONE = 'Africa/Douala'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-STATIC_URL = '/static/'
+# Static files (CSS, JavaScript, Images) - OPTIMIZED
+STATIC_URL = VGK_SETTINGS.get('CDN_URL', '') + '/static/' if VGK_SETTINGS.get('CDN_URL') else '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
-# Media files
-MEDIA_URL = '/media/'
+# Media files - OPTIMIZED
+MEDIA_URL = VGK_SETTINGS.get('CDN_URL', '') + '/media/' if VGK_SETTINGS.get('CDN_URL') else '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Static files configuration optimisée
@@ -203,7 +256,6 @@ WHITENOISE_SKIP_COMPRESS_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'zip
 # Compression des fichiers CSS/JS
 WHITENOISE_USE_FINDERS = True
 WHITENOISE_AUTOREFRESH = config('DEBUG', default=False, cast=bool)
-
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -235,7 +287,7 @@ SOCIALACCOUNT_ADAPTER = 'backend.adapters.CustomSocialAccountAdapter'
 # Social providers (Google, Facebook)
 SOCIALACCOUNT_PROVIDERS = SOCIALACCOUNT_PROVIDERS
 
-# REST Framework
+# REST Framework - OPTIMIZED
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
@@ -246,16 +298,32 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',
+        'user': '1000/hour'
+    },
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser'
+    ],
 }
 
 # CORS Settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:8000",
-    "https://vide-grenier-kamer.onrender.com",
+    "https://vide-grenier-kamer.onrender.com"
 ]
 
-# Security Settings
+# Security Settings - ENHANCED
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
@@ -263,13 +331,14 @@ SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
-# Email Configuration
+# Email Configuration - OPTIMIZED
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = VGK_SETTINGS['COMPANY_EMAIL']
 
 # Crispy Forms
 # CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
@@ -281,18 +350,50 @@ CAMPAY_BASE_URL = 'https://api.campay.net'
 ORANGE_MONEY_API_KEY = config('ORANGE_MONEY_API_KEY', default='')
 MTN_MONEY_API_KEY = config('MTN_MONEY_API_KEY', default='')
 
-# File Upload Settings
-FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
-DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
+# File Upload Settings - OPTIMIZED
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+FILE_UPLOAD_TEMP_DIR = BASE_DIR / 'temp'
 
-# Session Configuration
-SESSION_COOKIE_AGE = 1500  # 25 minutes
-SESSION_SAVE_EVERY_REQUEST = False  # Only true inactivity counts
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Expire session when browser closes
+# Celery Configuration - OPTIMIZED
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_ENABLE_UTC = True
+CELERY_WORKER_CONCURRENCY = 8
+CELERY_TASK_ACKS_LATE = True
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_TASK_ROUTES = {
+    'backend.tasks.*': {'queue': 'default'},
+    'backend.tasks.send_newsletter_task': {'queue': 'newsletter'},
+    'backend.tasks.send_bulk_notification_task': {'queue': 'notifications'},
+}
+CELERY_TASK_DEFAULT_QUEUE = 'default'
+CELERY_TASK_DEFAULT_EXCHANGE = 'default'
+CELERY_TASK_DEFAULT_ROUTING_KEY = 'default'
 
-# Logging
+# Newsletter Settings
+NEWSLETTER_SETTINGS = {
+    'BATCH_SIZE': 50,
+    'BATCH_DELAY': 5,  # seconds between batches
+    'MAX_RETRIES': 3,
+    'RETRY_DELAY': 300,  # 5 minutes
+}
 
-# Créer le dossier logs s'il n'existe pas
+# Performance Settings
+PERFORMANCE_SETTINGS = {
+    'CACHE_TIMEOUT': 900,  # 15 minutes
+    'PRODUCT_CACHE_TIMEOUT': 1800,  # 30 minutes
+    'DASHBOARD_CACHE_TIMEOUT': 600,  # 10 minutes
+    'SEARCH_CACHE_TIMEOUT': 300,  # 5 minutes
+    'MAX_QUERIES_PER_REQUEST': 20,
+    'SLOW_QUERY_THRESHOLD': 1.0,  # seconds
+}
+
+# Logging - ENHANCED
 LOGS_DIR = BASE_DIR / 'logs'
 os.makedirs(LOGS_DIR, exist_ok=True)
 
@@ -308,19 +409,12 @@ LOGGING = {
             'format': '{levelname} {message}',
             'style': '{',
         },
+        'performance': {
+            'format': '{asctime} {levelname} {message} - {duration:.2f}s - {query_count} queries',
+            'style': '{',
+        },
     },
     'handlers': {
-        # 'console': {
-        #     'level': 'DEBUG',
-        #     'class': 'logging.StreamHandler',
-        #     'formatter': 'verbose',
-        # },
-        # 'file': {
-        #     'level': 'INFO',
-        #     'class': 'logging.FileHandler',
-        #     'filename': LOGS_DIR / 'django.log',
-        #     'formatter': 'verbose',
-        # },
         'error_console': {
             'level': 'ERROR',
             'class': 'logging.StreamHandler',
@@ -330,6 +424,18 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
+        },
+        'performance_file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': LOGS_DIR / 'performance.log',
+            'formatter': 'performance',
+        },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': LOGS_DIR / 'errors.log',
+            'formatter': 'verbose',
         },
     },
     'root': {
@@ -357,35 +463,20 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
-        # 'backend': {
-        #     'handlers': ['console', 'file', 'error_console', 'request_console'],
-        #     'level': 'DEBUG',
-        #     'propagate': False,
-        # },
+        'backend.views': {
+            'handlers': ['performance_file', 'error_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['performance_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
     },
 }
 
-# Custom Settings for VGK
-VGK_SETTINGS = {
-    'COMMISSION_RATE': 0.08,  # 8% commission
-    'DELIVERY_COST_DOUALA_YAOUNDE': 1500,  # FCFA
-    'DELIVERY_COST_OTHER_CITIES': 2500,  # FCFA
-    'FREE_STORAGE_DAYS': 7,
-    'STORAGE_COST_PER_DAY': 500,  # FCFA
-    'MIN_PRODUCT_PRICE': 1000,  # FCFA
-    'MAX_PRODUCT_PRICE': 50000000,  # FCFA
-    'MAX_IMAGES_PER_PRODUCT': 5,
-    'SUPPORTED_CITIES': ['Douala', 'Yaoundé'],
-    'PICKUP_POINTS': {
-        'Douala': {
-            'address': '123 Avenue Ahidjo, Akwa',
-            'phone': '+237 694 63 84 12',
-            'hours': 'Lun-Ven 7h30-18h30, Sam 8h-16h, Dim 10h-14h'
-        },
-        'Yaoundé': {
-            'address': '456 Avenue Kennedy, Centre-ville',
-            'phone': '+237 694 63 84 13',
-            'hours': 'Lun-Ven 7h30-18h30, Sam 8h-16h, Dim fermé'
-        }
-    }
-}
+# Database Query Logging (only in development)
+if DEBUG:
+    LOGGING['loggers']['django.db.backends']['level'] = 'DEBUG'
+    LOGGING['loggers']['django.db.backends']['handlers'] = ['request_console']

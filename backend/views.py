@@ -25,8 +25,21 @@ from django.db import transaction
 from django.conf import settings
 from django.core.mail import send_mail
 from django.contrib.auth.decorators import login_required, user_passes_test
-
+from django.views.decorators.cache import cache_page
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+from django.core.cache import cache
+from django.contrib import messages
+from django.urls import reverse_lazy
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.http import require_POST
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+from django.core.cache import cache
+from django.conf import settings
+from django.utils import timezone
+from datetime import datetime, timedelta
 import json
+import logging
+
 import random
 import string
 import urllib.parse
@@ -36,12 +49,13 @@ from decimal import Decimal
 from .models import (
     User, Product, Category, Order, Payment, Review, 
     Chat, Message, Favorite, SearchHistory, Notification, 
-    AdminStock, PickupPoint, Analytics, ProductImage,
-    GroupChat, GroupChatMessage
+    AdminStock, PickupPoint, ProductImage,
+    GroupChat, GroupChatMessage, SearchAlert, SavedSearch,
+    ProductAlert
 )
 from .models_advanced import (
     VisitorCart, VisitorCartItem, ProductReport, VisitorFavorite, 
-    VisitorCompare, ProductComment, ProductLike, ProductAlert
+    VisitorCompare, ProductComment, ProductLike
 )
 from .forms import (
     CustomSignupForm, CustomLoginForm, ProductForm, 
@@ -54,6 +68,16 @@ from .utils import (
     process_payment, track_analytics, generate_pickup_code,
     get_client_ip
 )
+
+logger = logging.getLogger(__name__)
+
+# Cache decorators for performance
+CACHE_TIMEOUT = 60 * 15  # 15 minutes
+PRODUCT_CACHE_TIMEOUT = 60 * 30  # 30 minutes for product pages
+
+def get_cache_key(prefix, *args):
+    """Generate cache key with prefix and arguments"""
+    return f"vgk_{prefix}_{'_'.join(str(arg) for arg in args)}"
 
 
 class HomeView(TemplateView):
@@ -3661,6 +3685,513 @@ def newsletter_subscribe(request):
         'success': False,
         'error': 'Méthode non autorisée'
     })
+
+
+# ============= OPTIMIZED PRODUCT VIEWS =============
+
+@method_decorator(cache_page(PRODUCT_CACHE_TIMEOUT), name='dispatch')
+class ProductListView(ListView):
+    """Optimized product list view with caching and query optimization"""
+    model = Product
+    template_name = 'backend/client/products/products.html'
+    context_object_name = 'products'
+    paginate_by = 24
+    
+    def get_queryset(self):
+        """Optimized queryset with select_related and prefetch_related"""
+        queryset = Product.objects.select_related(
+            'seller', 'category'
+        ).prefetch_related(
+            'images'
+        ).filter(
+            status='ACTIVE'
+        ).only(
+            'id', 'title', 'slug', 'price', 'condition', 'city', 
+            'is_negotiable', 'views_count', 'likes_count', 'created_at',
+            'seller__email', 'seller__first_name', 'seller__last_name',
+            'category__name', 'category__slug'
+        )
+        
+        # Apply filters
+        category = self.request.GET.get('category')
+        if category:
+            queryset = queryset.filter(category__slug=category)
+        
+        city = self.request.GET.get('city')
+        if city:
+            queryset = queryset.filter(city=city)
+        
+        condition = self.request.GET.get('condition')
+        if condition:
+            queryset = queryset.filter(condition=condition)
+        
+        min_price = self.request.GET.get('min_price')
+        if min_price:
+            queryset = queryset.filter(price__gte=min_price)
+        
+        max_price = self.request.GET.get('max_price')
+        if max_price:
+            queryset = queryset.filter(price__lte=max_price)
+        
+        # Sort options
+        sort_by = self.request.GET.get('sort', '-created_at')
+        if sort_by == 'price_low':
+            queryset = queryset.order_by('price')
+        elif sort_by == 'price_high':
+            queryset = queryset.order_by('-price')
+        elif sort_by == 'popular':
+            queryset = queryset.order_by('-views_count')
+        elif sort_by == 'recent':
+            queryset = queryset.order_by('-created_at')
+        else:
+            queryset = queryset.order_by('-created_at')
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Cache categories
+        cache_key = get_cache_key('categories_active')
+        categories = cache.get(cache_key)
+        if categories is None:
+            categories = Category.objects.filter(
+                is_active=True, parent=None
+            ).prefetch_related('children').only(
+                'id', 'name', 'slug', 'icon'
+            )
+            cache.set(cache_key, categories, CACHE_TIMEOUT)
+        
+        context['categories'] = categories
+        context['current_filters'] = self.request.GET
+        return context
+
+
+@method_decorator(cache_page(PRODUCT_CACHE_TIMEOUT), name='dispatch')
+class ProductDetailView(DetailView):
+    """Optimized product detail view with caching"""
+    model = Product
+    template_name = 'backend/client/products/product_detail.html'
+    context_object_name = 'product'
+    
+    def get_queryset(self):
+        """Optimized queryset with related data"""
+        return Product.objects.select_related(
+            'seller', 'category'
+        ).prefetch_related(
+            'images', 'reviews__reviewer'
+        ).filter(
+            status='ACTIVE'
+        )
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Increment view count (async)
+        self.increment_view_count()
+        
+        # Get related products
+        related_products = Product.objects.select_related(
+            'seller', 'category'
+        ).prefetch_related(
+            'images'
+        ).filter(
+            category=self.object.category,
+            status='ACTIVE'
+        ).exclude(
+            id=self.object.id
+        ).only(
+            'id', 'title', 'slug', 'price', 'condition', 'city',
+            'seller__email', 'category__name'
+        )[:6]
+        
+        context['related_products'] = related_products
+        return context
+    
+    def increment_view_count(self):
+        """Increment view count asynchronously"""
+        try:
+            # Use cache to batch updates
+            cache_key = f"product_views_{self.object.id}"
+            current_views = cache.get(cache_key, 0)
+            cache.set(cache_key, current_views + 1, 60 * 5)  # 5 minutes
+            
+            # Update database periodically
+            if current_views % 10 == 0:  # Update every 10 views
+                Product.objects.filter(id=self.object.id).update(
+                    views_count=F('views_count') + current_views + 1
+                )
+                cache.delete(cache_key)
+        except Exception as e:
+            logger.error(f"Error incrementing view count: {e}")
+
+
+# ============= OPTIMIZED SEARCH VIEWS =============
+
+class OptimizedSearchView(ListView):
+    """Optimized search view with full-text search"""
+    model = Product
+    template_name = 'backend/client/search/results.html'
+    context_object_name = 'products'
+    paginate_by = 24
+    
+    def get_queryset(self):
+        query = self.request.GET.get('q', '').strip()
+        if not query:
+            return Product.objects.none()
+        
+        # Use PostgreSQL full-text search
+        search_vector = SearchVector('title', weight='A') + SearchVector('description', weight='B')
+        search_query = SearchQuery(query, config='french')
+        
+        queryset = Product.objects.select_related(
+            'seller', 'category'
+        ).prefetch_related(
+            'images'
+        ).annotate(
+            search=search_vector,
+            rank=SearchRank(search_vector, search_query)
+        ).filter(
+            search=search_query,
+            status='ACTIVE'
+        ).order_by('-rank', '-created_at').only(
+            'id', 'title', 'slug', 'price', 'condition', 'city',
+            'seller__email', 'category__name'
+        )
+        
+        # Log search for analytics
+        self.log_search(query, queryset.count())
+        
+        return queryset
+    
+    def log_search(self, query, results_count):
+        """Log search for analytics"""
+        try:
+            SearchHistory.objects.create(
+                user=self.request.user if self.request.user.is_authenticated else None,
+                search_term=query,
+                results_count=results_count,
+                ip_address=self.get_client_ip()
+            )
+        except Exception as e:
+            logger.error(f"Error logging search: {e}")
+    
+    def get_client_ip(self):
+        x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = self.request.META.get('REMOTE_ADDR')
+        return ip
+
+
+# ============= OPTIMIZED DASHBOARD VIEWS =============
+
+@method_decorator(cache_page(CACHE_TIMEOUT), name='dispatch')
+class OptimizedDashboardView(TemplateView):
+    """Optimized dashboard with caching and efficient queries"""
+    template_name = 'backend/client/dashboard/client_dashboard.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        
+        # Cache user-specific data
+        cache_key = get_cache_key('dashboard', user.id)
+        cached_data = cache.get(cache_key)
+        
+        if cached_data is None:
+            # Optimized queries with select_related
+            my_products = Product.objects.filter(
+                seller=user
+            ).select_related('category').only(
+                'id', 'title', 'price', 'status', 'created_at',
+                'category__name'
+            ).order_by('-created_at')[:5]
+            
+            my_orders = Order.objects.filter(
+                buyer=user
+            ).select_related('product', 'product__category').only(
+                'id', 'order_number', 'total_amount', 'status', 'created_at',
+                'product__title', 'product__category__name'
+            ).order_by('-created_at')[:5]
+            
+            my_favorites = Favorite.objects.filter(
+                user=user
+            ).select_related('product', 'product__category').only(
+                'id', 'created_at', 'product__title', 'product__price',
+                'product__category__name'
+            ).order_by('-created_at')[:5]
+            
+            # Count queries
+            unread_messages = Message.objects.filter(
+                chat__buyer=user, is_read=False
+            ).exclude(sender=user).count()
+            
+            unread_notifications = Notification.objects.filter(
+                user=user, is_read=False
+            ).count()
+            
+            # Sales stats
+            sales_stats = Order.objects.filter(
+                product__seller=user, status='DELIVERED'
+            ).aggregate(
+                total_sales=Count('id'),
+                total_revenue=Sum('total_amount')
+            )
+            
+            cached_data = {
+                'my_products': my_products,
+                'my_orders': my_orders,
+                'my_favorites': my_favorites,
+                'unread_messages': unread_messages,
+                'unread_notifications': unread_notifications,
+                'sales_stats': sales_stats,
+            }
+            
+            cache.set(cache_key, cached_data, CACHE_TIMEOUT)
+        
+        context.update(cached_data)
+        return context
+
+
+# ============= OPTIMIZED ORDER VIEWS =============
+
+class OptimizedOrderListView(LoginRequiredMixin, ListView):
+    """Optimized order list with efficient queries"""
+    model = Order
+    template_name = 'backend/client/orders/orders.html'
+    context_object_name = 'orders'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        return Order.objects.filter(
+            buyer=self.request.user
+        ).select_related(
+            'product', 'product__category', 'product__seller'
+        ).prefetch_related(
+            'product__images'
+        ).only(
+            'id', 'order_number', 'total_amount', 'status', 'created_at',
+            'product__title', 'product__category__name', 'product__seller__email'
+        ).order_by('-created_at')
+
+
+# ============= OPTIMIZED CHAT VIEWS =============
+
+class OptimizedChatListView(LoginRequiredMixin, ListView):
+    """Optimized chat list with efficient queries"""
+    model = Chat
+    template_name = 'backend/client/chat/chats.html'
+    context_object_name = 'chats'
+    
+    def get_queryset(self):
+        user = self.request.user
+        return Chat.objects.filter(
+            Q(buyer=user) | Q(seller=user),
+            is_active=True
+        ).select_related(
+            'product', 'product__category', 'buyer', 'seller'
+        ).prefetch_related(
+            'messages'
+        ).only(
+            'id', 'product__title', 'product__category__name',
+            'buyer__email', 'seller__email', 'updated_at'
+        ).order_by('-updated_at')
+
+
+# ============= CACHE MANAGEMENT =============
+
+def clear_product_cache(product_id=None):
+    """Clear product-related cache"""
+    if product_id:
+        cache.delete(get_cache_key('product_detail', product_id))
+    cache.delete_pattern('vgk_product_*')
+    cache.delete_pattern('vgk_dashboard_*')
+
+
+def clear_user_cache(user_id):
+    """Clear user-specific cache"""
+    cache.delete(get_cache_key('dashboard', user_id))
+    cache.delete_pattern(f'vgk_user_{user_id}_*')
+
+
+# ============= PERFORMANCE MONITORING =============
+
+class PerformanceMiddleware:
+    """Middleware to monitor query performance"""
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+    
+    def __call__(self, request):
+        from django.db import connection
+        from django.utils import timezone
+        
+        start_time = timezone.now()
+        
+        response = self.get_response(request)
+        
+        end_time = timezone.now()
+        duration = (end_time - start_time).total_seconds()
+        
+        # Log slow requests
+        if duration > 1.0:  # Log requests taking more than 1 second
+            logger.warning(f"Slow request: {request.path} took {duration:.2f}s")
+        
+        # Log query count
+        query_count = len(connection.queries)
+        if query_count > 20:  # Log requests with more than 20 queries
+            logger.warning(f"High query count: {request.path} made {query_count} queries")
+        
+        return response
+
+
+# ============= BULK OPERATIONS =============
+
+def bulk_update_product_status(product_ids, status):
+    """Bulk update product status efficiently"""
+    try:
+        updated_count = Product.objects.filter(
+            id__in=product_ids
+        ).update(
+            status=status,
+            updated_at=timezone.now()
+        )
+        
+        # Clear cache for updated products
+        for product_id in product_ids:
+            clear_product_cache(product_id)
+        
+        return updated_count
+    except Exception as e:
+        logger.error(f"Error in bulk update: {e}")
+        return 0
+
+
+def bulk_create_notifications(users, notification_data):
+    """Bulk create notifications efficiently"""
+    try:
+        notifications = [
+            Notification(
+                user=user,
+                **notification_data
+            )
+            for user in users
+        ]
+        
+        Notification.objects.bulk_create(notifications, batch_size=1000)
+        
+        # Clear user cache
+        for user in users:
+            clear_user_cache(user.id)
+        
+        return len(notifications)
+    except Exception as e:
+        logger.error(f"Error in bulk notification creation: {e}")
+        return 0
+
+
+# ============= ANALYTICS OPTIMIZATION =============
+
+def get_user_analytics(user_id, days=30):
+    """Get user analytics with caching"""
+    cache_key = get_cache_key('analytics', user_id, days)
+    analytics = cache.get(cache_key)
+    
+    if analytics is None:
+        end_date = timezone.now()
+        start_date = end_date - timedelta(days=days)
+        
+        analytics = {
+            'orders': Order.objects.filter(
+                buyer_id=user_id,
+                created_at__range=(start_date, end_date)
+            ).count(),
+            'products': Product.objects.filter(
+                seller_id=user_id,
+                created_at__range=(start_date, end_date)
+            ).count(),
+            'revenue': Order.objects.filter(
+                product__seller_id=user_id,
+                status='DELIVERED',
+                created_at__range=(start_date, end_date)
+            ).aggregate(total=Sum('total_amount'))['total'] or 0,
+        }
+        
+        cache.set(cache_key, analytics, CACHE_TIMEOUT)
+    
+    return analytics
+
+
+# ============= SEARCH OPTIMIZATION =============
+
+def get_search_suggestions(query, limit=10):
+    """Get search suggestions with caching"""
+    cache_key = get_cache_key('search_suggestions', query, limit)
+    suggestions = cache.get(cache_key)
+    
+    if suggestions is None:
+        # Use full-text search for suggestions
+        search_vector = SearchVector('title', weight='A')
+        search_query = SearchQuery(query, config='french')
+        
+        suggestions = Product.objects.annotate(
+            search=search_vector,
+            rank=SearchRank(search_vector, search_query)
+        ).filter(
+            search=search_query,
+            status='ACTIVE'
+        ).order_by('-rank').values_list(
+            'title', flat=True
+        ).distinct()[:limit]
+        
+        cache.set(cache_key, list(suggestions), CACHE_TIMEOUT)
+    
+    return suggestions
+
+
+# ============= NOTIFICATION OPTIMIZATION =============
+
+def get_user_notifications(user_id, limit=20):
+    """Get user notifications with caching"""
+    cache_key = get_cache_key('notifications', user_id, limit)
+    notifications = cache.get(cache_key)
+    
+    if notifications is None:
+        notifications = Notification.objects.filter(
+            user_id=user_id
+        ).order_by('-created_at').only(
+            'id', 'type', 'title', 'message', 'is_read', 'created_at'
+        )[:limit]
+        
+        cache.set(cache_key, list(notifications), CACHE_TIMEOUT)
+    
+    return notifications
+
+
+# ============= FAVORITE OPTIMIZATION =============
+
+def get_user_favorites(user_id, limit=20):
+    """Get user favorites with caching"""
+    cache_key = get_cache_key('favorites', user_id, limit)
+    favorites = cache.get(cache_key)
+    
+    if favorites is None:
+        favorites = Favorite.objects.filter(
+            user_id=user_id
+        ).select_related(
+            'product', 'product__category'
+        ).prefetch_related(
+            'product__images'
+        ).only(
+            'id', 'created_at', 'product__title', 'product__price',
+            'product__category__name'
+        ).order_by('-created_at')[:limit]
+        
+        cache.set(cache_key, list(favorites), CACHE_TIMEOUT)
+    
+    return favorites
 
 
 

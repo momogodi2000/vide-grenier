@@ -685,36 +685,7 @@ class ProductLike(models.Model):
         return f"{identifier} {self.like_type.lower()}d {self.product.title}"
 
 
-class ProductAlert(models.Model):
-    """Price alerts for products"""
-    ALERT_TYPES = [
-        ('PRICE_DROP', 'Price Drop'),
-        ('BACK_IN_STOCK', 'Back in Stock'),
-        ('NEW_SIMILAR', 'New Similar Product'),
-    ]
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='alerts')
-    
-    # For registered users
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='product_alerts')
-    
-    # For visitors
-    visitor_email = models.EmailField(blank=True)
-    visitor_phone = models.CharField(max_length=20, blank=True)
-    
-    alert_type = models.CharField(max_length=20, choices=ALERT_TYPES, default='PRICE_DROP')
-    target_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    triggered_at = models.DateTimeField(null=True, blank=True)
-    
-    class Meta:
-        db_table = 'product_alerts'
-    
-    def __str__(self):
-        identifier = self.user.get_full_name() if self.user else self.visitor_email
-        return f"{identifier} - {self.get_alert_type_display()} for {self.product.title}"
+# ProductAlert model moved to main models.py to avoid conflicts
 
 
 # ============= WALLET & FINANCIAL SYSTEM =============

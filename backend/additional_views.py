@@ -89,7 +89,7 @@ import json
 from .models import (
     User, Product, Category, Order, Payment, Review, 
     Chat, Message, Favorite, SearchHistory, Notification, 
-    AdminStock, PickupPoint, Analytics
+    AdminStock, PickupPoint
 )
 from .models import SavedSearch
 from .utils import send_sms_notification, send_email_notification
@@ -555,11 +555,8 @@ class RecentlyViewedView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Récupérer de l'historique analytics
-        recent_views = Analytics.objects.filter(
-            user=self.request.user,
-            metric_type='PRODUCT_VIEW'
-        ).order_by('-created_at')[:20]
+        # Récupérer de l'historique analytics (placeholder)
+        recent_views = []
         
         # Extraire les IDs des produits
         product_ids = [

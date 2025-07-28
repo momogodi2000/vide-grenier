@@ -32,7 +32,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 try:
     from .models import (
         Product, Category, Order, Review, Chat, Message, Notification, 
-        Analytics, AdminStock, PickupPoint, ProductImage, Payment, 
+        AdminStock, PickupPoint, ProductImage, Payment, 
         Favorite, SearchHistory
     )
     MAIN_MODELS_AVAILABLE = True
@@ -1705,11 +1705,8 @@ def admin_product_detail(request, product_id):
         except AdminStock.DoesNotExist:
             pass
     
-    # Analytics data
-    analytics_data = Analytics.objects.filter(
-        data__product_id=str(product.id),
-        metric_type='PRODUCT_VIEW'
-    ).order_by('-created_at')[:10]
+    # Analytics data (placeholder)
+    analytics_data = []
     
     context = {
         'product': product,
@@ -1777,17 +1774,8 @@ def admin_product_create(request):
                         warranty_info=form.cleaned_data.get('warranty_info', ''),
                     )
                     
-                    # Log analytics
-                    Analytics.objects.create(
-                        metric_type='PRODUCT_CREATE',
-                        user=request.user,
-                        data={
-                            'product_id': str(product.id),
-                            'product_title': product.title,
-                            'source': 'ADMIN'
-                        },
-                        ip_address=request.META.get('REMOTE_ADDR', ''),
-                    )
+                    # Log analytics (placeholder)
+                    pass
                     
                     messages.success(request, f'Produit "{product.title}" créé avec succès!')
                     return redirect('backend:admin_product_detail', product_id=product.id)
@@ -2047,19 +2035,8 @@ def admin_product_reject(request, product_id):
                 }
             )
             
-            # Log analytics
-            Analytics.objects.create(
-                metric_type='PRODUCT_REJECT',
-                user=request.user,
-                data={
-                    'product_id': str(product.id),
-                    'product_title': product.title,
-                    'seller_id': str(product.seller.id),
-                    'reason': rejection_reason,
-                    'email_sent': email_sent
-                },
-                ip_address=request.META.get('REMOTE_ADDR', ''),
-            )
+            # Log analytics (placeholder)
+            pass
             
             message = f'Produit "{product.title}" rejeté avec succès!'
             if not email_sent:
@@ -2335,12 +2312,15 @@ class AdminNewsletterListView(ListView):
             return []
         
         try:
-            queryset = Newsletter.objects.all().order_by('-created_at')
+            # Use the enhanced NewsletterCampaign model instead of legacy Newsletter
+            from .models_newsletter import NewsletterCampaign
+            queryset = NewsletterCampaign.objects.all().order_by('-created_at')
             
             # Search functionality
             search = self.request.GET.get('search', '')
             if search:
                 queryset = queryset.filter(
+                    Q(name__icontains=search) |
                     Q(subject__icontains=search) |
                     Q(content__icontains=search)
                 )
@@ -2355,10 +2335,11 @@ class AdminNewsletterListView(ListView):
         
         if NEWSLETTER_MODELS_AVAILABLE:
             try:
+                from .models_newsletter import NewsletterCampaign, NewsletterSubscriber
                 context.update({
-                    'total_newsletters': Newsletter.objects.count(),
-                    'sent_newsletters': Newsletter.objects.filter(is_sent=True).count(),
-                    'draft_newsletters': Newsletter.objects.filter(is_sent=False).count(),
+                    'total_newsletters': NewsletterCampaign.objects.count(),
+                    'sent_newsletters': NewsletterCampaign.objects.filter(status='SENT').count(),
+                    'draft_newsletters': NewsletterCampaign.objects.filter(status='DRAFT').count(),
                     'total_subscribers': NewsletterSubscriber.objects.filter(is_active=True).count(),
                 })
             except Exception as e:
@@ -2379,7 +2360,10 @@ def admin_newsletter_create(request):
             content = request.POST.get('content')
             
             if subject and content:
-                newsletter = Newsletter.objects.create(
+                # Use the enhanced NewsletterCampaign model instead of legacy Newsletter
+                from .models_newsletter import NewsletterCampaign
+                newsletter = NewsletterCampaign.objects.create(
+                    name=subject,  # Use subject as name for backward compatibility
                     subject=subject,
                     content=content,
                     created_by=request.user
@@ -4028,11 +4012,22 @@ class NewsletterView(AdminRequiredMixin, ListView):
     
     def get_queryset(self):
         if NEWSLETTER_MODELS_AVAILABLE:
-            return Newsletter.objects.all().order_by('-created_at')
+            # Use the enhanced NewsletterCampaign model instead of legacy Newsletter
+            from .models_newsletter import NewsletterCampaign
+            return NewsletterCampaign.objects.all().order_by('-created_at')
         return []
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        if NEWSLETTER_MODELS_AVAILABLE:
+            from .models_newsletter import NewsletterCampaign, NewsletterSubscriber
+            context.update({
+                'total_campaigns': NewsletterCampaign.objects.count(),
+                'sent_campaigns': NewsletterCampaign.objects.filter(status='SENT').count(),
+                'draft_campaigns': NewsletterCampaign.objects.filter(status='DRAFT').count(),
+                'scheduled_campaigns': NewsletterCampaign.objects.filter(status='SCHEDULED').count(),
+                'total_subscribers': NewsletterSubscriber.objects.filter(is_active=True).count(),
+            })
         return context
 
 class NewsletterCreateView(AdminRequiredMixin, TemplateView):
@@ -4049,7 +4044,9 @@ class NewsletterListView(AdminRequiredMixin, ListView):
     
     def get_queryset(self):
         if NEWSLETTER_MODELS_AVAILABLE:
-            return Newsletter.objects.all().order_by('-created_at')
+            # Use the enhanced NewsletterCampaign model instead of legacy Newsletter
+            from .models_newsletter import NewsletterCampaign
+            return NewsletterCampaign.objects.all().order_by('-created_at')
         return []
     
     def get_context_data(self, **kwargs):
@@ -4063,7 +4060,9 @@ class NewsletterSentView(AdminRequiredMixin, ListView):
     
     def get_queryset(self):
         if NEWSLETTER_MODELS_AVAILABLE:
-            return Newsletter.objects.filter(sent=True).order_by('-sent_at')
+            # Use the enhanced NewsletterCampaign model instead of legacy Newsletter
+            from .models_newsletter import NewsletterCampaign
+            return NewsletterCampaign.objects.filter(status='SENT').order_by('-sent_at')
         return []
     
     def get_context_data(self, **kwargs):

@@ -8,7 +8,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.contrib.auth import get_user_model
-from .models import Analytics, Notification
+from .models import Notification
 import logging
 
 logger = logging.getLogger(__name__)
@@ -269,32 +269,40 @@ def process_card_payment(order):
 
 
 def track_analytics(user=None, metric_type='PAGE_VIEW', request=None, data=None):
-    """Enregistrer une métrique d'analytics"""
+    """Enregistrer une métrique d'analytics (using performance monitoring)"""
     try:
         if data is None:
             data = {}
         
-        # Extraire les informations de la requête
+        # Extract request information
         page_url = request.build_absolute_uri() if request else ''
         referrer = request.META.get('HTTP_REFERER', '') if request else ''
         user_agent = request.META.get('HTTP_USER_AGENT', '') if request else ''
         ip_address = get_client_ip(request) if request else '127.0.0.1'
         session_id = request.session.session_key if request and request.session.session_key else ''
         
-        # Créer l'enregistrement analytics
-        Analytics.objects.create(
-            metric_type=metric_type,
-            user=user,
-            session_id=session_id,
-            page_url=page_url,
-            referrer=referrer,
-            user_agent=user_agent,
-            ip_address=ip_address,
-            data=data
-        )
+        # Log analytics data for performance monitoring
+        analytics_data = {
+            'metric_type': metric_type,
+            'user_id': user.id if user else None,
+            'session_id': session_id,
+            'page_url': page_url,
+            'referrer': referrer,
+            'user_agent': user_agent,
+            'ip_address': ip_address,
+            'data': data,
+            'timestamp': timezone.now().isoformat()
+        }
+        
+        # Store in cache for performance monitoring
+        from django.core.cache import cache
+        cache_key = f"analytics_{metric_type}_{ip_address}_{int(timezone.now().timestamp() / 3600)}"
+        cache.set(cache_key, analytics_data, 3600)  # Cache for 1 hour
+        
+        logger.info(f"Analytics tracked: {metric_type} for {page_url}")
         
     except Exception as e:
-        logger.error(f"Erreur enregistrement analytics: {str(e)}")
+        logger.error(f"Error tracking analytics: {str(e)}")
 
 
 def get_client_ip(request):

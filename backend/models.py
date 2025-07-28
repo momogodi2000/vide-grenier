@@ -1,9 +1,32 @@
-# backend/models.py - VERSION CORRIGÉE
+# backend/models.py - VERSION CORRIGÉE (SQLite Compatible)
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
+
+# PostgreSQL-specific imports (optional)
+try:
+    from django.contrib.postgres.indexes import GinIndex
+    from django.contrib.postgres.search import SearchVectorField, SearchVector
+    POSTGRES_AVAILABLE = True
+except ImportError:
+    POSTGRES_AVAILABLE = False
+    # Fallback for SQLite
+    class GinIndex:
+        def __init__(self, fields):
+            self.fields = fields
+    
+    class SearchVectorField(models.TextField):
+        pass
+    
+    class SearchVector:
+        def __init__(self, field, weight=None):
+            self.field = field
+            self.weight = weight
+        
+        def __add__(self, other):
+            return self
 
 from decimal import Decimal
 from PIL import Image
@@ -41,6 +64,16 @@ class User(AbstractUser):
     phone_verified = models.BooleanField(default=False)
     trust_score = models.IntegerField(default=100)
     loyalty_points = models.IntegerField(default=0)
+    loyalty_level = models.CharField(
+        max_length=20,
+        choices=[
+            ('bronze', 'Bronze'),
+            ('silver', 'Argent'),
+            ('gold', 'Or'),
+            ('platinum', 'Platine')
+        ],
+        default='bronze'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     last_activity = models.DateTimeField(auto_now=True)
@@ -50,52 +83,57 @@ class User(AbstractUser):
     
     class Meta:
         db_table = 'users'
-        verbose_name = 'Utilisateur'
-        verbose_name_plural = 'Utilisateurs'
+        indexes = [
+            models.Index(fields=['email']),
+            models.Index(fields=['phone']),
+            models.Index(fields=['user_type', 'is_active']),
+            models.Index(fields=['city', 'is_active']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['last_activity']),
+        ]
     
     def __str__(self):
-        return f"{self.email} ({self.get_user_type_display()})"
-    
-    def get_absolute_url(self):
-        return reverse('backend:profile', kwargs={'pk': self.pk})
+        return self.email
     
     def get_full_name(self):
-        return f"{self.first_name} {self.last_name}".strip()
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        return self.email
     
     @property
-    def loyalty_level(self):
-        if self.loyalty_points >= 20000:
-            return 'PLATINE'
-        elif self.loyalty_points >= 5000:
-            return 'OR'
-        elif self.loyalty_points >= 1000:
-            return 'ARGENT'
-        return 'BRONZE'
+    def display_name(self):
+        return self.get_full_name() or self.email
+    
+    def get_city_display(self):
+        return dict(self.CITIES).get(self.city, self.city)
 
 
 class Category(models.Model):
-    """Catégories de produits hiérarchiques"""
+    """Catégories de produits"""
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
     description = models.TextField(blank=True)
+    icon = models.CharField(max_length=50, blank=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
-    icon = models.CharField(max_length=50, blank=True)  # For emoji or icon class
-    image = models.ImageField(upload_to='categories/', blank=True, null=True)
-    is_active = models.BooleanField(default=True)
     order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         db_table = 'categories'
         verbose_name = 'Catégorie'
         verbose_name_plural = 'Catégories'
         ordering = ['order', 'name']
+        indexes = [
+            models.Index(fields=['slug']),
+            models.Index(fields=['parent', 'is_active']),
+            models.Index(fields=['order', 'is_active']),
+        ]
     
     def __str__(self):
-        if self.parent:
-            return f"{self.parent.name} > {self.name}"
         return self.name
     
     def get_absolute_url(self):
@@ -145,31 +183,39 @@ class Product(models.Model):
     views_count = models.PositiveIntegerField(default=0)
     likes_count = models.PositiveIntegerField(default=0)
     is_featured = models.BooleanField(default=False)
-    is_premium = models.BooleanField(default=False)
-    expires_at = models.DateTimeField(null=True, blank=True)
-    
-    # Approval fields
-    is_approved = models.BooleanField(default=False)
-    approved_at = models.DateTimeField(null=True, blank=True)
-    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_products')
-    rejected_at = models.DateTimeField(null=True, blank=True)
-    rejected_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='rejected_products')
-    rejection_reason = models.CharField(max_length=200, blank=True)
-    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # Full-text search field for PostgreSQL (optional)
+    if POSTGRES_AVAILABLE:
+        search_vector = SearchVectorField(null=True, blank=True)
     
     class Meta:
         db_table = 'products'
         verbose_name = 'Produit'
         verbose_name_plural = 'Produits'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'created_at']),
+            models.Index(fields=['seller', 'status']),
+            models.Index(fields=['category', 'status']),
+            models.Index(fields=['city', 'status']),
+            models.Index(fields=['price']),
+            models.Index(fields=['condition', 'status']),
+            models.Index(fields=['is_featured', 'status']),
+            models.Index(fields=['views_count']),
+            models.Index(fields=['likes_count']),
+        ]
+        
+        # Add PostgreSQL-specific indexes only if available
+        if POSTGRES_AVAILABLE:
+            indexes.append(GinIndex(fields=['search_vector']))
     
     def __str__(self):
         return self.title
     
     def save(self, *args, **kwargs):
-        # Auto-generate slug if not provided
+        # Generate slug if not provided
         if not self.slug:
             from django.utils.text import slugify
             base_slug = slugify(self.title)
@@ -180,6 +226,10 @@ class Product(models.Model):
             while Product.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
                 self.slug = f"{base_slug}-{counter}"
                 counter += 1
+        
+        # Update search vector for full-text search (PostgreSQL only)
+        if POSTGRES_AVAILABLE and hasattr(self, 'search_vector'):
+            self.search_vector = SearchVector('title', weight='A') + SearchVector('description', weight='B')
         
         super().save(*args, **kwargs)
     
@@ -217,6 +267,10 @@ class ProductImage(models.Model):
     class Meta:
         db_table = 'product_images'
         ordering = ['order']
+        indexes = [
+            models.Index(fields=['product', 'is_primary']),
+            models.Index(fields=['order']),
+        ]
     
     def __str__(self):
         return f"Image {self.order} - {self.product.title}"
@@ -252,25 +306,22 @@ class Order(models.Model):
         ('CAMPAY', 'Campay'),
         ('ORANGE_MONEY', 'Orange Money'),
         ('MTN_MONEY', 'MTN Mobile Money'),
-        ('NOUPIA', 'Noupia'),
-        ('CARD', 'Carte bancaire'),
-        ('CASH_ON_DELIVERY', 'Paiement à la livraison'),
+        ('CASH', 'Espèces'),
     ]
     
     DELIVERY_METHODS = [
-        ('PICKUP', 'Retrait en point'),
+        ('PICKUP', 'Point de retrait'),
         ('DELIVERY', 'Livraison à domicile'),
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    order_number = models.CharField(max_length=20, unique=True)
-    # For public/anonymous orders, buyer can be null
-    buyer = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='orders', null=True, blank=True)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    order_number = models.CharField(max_length=20, unique=True, blank=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='orders')
+    buyer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders_bought')
+    pickup_point = models.ForeignKey('PickupPoint', on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
     quantity = models.PositiveIntegerField(default=1)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    commission_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    delivery_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=STATUSES, default='PENDING')
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
     delivery_method = models.CharField(max_length=20, choices=DELIVERY_METHODS)
@@ -293,6 +344,16 @@ class Order(models.Model):
         verbose_name = 'Commande'
         verbose_name_plural = 'Commandes'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['order_number']),
+            models.Index(fields=['buyer', 'status']),
+            models.Index(fields=['product', 'status']),
+            models.Index(fields=['status', 'created_at']),
+            models.Index(fields=['payment_method', 'status']),
+            models.Index(fields=['pickup_point', 'status']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['delivered_at']),
+        ]
     
     def __str__(self):
         return f"Commande {self.order_number}"
@@ -333,6 +394,12 @@ class Payment(models.Model):
     class Meta:
         db_table = 'payments'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['payment_reference']),
+            models.Index(fields=['status', 'created_at']),
+            models.Index(fields=['transaction_id']),
+            models.Index(fields=['completed_at']),
+        ]
     
     def __str__(self):
         return f"Paiement {self.payment_reference}"
@@ -353,30 +420,30 @@ class Review(models.Model):
     overall_rating = models.IntegerField(choices=RATING_CHOICES)
     comment = models.TextField()
     images = models.JSONField(default=list, blank=True)
-    is_verified = models.BooleanField(default=True)
-    helpful_count = models.PositiveIntegerField(default=0)
+    is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         db_table = 'reviews'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['reviewer', 'created_at']),
+            models.Index(fields=['overall_rating']),
+            models.Index(fields=['is_verified', 'created_at']),
+        ]
     
     def __str__(self):
-        return f"Avis de {self.reviewer.email} - {self.overall_rating}★"
-    
-    @property
-    def average_rating(self):
-        return (self.product_quality + self.seller_communication + 
-                self.delivery_speed + self.packaging + self.overall_rating) / 5
+        return f"Avis de {self.reviewer.email} - {self.overall_rating}/5"
 
 
 class Chat(models.Model):
-    """Conversations entre acheteurs et vendeurs"""
+    """Conversations privées entre acheteur et vendeur"""
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='chats')
-    buyer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='buyer_chats')
-    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='seller_chats')
+    buyer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chats_as_buyer')
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chats_as_seller')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -385,6 +452,12 @@ class Chat(models.Model):
         db_table = 'chats'
         unique_together = ['product', 'buyer', 'seller']
         ordering = ['-updated_at']
+        indexes = [
+            models.Index(fields=['buyer', 'is_active']),
+            models.Index(fields=['seller', 'is_active']),
+            models.Index(fields=['product', 'is_active']),
+            models.Index(fields=['updated_at']),
+        ]
     
     def __str__(self):
         return f"Chat {self.buyer.email} - {self.seller.email}"
@@ -398,15 +471,12 @@ class GroupChat(models.Model):
         ('ADMIN_STAFF', 'Admin-Staff'),
         ('CLIENT_STAFF', 'Client-Staff'),
         ('GENERAL', 'Général'),
-        ('SUPPORT', 'Support'),
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
-    type = models.CharField(max_length=20, choices=TYPES, default='GENERAL')
+    type = models.CharField(max_length=20, choices=TYPES)
     participants = models.ManyToManyField(User, related_name='group_chats')
-    creator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_group_chats')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -414,9 +484,13 @@ class GroupChat(models.Model):
     class Meta:
         db_table = 'group_chats'
         ordering = ['-updated_at']
+        indexes = [
+            models.Index(fields=['type', 'is_active']),
+            models.Index(fields=['updated_at']),
+        ]
     
     def __str__(self):
-        return f"Groupe: {self.name}"
+        return f"Groupe {self.name}"
     
     @property
     def last_message(self):
@@ -446,6 +520,12 @@ class Message(models.Model):
     class Meta:
         db_table = 'messages'
         ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['chat', 'created_at']),
+            models.Index(fields=['sender', 'created_at']),
+            models.Index(fields=['is_read', 'created_at']),
+            models.Index(fields=['message_type']),
+        ]
     
     def __str__(self):
         return f"Message de {self.sender.email} - {self.created_at}"
@@ -474,6 +554,11 @@ class GroupChatMessage(models.Model):
     class Meta:
         db_table = 'group_chat_messages'
         ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['group_chat', 'created_at']),
+            models.Index(fields=['sender', 'created_at']),
+            models.Index(fields=['message_type']),
+        ]
     
     def __str__(self):
         return f"Message groupe de {self.sender.email} - {self.created_at}"
@@ -495,6 +580,10 @@ class Favorite(models.Model):
         db_table = 'favorites'
         unique_together = ['user', 'product']
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'created_at']),
+            models.Index(fields=['product', 'created_at']),
+        ]
     
     def __str__(self):
         return f"{self.user.email} - {self.product.title}"
@@ -514,6 +603,11 @@ class SearchHistory(models.Model):
     class Meta:
         db_table = 'search_history'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'created_at']),
+            models.Index(fields=['search_term']),
+            models.Index(fields=['ip_address', 'created_at']),
+        ]
     
     def __str__(self):
         return f"Recherche: {self.search_term}"
@@ -543,159 +637,142 @@ class Notification(models.Model):
     class Meta:
         db_table = 'notifications'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'is_read']),
+            models.Index(fields=['type', 'created_at']),
+            models.Index(fields=['is_read', 'created_at']),
+        ]
     
     def __str__(self):
         return f"Notification pour {self.user.email}: {self.title}"
 
 
-class AdminStock(models.Model):
-    """Stock administrateur avec gestion physique"""
-    
-    STATUSES = [
-        ('AVAILABLE', 'Disponible'),
-        ('RESERVED', 'Réservé'),
-        ('SOLD', 'Vendu'),
-        ('DAMAGED', 'Endommagé'),
-        ('MAINTENANCE', 'En maintenance'),
-    ]
+class PickupPoint(models.Model):
+    """Points de retrait"""
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='admin_stock')
-    sku = models.CharField(max_length=50, unique=True)
-    quantity = models.PositiveIntegerField(default=1)
-    location = models.CharField(max_length=20, choices=User.CITIES)
-    shelf_location = models.CharField(max_length=100, blank=True)
-    purchase_price = models.DecimalField(max_digits=10, decimal_places=2)
-    condition_notes = models.TextField(blank=True)
-    warranty_info = models.TextField(blank=True)
-    status = models.CharField(max_length=20, choices=STATUSES, default='AVAILABLE')
-    received_date = models.DateTimeField(auto_now_add=True)
+    name = models.CharField(max_length=100)
+    address = models.TextField()
+    city = models.CharField(max_length=20, choices=User.CITIES)
+    phone = models.CharField(max_length=15)
+    email = models.EmailField()
+    is_active = models.BooleanField(default=True)
+    opening_hours = models.JSONField(default=dict, blank=True)
+    special_hours = models.JSONField(default=dict, blank=True)
+    capacity = models.PositiveIntegerField(default=100)
+    processing_time = models.PositiveIntegerField(default=24, help_text="Temps de traitement en heures")
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        db_table = 'admin_stock'
-        ordering = ['location', 'shelf_location']
-    
-    def __str__(self):
-        return f"Stock {self.sku} - {self.product.title}"
-    
-    @property
-    def profit_margin(self):
-        if self.purchase_price > 0:
-            return ((self.product.price - self.purchase_price) / self.purchase_price) * 100
-        return 0
-
-
-class PickupPoint(models.Model):
-    """Points de retrait physiques"""
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=100)
-    city = models.CharField(max_length=20, choices=User.CITIES)
-    address = models.TextField()
-    phone = models.CharField(max_length=15)
-    email = models.EmailField()
-    opening_hours = models.JSONField(default=dict)
-    capacity = models.PositiveIntegerField(default=100)
-    current_stock = models.PositiveIntegerField(default=0)
-    manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
         db_table = 'pickup_points'
-        ordering = ['city', 'name']
-    
-    def __str__(self):
-        return f"{self.name} - {self.city}"
-    
-    @property
-    def is_full(self):
-        return self.current_stock >= self.capacity
-
-
-class Analytics(models.Model):
-    """Analytics et métriques business"""
-    
-    METRIC_TYPES = [
-        ('PAGE_VIEW', 'Vue de page'),
-        ('PRODUCT_VIEW', 'Vue produit'),
-        ('SEARCH', 'Recherche'),
-        ('CLICK', 'Clic'),
-        ('CONVERSION', 'Conversion'),
-        ('REVENUE', 'Revenus'),
-    ]
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    metric_type = models.CharField(max_length=20, choices=METRIC_TYPES)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    session_id = models.CharField(max_length=100, blank=True)
-    page_url = models.URLField(blank=True)
-    referrer = models.URLField(blank=True)
-    user_agent = models.TextField(blank=True)
-    ip_address = models.GenericIPAddressField()
-    data = models.JSONField(default=dict)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        db_table = 'analytics'
-        ordering = ['-created_at']
+        ordering = ['name']
         indexes = [
-            models.Index(fields=['metric_type', 'created_at']),
-            models.Index(fields=['user', 'created_at']),
+            models.Index(fields=['city', 'is_active']),
+            models.Index(fields=['is_active']),
         ]
     
     def __str__(self):
-        return f"{self.metric_type} - {self.created_at}"
-    
+        return f"{self.name} - {self.city}"
 
 
-
-
-# Models to add for search functionality
-class SavedSearch(models.Model):
-    """Recherches sauvegardées par les utilisateurs"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_searches')
-    name = models.CharField(max_length=100)
-    query_params = models.TextField()  # JSON string of search parameters
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        db_table = 'saved_searches'
-        ordering = ['-created_at']
-    
-    def __str__(self):
-        return f"{self.user.email} - {self.name}"
-    
-    @property
-    def query_description(self):
-        """Description lisible de la recherche"""
-        try:
-            params = json.loads(self.query_params)
-            parts = []
-            
-            if params.get('q'):
-                parts.append(f"Mots-clés: {params['q']}")
-            if params.get('category'):
-                parts.append(f"Catégorie: {params['category']}")
-            if params.get('price_min') or params.get('price_max'):
-                price_range = f"Prix: {params.get('price_min', '0')} - {params.get('price_max', '∞')} FCFA"
-                parts.append(price_range)
-                
-            return ' | '.join(parts) if parts else 'Recherche personnalisée'
-        except:
-            return 'Recherche personnalisée'
+# NewsletterSubscriber model moved to models_newsletter.py to avoid conflicts
 
 
 class SearchAlert(models.Model):
-    """Alertes de recherche pour notifications"""
+    """Alertes de recherche pour les utilisateurs"""
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='search_alerts')
-    name = models.CharField(max_length=100)
-    query_params = models.TextField()
+    search_term = models.CharField(max_length=200)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+    min_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    max_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    city = models.CharField(max_length=20, choices=User.CITIES, blank=True)
     is_active = models.BooleanField(default=True)
-    last_notification = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         db_table = 'search_alerts'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'is_active']),
+            models.Index(fields=['search_term']),
+            models.Index(fields=['category', 'is_active']),
+        ]
+    
+    def __str__(self):
+        return f"Alerte: {self.search_term} - {self.user.email}"
+
+
+class SavedSearch(models.Model):
+    """Recherches sauvegardées par les utilisateurs"""
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_searches')
+    name = models.CharField(max_length=100)
+    search_params = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'saved_searches'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.name} - {self.user.email}"
+
+
+class AdminStock(models.Model):
+    """Stock administrateur"""
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='admin_stock')
+    quantity = models.PositiveIntegerField(default=0)
+    location = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'admin_stock'
+        ordering = ['-updated_at']
+        indexes = [
+            models.Index(fields=['product', 'quantity']),
+            models.Index(fields=['quantity']),
+        ]
+    
+    def __str__(self):
+        return f"{self.product.title} - {self.quantity} unités"
+
+
+class ProductAlert(models.Model):
+    """Alertes de produits (stock faible, etc.)"""
+    
+    TYPES = [
+        ('LOW_STOCK', 'Stock faible'),
+        ('PRICE_CHANGE', 'Changement de prix'),
+        ('STATUS_CHANGE', 'Changement de statut'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='alerts')
+    type = models.CharField(max_length=20, choices=TYPES)
+    message = models.TextField()
+    is_resolved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'product_alerts'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['product', 'type']),
+            models.Index(fields=['is_resolved', 'created_at']),
+        ]
+    
+    def __str__(self):
+        return f"Alerte {self.type} - {self.product.title}"

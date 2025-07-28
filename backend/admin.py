@@ -7,7 +7,7 @@ from django.db.models import Count, Sum
 from .models import (
     User, Product, Category, Order, Payment, Review, 
     Chat, Message, Favorite, SearchHistory, Notification,
-    AdminStock, PickupPoint, Analytics, ProductImage
+    AdminStock, PickupPoint, ProductImage
 )
 
 
@@ -181,7 +181,7 @@ class ReviewAdmin(admin.ModelAdmin):
     
     list_display = (
         'reviewer', 'order', 'overall_rating', 'product_quality',
-        'is_verified', 'helpful_count', 'created_at'
+        'is_verified', 'created_at'
     )
     list_filter = ('overall_rating', 'is_verified', 'created_at')
     search_fields = ('reviewer__email', 'comment', 'order__product__title')
@@ -193,12 +193,11 @@ class AdminStockAdmin(admin.ModelAdmin):
     """Administration du stock admin"""
     
     list_display = (
-        'sku', 'product', 'quantity', 'location', 'status',
-        'purchase_price', 'selling_price', 'profit_margin', 'received_date'
+        'product', 'quantity', 'location', 'notes', 'created_at'
     )
-    list_filter = ('status', 'location', 'received_date')
-    search_fields = ('sku', 'product__title', 'shelf_location')
-    ordering = ('-received_date',)
+    list_filter = ('location', 'created_at')
+    search_fields = ('product__title', 'location')
+    ordering = ('-created_at',)
     
     def selling_price(self, obj):
         return obj.product.price if obj.product else 0
@@ -217,32 +216,10 @@ class PickupPointAdmin(admin.ModelAdmin):
     """Administration des points de retrait"""
     
     list_display = (
-        'name', 'city', 'manager', 'capacity', 'current_stock',
-        'occupancy_rate', 'is_active'
+        'name', 'city', 'phone', 'email', 'is_active', 'created_at'
     )
     list_filter = ('city', 'is_active')
     search_fields = ('name', 'address', 'phone')
-    
-    def occupancy_rate(self, obj):
-        if obj.capacity > 0:
-            rate = (obj.current_stock / obj.capacity) * 100
-            return f"{rate:.1f}%"
-        return "0%"
-    occupancy_rate.short_description = 'Taux occupation'
-
-
-@admin.register(Analytics)
-class AnalyticsAdmin(admin.ModelAdmin):
-    """Administration des analytics"""
-    
-    list_display = ('metric_type', 'user', 'page_url', 'ip_address', 'created_at')
-    list_filter = ('metric_type', 'created_at')
-    search_fields = ('user__email', 'page_url', 'ip_address')
-    ordering = ('-created_at',)
-    
-    # Lecture seule pour préserver l'intégrité des données
-    readonly_fields = ('metric_type', 'user', 'session_id', 'page_url', 'referrer', 
-                      'user_agent', 'ip_address', 'data', 'created_at')
 
 
 @admin.register(Notification)
