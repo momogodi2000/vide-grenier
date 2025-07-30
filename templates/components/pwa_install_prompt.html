@@ -1,0 +1,155 @@
+{% load static %}
+
+<!-- Enhanced PWA Install Prompt -->
+<div id="pwa-install-prompt" class="fixed bottom-4 left-4 right-4 z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 max-w-sm mx-auto">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center">
+                    <i data-lucide="download" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">Installer l'app</h3>
+                    <p class="text-sm text-gray-600">Accès rapide depuis votre écran d'accueil</p>
+                </div>
+            </div>
+            <button onclick="dismissPWAInstall()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        
+        <!-- Features -->
+        <div class="space-y-3 mb-6">
+            <div class="flex items-center space-x-3">
+                <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
+                <span class="text-sm text-gray-700">Accès hors ligne</span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
+                <span class="text-sm text-gray-700">Notifications push</span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
+                <span class="text-sm text-gray-700">Expérience native</span>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex space-x-3">
+            <button onclick="installPWA()" 
+                    class="flex-1 bg-green-600 text-white py-3 px-4 rounded-xl font-medium hover:bg-green-700 transition-colors flex items-center justify-center">
+                <i data-lucide="download" class="w-5 h-5 mr-2"></i>
+                Installer
+            </button>
+            <button onclick="dismissPWAInstall()" 
+                    class="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-200 transition-colors">
+                Plus tard
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let deferredPrompt;
+
+// Listen for the beforeinstallprompt event
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent the mini-infobar from appearing on mobile
+    e.preventDefault();
+    
+    // Stash the event so it can be triggered later
+    deferredPrompt = e;
+    
+    // Show the install prompt after a delay
+    setTimeout(() => {
+        showPWAInstallPrompt();
+    }, 3000);
+});
+
+// Listen for successful installation
+window.addEventListener('appinstalled', (evt) => {
+    // Hide the install prompt
+    dismissPWAInstall();
+    
+    // Show success message
+    showToast('Application installée avec succès !', 'success');
+    
+    // Clear the deferredPrompt
+    deferredPrompt = null;
+});
+
+function showPWAInstallPrompt() {
+    // Check if user has already dismissed or installed
+    if (localStorage.getItem('pwa-install-dismissed') || !deferredPrompt) {
+        return;
+    }
+    
+    const prompt = document.getElementById('pwa-install-prompt');
+    prompt.classList.remove('hidden');
+    
+    // Add entrance animation
+    prompt.style.animation = 'slideInUp 0.3s ease-out';
+}
+
+function dismissPWAInstall() {
+    const prompt = document.getElementById('pwa-install-prompt');
+    prompt.classList.add('hidden');
+    
+    // Remember that user dismissed the prompt
+    localStorage.setItem('pwa-install-dismissed', 'true');
+}
+
+function installPWA() {
+    if (!deferredPrompt) {
+        showToast('Installation non disponible', 'error');
+        return;
+    }
+    
+    // Show the install prompt
+    deferredPrompt.prompt();
+    
+    // Wait for the user to respond to the prompt
+    deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+            console.log('User accepted the install prompt');
+        } else {
+            console.log('User dismissed the install prompt');
+        }
+        
+        // Clear the deferredPrompt
+        deferredPrompt = null;
+        
+        // Hide the install prompt
+        dismissPWAInstall();
+    });
+}
+
+// Check if app is already installed
+function isPWAInstalled() {
+    return window.matchMedia('(display-mode: standalone)').matches ||
+           window.navigator.standalone === true;
+}
+
+// Reset dismiss state if app is not installed
+if (!isPWAInstalled()) {
+    localStorage.removeItem('pwa-install-dismissed');
+}
+</script>
+
+<style>
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#pwa-install-prompt {
+    animation: slideInUp 0.3s ease-out;
+}
+</style> 

@@ -56,7 +56,7 @@
         <!-- Page Header -->
         <div class="mb-8">
             <div class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
-                <a href="{% url 'backend:dashboard' %}" class="hover:text-gray-700">Dashboard</a>
+                <a href="{% url 'client:dashboard' %}" class="hover:text-gray-700">Dashboard</a>
                 <i data-lucide="chevron-right" class="w-4 h-4"></i>
                 <span class="text-purple-600 font-medium">Mes commandes</span>
             </div>
@@ -179,7 +179,7 @@
                             
                             <div class="flex-1">
                                 <h4 class="font-semibold text-gray-900 mb-2">
-                                    <a href="{% url 'backend:product_detail' slug=order.product.slug %}" 
+                                    <a href="{% url 'client:product_detail' pk=order.product.id %}" 
                                        class="hover:text-purple-600 transition-colors">
                                         {{ order.product.title }}
                                     </a>
@@ -209,7 +209,7 @@
 
                     <!-- Order Actions -->
                     <div class="space-y-3">
-                        <a href="{% url 'backend:order_detail' pk=order.id %}" 
+                        <a href="{% url 'client:purchase_detail' pk=order.id %}" 
                            class="w-full bg-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center">
                             <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
                             Voir détails

@@ -167,7 +167,7 @@
                                 <span>Tableau de bord</span>
                             </a>
                             
-                            <a href="{% url 'backend:profile' %}" 
+                            <a href="#" 
                                class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
                                 <i data-lucide="user" class="w-5 h-5 text-gray-400"></i>
                                 <span>Mon profil</span>
@@ -265,7 +265,7 @@
             {% if user.is_authenticated %}
             <div class="border-t border-gray-200 pt-4 space-y-2">
                 <a href="{% url 'backend:dashboard' %}" class="block py-2 text-gray-700 hover:text-green-600">Tableau de bord</a>
-                <a href="{% url 'backend:profile' %}" class="block py-2 text-gray-700 hover:text-green-600">Mon profil</a>
+                <a href="#" class="block py-2 text-gray-700 hover:text-green-600">Mon profil</a>
                 <a href="{% url 'backend:product_create' %}" class="block py-2 text-gray-700 hover:text-green-600">Vendre</a>
                 <a href="{% url 'backend:logout' %}" class="block py-2 text-red-600">Déconnexion</a>
             </div>

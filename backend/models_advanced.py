@@ -7,6 +7,7 @@ from decimal import Decimal
 import uuid
 import json
 from .models import Product, Order, Category
+# VisitorCart and VisitorCartItem will be imported when needed to avoid circular imports
 
 User = get_user_model()
 
@@ -154,63 +155,7 @@ class WishlistItem(models.Model):
         unique_together = ['wishlist', 'product']
 
 
-# ============= VISITOR CART FOR ANONYMOUS USERS =============
-
-class VisitorCart(models.Model):
-    """Shopping cart for anonymous visitors"""
-    DELIVERY_METHODS = [
-        ('PICKUP', 'Retrait en point'),
-        ('DELIVERY', 'Livraison à domicile'),
-    ]
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    session_key = models.CharField(max_length=100, unique=True)
-    visitor_name = models.CharField(max_length=100, blank=True)
-    visitor_email = models.EmailField(blank=True)
-    visitor_phone = models.CharField(max_length=20, blank=True)
-    delivery_method = models.CharField(max_length=20, choices=DELIVERY_METHODS, default='PICKUP')
-    delivery_address = models.TextField(blank=True)
-    notes = models.TextField(blank=True)
-    whatsapp_preferred = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        db_table = 'visitor_carts'
-    
-    @property
-    def total_amount(self):
-        return sum(item.total_price for item in self.items.all())
-    
-    @property
-    def total_items(self):
-        return sum(item.quantity for item in self.items.all())
-    
-    @property
-    def delivery_cost(self):
-        return Decimal('2000') if self.delivery_method == 'DELIVERY' else Decimal('0')
-    
-    @property
-    def final_total(self):
-        return self.total_amount + self.delivery_cost
-
-
-class VisitorCartItem(models.Model):
-    """Items in visitor cart"""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    cart = models.ForeignKey(VisitorCart, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField(default=1)
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
-    added_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        db_table = 'visitor_cart_items'
-        unique_together = ['cart', 'product']
-    
-    @property
-    def total_price(self):
-        return self.quantity * self.unit_price
+# VisitorCart and VisitorCartItem models are now defined in models_visitor.py to avoid conflicts
 
 
 # ============= SOCIAL COMMERCE =============
@@ -536,154 +481,12 @@ class InstallmentPayment(models.Model):
 
 # ============= PRODUCT REPORTS =============
 
-class ProductReport(models.Model):
-    """Product reports for inappropriate content"""
-    REPORT_TYPES = [
-        ('FAKE', 'Produit contrefait'),
-        ('INAPPROPRIATE', 'Contenu inapproprié'),
-        ('MISLEADING', 'Description trompeuse'),
-        ('OVERPRICED', 'Prix excessif'),
-        ('SPAM', 'Spam/Publicité'),
-        ('DUPLICATE', 'Annonce dupliquée'),
-        ('BROKEN', 'Produit défectueux'),
-        ('OTHER', 'Autre')
-    ]
-    
-    STATUSES = [
-        ('PENDING', 'En attente'),
-        ('REVIEWING', 'En cours d\'examen'),
-        ('RESOLVED', 'Résolu'),
-        ('DISMISSED', 'Rejeté')
-    ]
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reports')
-    reporter_ip = models.GenericIPAddressField()
-    reporter_email = models.EmailField(blank=True)
-    report_type = models.CharField(max_length=20, choices=REPORT_TYPES)
-    description = models.TextField()
-    status = models.CharField(max_length=20, choices=STATUSES, default='PENDING')
-    admin_notes = models.TextField(blank=True)
-    resolved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='resolved_reports')
-    created_at = models.DateTimeField(auto_now_add=True)
-    resolved_at = models.DateTimeField(null=True, blank=True)
-    
-    class Meta:
-        db_table = 'product_reports'
-        ordering = ['-created_at']
-    
-    def __str__(self):
-        return f"Report #{self.id} - {self.get_report_type_display()}" 
+# ProductReport model is now defined in models_visitor.py (visitor-focused reports)
 
 
 # ============= VISITOR FAVORITES & INTERACTIONS =============
-
-class VisitorFavorite(models.Model):
-    """Favorites for visitors (session-based)"""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    session_key = models.CharField(max_length=100)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='visitor_favorites')
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        unique_together = ['session_key', 'product']
-        db_table = 'visitor_favorites'
-    
-    def __str__(self):
-        return f"Visitor Favorite: {self.product.title}"
-
-
-class VisitorCompare(models.Model):
-    """Product comparison for visitors"""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    session_key = models.CharField(max_length=100)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='visitor_compares')
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        unique_together = ['session_key', 'product']
-        db_table = 'visitor_compares'
-    
-    def __str__(self):
-        return f"Visitor Compare: {self.product.title}"
-
-
-class ProductComment(models.Model):
-    """Comments on products (for both users and visitors)"""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='comments')
-    
-    # For registered users
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='comments')
-    
-    # For visitors
-    visitor_name = models.CharField(max_length=100, blank=True)
-    visitor_email = models.EmailField(blank=True)
-    visitor_ip = models.GenericIPAddressField(null=True, blank=True)
-    
-    content = models.TextField()
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
-    is_approved = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        ordering = ['-created_at']
-        db_table = 'product_comments'
-    
-    def __str__(self):
-        commenter = self.user.get_full_name() if self.user else self.visitor_name
-        return f"Comment by {commenter} on {self.product.title}"
-    
-    @property
-    def commenter_name(self):
-        return self.user.get_full_name() if self.user else self.visitor_name
-    
-    @property
-    def is_reply(self):
-        return self.parent is not None
-
-
-class ProductLike(models.Model):
-    """Likes/Dislikes for products"""
-    LIKE_CHOICES = [
-        ('LIKE', 'Like'),
-        ('DISLIKE', 'Dislike'),
-    ]
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='likes')
-    
-    # For registered users
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='product_likes')
-    
-    # For visitors  
-    visitor_ip = models.GenericIPAddressField(null=True, blank=True)
-    session_key = models.CharField(max_length=100, blank=True)
-    
-    like_type = models.CharField(max_length=10, choices=LIKE_CHOICES)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        db_table = 'product_likes'
-        # Prevent duplicate likes from same user/visitor
-        constraints = [
-            models.UniqueConstraint(
-                fields=['product', 'user'], 
-                condition=models.Q(user__isnull=False),
-                name='unique_user_product_like'
-            ),
-            models.UniqueConstraint(
-                fields=['product', 'visitor_ip', 'session_key'], 
-                condition=models.Q(user__isnull=True),
-                name='unique_visitor_product_like'
-            ),
-        ]
-    
-    def __str__(self):
-        identifier = self.user.get_full_name() if self.user else f"Visitor {self.visitor_ip}"
-        return f"{identifier} {self.like_type.lower()}d {self.product.title}"
-
+# Note: VisitorFavorite, VisitorCompare, ProductComment, and ProductLike models
+# are now defined in models_visitor.py to avoid conflicts and provide enhanced functionality
 
 # ProductAlert model moved to main models.py to avoid conflicts
 

@@ -1,659 +1,574 @@
-{% extends 'base.html' %}
+{% extends 'backend/visitor/base.html' %}
 {% load static %}
-{% csrf_token %}
+{% load humanize %}
 
 {% block title %}{{ product.title }} - Vidé-Grenier Kamer{% endblock %}
 
 {% block extra_css %}
 <style>
+    .product-gallery {
+        position: relative;
+        overflow: hidden;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    }
+    
     .product-image {
         transition: transform 0.3s ease;
+        cursor: pointer;
     }
+    
     .product-image:hover {
         transform: scale(1.05);
     }
-    .whatsapp-btn {
-        background: #25d366;
+    
+    .thumbnail {
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        cursor: pointer;
     }
-    .whatsapp-btn:hover {
-        background: #20ba5a;
+    
+    .thumbnail:hover {
+        border-color: #3b82f6;
+        transform: scale(1.1);
     }
-    .campay-btn {
-        background: #1e40af;
+    
+    .thumbnail.active {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
     }
-    .campay-btn:hover {
-        background: #1e3a8a;
-    }
-    .cart-widget {
-        position: fixed;
-        top: 50%;
-        right: 20px;
-        transform: translateY(-50%);
-        z-index: 1000;
-        background: white;
-        border-radius: 50px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        padding: 15px;
-        border: 2px solid #10b981;
-    }
-    .cart-badge {
-        position: absolute;
-        top: -8px;
-        right: -8px;
-        background: #ef4444;
+    
+    .price-badge {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         color: white;
-        border-radius: 50%;
-        width: 20px;
-        height: 20px;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: bold;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .condition-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .condition-neuf { background: #dcfce7; color: #166534; }
+    .condition-excellent { background: #dbeafe; color: #1e40af; }
+    .condition-bon { background: #fef3c7; color: #92400e; }
+    .condition-correct { background: #f3e8ff; color: #7c3aed; }
+    .condition-usage { background: #fee2e2; color: #991b1b; }
+    
+    .action-button {
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        font-weight: 600;
+        padding: 12px 24px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .action-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+    
+    .btn-outline {
+        background: transparent;
+        border: 2px solid #3b82f6;
+        color: #3b82f6;
+    }
+    
+    .btn-outline:hover {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .seller-card {
+        background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        backdrop-filter: blur(10px);
+    }
+    
+    .similar-product {
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        overflow: hidden;
+        background: white;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .similar-product:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        border-color: #3b82f6;
+    }
+    
+    .quantity-input {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 8px 12px;
+        text-align: center;
+        font-weight: 600;
+        transition: border-color 0.3s ease;
+    }
+    
+    .quantity-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .quantity-btn {
+        width: 40px;
+        height: 40px;
+        border: 2px solid #e5e7eb;
+        background: white;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
         font-weight: bold;
     }
-    .quantity-selector {
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        background: white;
+    
+    .quantity-btn:hover {
+        border-color: #3b82f6;
+        background: #3b82f6;
+        color: white;
     }
-    .modal {
-        backdrop-filter: blur(10px);
+    
+    .quantity-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .whatsapp-button {
+        background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 24px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .whatsapp-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(37, 211, 102, 0.3);
+        color: white;
+    }
+    
+    .cart-success {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 16px 24px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        z-index: 1000;
+        transform: translateX(400px);
+        transition: transform 0.3s ease;
+    }
+    
+    .cart-success.show {
+        transform: translateX(0);
+    }
+    
+    .loading-spinner {
+        border: 2px solid #f3f4f6;
+        border-top: 2px solid #3b82f6;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-8">
-
-
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <!-- Breadcrumb -->
-        <nav class="flex mb-8" aria-label="Breadcrumb">
-            <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                <li class="inline-flex items-center">
-                    <a href="{% url 'backend:home' %}" class="text-gray-700 hover:text-green-600">
-                        Accueil
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb -->
+    <nav class="flex mb-8" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-3">
+            <li class="inline-flex items-center">
+                <a href="{% url 'backend:visitor_product_list' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+                    <i data-lucide="home" class="w-4 h-4 mr-2"></i>
+                    Produits
+                </a>
+            </li>
+            <li>
+                <div class="flex items-center">
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                    <a href="{% url 'backend:category_detail' product.category.slug %}" class="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">
+                        {{ product.category.name }}
                     </a>
-                </li>
-                <li>
-                    <div class="flex items-center">
-                        <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-                        </svg>
-                        <a href="{% url 'backend:product_list' %}" class="ml-1 text-gray-700 hover:text-green-600 md:ml-2">
-                            Produits
-                        </a>
-                    </div>
-                </li>
-                <li aria-current="page">
-                    <div class="flex items-center">
-                        <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-                        </svg>
-                        <span class="ml-1 text-gray-500 md:ml-2">{{ product.title|truncatechars:30 }}</span>
-                    </div>
-                </li>
-            </ol>
-        </nav>
-
-        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-            <div class="md:flex">
-                
-                <!-- Product Images -->
-                <div class="md:w-1/2">
-                    <div class="relative">
-                        {% if product.images.all %}
-                            <div class="aspect-w-1 aspect-h-1">
-                                <img id="mainImage" src="{{ product.images.first.image.url }}" 
-                                     alt="{{ product.title }}"
-                                     class="w-full h-96 object-cover product-image">
-                            </div>
-                            
-                            {% if product.images.count > 1 %}
-                            <div class="flex space-x-2 p-4 overflow-x-auto">
-                                {% for image in product.images.all %}
-                                <img src="{{ image.image.url }}" 
-                                     alt="{{ product.title }}"
-                                     class="w-20 h-20 object-cover rounded cursor-pointer border-2 border-transparent hover:border-green-500"
-                                     onclick="changeMainImage('{{ image.image.url }}')">
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                        {% else %}
-                            <div class="w-full h-96 bg-gray-200 flex items-center justify-center">
-                                <span class="text-gray-500">Aucune image disponible</span>
-                            </div>
-                        {% endif %}
-                        
-                        <!-- Product Status Badge -->
-                        <div class="absolute top-4 left-4">
-                            <span class="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-                                {{ product.get_condition_display }}
-                            </span>
-                        </div>
-
-                        <!-- Report Button -->
-                        <div class="absolute top-4 right-4">
-                            <button onclick="openReportModal()" 
-                                    class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm font-medium hover:bg-red-200 transition-colors">
-                                <i data-lucide="flag" class="w-4 h-4 inline mr-1"></i>
-                                Signaler
-                            </button>
-                        </div>
-                    </div>
                 </div>
+            </li>
+            <li aria-current="page">
+                <div class="flex items-center">
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                    <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">
+                        {{ product.title|truncatechars:30 }}
+                    </span>
+                </div>
+            </li>
+        </ol>
+    </nav>
 
-                <!-- Product Details -->
-                <div class="md:w-1/2 p-8">
-                    <div class="mb-6">
-                        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ product.title }}</h1>
-                        <div class="flex items-center space-x-4 text-sm text-gray-600 mb-4">
-                            <span class="flex items-center">
-                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
-                                </svg>
-                                {{ product.city }}
-                            </span>
-                            <span class="flex items-center">
-                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
-                                </svg>
-                                {{ product.category.name }}
-                            </span>
-                            <span class="flex items-center">
-                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
-                                </svg>
-                                {{ product.created_at|date:"d M Y" }}
-                            </span>
-                        </div>
-                        
-                        <div class="mb-6">
-                            <span class="text-4xl font-bold text-green-600">{{ product.price|floatformat:0 }} FCFA</span>
-                            <div class="text-sm text-gray-500 mt-1">+ {{ delivery_cost|floatformat:0 }} FCFA frais de livraison</div>
-                        </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Product Images -->
+        <div class="space-y-4">
+            <div class="product-gallery">
+                <img id="main-image" src="{{ product.main_image.image.url|default:'/static/backend/images/placeholder.jpg' }}" 
+                     alt="{{ product.title }}" 
+                     class="w-full h-96 object-cover product-image">
+                
+                <!-- Image Navigation -->
+                <div class="absolute top-4 right-4 flex space-x-2">
+                    <button onclick="previousImage()" class="bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-all">
+                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    </button>
+                    <button onclick="nextImage()" class="bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-all">
+                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Thumbnails -->
+            {% if product.images.count > 1 %}
+            <div class="flex space-x-2 overflow-x-auto pb-2">
+                {% for image in product.images.all %}
+                <img src="{{ image.image.url }}" 
+                     alt="{{ product.title }}" 
+                     onclick="changeMainImage('{{ image.image.url }}', this)"
+                     class="thumbnail w-20 h-20 object-cover rounded-lg cursor-pointer {% if forloop.first %}active{% endif %}">
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Product Details -->
+        <div class="space-y-6">
+            <!-- Title and Price -->
+            <div class="space-y-4">
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ product.title }}</h1>
+                
+                <div class="flex items-center justify-between">
+                    <div class="price-badge text-2xl">
+                        {{ product.price|floatformat:0 }} FCFA
                     </div>
+                    <span class="condition-badge condition-{{ product.condition|lower }}">
+                        {{ product.get_condition_display }}
+                    </span>
+                </div>
+            </div>
 
-                    <div class="mb-6">
-                        <h3 class="text-lg font-semibold mb-3">Description</h3>
-                        <p class="text-gray-700 leading-relaxed">{{ product.description }}</p>
+            <!-- Description -->
+            <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Description</h3>
+                <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ product.description|linebreaks }}</p>
+            </div>
+
+            <!-- Product Info -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="map-pin" class="w-5 h-5 text-blue-500"></i>
+                        <span class="text-gray-700 dark:text-gray-300">Ville</span>
                     </div>
-
-                    <!-- Seller Info -->
-                    <div class="mb-6 p-4 bg-gray-50 rounded-lg">
-                        <h3 class="text-lg font-semibold mb-2">Vendeur</h3>
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
-                                <span class="text-white font-bold">{{ product.seller.first_name.0|upper }}{{ product.seller.last_name.0|upper }}</span>
-                            </div>
-                            <div>
-                                <p class="font-medium">{{ product.seller.first_name }} {{ product.seller.last_name }}</p>
-                                <p class="text-sm text-gray-600">Membre depuis {{ product.seller.date_joined|date:"M Y" }}</p>
-                            </div>
-                        </div>
+                    <p class="font-semibold text-gray-900 dark:text-white mt-1">{{ product.get_city_display }}</p>
+                </div>
+                
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="eye" class="w-5 h-5 text-blue-500"></i>
+                        <span class="text-gray-700 dark:text-gray-300">Vues</span>
                     </div>
+                    <p class="font-semibold text-gray-900 dark:text-white mt-1">{{ product.views_count|default:0 }}</p>
+                </div>
+            </div>
 
+            <!-- Add to Cart Section -->
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Ajouter au panier</h3>
+                
+                <div class="space-y-4">
                     <!-- Quantity Selector -->
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Quantité</label>
-                        <div class="flex items-center space-x-3">
-                            <div class="quantity-selector flex items-center">
-                                <button type="button" onclick="changeQuantity(-1)" 
-                                        class="px-3 py-2 text-gray-600 hover:text-gray-800">
-                                    <i data-lucide="minus" class="w-4 h-4"></i>
-                                </button>
-                                <input type="number" id="quantity" value="1" min="1" max="10" 
-                                       class="w-16 text-center border-0 py-2 focus:ring-0">
-                                <button type="button" onclick="changeQuantity(1)" 
-                                        class="px-3 py-2 text-gray-600 hover:text-gray-800">
-                                    <i data-lucide="plus" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-                            {% if is_in_cart %}
-                            <span class="text-sm text-green-600 font-medium">
-                                <i data-lucide="check-circle" class="w-4 h-4 inline mr-1"></i>
-                                {{ cart_item.quantity }} dans le panier
-                            </span>
-                            {% endif %}
+                    <div class="flex items-center space-x-4">
+                        <label class="text-gray-700 dark:text-gray-300 font-medium">Quantité:</label>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="decreaseQuantity()" class="quantity-btn" id="decrease-btn">
+                                <i data-lucide="minus" class="w-4 h-4"></i>
+                            </button>
+                            <input type="number" id="quantity" value="1" min="1" max="99" 
+                                   class="quantity-input w-16">
+                            <button onclick="increaseQuantity()" class="quantity-btn" id="increase-btn">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </button>
                         </div>
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="space-y-4">
-                        <h3 class="text-lg font-semibold">Options d'achat</h3>
-                        
-                        <!-- Add to Cart -->
-                        <button onclick="addToCart()" 
-                                class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200">
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <button onclick="addToCart()" id="add-to-cart-btn" 
+                                class="action-button btn-primary flex-1">
                             <i data-lucide="shopping-cart" class="w-5 h-5"></i>
                             <span>Ajouter au panier</span>
                         </button>
                         
-                        <!-- WhatsApp Contact for Single Product -->
-                        <a href="{{ single_whatsapp_url }}" 
-                           target="_blank"
-                           class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200 whatsapp-btn">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
-                            </svg>
-                            <span>Contacter pour ce produit</span>
-                        </a>
-                        
-                        <!-- WhatsApp Contact for Cart (if cart has items) -->
-                        {% if visitor_cart.total_items > 0 %}
-                        <a href="{{ cart_whatsapp_url }}" 
-                           target="_blank"
-                           class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
-                            </svg>
-                            <span>Contacter pour le panier ({{ visitor_cart.total_items }} articles)</span>
-                        </a>
-                        {% endif %}
-                        
-                        <!-- Checkout Cart or Login -->
-                        {% if visitor_cart.total_items > 0 %}
-                        <a href="{% url 'backend:visitor_cart_checkout' %}" 
-                           class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200">
-                            <i data-lucide="credit-card" class="w-5 h-5"></i>
-                            <span>Commander le panier ({{ visitor_cart.final_total|floatformat:0 }} FCFA)</span>
-                        </a>
-                        {% endif %}
-                        
-                        <!-- Login to Purchase -->
-                        <a href="{% url 'backend:login' %}?next={{ request.path }}&cart_items={{ visitor_cart.total_items }}" 
-                           class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200">
-                            <i data-lucide="log-in" class="w-5 h-5"></i>
-                            <span>Connectez-vous pour acheter{% if visitor_cart.total_items > 0 %} ({{ visitor_cart.total_items }} articles){% endif %}</span>
-                        </a>
-                        
-                        <!-- Quick Order Button -->
-                        <button onclick="openQuickOrderModal()" 
-                                class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200">
-                            <i data-lucide="zap" class="w-5 h-5"></i>
-                            <span>Commande rapide sans compte</span>
+                        <button onclick="toggleFavorite()" id="favorite-btn" 
+                                class="action-button btn-outline">
+                            <i data-lucide="heart" class="w-5 h-5"></i>
+                            <span>Favoris</span>
                         </button>
                     </div>
+
+                    <!-- WhatsApp Button -->
+                    <a href="{{ whatsapp_url }}" target="_blank" class="whatsapp-button w-full justify-center">
+                        <i data-lucide="message-circle" class="w-5 h-5"></i>
+                        <span>Contacter le vendeur</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Seller Information -->
+            <div class="seller-card p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Vendeur</h3>
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                        {{ product.seller.first_name.0|upper }}
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-900 dark:text-white">{{ product.seller.get_full_name }}</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Membre depuis {{ product.seller.date_joined|date:"M Y" }}</p>
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Similar Products -->
-        {% if similar_products %}
-        <div class="mt-12">
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">Produits similaires</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {% for similar_product in similar_products %}
-                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                    <div class="relative h-48">
-                        {% if similar_product.images.first %}
-                            <img src="{{ similar_product.images.first.image.url }}" 
-                                 alt="{{ similar_product.title }}"
-                                 class="w-full h-full object-cover">
-                        {% else %}
-                            <div class="w-full h-full bg-gray-200 flex items-center justify-center">
-                                <span class="text-gray-400">Pas d'image</span>
-                            </div>
-                        {% endif %}
-                    </div>
-                    <div class="p-4">
-                        <h3 class="font-semibold text-gray-900 mb-2">{{ similar_product.title|truncatechars:40 }}</h3>
-                        <p class="text-lg font-bold text-green-600">{{ similar_product.price|floatformat:0 }} FCFA</p>
-                        <a href="{% url 'backend:visitor_product_detail' slug=similar_product.slug %}" 
-                           class="mt-3 block w-full bg-green-600 text-white text-center py-2 rounded-lg hover:bg-green-700 transition-colors">
-                            Voir le produit
+    <!-- Similar Products -->
+    {% if similar_products %}
+    <div class="mt-16">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">Produits similaires</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for similar in similar_products %}
+            <div class="similar-product">
+                <img src="{{ similar.main_image.image.url|default:'/static/backend/images/placeholder.jpg' }}" 
+                     alt="{{ similar.title }}" 
+                     class="w-full h-48 object-cover">
+                <div class="p-4">
+                    <h3 class="font-semibold text-gray-900 dark:text-white mb-2">{{ similar.title|truncatechars:40 }}</h3>
+                    <p class="text-lg font-bold text-green-600">{{ similar.price|floatformat:0 }} FCFA</p>
+                    <div class="flex items-center justify-between mt-3">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">{{ similar.get_city_display }}</span>
+                        <a href="{% url 'backend:visitor_product_detail' similar.slug %}" 
+                           class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            Voir détails
                         </a>
                     </div>
                 </div>
-                {% endfor %}
             </div>
-        </div>
-        {% endif %}
-    </div>
-</div>
-
-
-
-<!-- Quick Order Modal -->
-<div id="quickOrderModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50 modal">
-    <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">Commande rapide</h3>
-                    <button onclick="closeQuickOrderModal()" class="text-gray-400 hover:text-gray-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-                
-                <form method="post" action="{% url 'backend:visitor_order_create' product_id=product.id %}">
-                    {% csrf_token %}
-                    
-                    <!-- Personal Information -->
-                    <div class="space-y-4 mb-6">
-                        <h4 class="font-medium text-gray-900">Vos informations</h4>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Nom complet *</label>
-                            <input type="text" name="visitor_name" required 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone *</label>
-                            <input type="tel" name="visitor_phone" required 
-                                   placeholder="ex: 237123456789"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Email (optionnel)</label>
-                            <input type="email" name="visitor_email" 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        
-                        <div class="flex items-center">
-                            <input type="checkbox" name="whatsapp_preferred" id="whatsapp_preferred" 
-                                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                            <label for="whatsapp_preferred" class="ml-2 text-sm text-gray-700">
-                                Préférer WhatsApp pour les communications
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <!-- Order Details -->
-                    <div class="space-y-4 mb-6">
-                        <h4 class="font-medium text-gray-900">Détails de la commande</h4>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Quantité</label>
-                            <input type="number" name="quantity" value="1" min="1" max="10" 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Mode de livraison</label>
-                            <select name="delivery_method" onchange="toggleDeliveryAddress()" 
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="PICKUP">Retrait en point de collecte</option>
-                                <option value="DELIVERY">Livraison à domicile (+{{ delivery_cost|floatformat:0 }} FCFA)</option>
-                            </select>
-                        </div>
-                        
-                        <div id="deliveryAddressDiv" class="hidden">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Adresse de livraison</label>
-                            <textarea name="delivery_address" rows="3" 
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                        </div>
-                    </div>
-                    
-                    <!-- Payment Method -->
-                    <div class="space-y-4 mb-6">
-                        <h4 class="font-medium text-gray-900">Mode de paiement</h4>
-                        
-                        <div class="space-y-2">
-                            <label class="flex items-center">
-                                <input type="radio" name="payment_method" value="CASH_ON_DELIVERY" checked 
-                                       class="text-blue-600 border-gray-300 focus:ring-blue-500">
-                                <span class="ml-2 text-sm">Paiement à la livraison</span>
-                            </label>
-                            
-                            {% if campay_enabled %}
-                            <label class="flex items-center">
-                                <input type="radio" name="payment_method" value="CAMPAY" 
-                                       class="text-blue-600 border-gray-300 focus:ring-blue-500">
-                                <span class="ml-2 text-sm">Paiement mobile (Campay)</span>
-                            </label>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <!-- Notes -->
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes (optionnel)</label>
-                        <textarea name="notes" rows="3" 
-                                  placeholder="Informations supplémentaires..."
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                    </div>
-                    
-                    <!-- Submit Button -->
-                    <button type="submit" 
-                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200">
-                        Confirmer la commande
-                    </button>
-                </form>
-            </div>
+            {% endfor %}
         </div>
     </div>
+    {% endif %}
 </div>
 
-<!-- Report Modal -->
-<div id="reportModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50 modal">
-    <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">Signaler cette annonce</h3>
-                    <button onclick="closeReportModal()" class="text-gray-400 hover:text-gray-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-                
-                <form id="reportForm">
-                    {% csrf_token %}
-                    
-                    <div class="space-y-4 mb-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Motif du signalement *</label>
-                            <select name="report_type" required 
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
-                                <option value="">Sélectionnez un motif</option>
-                                <option value="FAKE">Produit contrefait</option>
-                                <option value="INAPPROPRIATE">Contenu inapproprié</option>
-                                <option value="MISLEADING">Description trompeuse</option>
-                                <option value="OVERPRICED">Prix excessif</option>
-                                <option value="SPAM">Spam/Publicité</option>
-                                <option value="DUPLICATE">Annonce dupliquée</option>
-                                <option value="BROKEN">Produit défectueux</option>
-                                <option value="OTHER">Autre</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Description du problème *</label>
-                            <textarea name="description" rows="4" required
-                                      placeholder="Décrivez en détail le problème avec cette annonce..."
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"></textarea>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Votre email (optionnel)</label>
-                            <input type="email" name="reporter_email" 
-                                   placeholder="Pour un suivi si nécessaire"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
-                        </div>
-                    </div>
-                    
-                    <button type="submit" 
-                            class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200">
-                        Envoyer le signalement
-                    </button>
-                </form>
-            </div>
+<!-- Cart Success Notification -->
+<div id="cart-notification" class="cart-success">
+    <div class="flex items-center space-x-3">
+        <i data-lucide="check-circle" class="w-6 h-6"></i>
+        <div>
+            <p class="font-semibold">Produit ajouté au panier!</p>
+            <p class="text-sm opacity-90">Vérifiez votre panier pour continuer</p>
         </div>
     </div>
 </div>
 
 <script>
-// Product image functionality
-function changeMainImage(imageUrl) {
-    document.getElementById('mainImage').src = imageUrl;
-}
+    let currentImageIndex = 0;
+    const images = [
+        {% for image in product.images.all %}
+        '{{ image.image.url }}',
+        {% endfor %}
+    ];
 
-// Quantity controls
-function changeQuantity(delta) {
-    const input = document.getElementById('quantity');
-    const newValue = parseInt(input.value) + delta;
-    if (newValue >= 1 && newValue <= 10) {
-        input.value = newValue;
-    }
-}
-
-// Cart functionality
-async function addToCart() {
-    const quantity = document.getElementById('quantity').value;
-    
-    try {
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-        if (!csrfToken) {
-            // Add CSRF token if not present
-            const token = await fetch('/visitor/get-csrf/').then(r => r.json()).catch(() => ({}));
-        }
+    function changeMainImage(src, thumbnail) {
+        document.getElementById('main-image').src = src;
         
-        const response = await fetch('{% url "backend:visitor_add_to_cart" product_id=product.id %}', {
+        // Update active thumbnail
+        document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
+        thumbnail.classList.add('active');
+        
+        // Update current index
+        currentImageIndex = images.indexOf(src);
+    }
+
+    function nextImage() {
+        if (images.length > 1) {
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+            changeMainImage(images[currentImageIndex], document.querySelectorAll('.thumbnail')[currentImageIndex]);
+        }
+    }
+
+    function previousImage() {
+        if (images.length > 1) {
+            currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+            changeMainImage(images[currentImageIndex], document.querySelectorAll('.thumbnail')[currentImageIndex]);
+        }
+    }
+
+    function increaseQuantity() {
+        const input = document.getElementById('quantity');
+        const value = parseInt(input.value) || 1;
+        if (value < 99) {
+            input.value = value + 1;
+        }
+        updateQuantityButtons();
+    }
+
+    function decreaseQuantity() {
+        const input = document.getElementById('quantity');
+        const value = parseInt(input.value) || 1;
+        if (value > 1) {
+            input.value = value - 1;
+        }
+        updateQuantityButtons();
+    }
+
+    function updateQuantityButtons() {
+        const input = document.getElementById('quantity');
+        const value = parseInt(input.value) || 1;
+        
+        document.getElementById('decrease-btn').disabled = value <= 1;
+        document.getElementById('increase-btn').disabled = value >= 99;
+    }
+
+    function addToCart() {
+        const quantity = parseInt(document.getElementById('quantity').value) || 1;
+        const button = document.getElementById('add-to-cart-btn');
+        const originalContent = button.innerHTML;
+        
+        // Show loading state
+        button.innerHTML = '<div class="loading-spinner"></div><span>Ajout en cours...</span>';
+        button.disabled = true;
+        
+        fetch('{% url "backend:visitor_add_to_cart" product.id %}', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': csrfToken ? csrfToken.value : ''
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
             },
-            body: `quantity=${quantity}`
+            body: JSON.stringify({
+                quantity: quantity
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showCartNotification();
+                // Update cart count if available
+                const cartCount = document.getElementById('cart-count');
+                if (cartCount) {
+                    cartCount.textContent = data.cart_items;
+                }
+            } else {
+                alert('Erreur: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erreur lors de l\'ajout au panier');
+        })
+        .finally(() => {
+            // Restore button state
+            button.innerHTML = originalContent;
+            button.disabled = false;
         });
+    }
+
+    function toggleFavorite() {
+        const button = document.getElementById('favorite-btn');
+        const icon = button.querySelector('i');
         
-        const data = await response.json();
-        
-        if (data.success) {
-            showNotification(data.message, 'success');
-            updateCartUI(data.cart_items, data.cart_total);
-            
-            // Update cart widget and button states
-            setTimeout(() => {
-                location.reload(); // Reload to show updated cart widget and product status
-            }, 1000);
-        } else {
-            showNotification(data.message, 'error');
-        }
-    } catch (error) {
-        showNotification('Erreur lors de l\'ajout au panier', 'error');
-    }
-}
-
-function updateCartUI(items, total) {
-    // Update cart badge
-    const cartBadge = document.querySelector('.cart-badge');
-    if (cartBadge) {
-        cartBadge.textContent = items;
-    }
-    
-    // Update cart total
-    const cartTotal = document.getElementById('cartTotal');
-    if (cartTotal) {
-        cartTotal.textContent = `${total.toLocaleString()} FCFA`;
-    }
-}
-
-// Use global cart modal from base template
-function openCartModal() {
-    openVisitorCartModal();
-}
-
-function openQuickOrderModal() {
-    document.getElementById('quickOrderModal').classList.remove('hidden');
-    document.body.classList.add('overflow-hidden');
-}
-
-function closeQuickOrderModal() {
-    document.getElementById('quickOrderModal').classList.add('hidden');
-    document.body.classList.remove('overflow-hidden');
-}
-
-function openReportModal() {
-    document.getElementById('reportModal').classList.remove('hidden');
-    document.body.classList.add('overflow-hidden');
-}
-
-function closeReportModal() {
-    document.getElementById('reportModal').classList.add('hidden');
-    document.body.classList.remove('overflow-hidden');
-}
-
-
-
-// Delivery address toggle
-function toggleDeliveryAddress() {
-    const deliveryMethod = document.querySelector('select[name="delivery_method"]').value;
-    const addressDiv = document.getElementById('deliveryAddressDiv');
-    
-    if (deliveryMethod === 'DELIVERY') {
-        addressDiv.classList.remove('hidden');
-        addressDiv.querySelector('textarea').required = true;
-    } else {
-        addressDiv.classList.add('hidden');
-        addressDiv.querySelector('textarea').required = false;
-    }
-}
-
-// Report form submission
-document.getElementById('reportForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    
-    try {
-        const response = await fetch('{% url "backend:visitor_report_product" product_id=product.id %}', {
+        fetch('{% url "backend:visitor_toggle_favorite" product.id %}', {
             method: 'POST',
             headers: {
-                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-            },
-            body: formData
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.is_favorite) {
+                    icon.setAttribute('data-lucide', 'heart');
+                    icon.style.fill = '#ef4444';
+                    icon.style.color = '#ef4444';
+                } else {
+                    icon.setAttribute('data-lucide', 'heart');
+                    icon.style.fill = 'none';
+                    icon.style.color = 'currentColor';
+                }
+                lucide.createIcons();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
         });
+    }
+
+    function showCartNotification() {
+        const notification = document.getElementById('cart-notification');
+        notification.classList.add('show');
         
-        const data = await response.json();
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        updateQuantityButtons();
         
-        if (data.success) {
-            showNotification(data.message, 'success');
-            closeReportModal();
-            this.reset();
-        } else {
-            showNotification(data.message, 'error');
+        // Update quantity buttons when input changes
+        document.getElementById('quantity').addEventListener('input', updateQuantityButtons);
+        
+        // Initialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
         }
-    } catch (error) {
-        showNotification('Erreur lors de l\'envoi du signalement', 'error');
-    }
-});
-
-// Notification system
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg text-white font-medium ${
-        type === 'success' ? 'bg-green-500' : 
-        type === 'error' ? 'bg-red-500' : 'bg-blue-500'
-    }`;
-    notification.textContent = message;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 5000);
-}
-
-// Close modals when clicking outside
-document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('modal')) {
-        e.target.classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
-    }
-});
-
-// Initialize Lucide icons
-if (window.lucide) {
-    lucide.createIcons();
-}
+    });
 </script>
-
 {% endblock %} 

@@ -104,98 +104,72 @@
             @apply scale-y-100;
         }
         
-        .sidebar-link.active { 
-            @apply bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900/50 dark:to-cyan-900/50 text-blue-700 dark:text-blue-400 font-semibold shadow-lg border-l-4 border-blue-500; 
+        .sidebar-link.active {
+            @apply bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-gray-700 dark:to-gray-600 text-blue-700 dark:text-blue-400;
         }
         
-        /* Modern Navigation */
+        .sidebar-link.active::before {
+            @apply scale-y-100;
+        }
+        
+        .sidebar-icon {
+            @apply w-5 h-5 mr-3 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 transition-colors duration-300;
+        }
+        
+        .sidebar-link.active .sidebar-icon {
+            @apply text-blue-500;
+        }
+        
+        /* Enhanced Navbar */
         .navbar-glass {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            @apply bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50;
         }
         
-        .dark .navbar-glass {
-            background: rgba(17, 24, 39, 0.95);
-            border-bottom: 1px solid rgba(75, 85, 99, 0.2);
+        /* User Avatar */
+        .user-avatar {
+            @apply w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg;
         }
         
-        /* Enhanced Notifications */
-        .notification-badge { 
-            @apply absolute -top-2 -right-2 h-6 w-6 rounded-full bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs flex items-center justify-center animate-pulse shadow-lg font-semibold; 
+        /* Dropdown Menu */
+        .dropdown {
+            @apply absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 backdrop-blur-xl z-50;
         }
-
+        
+        .profile-dropdown-item {
+            @apply flex items-center px-5 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 group;
+        }
+        
+        /* Notification Badge */
+        .notification-badge {
+            @apply absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold;
+        }
+        
         /* Mobile Sidebar */
         .mobile-sidebar {
-            transform: translateX(-100%);
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
+            @apply bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-700/50;
         }
         
-        .dark .mobile-sidebar {
-            background: rgba(17, 24, 39, 0.95);
+        /* Custom Scrollbar */
+        .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
         }
         
-        .mobile-sidebar.open {
-            transform: translateX(0);
-        }
-
-        /* Enhanced Dropdown */
-        .dropdown {
-            @apply absolute right-0 mt-3 w-80 bg-white/95 dark:bg-gray-800/95 rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 z-50 transform opacity-0 scale-95 transition-all duration-300 backdrop-blur-xl border border-white/20 dark:border-gray-700/50;
-            max-height: 85vh;
-            overflow-y: auto;
-        }
-
-        .dropdown.show {
-            @apply opacity-100 scale-100;
-        }
-
-        /* Custom Scrollbars */
-        .dropdown::-webkit-scrollbar,
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
         }
-
-        .dropdown::-webkit-scrollbar-track,
+        
         .custom-scrollbar::-webkit-scrollbar-track {
-            background: rgba(241, 245, 249, 0.5);
-            border-radius: 3px;
+            background: transparent;
         }
-
-        .dropdown::-webkit-scrollbar-thumb,
+        
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: linear-gradient(to bottom, #0ea5e9, #06b6d4);
+            background-color: rgba(156, 163, 175, 0.5);
             border-radius: 3px;
         }
-
-        /* Enhanced User Avatar */
-        .user-avatar {
-            @apply w-10 h-10 bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-700 rounded-xl flex items-center justify-center text-white font-bold shadow-lg transform hover:scale-110 transition-all duration-300;
-        }
-
-        /* Profile Dropdown Items */
-        .profile-dropdown-item {
-            @apply flex items-center px-5 py-4 text-sm text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-700 dark:hover:to-gray-600 transition-all duration-200 cursor-pointer relative overflow-hidden;
-        }
-
-        .profile-dropdown-item::before {
-            content: '';
-            @apply absolute left-0 top-0 w-0 h-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all duration-300;
-        }
-
-        .profile-dropdown-item:hover::before {
-            @apply w-1;
-        }
-
-        /* Enhanced Icons */
-        .sidebar-icon {
-            @apply w-5 h-5 mr-3 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-all duration-300 transform group-hover:scale-110;
-        }
-
-        .sidebar-link.active .sidebar-icon {
-            @apply text-blue-600 dark:text-blue-400;
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(156, 163, 175, 0.7);
         }
 
         /* Client Theme Toggle Button */
@@ -339,12 +313,12 @@
                         </button>
                         
                         <!-- Enhanced Notifications -->
-                        <button class="p-3 text-gray-400 hover:text-gray-500 hover:bg-white/80 dark:hover:bg-gray-700/80 rounded-xl relative transition-all duration-300 transform hover:scale-110 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
+                        <a href="{% url 'backend:client_notifications' %}" class="p-3 text-gray-400 hover:text-gray-500 hover:bg-white/80 dark:hover:bg-gray-700/80 rounded-xl relative transition-all duration-300 transform hover:scale-110 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
                             <i data-lucide="bell-ring" class="w-6 h-6"></i>
                             {% if unread_notifications_count > 0 %}
                             <span class="notification-badge">{{ unread_notifications_count }}</span>
                             {% endif %}
-                        </button>
+                        </a>
                         
                         <!-- Enhanced Messages -->
                         <a href="{% url 'backend:chat_list' %}" class="p-3 text-gray-400 hover:text-gray-500 hover:bg-white/80 dark:hover:bg-gray-700/80 rounded-xl relative transition-all duration-300 transform hover:scale-110 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
@@ -355,10 +329,10 @@
                         </a>
                         
                         <!-- Wallet Quick Access -->
-                        <button class="p-3 text-gray-400 hover:text-gray-500 hover:bg-white/80 dark:hover:bg-gray-700/80 rounded-xl relative transition-all duration-300 transform hover:scale-110 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
+                        <a href="{% url 'backend:client_wallet_dashboard' %}" class="p-3 text-gray-400 hover:text-gray-500 hover:bg-white/80 dark:hover:bg-gray-700/80 rounded-xl relative transition-all duration-300 transform hover:scale-110 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
                             <i data-lucide="wallet" class="w-6 h-6"></i>
                             <span class="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full h-5 w-auto px-1 flex items-center justify-center text-[10px] font-bold">XAF</span>
-                        </button>
+                        </a>
                         
                     <!-- Profile Dropdown Section -->
 <div class="relative ml-3" x-data="{ open: false }">
@@ -403,14 +377,14 @@
         </div>
 
         <!-- Profile Button -->
-        <a href="{% url 'client:profile' %}" class="profile-dropdown-item group">
+        <a href="{% url 'backend:client_dashboard' %}" class="profile-dropdown-item group">
             <i data-lucide="user" class="w-5 h-5 mr-3 text-gray-500 dark:text-gray-400 group-hover:text-blue-500"></i>
             <span>Mon Profil</span>
             <i data-lucide="chevron-right" class="w-4 h-4 ml-auto text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
         </a>
 
         <!-- Wallet Button -->
-        <a href="{% url 'client:wallet' %}" class="profile-dropdown-item group">
+        <a href="{% url 'backend:client_wallet_dashboard' %}" class="profile-dropdown-item group">
             <i data-lucide="wallet" class="w-5 h-5 mr-3 text-gray-500 dark:text-gray-400 group-hover:text-blue-500"></i>
             <span>Mon Portefeuille</span>
             <i data-lucide="chevron-right" class="w-4 h-4 ml-auto text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
@@ -453,49 +427,49 @@
                     
                 <!-- Mobile Navigation Links -->
                 <nav class="flex-1 px-4 space-y-2" id="mobile-nav-links">
-                    <a href="{% url 'client:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <a href="{% url 'backend:client_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'client_dashboard' %}active{% endif %}">
                         <i data-lucide="layout-dashboard" class="sidebar-icon"></i>
                         <span>Tableau de bord</span>
                         <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                     </a>
-                    <a href="{% url 'client:wallet' %}" class="sidebar-link {% if request.resolver_match.url_name == 'wallet' %}active{% endif %}">
+                    <a href="{% url 'backend:client_wallet_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'client_wallet_dashboard' %}active{% endif %}">
                         <i data-lucide="wallet" class="sidebar-icon"></i>
                         <span>Mon Portefeuille</span>
                         <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                     </a>
-                    <a href="{% url 'client:products' %}" class="sidebar-link {% if request.resolver_match.url_name == 'products' %}active{% endif %}">
+                    <a href="{% url 'backend:client_product_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'client_product_list' %}active{% endif %}">
                         <i data-lucide="shopping-bag" class="sidebar-icon"></i>
                         <span>Mes Produits</span>
                         <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                     </a>
-                    <a href="{% url 'client:product_create' %}" class="sidebar-link {% if request.resolver_match.url_name == 'product_create' %}active{% endif %}">
+                    <a href="{% url 'backend:client_product_create' %}" class="sidebar-link {% if request.resolver_match.url_name == 'client_product_create' %}active{% endif %}">
                         <i data-lucide="plus-circle" class="sidebar-icon"></i>
                         <span>Ajouter Produit</span>
                         <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                     </a>
-                    <a href="{% url 'client:purchases' %}" class="sidebar-link {% if request.resolver_match.url_name == 'purchases' %}active{% endif %}">
+                    <a href="{% url 'backend:client_orders_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'client_orders_dashboard' %}active{% endif %}">
                         <i data-lucide="shopping-cart" class="sidebar-icon"></i>
                         <span>Mes Achats</span>
                         <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                     </a>
-                    <a href="{% url 'client:browse_products' %}" class="sidebar-link {% if request.resolver_match.url_name == 'browse_products' %}active{% endif %}">
+                    <a href="{% url 'backend:product_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'product_list' %}active{% endif %}">
                         <i data-lucide="search" class="sidebar-icon"></i>
                         <span>Parcourir Produits</span>
                         <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                     </a>
-                    <a href="{% url 'client:favorites' %}" class="sidebar-link {% if request.resolver_match.url_name == 'favorites' %}active{% endif %}">
+                    <a href="{% url 'backend:favorites_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'favorites_list' %}active{% endif %}">
                         <i data-lucide="heart" class="sidebar-icon"></i>
                         <span>Favoris</span>
                         <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                     </a>
-                    <a href="{% url 'client:chats' %}" class="sidebar-link {% if request.resolver_match.url_name == 'chats' %}active{% endif %}">
+                    <a href="{% url 'backend:chat_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'chat_list' %}active{% endif %}">
                         <i data-lucide="message-circle" class="sidebar-icon"></i>
                         <span>Messages</span>
                         <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                     </a>
-                    <a href="{% url 'client:profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-                        <i data-lucide="user" class="sidebar-icon"></i>
-                        <span>Mon Profil</span>
+                    <a href="{% url 'backend:client_analytics' %}" class="sidebar-link {% if request.resolver_match.url_name == 'client_analytics' %}active{% endif %}">
+                        <i data-lucide="bar-chart-3" class="sidebar-icon"></i>
+                        <span>Analytics</span>
                         <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                     </a>
                 </nav>
@@ -506,49 +480,49 @@
                 <div class="hidden lg:flex lg:w-72 lg:flex-col lg:fixed lg:inset-y-0 lg:top-16">
                     <div class="flex flex-col flex-grow pt-6 pb-4 overflow-y-auto bg-white/95 dark:bg-gray-800/95 border-r border-gray-200/50 dark:border-gray-700/50 custom-scrollbar backdrop-blur-xl">
                         <nav class="flex-1 px-4 space-y-2" id="desktop-nav-links">
-                            <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                            <a href="{% url 'backend:client_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'client_dashboard' %}active{% endif %}">
                                 <i data-lucide="layout-dashboard" class="sidebar-icon"></i>
                                 <span>Tableau de bord</span>
                                 <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                             </a>
-                            <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'wallet' %}active{% endif %}">
+                            <a href="{% url 'backend:client_wallet_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'client_wallet_dashboard' %}active{% endif %}">
                                 <i data-lucide="wallet" class="sidebar-icon"></i>
                                 <span>Mon Portefeuille</span>
                                 <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                             </a>
-                            <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'products' %}active{% endif %}">
+                            <a href="{% url 'backend:client_product_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'client_product_list' %}active{% endif %}">
                                 <i data-lucide="shopping-bag" class="sidebar-icon"></i>
                                 <span>Mes Produits</span>
                                 <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                             </a>
-                            <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'product_create' %}active{% endif %}">
+                            <a href="{% url 'backend:client_product_create' %}" class="sidebar-link {% if request.resolver_match.url_name == 'client_product_create' %}active{% endif %}">
                                 <i data-lucide="plus-circle" class="sidebar-icon"></i>
                                 <span>Ajouter Produit</span>
                                 <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                             </a>
-                            <a href=#" class="sidebar-link {% if request.resolver_match.url_name == 'purchases' %}active{% endif %}">
+                            <a href="{% url 'backend:client_orders_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'client_orders_dashboard' %}active{% endif %}">
                                 <i data-lucide="shopping-cart" class="sidebar-icon"></i>
                                 <span>Mes Achats</span>
                                 <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                             </a>
-                            <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'browse_products' %}active{% endif %}">
+                            <a href="{% url 'backend:product_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'product_list' %}active{% endif %}">
                                 <i data-lucide="search" class="sidebar-icon"></i>
                                 <span>Parcourir Produits</span>
                                 <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                             </a>
-                            <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'favorites' %}active{% endif %}">
+                            <a href="{% url 'backend:favorites_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'favorites_list' %}active{% endif %}">
                                 <i data-lucide="heart" class="sidebar-icon"></i>
                                 <span>Favoris</span>
                                 <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                             </a>
-                            <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'chats' %}active{% endif %}">
+                            <a href="{% url 'backend:chat_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'chat_list' %}active{% endif %}">
                                 <i data-lucide="message-circle" class="sidebar-icon"></i>
                                 <span>Messages</span>
                                 <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                             </a>
-                            <a href="#" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-                                <i data-lucide="user" class="sidebar-icon"></i>
-                                <span>Mon Profil</span>
+                            <a href="{% url 'backend:client_analytics' %}" class="sidebar-link {% if request.resolver_match.url_name == 'client_analytics' %}active{% endif %}">
+                                <i data-lucide="bar-chart-3" class="sidebar-icon"></i>
+                                <span>Analytics</span>
                                 <i data-lucide="chevron-right" class="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"></i>
                             </a>
                         </nav>
@@ -598,131 +572,73 @@
             const mobileOverlay = document.getElementById('mobile-overlay');
 
             function openMobileMenu() {
-                mobileSidebar.classList.add('open');
+                mobileSidebar.classList.remove('-translate-x-full');
                 mobileOverlay.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
-                
-                // Add stagger animation to menu items
-                const menuItems = mobileSidebar.querySelectorAll('.sidebar-link');
-                menuItems.forEach((item, index) => {
-                    item.style.opacity = '0';
-                    item.style.transform = 'translateX(-20px)';
-                    setTimeout(() => {
-                        item.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                        item.style.opacity = '1';
-                        item.style.transform = 'translateX(0)';
-                    }, index * 50);
-                });
             }
 
             function closeMobileMenu() {
-                mobileSidebar.classList.remove('open');
+                mobileSidebar.classList.add('-translate-x-full');
                 mobileOverlay.classList.add('hidden');
                 document.body.style.overflow = '';
             }
 
-            if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', openMobileMenu);
-            if (mobileCloseBtn) mobileCloseBtn.addEventListener('click', closeMobileMenu);
-            if (mobileOverlay) mobileOverlay.addEventListener('click', closeMobileMenu);
+            mobileMenuBtn?.addEventListener('click', openMobileMenu);
+            mobileCloseBtn?.addEventListener('click', closeMobileMenu);
+            mobileOverlay?.addEventListener('click', closeMobileMenu);
 
-            window.addEventListener('resize', function() {
-                if (window.innerWidth >= 1024) {
+            // Close on escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
                     closeMobileMenu();
                 }
             });
         }
 
-        // Enhanced Sidebar Link Interactions
-        function enhanceSidebarLinks() {
-            const sidebarLinks = document.querySelectorAll('.sidebar-link');
-            
-            sidebarLinks.forEach(link => {
-                link.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateX(8px)';
-                });
-                
-                link.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateX(0)';
-                });
-                
-                link.addEventListener('click', function(e) {
-                    // Add ripple effect
-                    const ripple = document.createElement('span');
-                    const rect = this.getBoundingClientRect();
-                    const size = Math.max(rect.width, rect.height);
-                    const x = e.clientX - rect.left - size / 2;
-                    const y = e.clientY - rect.top - size / 2;
-                    
-                    ripple.style.position = 'absolute';
-                    ripple.style.width = ripple.style.height = size + 'px';
-                    ripple.style.left = x + 'px';
-                    ripple.style.top = y + 'px';
-                    ripple.style.background = 'rgba(14, 165, 233, 0.3)';
-                    ripple.style.borderRadius = '50%';
-                    ripple.style.transform = 'scale(0)';
-                    ripple.style.animation = 'ripple 0.6s ease-out';
-                    ripple.style.pointerEvents = 'none';
-                    
-                    this.style.position = 'relative';
-                    this.style.overflow = 'hidden';
-                    this.appendChild(ripple);
-                    
-                    setTimeout(() => {
-                        ripple.remove();
-                    }, 600);
-                });
-            });
-        }
-
-        // Initialize everything
+        // Initialize everything when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize Alpine.js dark mode
-            if (localStorage.getItem('darkMode') === 'true') {
-                document.documentElement.classList.add('dark');
-            }
-            
             // Initialize Lucide icons
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
-            
-            setupMobileMenu();
-            enhanceSidebarLinks();
-            
+
+            // Setup time updates
             updateTime();
-            setInterval(updateTime, 1000); // Update every second
-            
-            console.log('🚀 Enhanced VGK Client Panel initialized successfully');
-        });
+            setInterval(updateTime, 1000);
 
-        // Enhanced keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            // Escape key functionality
-            if (e.key === 'Escape') {
-                const mobileSidebar = document.getElementById('mobile-sidebar');
-                const mobileOverlay = document.getElementById('mobile-overlay');
+            // Setup mobile menu
+            setupMobileMenu();
+
+            // Add smooth scrolling
+            document.documentElement.style.scrollBehavior = 'smooth';
+
+            // Enhanced hover effects for cards
+            const cards = document.querySelectorAll('.stats-card, .metric-card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px) scale(1.02)';
+                });
                 
-                if (mobileSidebar?.classList.contains('open')) {
-                    mobileSidebar.classList.remove('open');
-                    mobileOverlay.classList.add('hidden');
-                    document.body.style.overflow = '';
-                }
-            }
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
         });
 
-        // Add ripple animation styles
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes ripple {
-                to {
-                    transform: scale(4);
-                    opacity: 0;
-                }
-            }
-        `;
-        document.head.appendChild(style);
+        // Enhanced error handling
+        window.addEventListener('error', function(e) {
+            console.error('JavaScript Error:', e.error);
+        });
 
-        {% block extra_js %}{% endblock %}
+        // Enhanced performance monitoring
+        if ('performance' in window) {
+            window.addEventListener('load', function() {
+                const perfData = performance.getEntriesByType('navigation')[0];
+                console.log('Page Load Time:', perfData.loadEventEnd - perfData.loadEventStart, 'ms');
+            });
+        }
     </script>
+
+    {% block extra_js %}{% endblock %}
 </body>
 </html> 

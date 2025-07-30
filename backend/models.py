@@ -187,8 +187,7 @@ class Product(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     # Full-text search field for PostgreSQL (optional)
-    if POSTGRES_AVAILABLE:
-        search_vector = SearchVectorField(null=True, blank=True)
+    # Removed for SQLite compatibility
     
     class Meta:
         db_table = 'products'
@@ -208,8 +207,7 @@ class Product(models.Model):
         ]
         
         # Add PostgreSQL-specific indexes only if available
-        if POSTGRES_AVAILABLE:
-            indexes.append(GinIndex(fields=['search_vector']))
+        # Removed for SQLite compatibility
     
     def __str__(self):
         return self.title
@@ -228,8 +226,7 @@ class Product(models.Model):
                 counter += 1
         
         # Update search vector for full-text search (PostgreSQL only)
-        if POSTGRES_AVAILABLE and hasattr(self, 'search_vector'):
-            self.search_vector = SearchVector('title', weight='A') + SearchVector('description', weight='B')
+        # Removed for SQLite compatibility
         
         super().save(*args, **kwargs)
     
@@ -761,7 +758,7 @@ class ProductAlert(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='alerts')
     type = models.CharField(max_length=20, choices=TYPES)
-    message = models.TextField()
+    message = models.TextField(blank=True, default="")
     is_resolved = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     resolved_at = models.DateTimeField(null=True, blank=True)

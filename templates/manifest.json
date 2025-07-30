@@ -1,46 +1,45 @@
 {
-  "name": "Vidé-Grenier Kamer",
+  "name": "Vide-Grenier Kamer",
   "short_name": "VGK",
-  "description": "Marketplace camerounaise de seconde main - Vendez, Achetez, Économisez",
+  "description": "Plateforme de vente et d'achat d'articles d'occasion au Cameroun",
   "start_url": "/",
-  "scope": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "theme_color": "#00823A",
   "background_color": "#ffffff",
-  "lang": "fr-CM",
+  "theme_color": "#10b981",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "fr",
   "dir": "ltr",
-  
   "icons": [
     {
       "src": "/static/images/icons/icon-72x72.png",
       "sizes": "72x72",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "/static/images/icons/icon-96x96.png",
       "sizes": "96x96",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "/static/images/icons/icon-128x128.png",
       "sizes": "128x128",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "/static/images/icons/icon-144x144.png",
       "sizes": "144x144",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "/static/images/icons/icon-152x152.png",
       "sizes": "152x152",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "/static/images/icons/icon-192x192.png",
@@ -52,7 +51,7 @@
       "src": "/static/images/icons/icon-384x384.png",
       "sizes": "384x384",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "/static/images/icons/icon-512x512.png",
@@ -61,117 +60,57 @@
       "purpose": "any maskable"
     }
   ],
-  
+  "categories": ["shopping", "marketplace", "business"],
   "screenshots": [
     {
-      "src": "/static/images/screenshots/mobile-home.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "platform": "mobile",
-      "label": "Page d'accueil VGK"
-    },
-    {
-      "src": "/static/images/screenshots/mobile-products.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "platform": "mobile",
-      "label": "Liste des produits"
-    },
-    {
-      "src": "/static/images/screenshots/desktop-home.png",
+      "src": "/static/images/screenshot-1.png",
       "sizes": "1280x720",
       "type": "image/png",
-      "platform": "wide",
-      "label": "Interface desktop VGK"
-    }
-  ],
-  
-  "shortcuts": [
-    {
-      "name": "Rechercher des produits",
-      "short_name": "Recherche",
-      "description": "Rechercher des produits de seconde main",
-      "url": "/products/",
-      "icons": [
-        {
-          "src": "/static/images/icons/shortcut-search.png",
-          "sizes": "96x96"
-        }
-      ]
+      "form_factor": "wide"
     },
     {
-      "name": "Vendre un produit",
-      "short_name": "Vendre",
-      "description": "Publier une nouvelle annonce",
+      "src": "/static/images/screenshot-2.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ajouter un produit",
+      "short_name": "Ajouter",
+      "description": "Ajouter un nouveau produit à vendre",
       "url": "/products/create/",
       "icons": [
         {
-          "src": "/static/images/icons/shortcut-sell.png",
+          "src": "/static/images/add-product-icon.png",
           "sizes": "96x96"
         }
       ]
     },
     {
-      "name": "Mes commandes",
-      "short_name": "Commandes",
-      "description": "Voir mes achats et ventes",
-      "url": "/orders/",
+      "name": "Mes achats",
+      "short_name": "Achats",
+      "description": "Voir mes achats",
+      "url": "/orders/purchases/",
       "icons": [
         {
-          "src": "/static/images/icons/shortcut-orders.png",
+          "src": "/static/images/purchases-icon.png",
           "sizes": "96x96"
         }
       ]
     },
     {
-      "name": "Chat",
-      "short_name": "Messages",
-      "description": "Mes conversations",
-      "url": "/chat/",
+      "name": "Mes ventes",
+      "short_name": "Ventes",
+      "description": "Voir mes ventes",
+      "url": "/orders/sales/",
       "icons": [
         {
-          "src": "/static/images/icons/shortcut-chat.png",
+          "src": "/static/images/sales-icon.png",
           "sizes": "96x96"
         }
       ]
     }
-  ],
-  
-  "categories": ["shopping", "business", "finance"],
-  
-  "prefer_related_applications": false,
-  
-  "share_target": {
-    "action": "/share-product/",
-    "method": "POST",
-    "enctype": "multipart/form-data",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url",
-      "files": [
-        {
-          "name": "images",
-          "accept": ["image/*"]
-        }
-      ]
-    }
-  },
-  
-  "protocol_handlers": [
-    {
-      "protocol": "web+vgk",
-      "url": "/product/%s"
-    }
-  ],
-  
-  "handle_links": "preferred",
-  
-  "launch_handler": {
-    "client_mode": "focus-existing"
-  },
-  
-  "edge_side_panel": {
-    "preferred_width": 400
-  }
+  ]
 }

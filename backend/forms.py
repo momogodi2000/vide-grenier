@@ -7,7 +7,8 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, Submit, Row, Column, Field
 from crispy_forms.bootstrap import FormActions
 import re
-from .models import User, Product, Order, Review, Message, Category, GroupChat, GroupChatMessage
+from .models import User, Product, Order, Review, Message, Category, GroupChat, GroupChatMessage, PickupPoint
+from .models_advanced import StaffTask, InventoryMovement, StaffPerformance
 
 
 class CustomSignupForm(UserCreationForm):
@@ -864,3 +865,270 @@ class ContactForm(forms.Form):
                 Submit('submit', 'Envoyer le message', css_class='btn btn-primary btn-lg')
             )
         )
+
+
+# ============= ENHANCED FORMS FOR ADVANCED FEATURES =============
+
+class StaffTaskForm(forms.ModelForm):
+    """Form for staff task management"""
+    
+    class Meta:
+        model = StaffTask
+        fields = [
+            'assigned_to', 'pickup_point', 'task_type', 'title', 'description',
+            'priority', 'due_date', 'estimated_duration'
+        ]
+        widgets = {
+            'assigned_to': forms.Select(attrs={'class': 'form-control'}),
+            'pickup_point': forms.Select(attrs={'class': 'form-control'}),
+            'task_type': forms.Select(attrs={'class': 'form-control'}),
+            'title': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Titre de la tâche'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Description détaillée de la tâche'
+            }),
+            'priority': forms.Select(attrs={'class': 'form-control'}),
+            'due_date': forms.DateTimeInput(attrs={
+                'class': 'form-control',
+                'type': 'datetime-local'
+            }),
+            'estimated_duration': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Durée estimée en minutes'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Row(
+                Column('assigned_to', css_class='form-group col-md-6 mb-3'),
+                Column('pickup_point', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Field('task_type', css_class='form-group mb-3'),
+            Field('title', css_class='form-group mb-3'),
+            Field('description', css_class='form-group mb-3'),
+            Row(
+                Column('priority', css_class='form-group col-md-6 mb-3'),
+                Column('due_date', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Field('estimated_duration', css_class='form-group mb-3'),
+            FormActions(
+                Submit('submit', 'Créer la tâche', css_class='btn btn-primary')
+            )
+        )
+
+
+class PickupPointForm(forms.ModelForm):
+    """Form for pickup point management"""
+    
+    class Meta:
+        model = PickupPoint
+        fields = [
+            'name', 'address', 'city', 'phone', 'email', 'opening_hours',
+            'is_active', 'capacity', 'notes'
+        ]
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nom du point de retrait'
+            }),
+            'address': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Adresse complète'
+            }),
+            'city': forms.Select(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Téléphone'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Email'
+            }),
+            'opening_hours': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Horaires d\'ouverture'
+            }),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'capacity': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Capacité de stockage'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Notes sur le point de retrait'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Field('name', css_class='form-group mb-3'),
+            Field('address', css_class='form-group mb-3'),
+            Row(
+                Column('city', css_class='form-group col-md-6 mb-3'),
+                Column('phone', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('email', css_class='form-group col-md-6 mb-3'),
+                Column('opening_hours', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Field('capacity', css_class='form-group mb-3'),
+            Field('notes', css_class='form-group mb-3'),
+            Field('is_active', css_class='form-check mb-3'),
+            FormActions(
+                Submit('submit', 'Enregistrer', css_class='btn btn-primary')
+            )
+        )
+
+
+class StaffPerformanceForm(forms.ModelForm):
+    """Form for staff performance recording"""
+    
+    class Meta:
+        model = StaffPerformance
+        fields = [
+            'pickup_point', 'date', 'tasks_completed', 'orders_processed',
+            'customer_rating', 'efficiency_score', 'punctuality_score',
+            'inventory_accuracy', 'notes'
+        ]
+        widgets = {
+            'pickup_point': forms.Select(attrs={'class': 'form-control'}),
+            'date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'tasks_completed': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre de tâches complétées'
+            }),
+            'orders_processed': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre de commandes traitées'
+            }),
+            'customer_rating': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 1,
+                'max': 5,
+                'step': 0.1,
+                'placeholder': 'Note client (1-5)'
+            }),
+            'efficiency_score': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0,
+                'max': 100,
+                'placeholder': 'Score d\'efficacité (0-100)'
+            }),
+            'punctuality_score': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0,
+                'max': 100,
+                'placeholder': 'Score de ponctualité (0-100)'
+            }),
+            'inventory_accuracy': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0,
+                'max': 100,
+                'placeholder': 'Précision inventaire (0-100)'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Notes additionnelles'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Row(
+                Column('pickup_point', css_class='form-group col-md-6 mb-3'),
+                Column('date', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('tasks_completed', css_class='form-group col-md-6 mb-3'),
+                Column('orders_processed', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('customer_rating', css_class='form-group col-md-6 mb-3'),
+                Column('efficiency_score', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('punctuality_score', css_class='form-group col-md-6 mb-3'),
+                Column('inventory_accuracy', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Field('notes', css_class='form-group mb-3'),
+            FormActions(
+                Submit('submit', 'Enregistrer la performance', css_class='btn btn-primary')
+            )
+        )
+
+
+class EscrowPaymentForm(forms.ModelForm):
+    """Form for escrow payment management"""
+    
+    class Meta:
+        model = None  # Will be set dynamically
+        fields = ['amount', 'fee_amount', 'release_date', 'notes']
+        widgets = {
+            'amount': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Montant en FCFA'
+            }),
+            'fee_amount': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Frais en FCFA'
+            }),
+            'release_date': forms.DateTimeInput(attrs={
+                'class': 'form-control',
+                'type': 'datetime-local'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Notes additionnelles'
+            })
+        }
+
+
+class InstallmentPlanForm(forms.ModelForm):
+    """Form for installment plan creation"""
+    
+    class Meta:
+        model = None  # Will be set dynamically
+        fields = ['number_of_installments', 'down_payment', 'interest_rate']
+        widgets = {
+            'number_of_installments': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 2,
+                'max': 12,
+                'placeholder': 'Nombre d\'échéances (2-12)'
+            }),
+            'down_payment': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Acompte en FCFA'
+            }),
+            'interest_rate': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': 0.01,
+                'placeholder': 'Taux d\'intérêt (ex: 0.05 pour 5%)'
+            })
+        }

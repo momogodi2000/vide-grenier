@@ -36,10 +36,12 @@
     </script>
     
     <!-- Favicons -->
-    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
-    <link rel="apple-touch-icon" href="{% static 'images/icons/icon-192x192.png' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'images/icons/favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/icons/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/icons/favicon-16x16.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/icons/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{% static 'images/icons/icon-192x192.png' %}">
+    <link rel="icon" type="image/png" sizes="512x512" href="{% static 'images/icons/icon-512x512.png' %}">
     <link rel="manifest" href="{% url 'manifest' %}">
     
     <!-- Theme Color -->
@@ -500,6 +502,9 @@
         });
     </script>
     
+    <!-- PWA Installation Prompt Component -->
+    {% include 'components/pwa_install_prompt.html' %}
+    
     <!-- Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
@@ -513,6 +518,135 @@
                     });
             });
         }
+    </script>
+    
+    <!-- PWA Installation Logic -->
+    <script>
+        class PWAInstallPrompt {
+            constructor() {
+                this.promptElement = document.getElementById('pwa-install-prompt');
+                this.installBtn = document.getElementById('pwa-install-btn');
+                this.dismissBtn = document.getElementById('pwa-dismiss-btn');
+                this.addToHomeBtn = document.getElementById('pwa-add-to-home');
+                this.deviceOptions = document.getElementById('pwa-device-options');
+                this.installText = document.getElementById('pwa-install-text');
+                
+                this.deferredPrompt = null;
+                this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                this.isAndroid = /Android/.test(navigator.userAgent);
+                this.isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+                
+                this.init();
+            }
+            
+            init() {
+                if (this.isStandalone) {
+                    // App is already installed
+                    return;
+                }
+                
+                // Listen for the beforeinstallprompt event
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    this.deferredPrompt = e;
+                    this.showPrompt();
+                });
+                
+                // Show prompt for iOS devices
+                if (this.isIOS && !this.isStandalone) {
+                    this.showIOSPrompt();
+                }
+                
+                // Show prompt for Android devices without PWA support
+                if (this.isAndroid && !this.deferredPrompt && !this.isStandalone) {
+                    this.showAndroidPrompt();
+                }
+                
+                this.bindEvents();
+            }
+            
+            showPrompt() {
+                if (this.promptElement) {
+                    this.promptElement.classList.remove('translate-y-full');
+                    this.promptElement.classList.add('translate-y-0');
+                }
+            }
+            
+            showIOSPrompt() {
+                if (this.installText) {
+                    this.installText.textContent = 'Appuyez sur Partager puis "Sur l\'écran d\'accueil" pour installer l\'app';
+                }
+                if (this.deviceOptions) {
+                    this.deviceOptions.classList.remove('hidden');
+                }
+                this.showPrompt();
+            }
+            
+            showAndroidPrompt() {
+                if (this.installText) {
+                    this.installText.textContent = 'Téléchargez l\'APK pour installer l\'application';
+                }
+                if (this.deviceOptions) {
+                    this.deviceOptions.classList.remove('hidden');
+                }
+                this.showPrompt();
+            }
+            
+            bindEvents() {
+                if (this.installBtn) {
+                    this.installBtn.addEventListener('click', () => this.installPWA());
+                }
+                
+                if (this.dismissBtn) {
+                    this.dismissBtn.addEventListener('click', () => this.dismissPrompt());
+                }
+                
+                if (this.addToHomeBtn) {
+                    this.addToHomeBtn.addEventListener('click', () => this.showIOSInstructions());
+                }
+            }
+            
+            async installPWA() {
+                if (this.deferredPrompt) {
+                    this.deferredPrompt.prompt();
+                    const { outcome } = await this.deferredPrompt.userChoice;
+                    
+                    if (outcome === 'accepted') {
+                        console.log('PWA installed successfully');
+                        this.dismissPrompt();
+                    }
+                    
+                    this.deferredPrompt = null;
+                }
+            }
+            
+            dismissPrompt() {
+                if (this.promptElement) {
+                    this.promptElement.classList.add('translate-y-full');
+                    this.promptElement.classList.remove('translate-y-0');
+                }
+                
+                // Store dismissal timestamp
+                localStorage.setItem('pwa-prompt-dismissed', Date.now().toString());
+            }
+            
+            showIOSInstructions() {
+                // Show iOS-specific installation instructions
+                alert('Pour installer l\'application sur iOS:\n\n1. Appuyez sur le bouton Partager (📤)\n2. Faites défiler et appuyez sur "Sur l\'écran d\'accueil"\n3. Appuyez sur "Ajouter"');
+            }
+        }
+        
+        // Initialize PWA prompt after DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const dismissed = localStorage.getItem('pwa-prompt-dismissed');
+            const dismissedTime = dismissed ? parseInt(dismissed) : 0;
+            const now = Date.now();
+            
+            // Show prompt if not dismissed in the last 24 hours
+            if (now - dismissedTime > 24 * 60 * 60 * 1000) {
+                new PWAInstallPrompt();
+            }
+        });
     </script>
 </body>
 </html>

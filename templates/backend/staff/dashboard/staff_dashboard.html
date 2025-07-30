@@ -2,389 +2,406 @@
 {% load static %}
 {% load humanize %}
 
-{% block title %}Tableau de Bord Staff - Vidé-Grenier Kamer{% endblock %}
+{% block title %}Tableau de bord Staff - Vidé-Grenier Kamer{% endblock %}
 
 {% block content %}
 <div class="space-y-8">
-    <!-- Welcome Section -->
-    <div class="bg-gradient-to-r from-purple-600 via-purple-700 to-orange-800 rounded-2xl p-8 text-white relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-64 h-64 bg-white bg-opacity-10 rounded-full transform translate-x-32 -translate-y-32 blur-2xl"></div>
-        <div class="relative z-10">
-            <h1 class="text-3xl font-bold mb-4">
-                Bienvenue, {{ user.get_full_name|default:"Staff VGK" }}! 👋
-            </h1>
-            <p class="text-purple-100 text-lg">
-                Gérez les retraits, scannez les codes QR et assistez les clients depuis votre point de retrait.
-            </p>
-            <div class="flex items-center mt-4 space-x-4">
-                <div class="flex items-center bg-white bg-opacity-20 rounded-lg px-3 py-1">
-                    <i data-lucide="map-pin" class="w-4 h-4 mr-2"></i>
-                    <span class="text-sm font-medium">{{ user.pickup_point.name|default:"Point de Retrait" }}</span>
+    <!-- Welcome Header -->
+    <div class="bg-gradient-to-r from-purple-600 via-purple-700 to-orange-800 rounded-2xl p-8 text-white shadow-2xl">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">Bonjour, {{ user.first_name }} ! 👋</h1>
+                <p class="text-purple-100 text-lg">Voici un aperçu de votre activité aujourd'hui</p>
+                {% if user.pickup_point %}
+                <p class="text-purple-200 text-sm mt-2">Point de retrait: {{ user.pickup_point.name }}</p>
+                {% endif %}
                 </div>
-                <div class="flex items-center bg-white bg-opacity-20 rounded-lg px-3 py-1">
-                    <i data-lucide="clock" class="w-4 h-4 mr-2"></i>
-                    <span class="text-sm font-medium">Service actif</span>
-                </div>
+            <div class="text-right">
+                <div class="text-2xl font-bold">{{ today|date:"l, d F Y" }}</div>
+                <div class="text-purple-100" id="current-time"></div>
             </div>
         </div>
     </div>
 
-    <!-- Quick Actions Section -->
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Actions Rapides</h2>
+    <!-- Quick Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <button class="flex flex-col items-center p-6 bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl hover:from-purple-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105" onclick="openQRScanner()">
-                <i data-lucide="qr-code" class="w-8 h-8 mb-2"></i>
-                <span class="text-sm font-medium">Scanner QR</span>
-            </button>
-            <button class="flex flex-col items-center p-6 bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105" onclick="openOrderSearch()">
-                <i data-lucide="search" class="w-8 h-8 mb-2"></i>
-                <span class="text-sm font-medium">Rechercher</span>
-            </button>
-            <button class="flex flex-col items-center p-6 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105" onclick="openPickupForm()">
-                <i data-lucide="package" class="w-8 h-8 mb-2"></i>
-                <span class="text-sm font-medium">Retrait</span>
-            </button>
-            <a href="{% url 'backend:chat_list' %}" class="flex flex-col items-center p-6 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-300 transform hover:scale-105">
-                <i data-lucide="message-circle" class="w-8 h-8 mb-2"></i>
-                <span class="text-sm font-medium">Messages</span>
-            </a>
-        </div>
-    </div>
-
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        <!-- Retraits Aujourd'hui -->
-        <div class="stats-card">
+        <!-- Orders Processed Today -->
+        <div class="metric-card">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">Retraits Aujourd'hui</p>
-                    <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ todays_pickups|default:0 }}</p>
-                    <p class="text-green-600 text-sm">
-                        <i data-lucide="arrow-up" class="w-3 h-3 inline mr-1"></i>
-                        {{ completed_pickups|default:0 }} complétés
-                    </p>
+                    <p class="text-purple-100 text-sm font-medium">Commandes Traitées</p>
+                    <p class="text-2xl font-bold">{{ orders_processed_today }}</p>
                 </div>
-                <div class="p-3 bg-purple-500 rounded-xl">
-                    <i data-lucide="package-check" class="w-6 h-6 text-white"></i>
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                    <i data-lucide="package" class="w-6 h-6 text-white"></i>
                 </div>
             </div>
         </div>
 
-        <!-- En Attente -->
-        <div class="stats-card">
+        <!-- Today's Revenue -->
+        <div class="metric-card">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">En Attente</p>
-                    <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ pending_pickups|default:0 }}</p>
-                    <p class="text-orange-600 text-sm">
-                        <i data-lucide="clock" class="w-3 h-3 inline mr-1"></i>
-                        À traiter
-                    </p>
+                    <p class="text-purple-100 text-sm font-medium">Revenus Aujourd'hui</p>
+                    <p class="text-2xl font-bold">{{ todays_revenue|floatformat:0 }} FCFA</p>
                 </div>
-                <div class="p-3 bg-orange-500 rounded-xl">
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                    <i data-lucide="trending-up" class="w-6 h-6 text-white"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Orders -->
+        <div class="metric-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-purple-100 text-sm font-medium">Commandes en Attente</p>
+                    <p class="text-2xl font-bold">{{ pending_orders_count }}</p>
+                </div>
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
                     <i data-lucide="clock" class="w-6 h-6 text-white"></i>
                 </div>
             </div>
         </div>
 
-        <!-- Clients Aidés -->
-        <div class="stats-card">
+        <!-- Efficiency Score -->
+        <div class="metric-card">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">Clients Aidés</p>
-                    <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ clients_helped|default:0 }}</p>
-                    <p class="text-blue-600 text-sm">
-                        <i data-lucide="users" class="w-3 h-3 inline mr-1"></i>
-                        Cette semaine
-                    </p>
+                    <p class="text-purple-100 text-sm font-medium">Score d'Efficacité</p>
+                    <p class="text-2xl font-bold">{{ efficiency_score }}%</p>
                 </div>
-                <div class="p-3 bg-blue-500 rounded-xl">
-                    <i data-lucide="users" class="w-6 h-6 text-white"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Messages -->
-        <div class="stats-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">Messages</p>
-                    <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ unread_messages|default:0 }}</p>
-                    <p class="text-red-600 text-sm">
-                        <i data-lucide="bell" class="w-3 h-3 inline mr-1"></i>
-                        Non lus
-                    </p>
-                </div>
-                <div class="p-3 bg-red-500 rounded-xl">
-                    <i data-lucide="message-square" class="w-6 h-6 text-white"></i>
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                    <i data-lucide="target" class="w-6 h-6 text-white"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Recent Pickups -->
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Column -->
+        <div class="lg:col-span-2 space-y-8">
+            <!-- Order Processing Chart -->
+            <div class="stats-card">
         <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Retraits Récents</h2>
-            <a href="#" class="text-purple-600 hover:text-purple-700 font-medium flex items-center">
-                Voir tout
-                <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i>
-            </a>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Traitement des Commandes</h3>
+                    <div class="flex space-x-2">
+                        <button class="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-lg">Aujourd'hui</button>
+                        <button class="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded-lg">Cette semaine</button>
+                        <button class="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded-lg">Ce mois</button>
+                    </div>
+                </div>
+                <div class="h-64">
+                    <canvas id="ordersChart"></canvas>
+                </div>
         </div>
         
-        {% if recent_pickups %}
-        <div class="space-y-4">
-            {% for pickup in recent_pickups %}
-            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                <div class="flex items-center space-x-4">
-                    <div class="p-2 {% if pickup.status == 'DELIVERED' %}bg-green-100 text-green-600{% elif pickup.status == 'SHIPPED' %}bg-blue-100 text-blue-600{% else %}bg-orange-100 text-orange-600{% endif %} rounded-lg">
-                        <i data-lucide="{% if pickup.status == 'DELIVERED' %}check{% elif pickup.status == 'SHIPPED' %}truck{% else %}clock{% endif %}" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <p class="font-medium text-gray-900 dark:text-white">Commande #{{ pickup.order_number }}</p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ pickup.product.title|truncatechars:50 }}</p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Code: {{ pickup.pickup_code }}</p>
-                    </div>
+            <!-- Recent Orders -->
+            <div class="stats-card">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Commandes Récentes</h3>
+                    <a href="{% url 'backend:order_processing' %}" class="text-purple-600 hover:text-purple-700 text-sm font-medium">Voir tout</a>
                 </div>
-                <div class="text-right">
-                    <p class="font-bold text-gray-900 dark:text-white">{{ pickup.total_amount|floatformat:2 }}€</p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ pickup.created_at|date:"d M à H:i" }}</p>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                        {% if pickup.status == 'DELIVERED' %}bg-green-100 text-green-800{% elif pickup.status == 'SHIPPED' %}bg-blue-100 text-blue-800{% else %}bg-orange-100 text-orange-800{% endif %}">
-                        {{ pickup.get_status_display }}
-                    </span>
+        <div class="space-y-4">
+                    {% for order in recent_orders %}
+                    <div class="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center
+                            {% if order.status == 'DELIVERED' %}bg-green-100 text-green-600
+                            {% elif order.status == 'PENDING' %}bg-yellow-100 text-yellow-600
+                            {% elif order.status == 'CANCELLED' %}bg-red-100 text-red-600
+                            {% else %}bg-blue-100 text-blue-600{% endif %}">
+                            <i data-lucide="package" class="w-5 h-5"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-900 dark:text-white">Commande #{{ order.id|slice:":8" }}</p>
+                            <p class="text-sm text-gray-500">{{ order.product.title|truncatechars:30 }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-semibold text-gray-900 dark:text-white">{{ order.total_amount|floatformat:0 }} FCFA</p>
+                            <span class="text-xs px-2 py-1 rounded-full
+                                {% if order.status == 'DELIVERED' %}bg-green-100 text-green-700
+                                {% elif order.status == 'PENDING' %}bg-yellow-100 text-yellow-700
+                                {% elif order.status == 'CANCELLED' %}bg-red-100 text-red-700
+                                {% else %}bg-blue-100 text-blue-700{% endif %}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-8 text-gray-500">
+                        <i data-lucide="package" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                        <p>Aucune commande récente</p>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
-            {% endfor %}
         </div>
-        {% else %}
-        <div class="text-center py-12">
-            <i data-lucide="package" class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4"></i>
-            <p class="text-gray-500 dark:text-gray-400 text-lg">Aucun retrait récent</p>
-            <p class="text-gray-400 dark:text-gray-500">Les retraits apparaîtront ici</p>
+
+        <!-- Right Column -->
+        <div class="space-y-8">
+            <!-- Quick Actions -->
+            <div class="stats-card">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Actions Rapides</h3>
+                <div class="space-y-3">
+                    <a href="{% url 'backend:qr_scanner' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/50 rounded-xl flex items-center justify-center">
+                            <i data-lucide="qr-code" class="w-5 h-5 text-purple-600 dark:text-purple-400"></i>
+                        </div>
+                        <span class="font-medium text-gray-900 dark:text-white">Scanner QR Code</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 ml-auto"></i>
+                    </a>
+                    
+                    <a href="{% url 'backend:order_processing' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <div class="w-10 h-10 bg-orange-100 dark:bg-orange-900/50 rounded-xl flex items-center justify-center">
+                            <i data-lucide="list-checks" class="w-5 h-5 text-orange-600 dark:text-orange-400"></i>
+                        </div>
+                        <span class="font-medium text-gray-900 dark:text-white">Traiter Commandes</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 ml-auto"></i>
+                    </a>
+                    
+                    <a href="{% url 'backend:pickup_management' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-xl flex items-center justify-center">
+                            <i data-lucide="package" class="w-5 h-5 text-blue-600 dark:text-blue-400"></i>
+                        </div>
+                        <span class="font-medium text-gray-900 dark:text-white">Gestion Retraits</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 ml-auto"></i>
+                    </a>
+                    
+                    <a href="{% url 'backend:chat_list' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-xl flex items-center justify-center">
+                            <i data-lucide="message-circle" class="w-5 h-5 text-green-600 dark:text-green-400"></i>
+                        </div>
+                        <span class="font-medium text-gray-900 dark:text-white">Messages</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 ml-auto"></i>
+                    </a>
+                    
+                    <a href="{% url 'backend:analytics' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <div class="w-10 h-10 bg-cyan-100 dark:bg-cyan-900/50 rounded-xl flex items-center justify-center">
+                            <i data-lucide="bar-chart-3" class="w-5 h-5 text-cyan-600 dark:text-cyan-400"></i>
+                        </div>
+                        <span class="font-medium text-gray-900 dark:text-white">Statistiques</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 ml-auto"></i>
+                    </a>
         </div>
-        {% endif %}
     </div>
 
     <!-- Performance Metrics -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Daily Performance -->
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Performance Journalière</h3>
+            <div class="stats-card">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Métriques de Performance</h3>
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
-                    <span class="text-gray-600 dark:text-gray-400">Retraits traités</span>
-                    <span class="font-bold text-gray-900 dark:text-white">{{ todays_pickups|default:0 }}/{{ daily_target|default:20 }}</span>
+                        <span class="text-gray-600 dark:text-gray-400">Efficacité</span>
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ efficiency_score }}%</span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                    <div class="bg-purple-600 h-2.5 rounded-full" style="width: {% widthratio todays_pickups daily_target|default:20 100 %}%"></div>
-                </div>
-                
-                <div class="flex items-center justify-between">
-                    <span class="text-gray-600 dark:text-gray-400">Satisfaction client</span>
-                    <span class="font-bold text-green-600">{{ satisfaction_rate|default:95 }}%</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                    <div class="bg-green-600 h-2.5 rounded-full" style="width: {{ satisfaction_rate|default:95 }}%"></div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div class="bg-purple-600 h-2 rounded-full" style="width: {{ efficiency_score }}%"></div>
                 </div>
                 
                 <div class="flex items-center justify-between">
-                    <span class="text-gray-600 dark:text-gray-400">Temps moyen/retrait</span>
-                    <span class="font-bold text-blue-600">{{ avg_pickup_time|default:3 }}min</span>
+                        <span class="text-gray-600 dark:text-gray-400">Taux de satisfaction</span>
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ satisfaction_rate }}%</span>
                 </div>
+                
+                <div class="flex items-center justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Commandes annulées</span>
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ cancelled_orders_today }}</span>
+                    </div>
             </div>
         </div>
 
-        <!-- Quick Stats -->
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Statistiques Rapides</h3>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
-                    <p class="text-2xl font-bold text-purple-600">{{ weekly_pickups|default:0 }}</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Cette semaine</p>
+            <!-- Inventory Alerts -->
+            <div class="stats-card">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Alertes Stock</h3>
+                <div class="space-y-4">
+                    {% if low_stock_count > 0 %}
+                    <div class="flex items-center space-x-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-xl">
+                        <div class="w-8 h-8 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center">
+                            <i data-lucide="alert-triangle" class="w-4 h-4 text-red-600 dark:text-red-400"></i>
                 </div>
-                <div class="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                    <p class="text-2xl font-bold text-green-600">{{ monthly_pickups|default:0 }}</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Ce mois</p>
+                        <div>
+                            <p class="font-medium text-red-900 dark:text-red-100">{{ low_stock_count }} produits en stock faible</p>
+                            <p class="text-sm text-red-600 dark:text-red-300">Nécessite attention</p>
                 </div>
-                <div class="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                    <p class="text-2xl font-bold text-blue-600">{{ total_clients|default:0 }}</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Clients servis</p>
-                </div>
-                <div class="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
-                    <p class="text-2xl font-bold text-orange-600">{{ efficiency_score|default:98 }}%</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Efficacité</p>
+            </div>
+                    {% else %}
+                    <div class="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                        <div class="w-8 h-8 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
+                            <i data-lucide="check-circle" class="w-4 h-4 text-green-600 dark:text-green-400"></i>
+        </div>
+                        <div>
+                            <p class="font-medium text-green-900 dark:text-green-100">Stock optimal</p>
+                            <p class="text-sm text-green-600 dark:text-green-300">Aucune alerte</p>
+    </div>
+</div>
+                    {% endif %}
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                            <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ total_products }}</p>
+                            <p class="text-sm text-blue-600 dark:text-blue-300">Total Produits</p>
+                        </div>
+                        <div class="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                            <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ active_products }}</p>
+                            <p class="text-sm text-green-600 dark:text-green-300">Produits Actifs</p>
+            </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- QR Scanner Modal -->
-<div id="qr-scanner-modal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 hidden">
-    <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Scanner QR Code</h3>
-                <button class="text-gray-400 hover:text-gray-600" onclick="closeModal('qr-scanner-modal')">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
+    <!-- Bottom Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Monthly Performance -->
+        <div class="stats-card">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Performance Mensuelle</h3>
+            <div class="h-64">
+                <canvas id="performanceChart"></canvas>
+    </div>
+</div>
+
+        <!-- Customer Service -->
+        <div class="stats-card">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Service Client</h3>
             <div class="space-y-4">
-                <div class="bg-gray-100 dark:bg-gray-700 rounded-xl p-8 text-center">
-                    <i data-lucide="qr-code" class="w-16 h-16 text-gray-400 mx-auto mb-4"></i>
-                    <p class="text-gray-600 dark:text-gray-300">Placez le QR code devant la caméra</p>
-                </div>
-                <div class="flex space-x-3">
-                    <button class="flex-1 bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition-colors">
-                        Démarrer scan
-                    </button>
-                    <button class="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        <i data-lucide="keyboard" class="w-5 h-5"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Order Search Modal -->
-<div id="order-search-modal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 hidden">
-    <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Rechercher Commande</h3>
-                <button class="text-gray-400 hover:text-gray-600" onclick="closeModal('order-search-modal')">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-            <form class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Numéro de commande</label>
-                    <input type="text" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white" placeholder="VGK12345678">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Code de retrait</label>
-                    <input type="text" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white" placeholder="123456">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Téléphone client</label>
-                    <input type="tel" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white" placeholder="+237 6XX XXX XXX">
-                </div>
-                <button type="submit" class="w-full bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition-colors">
-                    Rechercher
-                </button>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Pickup Form Modal -->
-<div id="pickup-form-modal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 hidden">
-    <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full p-6">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Traiter Retrait</h3>
-                <button class="text-gray-400 hover:text-gray-600" onclick="closeModal('pickup-form-modal')">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-            <form class="space-y-4">
-                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
-                    <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Informations Commande</h4>
-                    <div class="space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Commande:</span>
-                            <span class="font-medium">#VGK12345678</span>
+                <div class="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+                            <i data-lucide="message-circle" class="w-5 h-5 text-blue-600 dark:text-blue-400"></i>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Client:</span>
-                            <span class="font-medium">Jean Dupont</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Produit:</span>
-                            <span class="font-medium">iPhone 12 Pro</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Montant:</span>
-                            <span class="font-medium text-green-600">350.000 FCFA</span>
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">Chats actifs</p>
+                            <p class="text-sm text-gray-500">{{ active_chats }} conversations</p>
                         </div>
                     </div>
+                    <a href="{% url 'backend:chat_list' %}" class="text-blue-600 hover:text-blue-700">
+                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                    </a>
                 </div>
                 
+                <div class="flex items-center justify-between p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center">
+                            <i data-lucide="alert-circle" class="w-5 h-5 text-orange-600 dark:text-orange-400"></i>
+                        </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Vérification identité</label>
-                    <div class="space-y-2">
-                        <label class="flex items-center">
-                            <input type="checkbox" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
-                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Pièce d'identité vérifiée</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="checkbox" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
-                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Code de retrait correct</span>
-                        </label>
+                            <p class="font-medium text-gray-900 dark:text-white">Problèmes non résolus</p>
+                            <p class="text-sm text-gray-500">{{ unresolved_issues }} tickets</p>
+                        </div>
                     </div>
+                    <a href="{% url 'backend:customer_service' %}" class="text-orange-600 hover:text-orange-700">
+                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                    </a>
                 </div>
                 
+                <div class="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
+                            <i data-lucide="thumbs-up" class="w-5 h-5 text-green-600 dark:text-green-400"></i>
+                        </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">État du produit</label>
-                    <select class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
-                        <option value="perfect">Parfait état</option>
-                        <option value="good">Bon état</option>
-                        <option value="damaged">Endommagé</option>
-                    </select>
+                            <p class="font-medium text-gray-900 dark:text-white">Taux de satisfaction</p>
+                            <p class="text-sm text-gray-500">{{ satisfaction_rate }}%</p>
+                        </div>
+                    </div>
+                    <div class="text-green-600">
+                        <i data-lucide="trending-up" class="w-5 h-5"></i>
                 </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Notes (optionnel)</label>
-                    <textarea class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white" rows="3" placeholder="Notes sur le retrait..."></textarea>
                 </div>
-                
-                <div class="flex space-x-3">
-                    <button type="button" class="flex-1 bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors">
-                        Confirmer Retrait
-                    </button>
-                    <button type="button" class="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        Reporter
-                    </button>
                 </div>
-            </form>
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-function openModal(modalId) {
-    document.getElementById(modalId).classList.remove('hidden');
-}
+document.addEventListener('DOMContentLoaded', function() {
+    // Update time
+    function updateTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('fr-FR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        document.getElementById('current-time').textContent = timeString;
+    }
+    
+    updateTime();
+    setInterval(updateTime, 1000);
 
-function closeModal(modalId) {
-    document.getElementById(modalId).classList.add('hidden');
-}
+    // Orders Chart
+    const ordersCtx = document.getElementById('ordersChart').getContext('2d');
+    const ordersChart = new Chart(ordersCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+            datasets: [{
+                label: 'Commandes traitées',
+                data: [12, 19, 15, 25, 22, 18, 14],
+                backgroundColor: '#8b5cf6',
+                borderRadius: 8
+            }, {
+                label: 'Commandes en attente',
+                data: [5, 8, 6, 10, 7, 4, 3],
+                backgroundColor: '#f59e0b',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
 
-function openQRScanner() {
-    openModal('qr-scanner-modal');
-}
-
-function openOrderSearch() {
-    openModal('order-search-modal');
-}
-
-function openPickupForm() {
-    openModal('pickup-form-modal');
-}
-
-// Auto-refresh for real-time updates
-setInterval(function() {
-    // Refresh pending pickups count
-    fetch('/staff/api/pending-count/')
-        .then(response => response.json())
-        .then(data => {
-            // Update UI with new data
-            console.log('Updated pending count:', data.count);
-        })
-        .catch(error => console.error('Error updating data:', error));
-}, 30000); // Every 30 seconds
+    // Performance Chart
+    const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+    const performanceChart = new Chart(performanceCtx, {
+        type: 'radar',
+        data: {
+            labels: ['Efficacité', 'Satisfaction', 'Rapidité', 'Précision', 'Communication'],
+            datasets: [{
+                label: 'Performance actuelle',
+                data: [85, 90, 78, 92, 88],
+                borderColor: '#8b5cf6',
+                backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                pointBackgroundColor: '#8b5cf6',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: '#8b5cf6'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        stepSize: 20
+                    }
+                }
+            }
+        }
+    });
+});
 </script>
 {% endblock %}

@@ -1,0 +1,1005 @@
+{% extends 'backend/visitor/base.html' %}
+{% load static %}
+
+{% block title %}Mon Panier - Vidé-Grenier Kamer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cart-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .cart-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .cart-item {
+        display: flex;
+        align-items: center;
+        padding: 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        transition: all 0.3s ease;
+    }
+    
+    .cart-item:hover {
+        background: #f9fafb;
+    }
+    
+    .cart-item:last-child {
+        border-bottom: none;
+    }
+    
+    .item-image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-right: 1rem;
+    }
+    
+    .item-details {
+        flex: 1;
+    }
+    
+    .item-title {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+    
+    .item-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+    }
+    
+    .item-price {
+        font-weight: 600;
+        color: #3b82f6;
+        font-size: 1.125rem;
+    }
+    
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0.5rem 0;
+    }
+    
+    .quantity-btn {
+        width: 32px;
+        height: 32px;
+        border: 1px solid #d1d5db;
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    
+    .quantity-btn:hover {
+        background: #f3f4f6;
+        border-color: #3b82f6;
+    }
+    
+    .quantity-input {
+        width: 50px;
+        height: 32px;
+        text-align: center;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-weight: bold;
+    }
+    
+    .remove-btn {
+        background: #ef4444;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+    }
+    
+    .remove-btn:hover {
+        background: #dc2626;
+    }
+    
+    .cart-summary {
+        background: #f9fafb;
+        padding: 1.5rem;
+        border-top: 1px solid #e5e7eb;
+    }
+    
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+        font-size: 0.875rem;
+    }
+    
+    .summary-row.total {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #374151;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 0.75rem;
+        margin-top: 0.75rem;
+    }
+    
+    .checkout-options {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+    
+    .option-card {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .option-card:hover {
+        border-color: #3b82f6;
+        background: #f0f9ff;
+    }
+    
+    .option-card.selected {
+        border-color: #3b82f6;
+        background: #f0f9ff;
+    }
+    
+    .option-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+    
+    .option-title {
+        font-weight: 600;
+        color: #374151;
+    }
+    
+    .option-price {
+        font-weight: 600;
+        color: #3b82f6;
+    }
+    
+    .option-description {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+    }
+    
+    .option-features {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .option-features li {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .option-features li::before {
+        content: "✓";
+        color: #10b981;
+        font-weight: bold;
+    }
+    
+    .visitor-form {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .form-textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        resize: vertical;
+        min-height: 80px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 1rem 0;
+    }
+    
+    .checkbox-input {
+        width: 18px;
+        height: 18px;
+        accent-color: #3b82f6;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .btn-primary {
+        background: #3b82f6;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .btn-primary:hover {
+        background: #2563eb;
+        transform: translateY(-2px);
+    }
+    
+    .btn-secondary {
+        background: white;
+        color: #3b82f6;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        border: 2px solid #3b82f6;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-secondary:hover {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .btn-whatsapp {
+        background: #25d366;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .btn-whatsapp:hover {
+        background: #128c7e;
+        transform: translateY(-2px);
+    }
+    
+    .empty-cart {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #6b7280;
+    }
+    
+    .empty-cart-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .account-prompt {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .account-prompt h3 {
+        color: white;
+        margin-bottom: 1rem;
+    }
+    
+    .account-benefits {
+        list-style: none;
+        padding: 0;
+        margin: 1rem 0;
+    }
+    
+    .account-benefits li {
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .account-benefits li::before {
+        content: "✓";
+        font-weight: bold;
+    }
+    
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 2rem;
+    }
+    
+    .loading-spinner.show {
+        display: block;
+    }
+    
+    @media (max-width: 768px) {
+        .cart-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .item-image {
+            width: 100%;
+            height: 200px;
+            margin-right: 0;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .quantity-controls {
+            width: 100%;
+            justify-content: space-between;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Account Creation Prompt -->
+        <div class="account-prompt">
+            <h3 class="text-xl font-bold">💡 Créez un compte pour plus d'avantages !</h3>
+            <p class="mb-4">Profitez de fonctionnalités exclusives en créant votre compte</p>
+            <ul class="account-benefits">
+                <li>Suivi de vos commandes en temps réel</li>
+                <li>Points de fidélité et réductions exclusives</li>
+                <li>Publiez vos propres produits</li>
+                <li>Historique d'achats et recommandations personnalisées</li>
+            </ul>
+            <div class="flex gap-2 mt-4">
+                <a href="{% url 'backend:register' %}" class="bg-white text-blue-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                    Créer un compte
+                </a>
+                <a href="{% url 'backend:login' %}" class="border border-white text-white px-6 py-2 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors">
+                    Se connecter
+                </a>
+            </div>
+        </div>
+
+        <!-- Cart Container -->
+        <div class="cart-container">
+            <!-- Cart Header -->
+            <div class="cart-header">
+                <h1 class="text-2xl font-bold">Mon Panier</h1>
+                <p class="text-blue-100">{{ cart.total_items }} article{{ cart.total_items|pluralize }}</p>
+            </div>
+
+            {% if cart_items %}
+            <!-- Cart Items -->
+            <div id="cart-items">
+                {% for item in cart_items %}
+                <div class="cart-item" data-item-id="{{ item.id }}">
+                    <img src="{{ item.product.main_image.image.url|default:'/static/images/placeholder.jpg' }}" 
+                         alt="{{ item.product.title }}" 
+                         class="item-image">
+                    
+                    <div class="item-details">
+                        <h3 class="item-title">{{ item.product.title }}</h3>
+                        <div class="item-meta">
+                            <span>{{ item.product.get_city_display }}</span>
+                            <span>{{ item.product.get_condition_display }}</span>
+                        </div>
+                        <div class="item-price">{{ item.unit_price|floatformat:0 }} FCFA</div>
+                        
+                        <div class="quantity-controls">
+                            <button class="quantity-btn" onclick="updateQuantity('{{ item.id }}', -1)">-</button>
+                            <input type="number" value="{{ item.quantity }}" min="1" 
+                                   class="quantity-input" 
+                                   onchange="updateQuantity('{{ item.id }}', 0, this.value)">
+                            <button class="quantity-btn" onclick="updateQuantity('{{ item.id }}', 1)">+</button>
+                        </div>
+                    </div>
+                    
+                    <div class="item-total">
+                        <div class="text-lg font-bold text-gray-900">{{ item.total_price|floatformat:0 }} FCFA</div>
+                        <button class="remove-btn" onclick="removeItem('{{ item.id }}')">
+                            <i class="fas fa-trash"></i> Supprimer
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Cart Summary -->
+            <div class="cart-summary">
+                <div class="summary-row">
+                    <span>Sous-total ({{ cart.total_items }} article{{ cart.total_items|pluralize }})</span>
+                    <span>{{ cart.total_amount|floatformat:0 }} FCFA</span>
+                </div>
+                <div class="summary-row">
+                    <span>Frais de livraison</span>
+                    <span id="delivery-cost">{{ cart.delivery_cost|floatformat:0 }} FCFA</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Total</span>
+                    <span id="final-total">{{ cart.final_total|floatformat:0 }} FCFA</span>
+                </div>
+            </div>
+            {% else %}
+            <!-- Empty Cart -->
+            <div class="empty-cart">
+                <div class="empty-cart-icon">🛒</div>
+                <h3 class="text-xl font-semibold mb-2">Votre panier est vide</h3>
+                <p class="text-gray-600 mb-4">Découvrez nos produits et commencez vos achats</p>
+                <a href="{% url 'backend:visitor_product_list' %}" 
+                   class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    Voir les produits
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if cart_items %}
+        <!-- Checkout Options -->
+        <div class="checkout-options">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Options de commande</h2>
+            
+            <div class="option-card" onclick="selectOption('pickup')">
+                <div class="option-header">
+                    <div>
+                        <div class="option-title">Retrait sur place</div>
+                        <div class="option-price">Gratuit</div>
+                    </div>
+                    <i class="fas fa-check-circle text-green-500"></i>
+                </div>
+                <div class="option-description">Récupérez vos articles dans nos points de retrait</div>
+                <ul class="option-features">
+                    <li>Pas de frais de livraison</li>
+                    <li>Paiement en espèces à la réception</li>
+                    <li>Disponible immédiatement</li>
+                </ul>
+            </div>
+            
+            <div class="option-card" onclick="selectOption('delivery')">
+                <div class="option-header">
+                    <div>
+                        <div class="option-title">Livraison à domicile</div>
+                        <div class="option-price">2000 FCFA</div>
+                    </div>
+                    <i class="fas fa-truck text-blue-500"></i>
+                </div>
+                <div class="option-description">Livraison à votre adresse avec paiement sécurisé</div>
+                <ul class="option-features">
+                    <li>Paiement Campay pour les frais de livraison</li>
+                    <li>Paiement espèces pour les articles</li>
+                    <li>Livraison sous 24-48h</li>
+                    <li>Reçu PDF avec QR code</li>
+                </ul>
+            </div>
+            
+            <div class="option-card" onclick="selectOption('negotiation')">
+                <div class="option-header">
+                    <div>
+                        <div class="option-title">Négociation WhatsApp</div>
+                        <div class="option-price">Gratuit</div>
+                    </div>
+                    <i class="fab fa-whatsapp text-green-500"></i>
+                </div>
+                <div class="option-description">Négociez le prix et organisez le retrait</div>
+                <ul class="option-features">
+                    <li>Discussion directe avec l'équipe</li>
+                    <li>Négociation possible sur les prix</li>
+                    <li>Organisation flexible du retrait</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Visitor Information Form -->
+        <div class="visitor-form">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Informations de contact</h2>
+            
+            <form id="visitor-form">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label">Nom complet *</label>
+                        <input type="text" id="visitor-name" name="visitor_name" 
+                               value="{{ cart.visitor_name }}" required
+                               class="form-input" placeholder="Votre nom complet">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Téléphone *</label>
+                        <input type="tel" id="visitor-phone" name="visitor_phone" 
+                               value="{{ cart.visitor_phone }}" required
+                               class="form-input" placeholder="Votre numéro de téléphone">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="visitor-email" name="visitor_email" 
+                               value="{{ cart.visitor_email }}"
+                               class="form-input" placeholder="Votre email (optionnel)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Ville</label>
+                        <select id="visitor-city" name="visitor_city" class="form-input">
+                            <option value="">Sélectionnez votre ville</option>
+                            <option value="DOUALA" {% if cart.city == 'DOUALA' %}selected{% endif %}>Douala</option>
+                            <option value="YAOUNDE" {% if cart.city == 'YAOUNDE' %}selected{% endif %}>Yaoundé</option>
+                            <option value="BAFOUSSAM" {% if cart.city == 'BAFOUSSAM' %}selected{% endif %}>Bafoussam</option>
+                            <option value="GAROUA" {% if cart.city == 'GAROUA' %}selected{% endif %}>Garoua</option>
+                            <option value="BAMENDA" {% if cart.city == 'BAMENDA' %}selected{% endif %}>Bamenda</option>
+                            <option value="LIMBE" {% if cart.city == 'LIMBE' %}selected{% endif %}>Limbé</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Adresse de livraison</label>
+                    <textarea id="delivery-address" name="delivery_address" 
+                              class="form-textarea" 
+                              placeholder="Votre adresse complète (pour livraison à domicile)">{{ cart.delivery_address }}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Notes supplémentaires</label>
+                    <textarea id="notes" name="notes" 
+                              class="form-textarea" 
+                              placeholder="Informations supplémentaires, préférences...">{{ cart.notes }}</textarea>
+                </div>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" id="whatsapp-preferred" name="whatsapp_preferred" 
+                           {% if cart.whatsapp_preferred %}checked{% endif %} class="checkbox-input">
+                    <label for="whatsapp-preferred" class="text-sm text-gray-700">
+                        Je préfère être contacté par WhatsApp
+                    </label>
+                </div>
+            </form>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button onclick="continueShopping()" class="btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Continuer les achats
+            </button>
+            
+            <button onclick="updateCartInfo()" class="btn-primary">
+                <i class="fas fa-save"></i>
+                Sauvegarder les informations
+            </button>
+            
+            <button onclick="proceedToCheckout()" class="btn-primary">
+                <i class="fas fa-credit-card"></i>
+                Procéder au paiement
+            </button>
+        </div>
+
+        <!-- WhatsApp Action Button -->
+        <div id="whatsapp-action" class="mt-4" style="display: none;">
+            <button onclick="sendWhatsAppMessage()" class="btn-whatsapp w-full">
+                <i class="fab fa-whatsapp"></i>
+                <span id="whatsapp-text">Envoyer message WhatsApp</span>
+            </button>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loading-spinner" class="loading-spinner">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p class="text-gray-600 mt-2">Traitement en cours...</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Global variables
+let selectedOption = null;
+let isLoading = false;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default option if cart has delivery method
+    const cartDeliveryMethod = '{{ cart.delivery_method }}';
+    if (cartDeliveryMethod) {
+        selectOption(cartDeliveryMethod.toLowerCase());
+    }
+});
+
+// Select checkout option
+function selectOption(option) {
+    selectedOption = option;
+    
+    // Update UI
+    document.querySelectorAll('.option-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    event.currentTarget.classList.add('selected');
+    
+    // Update delivery cost
+    updateDeliveryCost(option);
+    
+    // Show/hide WhatsApp action
+    const whatsappAction = document.getElementById('whatsapp-action');
+    if (option === 'negotiation') {
+        whatsappAction.style.display = 'block';
+        document.getElementById('whatsapp-text').textContent = 'Négocier le prix par WhatsApp';
+    } else {
+        whatsappAction.style.display = 'none';
+    }
+}
+
+// Update delivery cost
+function updateDeliveryCost(option) {
+    const deliveryCostElement = document.getElementById('delivery-cost');
+    const finalTotalElement = document.getElementById('final-total');
+    const subtotal = {{ cart.total_amount|default:0 }};
+    
+    let deliveryCost = 0;
+    if (option === 'delivery') {
+        deliveryCost = 2000;
+    }
+    
+    const finalTotal = subtotal + deliveryCost;
+    
+    deliveryCostElement.textContent = deliveryCost.toLocaleString() + ' FCFA';
+    finalTotalElement.textContent = finalTotal.toLocaleString() + ' FCFA';
+}
+
+// Update quantity
+function updateQuantity(itemId, delta, newValue = null) {
+    if (isLoading) return;
+    
+    isLoading = true;
+    showLoading(true);
+    
+    let quantity;
+    if (newValue !== null) {
+        quantity = parseInt(newValue);
+    } else {
+        const input = document.querySelector(`[data-item-id="${itemId}"] .quantity-input`);
+        quantity = Math.max(1, parseInt(input.value) + delta);
+    }
+    
+    fetch(`/visitor/cart/update/${itemId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            quantity: quantity
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update item display
+            const itemElement = document.querySelector(`[data-item-id="${itemId}"]`);
+            const quantityInput = itemElement.querySelector('.quantity-input');
+            const totalElement = itemElement.querySelector('.item-total .text-lg');
+            
+            quantityInput.value = data.item.quantity;
+            totalElement.textContent = data.item.total_price + ' FCFA';
+            
+            // Update cart summary
+            updateCartSummary(data.cart);
+            
+            showNotification('Quantité mise à jour', 'success');
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Erreur lors de la mise à jour', 'error');
+    })
+    .finally(() => {
+        isLoading = false;
+        showLoading(false);
+    });
+}
+
+// Remove item
+function removeItem(itemId) {
+    if (isLoading) return;
+    
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cet article ?')) {
+        return;
+    }
+    
+    isLoading = true;
+    showLoading(true);
+    
+    fetch(`/visitor/cart/remove/${itemId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove item from DOM
+            const itemElement = document.querySelector(`[data-item-id="${itemId}"]`);
+            itemElement.remove();
+            
+            // Update cart summary
+            updateCartSummary(data.cart);
+            
+            // Check if cart is empty
+            if (data.cart.total_items === 0) {
+                location.reload();
+            }
+            
+            showNotification('Article supprimé', 'success');
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Erreur lors de la suppression', 'error');
+    })
+    .finally(() => {
+        isLoading = false;
+        showLoading(false);
+    });
+}
+
+// Update cart summary
+function updateCartSummary(cart) {
+    const summaryRows = document.querySelectorAll('.summary-row');
+    const subtotalRow = summaryRows[0];
+    const deliveryRow = summaryRows[1];
+    const totalRow = summaryRows[2];
+    
+    subtotalRow.innerHTML = `<span>Sous-total (${cart.total_items} article${cart.total_items > 1 ? 's' : ''})</span><span>${cart.total_amount} FCFA</span>`;
+    
+    if (selectedOption === 'delivery') {
+        deliveryRow.innerHTML = `<span>Frais de livraison</span><span>2000 FCFA</span>`;
+        totalRow.innerHTML = `<span>Total</span><span>${cart.final_total} FCFA</span>`;
+    } else {
+        deliveryRow.innerHTML = `<span>Frais de livraison</span><span>0 FCFA</span>`;
+        totalRow.innerHTML = `<span>Total</span><span>${cart.total_amount} FCFA</span>`;
+    }
+}
+
+// Update cart information
+function updateCartInfo() {
+    if (isLoading) return;
+    
+    const formData = new FormData(document.getElementById('visitor-form'));
+    const data = Object.fromEntries(formData.entries());
+    
+    // Add checkbox value
+    data.whatsapp_preferred = document.getElementById('whatsapp-preferred').checked;
+    
+    isLoading = true;
+    showLoading(true);
+    
+    fetch('/visitor/cart/update-info/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Informations sauvegardées', 'success');
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Erreur lors de la sauvegarde', 'error');
+    })
+    .finally(() => {
+        isLoading = false;
+        showLoading(false);
+    });
+}
+
+// Proceed to checkout
+function proceedToCheckout() {
+    if (!selectedOption) {
+        showNotification('Veuillez sélectionner une option de commande', 'error');
+        return;
+    }
+    
+    // Validate form
+    const name = document.getElementById('visitor-name').value.trim();
+    const phone = document.getElementById('visitor-phone').value.trim();
+    
+    if (!name || !phone) {
+        showNotification('Veuillez remplir les informations obligatoires', 'error');
+        return;
+    }
+    
+    // Save cart info first
+    updateCartInfo();
+    
+    // Redirect based on option
+    switch(selectedOption) {
+        case 'pickup':
+            window.location.href = '/visitor/cart/checkout/?option=pickup';
+            break;
+        case 'delivery':
+            window.location.href = '/visitor/cart/checkout/?option=delivery';
+            break;
+        case 'negotiation':
+            sendWhatsAppMessage();
+            break;
+    }
+}
+
+// Send WhatsApp message
+function sendWhatsAppMessage() {
+    const name = document.getElementById('visitor-name').value.trim();
+    const phone = document.getElementById('visitor-phone').value.trim();
+    
+    if (!name || !phone) {
+        showNotification('Veuillez remplir vos informations de contact', 'error');
+        return;
+    }
+    
+    // Generate WhatsApp message
+    const cartItems = {{ cart_items_json|safe }};
+    let message = `Bonjour, je souhaite commander les articles suivants :\n\n`;
+    
+    cartItems.forEach(item => {
+        message += `• ${item.product.title} (Qté: ${item.quantity}) - ${item.total_price} FCFA\n`;
+    });
+    
+    message += `\nTotal: {{ cart.total_amount|floatformat:0 }} FCFA`;
+    message += `\n\nNom: ${name}`;
+    message += `\nTéléphone: ${phone}`;
+    
+    if (selectedOption === 'negotiation') {
+        message += `\n\nJe souhaite discuter du prix et organiser le retrait.`;
+    } else {
+        message += `\n\nJe souhaite effectuer un retrait sur place.`;
+    }
+    
+    const whatsappUrl = `https://wa.me/237694638412?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+    
+    showNotification('Message WhatsApp ouvert', 'success');
+}
+
+// Continue shopping
+function continueShopping() {
+    window.location.href = '{% url "backend:visitor_product_list" %}';
+}
+
+// Show/hide loading
+function showLoading(show) {
+    const spinner = document.getElementById('loading-spinner');
+    if (show) {
+        spinner.classList.add('show');
+    } else {
+        spinner.classList.remove('show');
+    }
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
+        type === 'success' ? 'bg-green-500 text-white' :
+        type === 'error' ? 'bg-red-500 text-white' :
+        'bg-blue-500 text-white'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %} 

@@ -10,11 +10,11 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.utils.decorators import method_decorator
 from .views_enhanced import ClientRequiredMixin
-from .models import Product, Order, Category, User
+from .models import Product, Order, Category, User, PickupPoint
 from .models_advanced import Wallet, Transaction, PrivateChat, ShoppingCart, UserBehavior, ProductRecommendation
 from .forms import ProductForm, ProfileForm
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, datetime
 from decimal import Decimal
 
 
@@ -280,294 +280,291 @@ class ClientDashboardView(ClientRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         
-        try:
-            # Wallet integration
-            wallet, created = Wallet.objects.get_or_create(user=user)
-            recent_transactions = wallet.transactions.all()[:5] if hasattr(wallet, 'transactions') else []
+        # Get wallet information
+        wallet, created = Wallet.objects.get_or_create(user=user)
+        
+        # Get today's date range
+        today = timezone.now().date()
+        start_of_day = timezone.make_aware(datetime.combine(today, datetime.min.time()))
+        end_of_day = timezone.make_aware(datetime.combine(today, datetime.max.time()))
+        
+        # Product statistics
+        user_products = Product.objects.filter(seller=user)
+        active_products = user_products.filter(status='ACTIVE')
+        pending_products = user_products.filter(status='PENDING')
+        
+        # Order statistics
+        user_orders = Order.objects.filter(product__seller=user)
+        todays_orders = user_orders.filter(created_at__range=[start_of_day, end_of_day])
+        monthly_orders = user_orders.filter(created_at__month=today.month)
+        
+        # Purchase statistics
+        user_purchases = Order.objects.filter(buyer=user)
+        todays_purchases = user_purchases.filter(created_at__range=[start_of_day, end_of_day])
+        monthly_purchases = user_purchases.filter(created_at__month=today.month)
+        
+        # Financial metrics
+        todays_revenue = todays_orders.filter(status='DELIVERED').aggregate(
+            total=Sum('total_amount'))['total'] or Decimal('0')
+        monthly_revenue = monthly_orders.filter(status='DELIVERED').aggregate(
+            total=Sum('total_amount'))['total'] or Decimal('0')
+        
+        todays_spending = todays_purchases.filter(status='DELIVERED').aggregate(
+            total=Sum('total_amount'))['total'] or Decimal('0')
+        monthly_spending = monthly_purchases.filter(status='DELIVERED').aggregate(
+            total=Sum('total_amount'))['total'] or Decimal('0')
+        
+        # Recent activities
+        recent_activities = self._get_recent_activities(user)
+        
+        # Monthly sales data for charts
+        monthly_sales_data = self._get_monthly_sales_data(user)
+        
+        # Category performance
+        category_performance = self._get_category_performance(user)
+        
+        # Product views today
+        product_views_today = self._get_product_views_today(user)
+        
+        # Conversion rate
+        conversion_rate = self._get_conversion_rate(user)
+        
+        # Trending categories
+        trending_categories = self._get_trending_categories()
+        
+        # Suggested price ranges
+        suggested_price_ranges = self._get_suggested_price_ranges(user)
+        
+        # Wallet chart data
+        wallet_chart_data = self._get_wallet_chart_data(wallet)
+        
+        # Unread messages count
+        unread_messages_count = self._get_unread_messages_count(user)
+        
+        # Pending reviews count
+        pending_reviews_count = self._get_pending_reviews_count(user)
+        
+        context.update({
+            # Wallet Information
+            'wallet': wallet,
+            'wallet_balance': wallet.balance,
+            'wallet_chart_data': wallet_chart_data,
             
-            # Product management stats - Fixed relationship names
-            user_products = user.products_sold.all()  # Fixed: was user.products.all()
-            active_products = user_products.filter(status='ACTIVE')
-            sold_products = user.products_sold.filter(status='SOLD')  # Fixed: was user.sold_products
+            # Product Statistics
+            'total_products': user_products.count(),
+            'active_products': active_products.count(),
+            'pending_products': pending_products.count(),
+            'product_views_today': product_views_today,
             
-            # Purchase history - Fixed: use correct relationship names
-            user_orders = user.orders.all()  # This is correct - buyer relationship
-            pending_orders = user_orders.filter(status__in=['PENDING', 'PAID', 'SHIPPED'])
-            completed_orders = user_orders.filter(status='DELIVERED')
+            # Sales Statistics
+            'todays_orders': todays_orders.count(),
+            'monthly_orders': monthly_orders.count(),
+            'todays_revenue': todays_revenue,
+            'monthly_revenue': monthly_revenue,
+            'avg_order_value': user_orders.aggregate(avg=Avg('total_amount'))['avg'] or Decimal('0'),
             
-            # Financial calculations - Fixed to use orders instead of products
-            # Calculate earnings from orders where user is the seller
-            seller_orders = Order.objects.filter(product__seller=user)
-            total_earned = seller_orders.filter(status='DELIVERED').aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
-            total_spent = completed_orders.aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
-            pending_earnings = seller_orders.filter(status__in=['PAID', 'SHIPPED']).aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+            # Purchase Statistics
+            'todays_purchases': todays_purchases.count(),
+            'monthly_purchases': monthly_purchases.count(),
+            'todays_spending': todays_spending,
+            'monthly_spending': monthly_spending,
             
-            # Performance metrics
-            avg_product_rating = 4.5  # Placeholder - calculate from reviews
-            total_views = user.behaviors.filter(action_type='VIEW').count() if hasattr(user, 'behaviors') else 0
-            total_likes = user.behaviors.filter(action_type='LIKE').count() if hasattr(user, 'behaviors') else 0
+            # Performance Metrics
+            'conversion_rate': conversion_rate,
+            'category_performance': category_performance,
+            'monthly_sales_data': monthly_sales_data,
             
-            # Recent activity
-            recent_activities = self._get_recent_activities(user)
+            # Recent Activities
+            'recent_activities': recent_activities,
             
-            # Recommendations
-            recommendations = ProductRecommendation.objects.filter(
-                user=user,
-                expires_at__gt=timezone.now()
-            ).select_related('product')[:6] if hasattr(ProductRecommendation, 'objects') else []
+            # Market Insights
+            'trending_categories': trending_categories,
+            'suggested_price_ranges': suggested_price_ranges,
             
-            # Analytics data for charts
-            monthly_sales_data = self._get_monthly_sales_data(user)
-            category_performance = self._get_category_performance(user)
+            # Communication
+            'unread_messages_count': unread_messages_count,
+            'pending_reviews_count': pending_reviews_count,
             
-            context.update({
-                # Wallet Information
-                'wallet': wallet,
-                'wallet_balance': wallet.available_balance if hasattr(wallet, 'available_balance') else Decimal('0'),
-                'pending_balance': wallet.pending_balance if hasattr(wallet, 'pending_balance') else Decimal('0'),
-                'recent_transactions': recent_transactions,
-                
-                # Product Management
-                'total_products': user_products.count(),
-                'active_products_count': active_products.count(),
-                'draft_products_count': user_products.filter(status='DRAFT').count(),
-                'sold_products_count': sold_products.count(),
-                'product_views_today': self._get_product_views_today(user),
-                'low_stock_products': active_products.filter(stock_quantity__lt=5) if hasattr(Product, 'stock_quantity') else [],
-                
-                # Sales & Purchases
-                'total_sales': sold_products.count(),
-                'total_purchases': completed_orders.count(),
-                'pending_orders_count': pending_orders.count(),
-                'total_earned': total_earned,
-                'total_spent': total_spent,
-                'pending_earnings': pending_earnings,
-                'net_balance': total_earned - total_spent,
-                
-                # Performance
-                'avg_product_rating': avg_product_rating,
-                'total_views': total_views,
-                'total_likes': total_likes,
-                'conversion_rate': self._calculate_conversion_rate(user),
-                
-                # Recent Activity
-                'recent_activities': recent_activities,
-                'recent_products': user_products.order_by('-created_at')[:5],
-                'recent_orders': user_orders.order_by('-created_at')[:5],
-                
-                # Recommendations & Insights
-                'recommendations': recommendations,
-                'trending_categories': self._get_trending_categories(),
-                'suggested_price_ranges': self._get_suggested_price_ranges(user),
-                
-                # Analytics Data
-                'monthly_sales_data': monthly_sales_data,
-                'category_performance': category_performance,
-                'wallet_chart_data': self._get_wallet_chart_data(wallet),
-                
-                # Quick Actions
-                'quick_stats': {
-                    'orders_this_month': user_orders.filter(created_at__month=timezone.now().month).count(),
-                    'revenue_this_month': seller_orders.filter(
-                        created_at__month=timezone.now().month,
-                        status='DELIVERED'
-                    ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0'),
-                    'new_messages': self._get_unread_messages_count(user),
-                    'pending_reviews': self._get_pending_reviews_count(user),
-                }
-            })
-            
-        except Exception as e:
-            # If there's an error, provide default values
-            print(f"Error in ClientDashboardView: {e}")
-            context.update({
-                'wallet': None,
-                'wallet_balance': Decimal('0'),
-                'pending_balance': Decimal('0'),
-                'recent_transactions': [],
-                'total_products': 0,
-                'active_products_count': 0,
-                'draft_products_count': 0,
-                'sold_products_count': 0,
-                'product_views_today': 0,
-                'low_stock_products': [],
-                'total_sales': 0,
-                'total_purchases': 0,
-                'pending_orders_count': 0,
-                'total_earned': Decimal('0'),
-                'total_spent': Decimal('0'),
-                'pending_earnings': Decimal('0'),
-                'net_balance': Decimal('0'),
-                'avg_product_rating': 0,
-                'total_views': 0,
-                'total_likes': 0,
-                'conversion_rate': 0,
-                'recent_activities': [],
-                'recent_products': [],
-                'recent_orders': [],
-                'recommendations': [],
-                'trending_categories': [],
-                'suggested_price_ranges': [],
-                'monthly_sales_data': [],
-                'category_performance': [],
-                'wallet_chart_data': [],
-                'quick_stats': {
-                    'orders_this_month': 0,
-                    'revenue_this_month': Decimal('0'),
-                    'new_messages': 0,
-                    'pending_reviews': 0,
-                }
-            })
+            # Quick Actions
+            'quick_actions': [
+                {'name': 'Ajouter un produit', 'url': 'client:product_create', 'icon': 'plus-circle'},
+                {'name': 'Voir mes ventes', 'url': 'client:sales', 'icon': 'shopping-bag'},
+                {'name': 'Mes achats', 'url': 'client:purchases', 'icon': 'shopping-cart'},
+                {'name': 'Messages', 'url': 'client:chats', 'icon': 'message-circle'},
+                {'name': 'Portefeuille', 'url': 'client:wallet', 'icon': 'wallet'},
+                {'name': 'Favoris', 'url': 'client:favorites', 'icon': 'heart'},
+            ]
+        })
         
         return context
     
     def _get_recent_activities(self, user):
-        """Get recent user activities"""
+        """Get recent activities for the user"""
         activities = []
         
         # Recent orders
-        recent_orders = user.orders.order_by('-created_at')[:3]
+        recent_orders = Order.objects.filter(
+            Q(product__seller=user) | Q(buyer=user)
+        ).order_by('-created_at')[:5]
+        
         for order in recent_orders:
+            if order.product.seller == user:
+                activities.append({
+                    'type': 'sale',
+                    'title': f'Vente: {order.product.title}',
+                    'amount': order.total_amount,
+                    'date': order.created_at,
+                    'status': order.status
+                })
+            else:
+                activities.append({
+                    'type': 'purchase',
+                    'title': f'Achat: {order.product.title}',
+                    'amount': order.total_amount,
+                    'date': order.created_at,
+                    'status': order.status
+                })
+        
+        # Recent product views
+        recent_views = Product.objects.filter(seller=user).order_by('-views_count')[:3]
+        for product in recent_views:
             activities.append({
-                'type': 'order',
-                'action': 'Commande passée',
-                'description': f'Commande pour {order.product.title}',
-                'timestamp': order.created_at,
-                'url': f'/client/purchases/{order.id}/'
+                'type': 'view',
+                'title': f'Vue: {product.title}',
+                'views': product.view_count,
+                'date': product.updated_at
             })
         
-        # Recent product additions - Fixed to use products_sold relationship
-        recent_products = user.products_sold.order_by('-created_at')[:3]
-        for product in recent_products:
-            activities.append({
-                'type': 'product',
-                'action': 'Produit ajouté',
-                'description': f'Nouveau produit: {product.title}',
-                'timestamp': product.created_at,
-                'url': f'/client/products/{product.id}/'
-            })
-        
-        # Sort by timestamp and return top 10
-        activities.sort(key=lambda x: x['timestamp'], reverse=True)
-        return activities[:10]
+        return sorted(activities, key=lambda x: x['date'], reverse=True)[:10]
     
     def _get_monthly_sales_data(self, user):
         """Get monthly sales data for charts"""
-        from django.db.models.functions import TruncMonth
+        current_month = timezone.now().month
+        current_year = timezone.now().year
         
-        monthly_data = Order.objects.filter(
-            product__seller=user,
-            status='DELIVERED',
-            created_at__gte=timezone.now() - timedelta(days=365)
-        ).annotate(
-            month=TruncMonth('created_at')
-        ).values('month').annotate(
-            total_sales=Count('id'),
-            total_revenue=Sum('total_amount')
-        ).order_by('month')
+        monthly_data = []
+        for month in range(1, 13):
+            if month > current_month and current_year == timezone.now().year:
+                break
+                
+            month_start = timezone.make_aware(datetime(current_year, month, 1))
+            if month == 12:
+                month_end = timezone.make_aware(datetime(current_year + 1, 1, 1))
+            else:
+                month_end = timezone.make_aware(datetime(current_year, month + 1, 1))
+            
+            month_orders = Order.objects.filter(
+                product__seller=user,
+                created_at__range=[month_start, month_end],
+                status='DELIVERED'
+            )
+            
+            month_revenue = month_orders.aggregate(
+                total=Sum('total_amount'))['total'] or Decimal('0')
+            
+            monthly_data.append({
+                'month': month,
+                'revenue': float(month_revenue),
+                'orders': month_orders.count()
+            })
         
-        return list(monthly_data)
+        return monthly_data
     
     def _get_category_performance(self, user):
-        """Get performance by category"""
-        category_data = user.products_sold.values(
-            'category__name'
-        ).annotate(
-            product_count=Count('id'),
-            total_sales=Count('orders', filter=Q(orders__status='DELIVERED')),
-            total_revenue=Sum('orders__total_amount', filter=Q(orders__status='DELIVERED'))
-        ).order_by('-total_revenue')
+        """Get category performance for user's products"""
+        user_products = Product.objects.filter(seller=user)
         
-        return list(category_data)[:5]  # Top 5 categories
+        category_stats = []
+        for category in Category.objects.all():
+            category_products = user_products.filter(category=category)
+            if category_products.exists():
+                category_orders = Order.objects.filter(
+                    product__in=category_products,
+                    status='DELIVERED'
+                )
+                
+                category_revenue = category_orders.aggregate(
+                    total=Sum('total_amount'))['total'] or Decimal('0')
+                
+                category_stats.append({
+                    'category': category.name,
+                    'products': category_products.count(),
+                    'orders': category_orders.count(),
+                    'revenue': float(category_revenue)
+                })
+        
+        return sorted(category_stats, key=lambda x: x['revenue'], reverse=True)[:5]
     
     def _get_product_views_today(self, user):
-        """Get today's product views"""
+        """Get total product views for today"""
         today = timezone.now().date()
-        return UserBehavior.objects.filter(
-            product__seller=user,
-            action_type='VIEW',
-            created_at__date=today
-        ).count() if hasattr(UserBehavior, 'objects') else 0
-    
-    def _calculate_conversion_rate(self, user):
-        """Calculate view to purchase conversion rate"""
-        total_views = UserBehavior.objects.filter(
-            product__seller=user,
-            action_type='VIEW'
-        ).count() if hasattr(UserBehavior, 'objects') else 0
+        user_products = Product.objects.filter(seller=user)
         
-        total_purchases = Order.objects.filter(
+        # This is a placeholder - you would need to implement view tracking
+        return sum(product.view_count for product in user_products)
+    
+    def _get_conversion_rate(self, user):
+        """Calculate conversion rate (orders / views)"""
+        user_products = Product.objects.filter(seller=user)
+        total_views = sum(product.view_count for product in user_products)
+        total_orders = Order.objects.filter(
             product__seller=user,
             status='DELIVERED'
         ).count()
         
         if total_views > 0:
-            return round((total_purchases / total_views) * 100, 2)
-        return 0
+            return round((total_orders / total_views) * 100, 2)
+        return 0.0
     
     def _get_trending_categories(self):
-        """Get trending categories based on recent activity"""
-        return Category.objects.annotate(
-            recent_products=Count(
-                'products',
-                filter=Q(products__created_at__gte=timezone.now() - timedelta(days=7))
-            )
-        ).order_by('-recent_products')[:5]
+        """Get trending categories"""
+        # Get categories with most active products
+        trending = Category.objects.annotate(
+            product_count=Count('products', filter=Q(products__status='ACTIVE'))
+        ).order_by('-product_count')[:5]
+        
+        return trending
     
     def _get_suggested_price_ranges(self, user):
-        """Get suggested price ranges for user's categories"""
-        user_categories = user.products_sold.values_list('category', flat=True).distinct()
+        """Get suggested price ranges based on user's products"""
+        user_products = Product.objects.filter(seller=user, status='ACTIVE')
         
-        price_suggestions = []
-        for category_id in user_categories:
-            category_products = Product.objects.filter(category_id=category_id, status='ACTIVE')
-            if category_products.exists():
-                avg_price = category_products.aggregate(avg=Avg('price'))['avg']
-                min_price = category_products.aggregate(min=Min('price'))['min']
-                max_price = category_products.aggregate(max=Max('price'))['max']
-                
-                price_suggestions.append({
-                    'category_id': category_id,
-                    'avg_price': avg_price,
-                    'suggested_min': min_price,
-                    'suggested_max': max_price
-                })
+        if user_products.exists():
+            avg_price = user_products.aggregate(avg=Avg('price'))['avg']
+            min_price = user_products.aggregate(min=Min('price'))['min']
+            max_price = user_products.aggregate(max=Max('price'))['max']
+            
+            return {
+                'average': float(avg_price) if avg_price else 0,
+                'minimum': float(min_price) if min_price else 0,
+                'maximum': float(max_price) if max_price else 0
+            }
         
-        return price_suggestions
+        return {'average': 0, 'minimum': 0, 'maximum': 0}
     
     def _get_wallet_chart_data(self, wallet):
         """Get wallet transaction data for charts"""
-        if not hasattr(wallet, 'transactions'):
-            return []
+        transactions = Transaction.objects.filter(wallet=wallet).order_by('-created_at')[:30]
         
-        from django.db.models.functions import TruncDate
+        chart_data = []
+        for transaction in transactions:
+            chart_data.append({
+                'date': transaction.created_at.strftime('%Y-%m-%d'),
+                'amount': float(transaction.amount),
+                'type': transaction.transaction_type
+            })
         
-        daily_data = wallet.transactions.filter(
-            created_at__gte=timezone.now() - timedelta(days=30)
-        ).annotate(
-            date=TruncDate('created_at')
-        ).values('date', 'transaction_type').annotate(
-            total_amount=Sum('amount')
-        ).order_by('date')
-        
-        return list(daily_data)
+        return chart_data
     
     def _get_unread_messages_count(self, user):
-        """Get count of unread messages"""
-        # Placeholder - implement with actual message model
-        return PrivateChat.objects.filter(
-            Q(participant_1=user) | Q(participant_2=user),
-            is_active=True
-        ).count()
+        """Get unread messages count"""
+        # Placeholder - implement based on your chat system
+        return 0
     
     def _get_pending_reviews_count(self, user):
-        """Get count of pending reviews to write"""
-        # Placeholder - implement with actual review system
-        return Order.objects.filter(
-            buyer=user,
-            status='DELIVERED'
-            # Add condition for orders without reviews
-        ).count()
+        """Get pending reviews count"""
+        # Placeholder - implement based on your review system
+        return 0
 
 
 class WalletView(ClientRequiredMixin, TemplateView):

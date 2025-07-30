@@ -1,186 +1,528 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 
-{% block title %}Commande Publique - {{ product.title }}{% endblock %}
+{% block title %}Commande - Point de retrait - Vidé-Grenier Kamer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pickup-option {
+        transition: all 0.3s ease;
+    }
+    
+    .pickup-option:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .pickup-option.selected {
+        border-color: #10b981;
+        background-color: #f0fdf4;
+    }
+    
+    .form-input {
+        transition: all 0.2s ease;
+    }
+    
+    .form-input:focus {
+        transform: scale(1.02);
+    }
+    
+    .progress-step {
+        transition: all 0.3s ease;
+    }
+    
+    .progress-step.active {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+    
+    .progress-step.completed {
+        background: #10b981;
+        color: white;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8">
-    <div class="max-w-4xl mx-auto px-4">
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Finaliser votre commande</h1>
-            <p class="text-gray-600">Paiement à la livraison disponible</p>
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'backend:visitor_cart' %}" class="text-gray-400 hover:text-gray-600">
+                        <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                    </a>
+                    <h1 class="text-2xl font-bold text-gray-900">Retrait en point de vente</h1>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-gray-500">Étape 2 sur 3</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Progress Steps -->
+        <div class="mb-8">
+            <div class="flex items-center justify-center space-x-4">
+                <div class="progress-step completed w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium">
+                    <i data-lucide="check" class="w-5 h-5"></i>
+                </div>
+                <div class="flex-1 h-1 bg-green-200 rounded"></div>
+                <div class="progress-step active w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium">
+                    2
+                </div>
+                <div class="flex-1 h-1 bg-gray-200 rounded"></div>
+                <div class="progress-step w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium bg-gray-100 text-gray-500">
+                    3
+                </div>
+            </div>
+            <div class="flex justify-between mt-2 text-sm text-gray-600">
+                <span>Panier</span>
+                <span>Point de retrait</span>
+                <span>Confirmation</span>
+            </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
-            <div class="grid md:grid-cols-2 gap-0">
-                <!-- Product Summary -->
-                <div class="bg-gradient-to-br from-green-500 to-blue-600 p-8 text-white">
-                    <h2 class="text-2xl font-bold mb-6">Résumé de votre commande</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Pickup Form -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-6">Sélectionner un point de retrait</h2>
                     
-                    <!-- Product Info -->
-                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-6">
-                        <div class="flex items-start space-x-4">
-                            {% if product.images %}
-                                <img src="{{ product.images.0 }}" alt="{{ product.title }}" 
-                                     class="w-20 h-20 rounded-lg object-cover">
-                            {% else %}
-                                <div class="w-20 h-20 bg-white/20 rounded-lg flex items-center justify-center">
-                                    <i data-lucide="package" class="w-8 h-8"></i>
+                    <form id="pickup-form" class="space-y-6">
+                        <!-- Personal Information -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-medium text-gray-900">Informations personnelles</h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Prénom *</label>
+                                    <input type="text" name="first_name" required 
+                                           class="form-input w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent">
                                 </div>
-                            {% endif %}
-                            <div class="flex-1">
-                                <h3 class="text-lg font-semibold mb-2">{{ product.title }}</h3>
-                                <div class="space-y-1 text-sm opacity-90">
-                                    <p><i data-lucide="map-pin" class="w-4 h-4 inline mr-1"></i>{{ product.get_city_display }}</p>
-                                    <p><i data-lucide="user" class="w-4 h-4 inline mr-1"></i>{{ product.seller.get_full_name }}</p>
-                                    <p><i data-lucide="tag" class="w-4 h-4 inline mr-1"></i>{{ product.category.name }}</p>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nom *</label>
+                                    <input type="text" name="last_name" required 
+                                           class="form-input w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Numéro de téléphone *</label>
+                                <input type="tel" name="phone" required placeholder="+237 XXX XXX XXX" 
+                                       class="form-input w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                <input type="email" name="email" placeholder="votre@email.com" 
+                                       class="form-input w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        
+                        <!-- Pickup Point Selection -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-medium text-gray-900">Point de retrait</h3>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Ville *</label>
+                                <select name="city" required onchange="loadPickupPoints(this.value)" 
+                                        class="form-input w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                    <option value="">Sélectionnez une ville</option>
+                                    <option value="douala">Douala</option>
+                                    <option value="yaounde">Yaoundé</option>
+                                    <option value="bafoussam">Bafoussam</option>
+                                    <option value="garoua">Garoua</option>
+                                    <option value="bamenda">Bamenda</option>
+                                </select>
+                            </div>
+                            
+                            <div id="pickup-points" class="space-y-3">
+                                <!-- Pickup points will be loaded here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Pickup Date and Time -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-medium text-gray-900">Date et heure de retrait</h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Date *</label>
+                                    <input type="date" name="pickup_date" required min="{{ min_date }}" 
+                                           class="form-input w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Heure *</label>
+                                    <select name="pickup_time" required 
+                                            class="form-input w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                        <option value="">Sélectionnez une heure</option>
+                                        <option value="09:00">09:00 - 10:00</option>
+                                        <option value="10:00">10:00 - 11:00</option>
+                                        <option value="11:00">11:00 - 12:00</option>
+                                        <option value="14:00">14:00 - 15:00</option>
+                                        <option value="15:00">15:00 - 16:00</option>
+                                        <option value="16:00">16:00 - 17:00</option>
+                                        <option value="17:00">17:00 - 18:00</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Price Breakdown -->
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center">
-                            <span>Prix du produit</span>
-                            <span class="text-xl font-bold">{{ product.price|floatformat:0 }} FCFA</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="flex items-center">
-                                <i data-lucide="truck" class="w-4 h-4 mr-2"></i>
-                                Frais de livraison
-                            </span>
-                            <span class="text-xl font-bold">{{ delivery_cost|floatformat:0 }} FCFA</span>
-                        </div>
-                        <hr class="border-white/30">
-                        <div class="flex justify-between items-center text-2xl font-bold">
-                            <span>Total</span>
-                            <span>{{ total_amount|floatformat:0 }} FCFA</span>
-                        </div>
-                    </div>
-
-                    <!-- Payment Method -->
-                    <div class="mt-6 p-4 bg-yellow-400/20 rounded-lg">
-                        <div class="flex items-center space-x-2">
-                            <i data-lucide="credit-card" class="w-5 h-5"></i>
-                            <span class="font-semibold">Paiement à la livraison</span>
-                        </div>
-                        <p class="text-sm mt-1 opacity-90">Vous payez uniquement à la réception de votre commande</p>
-                    </div>
-                </div>
-
-                <!-- Order Form -->
-                <div class="p-8">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Informations de livraison</h2>
-                    
-                    <form method="post" class="space-y-6">
-                        {% csrf_token %}
                         
-                        <!-- Delivery Address -->
+                        <!-- Additional Notes -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                <i data-lucide="map-pin" class="w-4 h-4 inline mr-1"></i>
-                                Adresse de livraison
-                            </label>
-                            <textarea name="delivery_address" rows="4" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                placeholder="Exemple: Quartier Mokolo, près du marché central, après la pharmacie..."></textarea>
-                            <p class="text-xs text-gray-500 mt-1">Soyez précis pour faciliter la livraison</p>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Notes supplémentaires</label>
+                            <textarea name="notes" rows="3" placeholder="Informations supplémentaires pour la commande..." 
+                                      class="form-input w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"></textarea>
                         </div>
-
-                        <!-- Phone Number -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                <i data-lucide="phone" class="w-4 h-4 inline mr-1"></i>
-                                Numéro de téléphone
-                            </label>
-                            <input type="tel" name="phone" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                placeholder="+237 6XX XXX XXX">
+                        
+                        <!-- Terms and Conditions -->
+                        <div class="space-y-4">
+                            <div class="flex items-start space-x-3">
+                                <input type="checkbox" name="terms" required 
+                                       class="mt-1 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                                <div class="text-sm text-gray-600">
+                                    <p>J'accepte les <a href="#" class="text-green-600 hover:text-green-700">conditions générales</a> et la <a href="#" class="text-green-600 hover:text-green-700">politique de confidentialité</a> de Vidé-Grenier Kamer.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start space-x-3">
+                                <input type="checkbox" name="marketing" 
+                                       class="mt-1 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                                <div class="text-sm text-gray-600">
+                                    <p>J'accepte de recevoir des offres et actualités par email (optionnel).</p>
+                                </div>
+                            </div>
                         </div>
-
-                        <!-- Notes -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                <i data-lucide="message-square" class="w-4 h-4 inline mr-1"></i>
-                                Instructions spéciales (optionnel)
-                            </label>
-                            <textarea name="notes" rows="3"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                placeholder="Toute instruction particulière pour la livraison..."></textarea>
-                        </div>
-
-                        <!-- Terms Agreement -->
-                        <div class="flex items-start space-x-3">
-                            <input type="checkbox" id="terms" required
-                                class="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
-                            <label for="terms" class="text-sm text-gray-700">
-                                J'accepte les <a href="#" class="text-green-600 hover:text-green-700 font-medium">conditions d'utilisation</a> 
-                                et confirme que les informations fournies sont exactes.
-                            </label>
-                        </div>
-
+                        
                         <!-- Submit Button -->
                         <button type="submit" 
-                            class="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-green-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
-                            <i data-lucide="shopping-cart" class="w-5 h-5 inline mr-2"></i>
-                            Confirmer la commande
+                                class="w-full bg-green-600 text-white py-4 px-6 rounded-xl font-medium hover:bg-green-700 transition-colors flex items-center justify-center">
+                            <i data-lucide="map-pin" class="w-5 h-5 mr-3"></i>
+                            Confirmer la commande ({{ total|floatformat:0 }} FCFA)
                         </button>
                     </form>
-
-                    <!-- Trust Indicators -->
-                    <div class="mt-8 pt-6 border-t border-gray-200">
-                        <h3 class="text-sm font-semibold text-gray-900 mb-3">Pourquoi commander avec VGK ?</h3>
-                        <div class="space-y-2 text-sm text-gray-600">
-                            <div class="flex items-center space-x-2">
-                                <i data-lucide="shield-check" class="w-4 h-4 text-green-500"></i>
-                                <span>Paiement sécurisé à la livraison</span>
+                </div>
+            </div>
+            
+            <!-- Order Summary -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sticky top-8">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Résumé de la commande</h3>
+                    
+                    <!-- Cart Items -->
+                    <div class="space-y-4 mb-6">
+                        {% for item in cart_items %}
+                        <div class="flex items-center space-x-3">
+                            <img src="{{ item.product.main_image.image.url|default:'/static/images/placeholder.jpg' }}" 
+                                 alt="{{ item.product.title }}" 
+                                 class="w-12 h-12 object-cover rounded-lg">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">{{ item.product.title }}</p>
+                                <p class="text-sm text-gray-500">{{ item.quantity }}x {{ item.product.price|floatformat:0 }} FCFA</p>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <i data-lucide="truck" class="w-4 h-4 text-blue-500"></i>
-                                <span>Livraison rapide partout au Cameroun</span>
+                            <p class="text-sm font-medium text-gray-900">{{ item.total_price|floatformat:0 }} FCFA</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Price Breakdown -->
+                    <div class="space-y-3 border-t border-gray-200 pt-4">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Sous-total</span>
+                            <span class="font-medium">{{ subtotal|floatformat:0 }} FCFA</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Frais de retrait</span>
+                            <span class="font-medium">0 FCFA</span>
+                        </div>
+                        <div class="border-t border-gray-200 pt-3">
+                            <div class="flex justify-between text-lg font-bold">
+                                <span>Total</span>
+                                <span class="text-green-600">{{ total|floatformat:0 }} FCFA</span>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <i data-lucide="headphones" class="w-4 h-4 text-purple-500"></i>
-                                <span>Support client disponible 24/7</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Pickup Info -->
+                    <div class="mt-6 p-4 bg-blue-50 rounded-xl">
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="info" class="w-5 h-5 text-blue-600 mt-0.5"></i>
+                            <div class="text-sm text-blue-800">
+                                <p class="font-medium mb-1">Retrait en point de vente</p>
+                                <ul class="space-y-1 text-xs">
+                                    <li>• Paiement à la réception</li>
+                                    <li>• Vérification des articles</li>
+                                    <li>• Support disponible sur place</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Alternative Contact Methods -->
-        <div class="mt-8 text-center">
-            <p class="text-gray-600 mb-4">Vous préférez commander par WhatsApp ?</p>
-            <a href="https://wa.me/237694638412?text=Bonjour, je souhaite commander: {{ product.title }}" 
-               target="_blank"
-               class="inline-flex items-center space-x-2 bg-green-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-600 transition-colors">
-                <i data-lucide="message-circle" class="w-5 h-5"></i>
-                <span>Commander via WhatsApp</span>
-            </a>
-        </div>
     </div>
 </div>
 
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<!-- Toast Container -->
+<div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
 <script>
-    lucide.createIcons();
-    
-    // Auto-focus on first input
-    document.querySelector('textarea[name="delivery_address"]').focus();
-    
-    // Phone number formatting
-    const phoneInput = document.querySelector('input[name="phone"]');
-    phoneInput.addEventListener('input', function(e) {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.startsWith('237')) {
-            value = '+' + value;
-        } else if (value.startsWith('6') && value.length <= 9) {
-            value = '+237 ' + value;
+// Pickup Points Data
+const pickupPoints = {
+    douala: [
+        {
+            id: 1,
+            name: "Centre Commercial Akwa",
+            address: "Rue de la Joie, Akwa, Douala",
+            hours: "09:00 - 18:00",
+            phone: "+237 694 63 84 12"
+        },
+        {
+            id: 2,
+            name: "Marché Central",
+            address: "Place du Gouvernement, Douala",
+            hours: "08:00 - 17:00",
+            phone: "+237 694 63 84 12"
+        },
+        {
+            id: 3,
+            name: "Carrefour Deido",
+            address: "Avenue de l'Indépendance, Deido",
+            hours: "09:00 - 19:00",
+            phone: "+237 694 63 84 12"
         }
-        e.target.value = value;
+    ],
+    yaounde: [
+        {
+            id: 4,
+            name: "Marché Central Yaoundé",
+            address: "Centre-ville, Yaoundé",
+            hours: "08:00 - 17:00",
+            phone: "+237 694 63 84 12"
+        },
+        {
+            id: 5,
+            name: "Carrefour Bastos",
+            address: "Quartier Bastos, Yaoundé",
+            hours: "09:00 - 18:00",
+            phone: "+237 694 63 84 12"
+        }
+    ],
+    bafoussam: [
+        {
+            id: 6,
+            name: "Marché Central Bafoussam",
+            address: "Centre-ville, Bafoussam",
+            hours: "08:00 - 17:00",
+            phone: "+237 694 63 84 12"
+        }
+    ],
+    garoua: [
+        {
+            id: 7,
+            name: "Marché Central Garoua",
+            address: "Centre-ville, Garoua",
+            hours: "08:00 - 17:00",
+            phone: "+237 694 63 84 12"
+        }
+    ],
+    bamenda: [
+        {
+            id: 8,
+            name: "Marché Central Bamenda",
+            address: "Centre-ville, Bamenda",
+            hours: "08:00 - 17:00",
+            phone: "+237 694 63 84 12"
+        }
+    ]
+};
+
+function loadPickupPoints(city) {
+    const container = document.getElementById('pickup-points');
+    const points = pickupPoints[city] || [];
+    
+    if (points.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-sm">Aucun point de retrait disponible dans cette ville</p>';
+        return;
+    }
+    
+    container.innerHTML = points.map(point => `
+        <div class="pickup-option border-2 border-gray-200 rounded-xl p-4 cursor-pointer" onclick="selectPickupPoint(${point.id})">
+            <div class="flex items-start space-x-3">
+                <input type="radio" name="pickup_point" value="${point.id}" class="mt-1 text-green-600 focus:ring-green-500">
+                <div class="flex-1">
+                    <h4 class="font-medium text-gray-900">${point.name}</h4>
+                    <p class="text-sm text-gray-600 mt-1">${point.address}</p>
+                    <div class="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                        <span class="flex items-center">
+                            <i data-lucide="clock" class="w-3 h-3 mr-1"></i>
+                            ${point.hours}
+                        </span>
+                        <span class="flex items-center">
+                            <i data-lucide="phone" class="w-3 h-3 mr-1"></i>
+                            ${point.phone}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function selectPickupPoint(pointId) {
+    // Remove selected class from all options
+    document.querySelectorAll('.pickup-option').forEach(option => {
+        option.classList.remove('selected');
     });
+    
+    // Add selected class to clicked option
+    event.currentTarget.classList.add('selected');
+    
+    // Check the radio button
+    const radio = event.currentTarget.querySelector('input[type="radio"]');
+    radio.checked = true;
+}
+
+// Form Submission
+document.getElementById('pickup-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    // Validate form
+    if (!validateForm(data)) {
+        return;
+    }
+    
+    // Show loading state
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 mr-3 animate-spin"></i>Traitement en cours...';
+    submitBtn.disabled = true;
+    
+    // Submit order
+    submitPickupOrder(data)
+        .then(response => {
+            if (response.success) {
+                // Redirect to success page
+                window.location.href = response.redirect_url;
+            } else {
+                showToast(response.message || 'Erreur lors du traitement', 'error');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Order error:', error);
+            showToast('Erreur lors du traitement de la commande', 'error');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+});
+
+function validateForm(data) {
+    const required = ['first_name', 'last_name', 'phone', 'city', 'pickup_point', 'pickup_date', 'pickup_time'];
+    
+    for (const field of required) {
+        if (!data[field]) {
+            showToast(`Le champ ${field} est requis`, 'error');
+            return false;
+        }
+    }
+    
+    // Validate phone number
+    const phoneRegex = /^\+237[0-9]{9}$/;
+    if (!phoneRegex.test(data.phone)) {
+        showToast('Numéro de téléphone invalide. Format: +237XXXXXXXXX', 'error');
+        return false;
+    }
+    
+    // Validate email if provided
+    if (data.email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(data.email)) {
+            showToast('Adresse email invalide', 'error');
+            return false;
+        }
+    }
+    
+    // Validate pickup date
+    const pickupDate = new Date(data.pickup_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (pickupDate < today) {
+        showToast('La date de retrait ne peut pas être dans le passé', 'error');
+        return false;
+    }
+    
+    return true;
+}
+
+function submitPickupOrder(data) {
+    return fetch('/visitor/orders/submit-pickup/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    })
+    .then(response => response.json());
+}
+
+// Utility Functions
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    
+    const bgColor = type === 'success' ? 'bg-green-600' : 
+                   type === 'error' ? 'bg-red-600' : 'bg-blue-600';
+    
+    toast.className = `${bgColor} text-white px-6 py-3 rounded-xl shadow-lg transform translate-x-full transition-transform duration-300`;
+    toast.textContent = message;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.remove('translate-x-full');
+        toast.classList.add('translate-x-0');
+    }, 100);
+    
+    setTimeout(() => {
+        toast.classList.remove('translate-x-0');
+        toast.classList.add('translate-x-full');
+        
+        setTimeout(() => {
+            container.removeChild(toast);
+        }, 300);
+    }, 3000);
+}
+
+// Set minimum date to today
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.querySelector('input[name="pickup_date"]').min = today;
+});
 </script>
 {% endblock %}
