@@ -170,7 +170,7 @@ def client_dashboard(request):
         'conversion_rate': conversion_rate,
     }
     
-    return render(request, 'backend/client/dashboard/enhanced_dashboard.html', context)
+    return render(request, 'backend/client/dashboard/client_dashboard.html', context)
 
 @login_required
 def client_analytics(request):
@@ -197,8 +197,8 @@ def client_analytics(request):
     ).annotate(
         total_sales=Sum('orders__total_amount'),
         order_count=Count('orders'),
-        view_count=Count('behaviors', filter=Q(behaviors__action_type='VIEW')),
-        like_count=Count('likes', filter=Q(likes__like_type='LIKE'))
+        view_count=F('views_count'),
+        like_count=F('likes_count')
     ).order_by('-total_sales')[:10]
     
     # Category Performance
@@ -226,12 +226,10 @@ def client_analytics(request):
         product__seller=user,
         status='COMPLETED',
         created_at__gte=start_date
-    ).extra(
-        select={'day': 'date(created_at)'}
-    ).values('day').annotate(
+    ).values('created_at__date').annotate(
         revenue=Sum('total_amount'),
         orders=Count('id')
-    ).order_by('day')
+    ).order_by('created_at__date')
     
     context = {
         'sales_data': list(sales_data),
@@ -343,7 +341,7 @@ def client_wallet_dashboard(request):
         'monthly_transactions': monthly_transactions,
     }
     
-    return render(request, 'backend/client/wallet/enhanced_wallet.html', context)
+    return render(request, 'backend/client/wallet/wallet.html', context)
 
 @login_required
 def client_social_dashboard(request):
@@ -394,7 +392,7 @@ def client_social_dashboard(request):
 class ClientProductListView(LoginRequiredMixin, ListView):
     """Enhanced product list for clients"""
     model = Product
-    template_name = 'backend/client/products/enhanced_product_list.html'
+    template_name = 'backend/client/products/products.html'
     context_object_name = 'products'
     paginate_by = 20
     
@@ -428,7 +426,7 @@ class ClientProductCreateView(LoginRequiredMixin, CreateView):
     """Enhanced product creation"""
     model = Product
     form_class = ProductForm
-    template_name = 'backend/client/products/enhanced_product_form.html'
+    template_name = 'backend/client/products/product_create.html'
     success_url = reverse_lazy('backend:client_product_list')
     
     def form_valid(self, form):
@@ -447,7 +445,7 @@ class ClientProductUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateVie
     """Enhanced product update"""
     model = Product
     form_class = ProductForm
-    template_name = 'backend/client/products/enhanced_product_form.html'
+    template_name = 'backend/client/products/product_edit.html'
     success_url = reverse_lazy('backend:client_product_list')
     
     def test_func(self):
@@ -522,7 +520,7 @@ def client_orders_dashboard(request):
         'date_filter': date_filter,
     }
     
-    return render(request, 'backend/client/orders/enhanced_orders_dashboard.html', context)
+    return render(request, 'backend/client/orders/list.html', context)
 
 # ============= ENHANCED COMMUNICATION =============
 

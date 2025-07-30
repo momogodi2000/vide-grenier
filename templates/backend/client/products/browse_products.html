@@ -1,1 +1,368 @@
-<!-- Browse Products Template -->
+{% extends 'backend/base/client_base.html' %}
+{% load static %}
+
+{% block title %}Parcourir les Produits - Vidé-Grenier Kamer{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+                <a href="{% url 'client:dashboard' %}" class="hover:text-gray-700">Dashboard</a>
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                <span class="text-green-600 font-medium">Parcourir les produits</span>
+            </div>
+            
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Parcourir les Produits</h1>
+            <p class="text-gray-600">Découvrez tous les produits disponibles sur la plateforme</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Filters Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-lg p-6 sticky top-8">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                        <i data-lucide="filter" class="w-5 h-5 mr-2 text-green-600"></i>
+                        Filtres
+                    </h3>
+                    
+                    <form method="GET" id="filter-form">
+                        <!-- Search -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Recherche</label>
+                            <input type="text" name="search" value="{{ request.GET.search }}" 
+                                   placeholder="Rechercher un produit..."
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        </div>
+
+                        <!-- Category -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
+                            <select name="category" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                <option value="">Toutes les catégories</option>
+                                {% for category in categories %}
+                                <option value="{{ category.slug }}" {% if request.GET.category == category.slug %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Price Range -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Prix (FCFA)</label>
+                            <div class="space-y-2">
+                                <input type="number" name="min_price" value="{{ request.GET.min_price }}" 
+                                       placeholder="Prix minimum"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                <input type="number" name="max_price" value="{{ request.GET.max_price }}" 
+                                       placeholder="Prix maximum"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                            </div>
+                        </div>
+
+                        <!-- Condition -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">État</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="condition" value="NEW" 
+                                           {% if 'NEW' in request.GET.getlist 'condition' %}checked{% endif %}
+                                           class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2">
+                                    <span class="ml-2 text-sm text-gray-700">Neuf</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="condition" value="LIKE_NEW" 
+                                           {% if 'LIKE_NEW' in request.GET.getlist 'condition' %}checked{% endif %}
+                                           class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2">
+                                    <span class="ml-2 text-sm text-gray-700">Comme neuf</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="condition" value="GOOD" 
+                                           {% if 'GOOD' in request.GET.getlist 'condition' %}checked{% endif %}
+                                           class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2">
+                                    <span class="ml-2 text-sm text-gray-700">Bon état</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="condition" value="FAIR" 
+                                           {% if 'FAIR' in request.GET.getlist 'condition' %}checked{% endif %}
+                                           class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2">
+                                    <span class="ml-2 text-sm text-gray-700">État correct</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Location -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Ville</label>
+                            <select name="city" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                <option value="">Toutes les villes</option>
+                                {% for city in cities %}
+                                <option value="{{ city }}" {% if request.GET.city == city %}selected{% endif %}>
+                                    {{ city }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Sort -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Trier par</label>
+                            <select name="sort" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Plus récents</option>
+                                <option value="oldest" {% if request.GET.sort == 'oldest' %}selected{% endif %}>Plus anciens</option>
+                                <option value="price_low" {% if request.GET.sort == 'price_low' %}selected{% endif %}>Prix croissant</option>
+                                <option value="price_high" {% if request.GET.sort == 'price_high' %}selected{% endif %}>Prix décroissant</option>
+                                <option value="popular" {% if request.GET.sort == 'popular' %}selected{% endif %}>Plus populaires</option>
+                            </select>
+                        </div>
+
+                        <!-- Apply Filters -->
+                        <div class="space-y-3">
+                            <button type="submit" 
+                                    class="w-full bg-green-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-green-700 transition-colors">
+                                <i data-lucide="search" class="w-4 h-4 mr-2 inline"></i>
+                                Appliquer les filtres
+                            </button>
+                            
+                            <a href="{% url 'client:browse_products' %}" 
+                               class="block w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-semibold hover:bg-gray-200 transition-colors text-center">
+                                <i data-lucide="refresh-cw" class="w-4 h-4 mr-2 inline"></i>
+                                Réinitialiser
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="lg:col-span-3">
+                <!-- Results Header -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-900">
+                                {{ products.count }} produit{{ products.count|pluralize }} trouvé{{ products.count|pluralize }}
+                            </h2>
+                            {% if request.GET.search or request.GET.category or request.GET.min_price or request.GET.max_price %}
+                            <p class="text-sm text-gray-600 mt-1">Filtres appliqués</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="flex items-center space-x-4 mt-4 sm:mt-0">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm text-gray-600">Vue:</span>
+                                <button onclick="toggleView('grid')" id="grid-view" 
+                                        class="p-2 rounded-lg bg-green-100 text-green-600">
+                                    <i data-lucide="grid" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="toggleView('list')" id="list-view" 
+                                        class="p-2 rounded-lg bg-gray-100 text-gray-600">
+                                    <i data-lucide="list" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products -->
+                {% if products %}
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" id="products-grid">
+                    {% for product in products %}
+                    <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                        <!-- Product Image -->
+                        <div class="relative h-48">
+                            {% if product.images.first %}
+                            <img src="{{ product.images.first.image.url }}" 
+                                 alt="{{ product.title }}" 
+                                 class="w-full h-full object-cover">
+                            {% else %}
+                            <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                                <i data-lucide="image" class="w-12 h-12 text-gray-400"></i>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Status Badge -->
+                            {% if product.status == 'SOLD' %}
+                            <div class="absolute top-3 left-3">
+                                <span class="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                                    Vendu
+                                </span>
+                            </div>
+                            {% elif product.status == 'RESERVED' %}
+                            <div class="absolute top-3 left-3">
+                                <span class="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                                    Réservé
+                                </span>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Quick Actions -->
+                            <div class="absolute top-3 right-3 flex space-x-2">
+                                <button onclick="toggleFavorite('{{ product.id }}')" 
+                                        class="w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-red-50 transition-colors">
+                                    <i data-lucide="heart" class="w-4 h-4 text-gray-600 favorite-icon" id="favorite-{{ product.id }}"></i>
+                                </button>
+                                
+                                <button onclick="addToCompare('{{ product.id }}')" 
+                                        class="w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-50 transition-colors">
+                                    <i data-lucide="git-compare" class="w-4 h-4 text-gray-600"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Product Info -->
+                        <div class="p-4">
+                            <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">{{ product.title }}</h3>
+                            
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-green-600 font-bold text-lg">{{ product.price|floatformat:0 }} FCFA</span>
+                                <span class="text-sm text-gray-500">{{ product.category.name }}</span>
+                            </div>
+                            
+                            <!-- Seller Info -->
+                            <div class="flex items-center mb-3">
+                                <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center mr-2">
+                                    <span class="text-xs font-medium text-gray-600">
+                                        {{ product.seller.username|first|upper }}
+                                    </span>
+                                </div>
+                                <span class="text-sm text-gray-600">{{ product.seller.username }}</span>
+                                <span class="text-sm text-gray-400 ml-auto">{{ product.city }}</span>
+                            </div>
+                            
+                            <!-- Stats -->
+                            <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                                <div class="flex items-center">
+                                    <i data-lucide="eye" class="w-4 h-4 mr-1"></i>
+                                    <span>{{ product.views_count|default:0 }}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i data-lucide="heart" class="w-4 h-4 mr-1"></i>
+                                    <span>{{ product.likes_count|default:0 }}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i data-lucide="message-circle" class="w-4 h-4 mr-1"></i>
+                                    <span>{{ product.chats.count|default:0 }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Actions -->
+                            <div class="flex space-x-2">
+                                <a href="{% url 'client:product_detail' pk=product.id %}" 
+                                   class="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors text-center">
+                                    Voir détails
+                                </a>
+                                
+                                <button onclick="contactSeller('{{ product.id }}')" 
+                                        class="px-3 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors">
+                                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <div class="mt-8 flex justify-center">
+                    <nav class="flex items-center space-x-2">
+                        {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                           class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        </a>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <span class="px-3 py-2 bg-green-600 text-white rounded-lg">{{ num }}</span>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                           class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                            {{ num }}
+                        </a>
+                        {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                           class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
+                {% endif %}
+
+                {% else %}
+                <!-- Empty State -->
+                <div class="text-center py-16">
+                    <div class="bg-white rounded-3xl p-12 shadow-lg max-w-md mx-auto">
+                        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i data-lucide="search" class="w-12 h-12 text-gray-400"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">Aucun produit trouvé</h2>
+                        <p class="text-gray-600 mb-8">Essayez de modifier vos critères de recherche</p>
+                        <a href="{% url 'client:browse_products' %}" 
+                           class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors inline-flex items-center">
+                            <i data-lucide="refresh-cw" class="w-5 h-5 mr-2"></i>
+                            Réinitialiser les filtres
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// View toggle
+function toggleView(view) {
+    const gridView = document.getElementById('grid-view');
+    const listView = document.getElementById('list-view');
+    const productsGrid = document.getElementById('products-grid');
+    
+    if (view === 'grid') {
+        gridView.className = 'p-2 rounded-lg bg-green-100 text-green-600';
+        listView.className = 'p-2 rounded-lg bg-gray-100 text-gray-600';
+        productsGrid.className = 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6';
+    } else {
+        gridView.className = 'p-2 rounded-lg bg-gray-100 text-gray-600';
+        listView.className = 'p-2 rounded-lg bg-green-100 text-green-600';
+        productsGrid.className = 'space-y-4';
+    }
+}
+
+// Product actions
+function toggleFavorite(productId) {
+    fetch(`/client/favorites/toggle/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const icon = document.getElementById(`favorite-${productId}`);
+        if (data.is_favorite) {
+            icon.className = 'w-4 h-4 text-red-500';
+        } else {
+            icon.className = 'w-4 h-4 text-gray-600';
+        }
+    });
+}
+
+function addToCompare(productId) {
+    // Add to compare functionality
+    console.log('Add to compare:', productId);
+}
+
+function contactSeller(productId) {
+    window.location.href = `/client/chat/create/${productId}/`;
+}
+</script>
+{% endblock %}

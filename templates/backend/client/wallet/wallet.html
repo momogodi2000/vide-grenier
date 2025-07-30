@@ -1,546 +1,323 @@
-{% extends "backend/base/client_base.html" %}
+{% extends 'backend/base/client_base.html' %}
 {% load static %}
 
-{% block title %}Mon Wallet - Client{% endblock %}
-
-{% block extra_css %}
-<style>
-    .wallet-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 20px;
-        color: white;
-        padding: 2rem;
-        margin-bottom: 2rem;
-    }
-    .balance-display {
-        font-size: 3rem;
-        font-weight: bold;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-    .transaction-item {
-        transition: all 0.2s;
-        border-radius: 8px;
-    }
-    .transaction-item:hover {
-        background-color: #f8f9fa;
-        transform: translateY(-1px);
-    }
-    .transaction-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .quick-action-card {
-        border: 2px solid #e9ecef;
-        border-radius: 12px;
-        transition: all 0.2s;
-        cursor: pointer;
-    }
-    .quick-action-card:hover {
-        border-color: #007bff;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,123,255,0.15);
-    }
-</style>
-{% endblock %}
+{% block title %}Mon Portefeuille - Vidé-Grenier Kamer{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Wallet Header -->
-    <div class="wallet-card">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h2 class="mb-2">
-                    <i class="fas fa-wallet me-2"></i>
-                    Mon Wallet Digital
-                </h2>
-                <p class="mb-0 opacity-75">Gérez vos fonds et suivez vos transactions en toute sécurité</p>
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+                <a href="{% url 'client:dashboard' %}" class="hover:text-gray-700">Dashboard</a>
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                <span class="text-green-600 font-medium">Mon Portefeuille</span>
             </div>
-            <div class="col-md-4 text-end">
-                <div class="balance-display">{{ wallet.available_balance|floatformat:0 }}</div>
-                <p class="mb-0">FCFA Disponible</p>
-                {% if wallet.pending_balance > 0 %}
-                    <small class="opacity-75">
-                        <i class="fas fa-clock"></i> {{ wallet.pending_balance|floatformat:0 }} FCFA en attente
-                    </small>
+            
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Mon Portefeuille</h1>
+            <p class="text-gray-600">Gérez vos finances et suivez vos transactions</p>
+        </div>
+
+        <!-- Wallet Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Balance Card -->
+            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <p class="text-green-100 text-sm">Solde disponible</p>
+                        <p class="text-3xl font-bold">{{ wallet.balance|floatformat:0 }} FCFA</p>
+                    </div>
+                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                        <i data-lucide="wallet" class="w-6 h-6"></i>
+                    </div>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="{% url 'client:add_funds' %}" 
+                       class="flex-1 bg-white/20 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-white/30 transition-colors text-center">
+                        Ajouter
+                    </a>
+                    <a href="{% url 'client:withdraw_request' %}" 
+                       class="flex-1 bg-white/20 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-white/30 transition-colors text-center">
+                        Retirer
+                    </a>
+                </div>
+            </div>
+
+            <!-- Total Credit -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-blue-100 rounded-lg">
+                        <i data-lucide="trending-up" class="w-6 h-6 text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Crédit</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ transaction_stats.total_credit|default:0|floatformat:0 }} FCFA</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Debit -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-red-100 rounded-lg">
+                        <i data-lucide="trending-down" class="w-6 h-6 text-red-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Débit</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ transaction_stats.total_debit|default:0|floatformat:0 }} FCFA</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Commission -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-purple-100 rounded-lg">
+                        <i data-lucide="percent" class="w-6 h-6 text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Commission</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ transaction_stats.total_commission|default:0|floatformat:0 }} FCFA</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Quick Actions -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                        <i data-lucide="zap" class="w-5 h-5 mr-2 text-green-600"></i>
+                        Actions Rapides
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <a href="{% url 'client:add_funds' %}" 
+                           class="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                                <i data-lucide="plus" class="w-5 h-5 text-green-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">Ajouter des fonds</p>
+                                <p class="text-sm text-gray-600">Rechargez votre portefeuille</p>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400 ml-auto"></i>
+                        </a>
+                        
+                        <a href="{% url 'client:withdraw_request' %}" 
+                           class="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                                <i data-lucide="download" class="w-5 h-5 text-blue-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">Demander un retrait</p>
+                                <p class="text-sm text-gray-600">Retirez vos gains</p>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400 ml-auto"></i>
+                        </a>
+                        
+                        <a href="{% url 'client:wallet_transactions' %}" 
+                           class="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                                <i data-lucide="list" class="w-5 h-5 text-purple-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">Voir l'historique</p>
+                                <p class="text-sm text-gray-600">Toutes vos transactions</p>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400 ml-auto"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Monthly Summary -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                        <i data-lucide="calendar" class="w-5 h-5 mr-2 text-green-600"></i>
+                        Résumé du Mois
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Crédit reçu</span>
+                            <span class="font-semibold text-green-600">{{ monthly_transactions.total_credit|default:0|floatformat:0 }} FCFA</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Débit effectué</span>
+                            <span class="font-semibold text-red-600">{{ monthly_transactions.total_debit|default:0|floatformat:0 }} FCFA</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Transactions</span>
+                            <span class="font-semibold text-gray-900">{{ monthly_transactions.transaction_count|default:0 }}</span>
+                        </div>
+                        
+                        <div class="pt-4 border-t border-gray-200">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-900 font-medium">Solde net</span>
+                                <span class="font-bold text-lg {% if monthly_transactions.total_credit > monthly_transactions.total_debit %}text-green-600{% else %}text-red-600{% endif %}">
+                                    {{ monthly_transactions.total_credit|default:0|add:monthly_transactions.total_debit|default:0|floatformat:0 }} FCFA
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                            <i data-lucide="clock" class="w-5 h-5 mr-2 text-green-600"></i>
+                            Transactions Récentes
+                        </h3>
+                        <a href="{% url 'client:wallet_transactions' %}" 
+                           class="text-green-600 hover:text-green-700 text-sm font-medium">
+                            Voir tout
+                        </a>
+                    </div>
+                    
+                    {% if transactions %}
+                    <div class="space-y-4">
+                        {% for transaction in transactions %}
+                        <div class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center mr-4
+                                        {% if transaction.transaction_type == 'CREDIT' %}bg-green-100{% elif transaction.transaction_type == 'DEBIT' %}bg-red-100{% else %}bg-blue-100{% endif %}">
+                                {% if transaction.transaction_type == 'CREDIT' %}
+                                <i data-lucide="plus" class="w-5 h-5 text-green-600"></i>
+                                {% elif transaction.transaction_type == 'DEBIT' %}
+                                <i data-lucide="minus" class="w-5 h-5 text-red-600"></i>
+                                {% else %}
+                                <i data-lucide="percent" class="w-5 h-5 text-blue-600"></i>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="flex-1">
+                                <p class="font-medium text-gray-900">{{ transaction.description|default:"Transaction" }}</p>
+                                <p class="text-sm text-gray-600">{{ transaction.created_at|date:"d/m/Y H:i" }}</p>
+                            </div>
+                            
+                            <div class="text-right">
+                                <p class="font-semibold {% if transaction.transaction_type == 'CREDIT' %}text-green-600{% elif transaction.transaction_type == 'DEBIT' %}text-red-600{% else %}text-blue-600{% endif %}">
+                                    {% if transaction.transaction_type == 'CREDIT' %}+{% elif transaction.transaction_type == 'DEBIT' %}-{% endif %}
+                                    {{ transaction.amount|floatformat:0 }} FCFA
+                                </p>
+                                <p class="text-xs text-gray-500">{{ transaction.transaction_type }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-12">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="wallet" class="w-8 h-8 text-gray-400"></i>
+                        </div>
+                        <p class="text-gray-600">Aucune transaction pour le moment</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Pending Withdrawals -->
+                {% if pending_withdrawals %}
+                <div class="bg-white rounded-xl shadow-lg p-6 mt-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                        <i data-lucide="clock" class="w-5 h-5 mr-2 text-yellow-600"></i>
+                        Demandes de Retrait en Attente
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        {% for withdrawal in pending_withdrawals %}
+                        <div class="flex items-center p-4 bg-yellow-50 rounded-lg">
+                            <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-4">
+                                <i data-lucide="download" class="w-5 h-5 text-yellow-600"></i>
+                            </div>
+                            
+                            <div class="flex-1">
+                                <p class="font-medium text-gray-900">Retrait de {{ withdrawal.amount|floatformat:0 }} FCFA</p>
+                                <p class="text-sm text-gray-600">Demandé le {{ withdrawal.requested_at|date:"d/m/Y" }}</p>
+                                <p class="text-sm text-yellow-600 font-medium">{{ withdrawal.get_status_display }}</p>
+                            </div>
+                            
+                            <div class="text-right">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                           {% if withdrawal.status == 'PENDING' %}bg-yellow-100 text-yellow-800
+                                           {% elif withdrawal.status == 'APPROVED' %}bg-green-100 text-green-800
+                                           {% elif withdrawal.status == 'PROCESSING' %}bg-blue-100 text-blue-800
+                                           {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ withdrawal.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
                 {% endif %}
             </div>
         </div>
-    </div>
 
-    <!-- Quick Actions -->
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card quick-action-card h-100 text-center p-3" data-bs-toggle="modal" data-bs-target="#addFundsModal">
-                <div class="card-body">
-                    <i class="fas fa-plus-circle fa-3x text-success mb-3"></i>
-                    <h5 class="card-title">Ajouter des Fonds</h5>
-                    <p class="card-text text-muted">Rechargez votre wallet via Mobile Money</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card quick-action-card h-100 text-center p-3" data-bs-toggle="modal" data-bs-target="#withdrawModal">
-                <div class="card-body">
-                    <i class="fas fa-minus-circle fa-3x text-warning mb-3"></i>
-                    <h5 class="card-title">Retirer des Fonds</h5>
-                    <p class="card-text text-muted">Transférez vers votre compte mobile</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card quick-action-card h-100 text-center p-3" onclick="window.location.href='#'">
-                <div class="card-body">
-                    <i class="fas fa-history fa-3x text-info mb-3"></i>
-                    <h5 class="card-title">Historique Complet</h5>
-                    <p class="card-text text-muted">Consultez toutes vos transactions</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card quick-action-card h-100 text-center p-3" onclick="generateStatement()">
-                <div class="card-body">
-                    <i class="fas fa-file-download fa-3x text-primary mb-3"></i>
-                    <h5 class="card-title">Relevé de Compte</h5>
-                    <p class="card-text text-muted">Téléchargez votre relevé PDF</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <!-- Left Column - Transactions -->
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-exchange-alt text-primary me-2"></i>
-                        Transactions Récentes
-                    </h5>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary active" onclick="filterTransactions('all')">
-                            Toutes
-                        </button>
-                        <button class="btn btn-outline-success" onclick="filterTransactions('credit')">
-                            Crédits
-                        </button>
-                        <button class="btn btn-outline-danger" onclick="filterTransactions('debit')">
-                            Débits
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    {% if recent_transactions %}
-                        <div class="table-responsive">
-                            <table class="table table-borderless">
-                                <tbody>
-                                    {% for transaction in recent_transactions %}
-                                    <tr class="transaction-item border-bottom">
-                                        <td width="60">
-                                            <div class="transaction-icon {% if transaction.amount > 0 %}bg-success{% else %}bg-danger{% endif %} text-white">
-                                                <i class="fas fa-{% if transaction.amount > 0 %}plus{% else %}minus{% endif %}"></i>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div>
-                                                <strong>{{ transaction.description|default:"Transaction" }}</strong>
-                                                <br>
-                                                <small class="text-muted">
-                                                    <i class="fas fa-calendar"></i> {{ transaction.created_at|date:"d/m/Y à H:i" }}
-                                                </small>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            {% if transaction.reference %}
-                                                <small class="text-muted">Réf: {{ transaction.reference }}</small>
-                                            {% endif %}
-                                        </td>
-                                        <td class="text-end">
-                                            <div class="{% if transaction.amount > 0 %}text-success{% else %}text-danger{% endif %}">
-                                                <strong>
-                                                    {% if transaction.amount > 0 %}+{% endif %}{{ transaction.amount|floatformat:0 }} FCFA
-                                                </strong>
-                                            </div>
-                                            <small class="text-muted">
-                                                {% if transaction.status == 'COMPLETED' %}
-                                                    <i class="fas fa-check-circle text-success"></i> Complété
-                                                {% elif transaction.status == 'PENDING' %}
-                                                    <i class="fas fa-clock text-warning"></i> En attente
-                                                {% else %}
-                                                    <i class="fas fa-times-circle text-danger"></i> Échoué
-                                                {% endif %}
-                                            </small>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        <div class="text-center mt-3">
-                            <a href="#" class="btn btn-outline-primary">
-                                <i class="fas fa-eye"></i> Voir Toutes les Transactions
-                            </a>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-5">
-                            <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
-                            <h5>Aucune transaction</h5>
-                            <p class="text-muted">Vos transactions apparaîtront ici</p>
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFundsModal">
-                                <i class="fas fa-plus"></i> Première Transaction
-                            </button>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Column - Wallet Info -->
-        <div class="col-md-4">
-            <!-- Wallet Status -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-info-circle text-info me-2"></i>
-                        Statut du Wallet
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex justify-content-between mb-3">
-                        <span>Solde Disponible:</span>
-                        <strong class="text-success">{{ wallet.available_balance|floatformat:0 }} FCFA</strong>
-                    </div>
-                    <div class="d-flex justify-content-between mb-3">
-                        <span>En Attente:</span>
-                        <strong class="text-warning">{{ wallet.pending_balance|floatformat:0 }} FCFA</strong>
-                    </div>
-                    <div class="d-flex justify-content-between mb-3">
-                        <span>Total Reçu:</span>
-                        <strong class="text-info">{{ wallet.total_received|default:0|floatformat:0 }} FCFA</strong>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <span>Total Dépensé:</span>
-                        <strong class="text-muted">{{ wallet.total_spent|default:0|floatformat:0 }} FCFA</strong>
-                    </div>
-                    
-                    <hr>
-                    
-                    <div class="text-center">
-                        <small class="text-muted">
-                            <i class="fas fa-shield-alt"></i>
-                            Wallet sécurisé avec chiffrement SSL
-                        </small>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Security Tips -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-shield-alt text-success me-2"></i>
-                        Conseils Sécurité
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <div class="d-flex align-items-start">
-                            <i class="fas fa-check-circle text-success me-2 mt-1"></i>
-                            <small>Vérifiez toujours les montants avant de confirmer</small>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="d-flex align-items-start">
-                            <i class="fas fa-check-circle text-success me-2 mt-1"></i>
-                            <small>Ne partagez jamais vos codes de confirmation</small>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="d-flex align-items-start">
-                            <i class="fas fa-check-circle text-success me-2 mt-1"></i>
-                            <small>Surveillez régulièrement vos transactions</small>
-                        </div>
+        <!-- Security Tips -->
+        <div class="mt-8 bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i data-lucide="shield" class="w-5 h-5 mr-2 text-green-600"></i>
+                Conseils de Sécurité
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="flex items-start">
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                        <i data-lucide="check" class="w-4 h-4 text-green-600"></i>
                     </div>
                     <div>
-                        <div class="d-flex align-items-start">
-                            <i class="fas fa-check-circle text-success me-2 mt-1"></i>
-                            <small>Contactez le support en cas de problème</small>
-                        </div>
+                        <p class="font-medium text-gray-900 mb-1">Protection des données</p>
+                        <p class="text-sm text-gray-600">Vos informations financières sont cryptées et sécurisées</p>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Add Funds Modal -->
-<div class="modal fade" id="addFundsModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-plus-circle text-success me-2"></i>
-                    Ajouter des Fonds
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addFundsForm">
-                    <div class="mb-3">
-                        <label class="form-label">Montant à ajouter</label>
-                        <div class="input-group">
-                            <input type="number" class="form-control form-control-lg" 
-                                   id="addAmount" min="1000" step="500" 
-                                   placeholder="Montant en FCFA">
-                            <span class="input-group-text">FCFA</span>
-                        </div>
-                        <div class="form-text">Montant minimum: 1,000 FCFA</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Méthode de paiement</label>
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="card payment-method" data-method="orange_money">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-mobile-alt fa-2x text-warning mb-2"></i>
-                                        <h6>Orange Money</h6>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="card payment-method" data-method="mtn_money">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-mobile-alt fa-2x text-warning mb-2"></i>
-                                        <h6>MTN Money</h6>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3" id="phoneSection" style="display: none;">
-                        <label class="form-label">Numéro de téléphone</label>
-                        <input type="tel" class="form-control" id="phoneNumber" 
-                               placeholder="+237 6XX XXX XXX">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button type="button" class="btn btn-success" onclick="processAddFunds()" disabled id="addFundsBtn">
-                    <i class="fas fa-plus"></i> Ajouter les Fonds
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Withdraw Modal -->
-<div class="modal fade" id="withdrawModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-minus-circle text-warning me-2"></i>
-                    Retirer des Fonds
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Solde disponible: <strong>{{ wallet.available_balance|floatformat:0 }} FCFA</strong>
                 </div>
                 
-                <form id="withdrawForm">
-                    <div class="mb-3">
-                        <label class="form-label">Montant à retirer</label>
-                        <div class="input-group">
-                            <input type="number" class="form-control form-control-lg" 
-                                   id="withdrawAmount" min="1000" 
-                                   max="{{ wallet.available_balance }}"
-                                   placeholder="Montant en FCFA">
-                            <span class="input-group-text">FCFA</span>
-                        </div>
-                        <div class="form-text">Montant minimum: 1,000 FCFA</div>
+                <div class="flex items-start">
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                        <i data-lucide="check" class="w-4 h-4 text-green-600"></i>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Numéro de destination</label>
-                        <input type="tel" class="form-control" id="withdrawPhone" 
-                               placeholder="+237 6XX XXX XXX">
+                    <div>
+                        <p class="font-medium text-gray-900 mb-1">Transactions sécurisées</p>
+                        <p class="text-sm text-gray-600">Toutes les transactions sont protégées par des protocoles de sécurité</p>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Opérateur</label>
-                        <select class="form-select" id="withdrawOperator">
-                            <option value="">Sélectionner...</option>
-                            <option value="orange">Orange Money</option>
-                            <option value="mtn">MTN Money</option>
-                        </select>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                        <i data-lucide="check" class="w-4 h-4 text-green-600"></i>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button type="button" class="btn btn-warning" onclick="processWithdraw()">
-                    <i class="fas fa-minus"></i> Retirer les Fonds
-                </button>
+                    <div>
+                        <p class="font-medium text-gray-900 mb-1">Support 24/7</p>
+                        <p class="text-sm text-gray-600">Notre équipe est disponible pour vous aider en cas de problème</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
-// Payment method selection
-document.querySelectorAll('.payment-method').forEach(method => {
-    method.addEventListener('click', function() {
-        // Remove active class from all methods
-        document.querySelectorAll('.payment-method').forEach(m => {
-            m.classList.remove('border-primary', 'bg-light');
-        });
-        
-        // Add active class to selected method
-        this.classList.add('border-primary', 'bg-light');
-        
-        // Show phone section
-        document.getElementById('phoneSection').style.display = 'block';
-        
-        // Enable add funds button
-        document.getElementById('addFundsBtn').disabled = false;
+// Auto-refresh wallet balance (optional)
+setInterval(function() {
+    // You can add AJAX call here to refresh balance
+}, 30000); // Refresh every 30 seconds
+
+// Add smooth animations
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.bg-white, .bg-gradient-to-br');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
     });
 });
-
-// Add funds process
-function processAddFunds() {
-    const amount = document.getElementById('addAmount').value;
-    const phone = document.getElementById('phoneNumber').value;
-    const method = document.querySelector('.payment-method.border-primary').dataset.method;
-    
-    if (!amount || !phone || !method) {
-        alert('Veuillez remplir tous les champs');
-        return;
-    }
-    
-    if (amount < 1000) {
-        alert('Le montant minimum est de 1,000 FCFA');
-        return;
-    }
-    
-    // Process payment
-    fetch('{% url "client:add_funds" %}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}',
-        },
-        body: JSON.stringify({
-            amount: amount,
-            phone: phone,
-            method: method
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Demande d\'ajout de fonds envoyée ! Vous recevrez un SMS de confirmation.');
-            location.reload();
-        } else {
-            alert('Erreur: ' + data.error);
-        }
-    });
-}
-
-// Withdraw process
-function processWithdraw() {
-    const amount = document.getElementById('withdrawAmount').value;
-    const phone = document.getElementById('withdrawPhone').value;
-    const operator = document.getElementById('withdrawOperator').value;
-    
-    if (!amount || !phone || !operator) {
-        alert('Veuillez remplir tous les champs');
-        return;
-    }
-    
-    if (amount < 1000) {
-        alert('Le montant minimum est de 1,000 FCFA');
-        return;
-    }
-    
-    if (amount > {{ wallet.available_balance }}) {
-        alert('Solde insuffisant');
-        return;
-    }
-    
-    // Process withdrawal
-    fetch('{% url "client:withdraw_request" %}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}',
-        },
-        body: JSON.stringify({
-            amount: amount,
-            phone: phone,
-            operator: operator
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Demande de retrait envoyée ! Le traitement prend 24-48h.');
-            location.reload();
-        } else {
-            alert('Erreur: ' + data.error);
-        }
-    });
-}
-
-// Filter transactions
-function filterTransactions(type) {
-    // Update active button
-    document.querySelectorAll('.btn-group button').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event.target.classList.add('active');
-    
-    // Filter transactions (implement with AJAX if needed)
-    if (type !== 'all') {
-        window.location.href = `#?type=${type}`;
-    }
-}
-
-// Generate statement
-function generateStatement() {
-    window.open('{% url "client:wallet" %}statement/', '_blank');
-}
-
-// Real-time balance updates
-setInterval(function() {
-    fetch('/client/wallet/balance/')
-        .then(response => response.json())
-        .then(data => {
-            if (data.balance !== undefined) {
-                // Update balance display if changed
-                const balanceElement = document.querySelector('.balance-display');
-                if (balanceElement.textContent !== data.balance.toString()) {
-                    balanceElement.textContent = data.balance;
-                    // Add flash effect
-                    balanceElement.classList.add('text-warning');
-                    setTimeout(() => {
-                        balanceElement.classList.remove('text-warning');
-                    }, 1000);
-                }
-            }
-        })
-        .catch(error => console.log('Balance update failed:', error));
-}, 30000); // Update every 30 seconds
 </script>
 {% endblock %} 

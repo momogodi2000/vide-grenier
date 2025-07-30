@@ -1,0 +1,351 @@
+{% extends user_type|yesno:'backend/base/admin_base.html,backend/base/staff_base.html,backend/base/client_base.html' %}
+{% load static %}
+
+{% block title %}Chat #{{ chat.id }} - Vidé-Grenier Kamer{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+                {% if user_type == 'admin' %}
+                <a href="{% url 'admin:dashboard' %}" class="hover:text-gray-700">Dashboard</a>
+                {% elif user_type == 'staff' %}
+                <a href="{% url 'staff:dashboard' %}" class="hover:text-gray-700">Dashboard</a>
+                {% else %}
+                <a href="{% url 'client:dashboard' %}" class="hover:text-gray-700">Dashboard</a>
+                {% endif %}
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                <a href="{% url 'admin_chat_list' %}" class="hover:text-gray-700">Chats</a>
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                <span class="text-green-600 font-medium">Chat #{{ chat.id }}</span>
+            </div>
+            
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ chat.subject }}</h1>
+                    <p class="text-gray-600">
+                        {% if user_type == 'client' %}
+                        Conversation avec le support
+                        {% else %}
+                        Conversation avec {{ chat.user.username }}
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="flex items-center space-x-3 mt-4 md:mt-0">
+                    <div class="flex items-center space-x-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                   {% if chat.status == 'OPEN' %}bg-green-100 text-green-800
+                                   {% elif chat.status == 'WAITING' %}bg-yellow-100 text-yellow-800
+                                   {% elif chat.status == 'RESPONDED' %}bg-blue-100 text-blue-800
+                                   {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ chat.get_status_display }}
+                        </span>
+                        
+                        {% if user_type != 'client' %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                   {% if chat.priority == 'URGENT' %}bg-red-100 text-red-800
+                                   {% elif chat.priority == 'HIGH' %}bg-orange-100 text-orange-800
+                                   {% elif chat.priority == 'MEDIUM' %}bg-yellow-100 text-yellow-800
+                                   {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ chat.get_priority_display }}
+                        </span>
+                        {% endif %}
+                        
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            {{ chat.get_category_display }}
+                        </span>
+                    </div>
+                    
+                    {% if chat.status != 'CLOSED' %}
+                    <button onclick="closeChat({{ chat.id }})" 
+                            class="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors text-sm">
+                        <i data-lucide="x" class="w-4 h-4 mr-1"></i>
+                        Fermer
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Chat Messages -->
+            <div class="lg:col-span-3">
+                <div class="bg-white rounded-xl shadow-lg">
+                    <!-- Chat Header -->
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <span class="text-lg font-medium text-blue-600">
+                                        {{ chat.user.username|first|upper }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-900">{{ chat.user.username }}</h3>
+                                    <p class="text-sm text-gray-600">Créé le {{ chat.created_at|date:"d/m/Y H:i" }}</p>
+                                </div>
+                            </div>
+                            
+                            {% if user_type != 'client' and chat.assigned_to %}
+                            <div class="text-right">
+                                <p class="text-sm text-gray-600">Assigné à</p>
+                                <p class="font-medium text-gray-900">{{ chat.assigned_to.username }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Messages -->
+                    <div class="h-96 overflow-y-auto p-6" id="messages-container">
+                        {% for message in messages %}
+                        <div class="mb-6 {% if message.sender == request.user %}text-right{% endif %}">
+                            <div class="flex {% if message.sender == request.user %}justify-end{% endif %}">
+                                <div class="max-w-xs lg:max-w-md">
+                                    <div class="flex items-center space-x-2 mb-2 {% if message.sender == request.user %}justify-end{% endif %}">
+                                        <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                            <span class="text-xs font-medium text-gray-600">
+                                                {{ message.sender.username|first|upper }}
+                                            </span>
+                                        </div>
+                                        <span class="text-sm text-gray-600">{{ message.sender.username }}</span>
+                                        <span class="text-xs text-gray-400">{{ message.created_at|date:"H:i" }}</span>
+                                    </div>
+                                    
+                                    <div class="{% if message.sender == request.user %}bg-green-600 text-white{% else %}bg-gray-100 text-gray-900{% endif %} rounded-lg p-3">
+                                        <p class="text-sm">{{ message.content }}</p>
+                                    </div>
+                                    
+                                    {% if message.message_type == 'ADMIN' %}
+                                    <p class="text-xs text-gray-500 mt-1">Réponse officielle</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-12">
+                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="message-circle" class="w-8 h-8 text-gray-400"></i>
+                            </div>
+                            <p class="text-gray-600">Aucun message pour le moment</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Message Input -->
+                    {% if chat.status != 'CLOSED' %}
+                    <div class="p-6 border-t border-gray-200">
+                        <form method="POST" id="message-form">
+                            {% csrf_token %}
+                            <div class="flex space-x-4">
+                                <div class="flex-1">
+                                    {{ form.content }}
+                                </div>
+                                <button type="submit" 
+                                        class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                                    <i data-lucide="send" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    {% else %}
+                    <div class="p-6 border-t border-gray-200 bg-gray-50">
+                        <div class="text-center">
+                            <p class="text-gray-600">Cette conversation est fermée</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+                <!-- Chat Info -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i data-lucide="info" class="w-5 h-5 mr-2 text-green-600"></i>
+                        Informations
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">ID du chat</p>
+                            <p class="text-gray-900">#{{ chat.id }}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Utilisateur</p>
+                            <p class="text-gray-900">{{ chat.user.username }}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Email</p>
+                            <p class="text-gray-900">{{ chat.user.email }}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Créé le</p>
+                            <p class="text-gray-900">{{ chat.created_at|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Dernière activité</p>
+                            <p class="text-gray-900">{{ chat.updated_at|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Messages</p>
+                            <p class="text-gray-900">{{ chat.message_count }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                {% if user_type != 'client' %}
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i data-lucide="zap" class="w-5 h-5 mr-2 text-green-600"></i>
+                        Actions Rapides
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        {% if not chat.assigned_to %}
+                        <button onclick="assignToMe({{ chat.id }})" 
+                                class="w-full px-4 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors text-sm">
+                            M'assigner ce chat
+                        </button>
+                        {% endif %}
+                        
+                        <button onclick="showTemplates()" 
+                                class="w-full px-4 py-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors text-sm">
+                            Utiliser un template
+                        </button>
+                        
+                        <button onclick="addNote({{ chat.id }})" 
+                                class="w-full px-4 py-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 transition-colors text-sm">
+                            Ajouter une note
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Templates -->
+                {% if user_type != 'client' %}
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i data-lucide="file-text" class="w-5 h-5 mr-2 text-green-600"></i>
+                        Templates
+                    </h3>
+                    
+                    <div class="space-y-2">
+                        <button onclick="useTemplate('greeting')" 
+                                class="w-full text-left p-2 text-sm text-gray-700 hover:bg-gray-100 rounded transition-colors">
+                            Salutation
+                        </button>
+                        <button onclick="useTemplate('closing')" 
+                                class="w-full text-left p-2 text-sm text-gray-700 hover:bg-gray-100 rounded transition-colors">
+                            Fermeture
+                        </button>
+                        <button onclick="useTemplate('follow_up')" 
+                                class="w-full text-left p-2 text-sm text-gray-700 hover:bg-gray-100 rounded transition-colors">
+                            Suivi
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-scroll to bottom
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('messages-container');
+    container.scrollTop = container.scrollHeight;
+});
+
+// Message form submission
+document.getElementById('message-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const content = formData.get('content');
+    
+    if (!content.trim()) return;
+    
+    fetch(`/admin-chat/{{ chat.id }}/send-message/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+});
+
+function assignToMe(chatId) {
+    fetch(`/admin-chat/${chatId}/assign/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            assigned_to: '{{ request.user.id }}'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+function closeChat(chatId) {
+    if (confirm('Êtes-vous sûr de vouloir fermer cette conversation ?')) {
+        fetch(`/admin-chat/${chatId}/close/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+}
+
+function showTemplates() {
+    // Implement templates modal
+    alert('Templates disponibles');
+}
+
+function addNote(chatId) {
+    // Implement note functionality
+    alert('Ajouter une note');
+}
+
+function useTemplate(type) {
+    const templates = {
+        'greeting': 'Bonjour ! Comment puis-je vous aider aujourd\'hui ?',
+        'closing': 'Merci de nous avoir contacté. N\'hésitez pas à revenir vers nous si vous avez d\'autres questions.',
+        'follow_up': 'Avez-vous d\'autres questions concernant ce sujet ?'
+    };
+    
+    const textarea = document.querySelector('textarea[name="content"]');
+    textarea.value = templates[type];
+    textarea.focus();
+}
+</script>
+{% endblock %} 

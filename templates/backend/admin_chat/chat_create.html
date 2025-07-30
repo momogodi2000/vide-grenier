@@ -1,0 +1,238 @@
+{% extends user_type|yesno:'backend/base/admin_base.html,backend/base/staff_base.html,backend/base/client_base.html' %}
+{% load static %}
+
+{% block title %}Nouveau Chat - Vidé-Grenier Kamer{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+                {% if user_type == 'admin' %}
+                <a href="{% url 'admin:dashboard' %}" class="hover:text-gray-700">Dashboard</a>
+                {% elif user_type == 'staff' %}
+                <a href="{% url 'staff:dashboard' %}" class="hover:text-gray-700">Dashboard</a>
+                {% else %}
+                <a href="{% url 'client:dashboard' %}" class="hover:text-gray-700">Dashboard</a>
+                {% endif %}
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                <a href="{% url 'admin_chat_list' %}" class="hover:text-gray-700">Chats</a>
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                <span class="text-green-600 font-medium">Nouveau Chat</span>
+            </div>
+            
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Nouveau Chat</h1>
+            <p class="text-gray-600">
+                {% if user_type == 'client' %}
+                Créez une nouvelle demande de support
+                {% else %}
+                Créer un nouveau chat pour un utilisateur
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Main Form -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                    <form method="POST" id="chat-form">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="mb-8">
+                            <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                                <i data-lucide="info" class="w-5 h-5 mr-2 text-green-600"></i>
+                                Informations de base
+                            </h2>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="{{ form.subject.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Sujet *
+                                    </label>
+                                    {{ form.subject }}
+                                    {% if form.subject.errors %}
+                                    <p class="text-red-500 text-sm mt-1">{{ form.subject.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                                
+                                <div>
+                                    <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Catégorie *
+                                    </label>
+                                    {{ form.category }}
+                                    {% if form.category.errors %}
+                                    <p class="text-red-500 text-sm mt-1">{{ form.category.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if user_type != 'client' %}
+                                <div>
+                                    <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Priorité
+                                    </label>
+                                    {{ form.priority }}
+                                    {% if form.priority.errors %}
+                                    <p class="text-red-500 text-sm mt-1">{{ form.priority.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Initial Message -->
+                        <div class="mb-8">
+                            <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                                <i data-lucide="message-circle" class="w-5 h-5 mr-2 text-green-600"></i>
+                                Message initial
+                            </h2>
+                            
+                            <div>
+                                <label for="initial_message" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Décrivez votre problème ou question *
+                                </label>
+                                <textarea name="initial_message" id="initial_message" rows="6" required
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none"
+                                          placeholder="Décrivez votre problème ou question en détail..."></textarea>
+                                <p class="text-sm text-gray-500 mt-2">
+                                    Plus votre description est détaillée, plus nous pourrons vous aider rapidement.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
+                            <button type="submit" 
+                                    class="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors">
+                                <i data-lucide="send" class="w-5 h-5 mr-2 inline"></i>
+                                Créer le chat
+                            </button>
+                            
+                            <a href="{% url 'admin_chat_list' %}" 
+                               class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors text-center">
+                                <i data-lucide="x" class="w-5 h-5 mr-2 inline"></i>
+                                Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+                <!-- Help Tips -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i data-lucide="lightbulb" class="w-5 h-5 mr-2 text-yellow-500"></i>
+                        Conseils pour une bonne demande
+                    </h3>
+                    
+                    <div class="space-y-3 text-sm text-gray-600">
+                        <div class="flex items-start">
+                            <i data-lucide="check" class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                            <span>Soyez précis dans votre description</span>
+                        </div>
+                        <div class="flex items-start">
+                            <i data-lucide="check" class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                            <span>Incluez les étapes que vous avez déjà essayées</span>
+                        </div>
+                        <div class="flex items-start">
+                            <i data-lucide="check" class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                            <span>Mentionnez votre navigateur et système d'exploitation si pertinent</span>
+                        </div>
+                        <div class="flex items-start">
+                            <i data-lucide="check" class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                            <span>Joignez des captures d'écran si possible</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categories Info -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i data-lucide="folder" class="w-5 h-5 mr-2 text-blue-500"></i>
+                        Catégories
+                    </h3>
+                    
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <p class="font-medium text-gray-900">Problème technique</p>
+                            <p class="text-gray-600">Bugs, erreurs, problèmes de performance</p>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900">Facturation</p>
+                            <p class="text-gray-600">Paiements, remboursements, factures</p>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900">Compte utilisateur</p>
+                            <p class="text-gray-600">Connexion, sécurité, paramètres</p>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900">Produit/Service</p>
+                            <p class="text-gray-600">Questions sur nos produits</p>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900">Question générale</p>
+                            <p class="text-gray-600">Autres questions</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Response Time -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i data-lucide="clock" class="w-5 h-5 mr-2 text-green-500"></i>
+                        Temps de réponse
+                    </h3>
+                    
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Urgent</span>
+                            <span class="font-medium text-red-600">1-2 heures</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Élevée</span>
+                            <span class="font-medium text-orange-600">2-4 heures</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Moyenne</span>
+                            <span class="font-medium text-yellow-600">4-8 heures</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Faible</span>
+                            <span class="font-medium text-green-600">24 heures</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+document.getElementById('chat-form').addEventListener('submit', function(e) {
+    const subject = document.getElementById('{{ form.subject.id_for_label }}').value;
+    const category = document.getElementById('{{ form.category.id_for_label }}').value;
+    const initialMessage = document.getElementById('initial_message').value;
+    
+    if (!subject || !category || !initialMessage.trim()) {
+        e.preventDefault();
+        alert('Veuillez remplir tous les champs obligatoires.');
+    }
+});
+
+// Auto-save draft (optional)
+let autoSaveTimer;
+document.querySelectorAll('#chat-form input, #chat-form textarea, #chat-form select').forEach(element => {
+    element.addEventListener('input', function() {
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(function() {
+            // Implement auto-save functionality
+            console.log('Auto-saving draft...');
+        }, 2000);
+    });
+});
+</script>
+{% endblock %} 

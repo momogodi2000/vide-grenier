@@ -1,0 +1,236 @@
+{% extends 'backend/base/admin_base.html' %}
+{% load static %}
+
+{% block title %}Admin Chat Dashboard - Vidé-Grenier Kamer{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Admin Chat Dashboard</h1>
+            <p class="text-gray-600">Gérez les demandes de support et les conversations avec les utilisateurs</p>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-blue-100 rounded-lg">
+                        <i data-lucide="message-circle" class="w-6 h-6 text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Chats</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_chats }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-green-100 rounded-lg">
+                        <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Ouverts</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.open_chats }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-yellow-100 rounded-lg">
+                        <i data-lucide="clock" class="w-6 h-6 text-yellow-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">En Attente</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.waiting_chats }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-purple-100 rounded-lg">
+                        <i data-lucide="timer" class="w-6 h-6 text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Temps Moyen</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.avg_response_time }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Open Chats -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                            <i data-lucide="message-circle" class="w-5 h-5 mr-2 text-green-600"></i>
+                            Chats Ouverts
+                        </h3>
+                        <a href="{% url 'admin_chat_list' %}" class="text-green-600 hover:text-green-700 text-sm font-medium">
+                            Voir tout
+                        </a>
+                    </div>
+                    
+                    {% if open_chats %}
+                    <div class="space-y-4">
+                        {% for chat in open_chats %}
+                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                        <span class="text-sm font-medium text-green-600">
+                                            {{ chat.user.username|first|upper }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-900">{{ chat.subject }}</p>
+                                        <p class="text-sm text-gray-600">{{ chat.user.username }} • {{ chat.created_at|date:"d/m/Y H:i" }}</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center space-x-2">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                               {% if chat.priority == 'URGENT' %}bg-red-100 text-red-800
+                                               {% elif chat.priority == 'HIGH' %}bg-orange-100 text-orange-800
+                                               {% elif chat.priority == 'MEDIUM' %}bg-yellow-100 text-yellow-800
+                                               {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ chat.get_priority_display }}
+                                    </span>
+                                    
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        {{ chat.get_category_display }}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-4 text-sm text-gray-600">
+                                    <span>{{ chat.message_count }} messages</span>
+                                    <span>{{ chat.created_at|timesince }}</span>
+                                </div>
+                                
+                                <div class="flex space-x-2">
+                                    <a href="{% url 'admin_chat_detail' pk=chat.id %}" 
+                                       class="px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors">
+                                        Répondre
+                                    </a>
+                                    
+                                    <button onclick="assignChat({{ chat.id }})" 
+                                            class="px-3 py-1 bg-blue-100 text-blue-600 rounded-lg text-sm hover:bg-blue-200 transition-colors">
+                                        Assigner
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-12">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="check-circle" class="w-8 h-8 text-gray-400"></i>
+                        </div>
+                        <p class="text-gray-600">Aucun chat ouvert pour le moment</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Waiting Chats -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                        <i data-lucide="clock" class="w-5 h-5 mr-2 text-yellow-600"></i>
+                        En Attente
+                    </h3>
+                    
+                    {% if waiting_chats %}
+                    <div class="space-y-4">
+                        {% for chat in waiting_chats %}
+                        <div class="border border-yellow-200 rounded-lg p-4 bg-yellow-50">
+                            <div class="flex items-center mb-2">
+                                <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+                                    <span class="text-xs font-medium text-yellow-600">
+                                        {{ chat.user.username|first|upper }}
+                                    </span>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-medium text-gray-900 text-sm">{{ chat.subject|truncatechars:30 }}</p>
+                                    <p class="text-xs text-gray-600">{{ chat.user.username }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-600">{{ chat.created_at|timesince }}</span>
+                                <a href="{% url 'admin_chat_detail' pk=chat.id %}" 
+                                   class="px-2 py-1 bg-yellow-600 text-white rounded text-xs hover:bg-yellow-700 transition-colors">
+                                    Voir
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i data-lucide="check" class="w-6 h-6 text-gray-400"></i>
+                        </div>
+                        <p class="text-sm text-gray-600">Aucun chat en attente</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mt-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                        <i data-lucide="zap" class="w-5 h-5 mr-2 text-green-600"></i>
+                        Actions Rapides
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <a href="{% url 'admin_chat_list' %}" 
+                           class="flex items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                            <i data-lucide="list" class="w-5 h-5 text-blue-600 mr-3"></i>
+                            <span class="text-sm font-medium text-gray-900">Tous les chats</span>
+                        </a>
+                        
+                        <a href="#" onclick="createTemplate()" 
+                           class="flex items-center p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                            <i data-lucide="file-text" class="w-5 h-5 text-green-600 mr-3"></i>
+                            <span class="text-sm font-medium text-gray-900">Nouveau template</span>
+                        </a>
+                        
+                        <a href="#" onclick="exportChats()" 
+                           class="flex items-center p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+                            <i data-lucide="download" class="w-5 h-5 text-purple-600 mr-3"></i>
+                            <span class="text-sm font-medium text-gray-900">Exporter les données</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function assignChat(chatId) {
+    // Implement chat assignment functionality
+    console.log('Assigning chat:', chatId);
+}
+
+function createTemplate() {
+    // Implement template creation
+    console.log('Creating template');
+}
+
+function exportChats() {
+    // Implement chat export
+    console.log('Exporting chats');
+}
+</script>
+{% endblock %} 

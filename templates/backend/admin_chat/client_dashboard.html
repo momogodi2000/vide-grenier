@@ -1,0 +1,292 @@
+{% extends 'backend/base/client_base.html' %}
+{% load static %}
+
+{% block title %}Support Chat - Vidé-Grenier Kamer{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+                <a href="{% url 'client:dashboard' %}" class="hover:text-gray-700">Dashboard</a>
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                <span class="text-green-600 font-medium">Support Chat</span>
+            </div>
+            
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Support Chat</h1>
+            <p class="text-gray-600">Contactez notre équipe de support pour toute assistance</p>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-blue-100 rounded-lg">
+                        <i data-lucide="message-circle" class="w-6 h-6 text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Chats</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_chats }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-green-100 rounded-lg">
+                        <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Ouverts</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.open_chats }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-yellow-100 rounded-lg">
+                        <i data-lucide="clock" class="w-6 h-6 text-yellow-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">En Attente</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.waiting_chats }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Quick Actions -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                        <i data-lucide="zap" class="w-5 h-5 mr-2 text-green-600"></i>
+                        Actions Rapides
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <a href="{% url 'admin_chat_create' %}" 
+                           class="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                                <i data-lucide="plus" class="w-5 h-5 text-green-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">Nouveau chat</p>
+                                <p class="text-sm text-gray-600">Créer une nouvelle demande</p>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400 ml-auto"></i>
+                        </a>
+                        
+                        <a href="{% url 'admin_chat_list' %}" 
+                           class="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                                <i data-lucide="list" class="w-5 h-5 text-blue-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">Mes conversations</p>
+                                <p class="text-sm text-gray-600">Voir tous mes chats</p>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400 ml-auto"></i>
+                        </a>
+                        
+                        <a href="#" onclick="showFAQ()" 
+                           class="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                                <i data-lucide="help-circle" class="w-5 h-5 text-purple-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">FAQ</p>
+                                <p class="text-sm text-gray-600">Questions fréquentes</p>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400 ml-auto"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Support Info -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                        <i data-lucide="info" class="w-5 h-5 mr-2 text-green-600"></i>
+                        Informations Support
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                <i data-lucide="clock" class="w-4 h-4 text-green-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">Horaires</p>
+                                <p class="text-sm text-gray-600">Lun-Ven: 8h-18h</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                <i data-lucide="message-circle" class="w-4 h-4 text-blue-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">Temps de réponse</p>
+                                <p class="text-sm text-gray-600">2-4 heures en moyenne</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                                <i data-lucide="phone" class="w-4 h-4 text-purple-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">Téléphone</p>
+                                <p class="text-sm text-gray-600">+237 XXX XXX XXX</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Chats -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                            <i data-lucide="clock" class="w-5 h-5 mr-2 text-green-600"></i>
+                            Mes Conversations Récentes
+                        </h3>
+                        <a href="{% url 'admin_chat_list' %}" 
+                           class="text-green-600 hover:text-green-700 text-sm font-medium">
+                            Voir tout
+                        </a>
+                    </div>
+                    
+                    {% if chats %}
+                    <div class="space-y-4">
+                        {% for chat in chats %}
+                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                        <i data-lucide="message-circle" class="w-5 h-5 text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-900">{{ chat.subject }}</p>
+                                        <p class="text-sm text-gray-600">{{ chat.created_at|date:"d/m/Y H:i" }}</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center space-x-2">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                               {% if chat.status == 'OPEN' %}bg-green-100 text-green-800
+                                               {% elif chat.status == 'WAITING' %}bg-yellow-100 text-yellow-800
+                                               {% elif chat.status == 'RESPONDED' %}bg-blue-100 text-blue-800
+                                               {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ chat.get_status_display }}
+                                    </span>
+                                    
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        {{ chat.get_category_display }}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-4 text-sm text-gray-600">
+                                    <span>{{ chat.message_count }} messages</span>
+                                    <span>{{ chat.created_at|timesince }}</span>
+                                </div>
+                                
+                                <div class="flex space-x-2">
+                                    <a href="{% url 'admin_chat_detail' pk=chat.id %}" 
+                                       class="px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors">
+                                        Continuer
+                                    </a>
+                                    
+                                    {% if chat.status == 'OPEN' %}
+                                    <button onclick="closeChat({{ chat.id }})" 
+                                            class="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-sm hover:bg-red-200 transition-colors">
+                                        Fermer
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-12">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="message-circle" class="w-8 h-8 text-gray-400"></i>
+                        </div>
+                        <p class="text-gray-600 mb-4">Aucune conversation pour le moment</p>
+                        <a href="{% url 'admin_chat_create' %}" 
+                           class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                            Créer une nouvelle demande
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Open Chats -->
+                {% if open_chats %}
+                <div class="bg-white rounded-xl shadow-lg p-6 mt-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                        <i data-lucide="message-circle" class="w-5 h-5 mr-2 text-green-600"></i>
+                        Chats Ouverts
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        {% for chat in open_chats %}
+                        <div class="border border-green-200 rounded-lg p-4 bg-green-50">
+                            <div class="flex items-center mb-2">
+                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                    <i data-lucide="message-circle" class="w-4 h-4 text-green-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-medium text-gray-900 text-sm">{{ chat.subject|truncatechars:40 }}</p>
+                                    <p class="text-xs text-gray-600">{{ chat.created_at|timesince }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-600">{{ chat.message_count }} messages</span>
+                                <a href="{% url 'admin_chat_detail' pk=chat.id %}" 
+                                   class="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors">
+                                    Continuer
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showFAQ() {
+    // Implement FAQ modal or redirect
+    alert('FAQ - Questions fréquentes');
+}
+
+function closeChat(chatId) {
+    if (confirm('Êtes-vous sûr de vouloir fermer cette conversation ?')) {
+        fetch(`/admin-chat/${chatId}/close/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+}
+</script>
+{% endblock %} 

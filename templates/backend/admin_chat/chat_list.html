@@ -1,0 +1,301 @@
+{% extends user_type|yesno:'backend/base/admin_base.html,backend/base/staff_base.html,backend/base/client_base.html' %}
+{% load static %}
+
+{% block title %}Chats - Vidé-Grenier Kamer{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+                {% if user_type == 'admin' %}
+                <a href="{% url 'admin:dashboard' %}" class="hover:text-gray-700">Dashboard</a>
+                {% elif user_type == 'staff' %}
+                <a href="{% url 'staff:dashboard' %}" class="hover:text-gray-700">Dashboard</a>
+                {% else %}
+                <a href="{% url 'client:dashboard' %}" class="hover:text-gray-700">Dashboard</a>
+                {% endif %}
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                <span class="text-green-600 font-medium">Chats</span>
+            </div>
+            
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                        {% if user_type == 'admin' %}Tous les Chats
+                        {% elif user_type == 'staff' %}Chats Assignés
+                        {% else %}Mes Conversations{% endif %}
+                    </h1>
+                    <p class="text-gray-600">
+                        {% if user_type == 'admin' %}Gérez toutes les demandes de support
+                        {% elif user_type == 'staff' %}Assistez les utilisateurs
+                        {% else %}Vos conversations avec le support{% endif %}
+                    </p>
+                </div>
+                
+                {% if user_type != 'client' %}
+                <div class="flex space-x-3 mt-4 md:mt-0">
+                    <a href="#" onclick="showFilters()" 
+                       class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                        <i data-lucide="filter" class="w-4 h-4 mr-2"></i>
+                        Filtres
+                    </a>
+                    
+                    <a href="#" onclick="exportData()" 
+                       class="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors">
+                        <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+                        Exporter
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8" id="filters-section" style="display: none;">
+            <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+                    <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        <option value="">Tous les statuts</option>
+                        <option value="OPEN" {% if request.GET.status == 'OPEN' %}selected{% endif %}>Ouvert</option>
+                        <option value="WAITING" {% if request.GET.status == 'WAITING' %}selected{% endif %}>En attente</option>
+                        <option value="RESPONDED" {% if request.GET.status == 'RESPONDED' %}selected{% endif %}>Répondu</option>
+                        <option value="CLOSED" {% if request.GET.status == 'CLOSED' %}selected{% endif %}>Fermé</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Priorité</label>
+                    <select name="priority" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        <option value="">Toutes les priorités</option>
+                        <option value="LOW" {% if request.GET.priority == 'LOW' %}selected{% endif %}>Faible</option>
+                        <option value="MEDIUM" {% if request.GET.priority == 'MEDIUM' %}selected{% endif %}>Moyenne</option>
+                        <option value="HIGH" {% if request.GET.priority == 'HIGH' %}selected{% endif %}>Élevée</option>
+                        <option value="URGENT" {% if request.GET.priority == 'URGENT' %}selected{% endif %}>Urgente</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
+                    <select name="category" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        <option value="">Toutes les catégories</option>
+                        <option value="TECHNICAL" {% if request.GET.category == 'TECHNICAL' %}selected{% endif %}>Technique</option>
+                        <option value="BILLING" {% if request.GET.category == 'BILLING' %}selected{% endif %}>Facturation</option>
+                        <option value="ACCOUNT" {% if request.GET.category == 'ACCOUNT' %}selected{% endif %}>Compte</option>
+                        <option value="PRODUCT" {% if request.GET.category == 'PRODUCT' %}selected{% endif %}>Produit</option>
+                        <option value="GENERAL" {% if request.GET.category == 'GENERAL' %}selected{% endif %}>Général</option>
+                    </select>
+                </div>
+                
+                <div class="flex items-end space-x-2">
+                    <button type="submit" 
+                            class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        Appliquer
+                    </button>
+                    <a href="{% url 'admin_chat_list' %}" 
+                       class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                        Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Chats List -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">
+                    {% if user_type == 'admin' %}Tous les Chats ({{ chats.count }})
+                    {% elif user_type == 'staff' %}Mes Chats Assignés ({{ chats.count }})
+                    {% else %}Mes Conversations ({{ chats.count }}){% endif %}
+                </h2>
+            </div>
+            
+            {% if chats %}
+            <div class="divide-y divide-gray-200">
+                {% for chat in chats %}
+                <div class="p-6 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                <span class="text-lg font-medium text-blue-600">
+                                    {{ chat.user.username|first|upper }}
+                                </span>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">{{ chat.subject }}</h3>
+                                <p class="text-sm text-gray-600">
+                                    {{ chat.user.username }} • {{ chat.created_at|date:"d/m/Y H:i" }}
+                                    {% if user_type != 'client' and chat.assigned_to %}
+                                    • Assigné à {{ chat.assigned_to.username }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                       {% if chat.status == 'OPEN' %}bg-green-100 text-green-800
+                                       {% elif chat.status == 'WAITING' %}bg-yellow-100 text-yellow-800
+                                       {% elif chat.status == 'RESPONDED' %}bg-blue-100 text-blue-800
+                                       {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ chat.get_status_display }}
+                            </span>
+                            
+                            {% if user_type != 'client' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                       {% if chat.priority == 'URGENT' %}bg-red-100 text-red-800
+                                       {% elif chat.priority == 'HIGH' %}bg-orange-100 text-orange-800
+                                       {% elif chat.priority == 'MEDIUM' %}bg-yellow-100 text-yellow-800
+                                       {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ chat.get_priority_display }}
+                            </span>
+                            {% endif %}
+                            
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                {{ chat.get_category_display }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-6 text-sm text-gray-600">
+                            <span>{{ chat.message_count }} messages</span>
+                            <span>{{ chat.created_at|timesince }}</span>
+                            {% if chat.last_message %}
+                            <span>Dernier message: {{ chat.last_message.created_at|timesince }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <a href="{% url 'admin_chat_detail' pk=chat.id %}" 
+                               class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
+                                {% if user_type == 'client' %}Continuer{% else %}Répondre{% endif %}
+                            </a>
+                            
+                            {% if user_type != 'client' and not chat.assigned_to %}
+                            <button onclick="assignToMe({{ chat.id }})" 
+                                    class="px-4 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors text-sm">
+                                M'assigner
+                            </button>
+                            {% endif %}
+                            
+                            {% if chat.status != 'CLOSED' %}
+                            <button onclick="closeChat({{ chat.id }})" 
+                                    class="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors text-sm">
+                                Fermer
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="px-6 py-4 border-t border-gray-200">
+                <nav class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                           class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        </a>
+                        {% endif %}
+                        
+                        <span class="text-sm text-gray-600">
+                            Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+                        </span>
+                        
+                        {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                           class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="text-sm text-gray-600">
+                        {{ page_obj.start_index }}-{{ page_obj.end_index }} sur {{ page_obj.paginator.count }} résultats
+                    </div>
+                </nav>
+            </div>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-16">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="message-circle" class="w-8 h-8 text-gray-400"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Aucun chat trouvé</h3>
+                <p class="text-gray-600 mb-6">
+                    {% if user_type == 'client' %}
+                    Vous n'avez pas encore de conversations avec le support.
+                    {% else %}
+                    Aucune conversation ne correspond à vos critères.
+                    {% endif %}
+                </p>
+                
+                {% if user_type == 'client' %}
+                <a href="{% url 'admin_chat_create' %}" 
+                   class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                    Créer une nouvelle demande
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function showFilters() {
+    const filtersSection = document.getElementById('filters-section');
+    filtersSection.style.display = filtersSection.style.display === 'none' ? 'block' : 'none';
+}
+
+function exportData() {
+    // Implement export functionality
+    alert('Export des données');
+}
+
+function assignToMe(chatId) {
+    fetch(`/admin-chat/${chatId}/assign/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            assigned_to: '{{ request.user.id }}'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+function closeChat(chatId) {
+    if (confirm('Êtes-vous sûr de vouloir fermer cette conversation ?')) {
+        fetch(`/admin-chat/${chatId}/close/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+}
+</script>
+{% endblock %} 

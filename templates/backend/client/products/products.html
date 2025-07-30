@@ -1,1 +1,355 @@
-<!-- Products Template -->
+{% extends 'backend/base/client_base.html' %}
+{% load static %}
+
+{% block title %}Mes Produits - Vidé-Grenier Kamer{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div class="mb-4 md:mb-0">
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Mes Produits</h1>
+                    <p class="text-gray-600">Gérez vos annonces et suivez leurs performances</p>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <a href="{% url 'client:product_create' %}" 
+                       class="inline-flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors">
+                        <i data-lucide="plus" class="w-5 h-5 mr-2"></i>
+                        Ajouter un produit
+                    </a>
+                    
+                    <a href="{% url 'client:browse_products' %}" 
+                       class="inline-flex items-center px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors">
+                        <i data-lucide="eye" class="w-5 h-5 mr-2"></i>
+                        Parcourir les produits
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-blue-100 rounded-lg">
+                        <i data-lucide="package" class="w-6 h-6 text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Produits</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ products.count }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-green-100 rounded-lg">
+                        <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Actifs</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ products|length }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-yellow-100 rounded-lg">
+                        <i data-lucide="eye" class="w-6 h-6 text-yellow-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Vues Total</p>
+                        <p class="text-2xl font-bold text-gray-900">
+                            {% for product in products %}
+                                {% if forloop.first %}
+                                    {{ product.views_count|default:0 }}
+                                {% endif %}
+                            {% endfor %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-purple-100 rounded-lg">
+                        <i data-lucide="heart" class="w-6 h-6 text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Favoris</p>
+                        <p class="text-2xl font-bold text-gray-900">
+                            {% for product in products %}
+                                {% if forloop.first %}
+                                    {{ product.likes_count|default:0 }}
+                                {% endif %}
+                            {% endfor %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <select id="status-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        <option value="">Tous les statuts</option>
+                        <option value="ACTIVE">Actif</option>
+                        <option value="INACTIVE">Inactif</option>
+                        <option value="SOLD">Vendu</option>
+                        <option value="RESERVED">Réservé</option>
+                    </select>
+                    
+                    <select id="category-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        <option value="">Toutes les catégories</option>
+                        {% for category in categories %}
+                        <option value="{{ category.slug }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                    
+                    <select id="sort-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        <option value="newest">Plus récents</option>
+                        <option value="oldest">Plus anciens</option>
+                        <option value="price-high">Prix élevé</option>
+                        <option value="price-low">Prix bas</option>
+                        <option value="views">Plus de vues</option>
+                    </select>
+                </div>
+                
+                <div class="relative">
+                    <input type="text" id="search-products" 
+                           placeholder="Rechercher un produit..."
+                           class="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    <i data-lucide="search" class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        {% if products %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="products-grid">
+            {% for product in products %}
+            <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300"
+                 data-status="{{ product.status }}"
+                 data-category="{{ product.category.slug }}"
+                 data-price="{{ product.price }}"
+                 data-title="{{ product.title|lower }}">
+                
+                <!-- Product Image -->
+                <div class="relative h-48">
+                    {% if product.images.first %}
+                    <img src="{{ product.images.first.image.url }}" 
+                         alt="{{ product.title }}" 
+                         class="w-full h-full object-cover">
+                    {% else %}
+                    <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                        <i data-lucide="image" class="w-12 h-12 text-gray-400"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Status Badge -->
+                    <div class="absolute top-3 left-3">
+                        {% if product.status == 'ACTIVE' %}
+                        <span class="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                            Actif
+                        </span>
+                        {% elif product.status == 'SOLD' %}
+                        <span class="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                            Vendu
+                        </span>
+                        {% elif product.status == 'RESERVED' %}
+                        <span class="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                            Réservé
+                        </span>
+                        {% else %}
+                        <span class="bg-gray-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                            Inactif
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="absolute top-3 right-3 flex space-x-2">
+                        <button onclick="editProduct('{{ product.id }}')" 
+                                class="w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors">
+                            <i data-lucide="edit" class="w-4 h-4 text-gray-600"></i>
+                        </button>
+                        
+                        <button onclick="toggleProductStatus('{{ product.id }}')" 
+                                class="w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors">
+                            {% if product.status == 'ACTIVE' %}
+                            <i data-lucide="pause" class="w-4 h-4 text-yellow-600"></i>
+                            {% else %}
+                            <i data-lucide="play" class="w-4 h-4 text-green-600"></i>
+                            {% endif %}
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Product Info -->
+                <div class="p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">{{ product.title }}</h3>
+                    
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-green-600 font-bold text-lg">{{ product.price|floatformat:0 }} FCFA</span>
+                        <span class="text-sm text-gray-500">{{ product.category.name }}</span>
+                    </div>
+                    
+                    <!-- Stats -->
+                    <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                        <div class="flex items-center">
+                            <i data-lucide="eye" class="w-4 h-4 mr-1"></i>
+                            <span>{{ product.views_count|default:0 }}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i data-lucide="heart" class="w-4 h-4 mr-1"></i>
+                            <span>{{ product.likes_count|default:0 }}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i data-lucide="message-circle" class="w-4 h-4 mr-1"></i>
+                            <span>{{ product.chats.count|default:0 }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="flex space-x-2">
+                        <a href="{% url 'client:product_detail' pk=product.id %}" 
+                           class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors text-center">
+                            Voir
+                        </a>
+                        
+                        <button onclick="deleteProduct('{{ product.id }}')" 
+                                class="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="mt-8 flex justify-center">
+            <nav class="flex items-center space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" 
+                   class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </a>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <span class="px-3 py-2 bg-green-600 text-white rounded-lg">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}" 
+                   class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    {{ num }}
+                </a>
+                {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" 
+                   class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-16">
+            <div class="bg-white rounded-3xl p-12 shadow-lg max-w-md mx-auto">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="package" class="w-12 h-12 text-gray-400"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Aucun produit trouvé</h2>
+                <p class="text-gray-600 mb-8">Commencez par ajouter votre premier produit</p>
+                <a href="{% url 'client:product_create' %}" 
+                   class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors inline-flex items-center">
+                    <i data-lucide="plus" class="w-5 h-5 mr-2"></i>
+                    Ajouter un produit
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const statusFilter = document.getElementById('status-filter');
+    const categoryFilter = document.getElementById('category-filter');
+    const sortFilter = document.getElementById('sort-filter');
+    const searchInput = document.getElementById('search-products');
+    const productsGrid = document.getElementById('products-grid');
+    
+    function filterProducts() {
+        const status = statusFilter.value;
+        const category = categoryFilter.value;
+        const sort = sortFilter.value;
+        const search = searchInput.value.toLowerCase();
+        
+        const products = document.querySelectorAll('.product-card');
+        
+        products.forEach(product => {
+            const productStatus = product.dataset.status;
+            const productCategory = product.dataset.category;
+            const productTitle = product.dataset.title;
+            
+            let show = true;
+            
+            if (status && productStatus !== status) show = false;
+            if (category && productCategory !== category) show = false;
+            if (search && !productTitle.includes(search)) show = false;
+            
+            product.style.display = show ? 'block' : 'none';
+        });
+    }
+    
+    statusFilter.addEventListener('change', filterProducts);
+    categoryFilter.addEventListener('change', filterProducts);
+    sortFilter.addEventListener('change', filterProducts);
+    searchInput.addEventListener('input', filterProducts);
+});
+
+// Product actions
+function editProduct(productId) {
+    window.location.href = `/client/products/${productId}/edit/`;
+}
+
+function toggleProductStatus(productId) {
+    if (confirm('Voulez-vous changer le statut de ce produit ?')) {
+        // AJAX call to toggle status
+        fetch(`/client/products/${productId}/toggle-status/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+}
+
+function deleteProduct(productId) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
+        window.location.href = `/client/products/${productId}/delete/`;
+    }
+}
+</script>
+{% endblock %}
