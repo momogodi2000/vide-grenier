@@ -1,407 +1,605 @@
 {% extends 'backend/base/staff_base.html' %}
 {% load static %}
-{% load humanize %}
 
-{% block title %}Tableau de bord Staff - Vidé-Grenier Kamer{% endblock %}
+{% block title %}Dashboard Staff - Vidé-Grenier Kamer{% endblock %}
 
-{% block content %}
-<div class="space-y-8">
-    <!-- Welcome Header -->
-    <div class="bg-gradient-to-r from-purple-600 via-purple-700 to-orange-800 rounded-2xl p-8 text-white shadow-2xl">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold mb-2">Bonjour, {{ user.first_name }} ! 👋</h1>
-                <p class="text-purple-100 text-lg">Voici un aperçu de votre activité aujourd'hui</p>
-                {% if user.pickup_point %}
-                <p class="text-purple-200 text-sm mt-2">Point de retrait: {{ user.pickup_point.name }}</p>
-                {% endif %}
-                </div>
-            <div class="text-right">
-                <div class="text-2xl font-bold">{{ today|date:"l, d F Y" }}</div>
-                <div class="text-purple-100" id="current-time"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quick Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- Orders Processed Today -->
-        <div class="metric-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-purple-100 text-sm font-medium">Commandes Traitées</p>
-                    <p class="text-2xl font-bold">{{ orders_processed_today }}</p>
-                </div>
-                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                    <i data-lucide="package" class="w-6 h-6 text-white"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Today's Revenue -->
-        <div class="metric-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-purple-100 text-sm font-medium">Revenus Aujourd'hui</p>
-                    <p class="text-2xl font-bold">{{ todays_revenue|floatformat:0 }} FCFA</p>
-                </div>
-                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                    <i data-lucide="trending-up" class="w-6 h-6 text-white"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pending Orders -->
-        <div class="metric-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-purple-100 text-sm font-medium">Commandes en Attente</p>
-                    <p class="text-2xl font-bold">{{ pending_orders_count }}</p>
-                </div>
-                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                    <i data-lucide="clock" class="w-6 h-6 text-white"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Efficiency Score -->
-        <div class="metric-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-purple-100 text-sm font-medium">Score d'Efficacité</p>
-                    <p class="text-2xl font-bold">{{ efficiency_score }}%</p>
-                </div>
-                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                    <i data-lucide="target" class="w-6 h-6 text-white"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Left Column -->
-        <div class="lg:col-span-2 space-y-8">
-            <!-- Order Processing Chart -->
-            <div class="stats-card">
-        <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Traitement des Commandes</h3>
-                    <div class="flex space-x-2">
-                        <button class="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-lg">Aujourd'hui</button>
-                        <button class="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded-lg">Cette semaine</button>
-                        <button class="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded-lg">Ce mois</button>
-                    </div>
-                </div>
-                <div class="h-64">
-                    <canvas id="ordersChart"></canvas>
-                </div>
-        </div>
-        
-            <!-- Recent Orders -->
-            <div class="stats-card">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Commandes Récentes</h3>
-                    <a href="{% url 'backend:order_processing' %}" class="text-purple-600 hover:text-purple-700 text-sm font-medium">Voir tout</a>
-                </div>
-        <div class="space-y-4">
-                    {% for order in recent_orders %}
-                    <div class="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                        <div class="w-10 h-10 rounded-full flex items-center justify-center
-                            {% if order.status == 'DELIVERED' %}bg-green-100 text-green-600
-                            {% elif order.status == 'PENDING' %}bg-yellow-100 text-yellow-600
-                            {% elif order.status == 'CANCELLED' %}bg-red-100 text-red-600
-                            {% else %}bg-blue-100 text-blue-600{% endif %}">
-                            <i data-lucide="package" class="w-5 h-5"></i>
-                        </div>
-                        <div class="flex-1">
-                            <p class="font-medium text-gray-900 dark:text-white">Commande #{{ order.id|slice:":8" }}</p>
-                            <p class="text-sm text-gray-500">{{ order.product.title|truncatechars:30 }}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-semibold text-gray-900 dark:text-white">{{ order.total_amount|floatformat:0 }} FCFA</p>
-                            <span class="text-xs px-2 py-1 rounded-full
-                                {% if order.status == 'DELIVERED' %}bg-green-100 text-green-700
-                                {% elif order.status == 'PENDING' %}bg-yellow-100 text-yellow-700
-                                {% elif order.status == 'CANCELLED' %}bg-red-100 text-red-700
-                                {% else %}bg-blue-100 text-blue-700{% endif %}">
-                                {{ order.get_status_display }}
-                            </span>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="text-center py-8 text-gray-500">
-                        <i data-lucide="package" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
-                        <p>Aucune commande récente</p>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Column -->
-        <div class="space-y-8">
-            <!-- Quick Actions -->
-            <div class="stats-card">
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Actions Rapides</h3>
-                <div class="space-y-3">
-                    <a href="{% url 'backend:qr_scanner' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/50 rounded-xl flex items-center justify-center">
-                            <i data-lucide="qr-code" class="w-5 h-5 text-purple-600 dark:text-purple-400"></i>
-                        </div>
-                        <span class="font-medium text-gray-900 dark:text-white">Scanner QR Code</span>
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 ml-auto"></i>
-                    </a>
-                    
-                    <a href="{% url 'backend:order_processing' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        <div class="w-10 h-10 bg-orange-100 dark:bg-orange-900/50 rounded-xl flex items-center justify-center">
-                            <i data-lucide="list-checks" class="w-5 h-5 text-orange-600 dark:text-orange-400"></i>
-                        </div>
-                        <span class="font-medium text-gray-900 dark:text-white">Traiter Commandes</span>
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 ml-auto"></i>
-                    </a>
-                    
-                    <a href="{% url 'backend:pickup_management' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-xl flex items-center justify-center">
-                            <i data-lucide="package" class="w-5 h-5 text-blue-600 dark:text-blue-400"></i>
-                        </div>
-                        <span class="font-medium text-gray-900 dark:text-white">Gestion Retraits</span>
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 ml-auto"></i>
-                    </a>
-                    
-                    <a href="{% url 'backend:chat_list' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-xl flex items-center justify-center">
-                            <i data-lucide="message-circle" class="w-5 h-5 text-green-600 dark:text-green-400"></i>
-                        </div>
-                        <span class="font-medium text-gray-900 dark:text-white">Messages</span>
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 ml-auto"></i>
-                    </a>
-                    
-                    <a href="{% url 'backend:analytics' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        <div class="w-10 h-10 bg-cyan-100 dark:bg-cyan-900/50 rounded-xl flex items-center justify-center">
-                            <i data-lucide="bar-chart-3" class="w-5 h-5 text-cyan-600 dark:text-cyan-400"></i>
-                        </div>
-                        <span class="font-medium text-gray-900 dark:text-white">Statistiques</span>
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 ml-auto"></i>
-                    </a>
-        </div>
-    </div>
-
-    <!-- Performance Metrics -->
-            <div class="stats-card">
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Métriques de Performance</h3>
-            <div class="space-y-4">
-                <div class="flex items-center justify-between">
-                        <span class="text-gray-600 dark:text-gray-400">Efficacité</span>
-                        <span class="font-semibold text-gray-900 dark:text-white">{{ efficiency_score }}%</span>
-                </div>
-                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                        <div class="bg-purple-600 h-2 rounded-full" style="width: {{ efficiency_score }}%"></div>
-                </div>
-                
-                <div class="flex items-center justify-between">
-                        <span class="text-gray-600 dark:text-gray-400">Taux de satisfaction</span>
-                        <span class="font-semibold text-gray-900 dark:text-white">{{ satisfaction_rate }}%</span>
-                </div>
-                
-                <div class="flex items-center justify-between">
-                        <span class="text-gray-600 dark:text-gray-400">Commandes annulées</span>
-                        <span class="font-semibold text-gray-900 dark:text-white">{{ cancelled_orders_today }}</span>
-                    </div>
-            </div>
-        </div>
-
-            <!-- Inventory Alerts -->
-            <div class="stats-card">
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Alertes Stock</h3>
-                <div class="space-y-4">
-                    {% if low_stock_count > 0 %}
-                    <div class="flex items-center space-x-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-xl">
-                        <div class="w-8 h-8 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center">
-                            <i data-lucide="alert-triangle" class="w-4 h-4 text-red-600 dark:text-red-400"></i>
-                </div>
-                        <div>
-                            <p class="font-medium text-red-900 dark:text-red-100">{{ low_stock_count }} produits en stock faible</p>
-                            <p class="text-sm text-red-600 dark:text-red-300">Nécessite attention</p>
-                </div>
-            </div>
-                    {% else %}
-                    <div class="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                        <div class="w-8 h-8 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
-                            <i data-lucide="check-circle" class="w-4 h-4 text-green-600 dark:text-green-400"></i>
-        </div>
-                        <div>
-                            <p class="font-medium text-green-900 dark:text-green-100">Stock optimal</p>
-                            <p class="text-sm text-green-600 dark:text-green-300">Aucune alerte</p>
-    </div>
-</div>
-                    {% endif %}
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                            <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ total_products }}</p>
-                            <p class="text-sm text-blue-600 dark:text-blue-300">Total Produits</p>
-                        </div>
-                        <div class="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                            <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ active_products }}</p>
-                            <p class="text-sm text-green-600 dark:text-green-300">Produits Actifs</p>
-            </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-    <!-- Bottom Row -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Monthly Performance -->
-        <div class="stats-card">
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Performance Mensuelle</h3>
-            <div class="h-64">
-                <canvas id="performanceChart"></canvas>
-    </div>
-</div>
-
-        <!-- Customer Service -->
-        <div class="stats-card">
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Service Client</h3>
-            <div class="space-y-4">
-                <div class="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
-                            <i data-lucide="message-circle" class="w-5 h-5 text-blue-600 dark:text-blue-400"></i>
-                        </div>
-                        <div>
-                            <p class="font-medium text-gray-900 dark:text-white">Chats actifs</p>
-                            <p class="text-sm text-gray-500">{{ active_chats }} conversations</p>
-                        </div>
-                    </div>
-                    <a href="{% url 'backend:chat_list' %}" class="text-blue-600 hover:text-blue-700">
-                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                    </a>
-                </div>
-                
-                <div class="flex items-center justify-between p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center">
-                            <i data-lucide="alert-circle" class="w-5 h-5 text-orange-600 dark:text-orange-400"></i>
-                        </div>
-                <div>
-                            <p class="font-medium text-gray-900 dark:text-white">Problèmes non résolus</p>
-                            <p class="text-sm text-gray-500">{{ unresolved_issues }} tickets</p>
-                        </div>
-                    </div>
-                    <a href="{% url 'backend:customer_service' %}" class="text-orange-600 hover:text-orange-700">
-                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                    </a>
-                </div>
-                
-                <div class="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
-                            <i data-lucide="thumbs-up" class="w-5 h-5 text-green-600 dark:text-green-400"></i>
-                        </div>
-                <div>
-                            <p class="font-medium text-gray-900 dark:text-white">Taux de satisfaction</p>
-                            <p class="text-sm text-gray-500">{{ satisfaction_rate }}%</p>
-                        </div>
-                    </div>
-                    <div class="text-green-600">
-                        <i data-lucide="trending-up" class="w-5 h-5"></i>
-                </div>
-                </div>
-                </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Update time
-    function updateTime() {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('fr-FR', {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        });
-        document.getElementById('current-time').textContent = timeString;
+{% block extra_css %}
+<style>
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
     }
     
-    updateTime();
-    setInterval(updateTime, 1000);
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+        50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.6); }
+    }
+    
+    @keyframes slide-in-left {
+        from { transform: translateX(-100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes slide-in-right {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes fade-in-up {
+        from { transform: translateY(30px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    @keyframes rotate-3d {
+        from { transform: rotateY(0deg); }
+        to { transform: rotateY(360deg); }
+    }
+    
+    @keyframes shimmer {
+        0% { background-position: -200px 0; }
+        100% { background-position: calc(200px + 100%) 0; }
+    }
+    
+    .float-animation {
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    .pulse-glow {
+        animation: pulse-glow 2s ease-in-out infinite;
+    }
+    
+    .slide-in-left {
+        animation: slide-in-left 0.8s ease-out;
+    }
+    
+    .slide-in-right {
+        animation: slide-in-right 0.8s ease-out;
+    }
+    
+    .fade-in-up {
+        animation: fade-in-up 0.6s ease-out;
+    }
+    
+    .rotate-3d {
+        animation: rotate-3d 20s linear infinite;
+    }
+    
+    .shimmer {
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        background-size: 200px 100%;
+        animation: shimmer 1.5s infinite;
+    }
+    
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .gradient-bg {
+        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
+    }
+    
+    .card-hover {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .card-hover:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+    
+    .progress-ring-circle {
+        transition: stroke-dashoffset 0.35s;
+        transform-origin: 50% 50%;
+    }
+    
+    .parallax-bg {
+        background-attachment: fixed;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+    }
+    
+    .morphing-bg {
+        background: linear-gradient(45deg, #1e3a8a, #3b82f6, #1e40af, #1d4ed8);
+        background-size: 400% 400%;
+        animation: morphing 8s ease-in-out infinite;
+    }
+    
+    @keyframes morphing {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+    }
+    
+    @media (max-width: 768px) {
+        .parallax-bg {
+            background-attachment: scroll;
+        }
+    }
+</style>
+{% endblock %}
 
-    // Orders Chart
-    const ordersCtx = document.getElementById('ordersChart').getContext('2d');
-    const ordersChart = new Chart(ordersCtx, {
-        type: 'bar',
-        data: {
-            labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
-            datasets: [{
-                label: 'Commandes traitées',
-                data: [12, 19, 15, 25, 22, 18, 14],
-                backgroundColor: '#8b5cf6',
-                borderRadius: 8
-            }, {
-                label: 'Commandes en attente',
-                data: [5, 8, 6, 10, 7, 4, 3],
-                backgroundColor: '#f59e0b',
-                borderRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'top'
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
+{% block content %}
+<!-- Hero Section with Morphing Background -->
+<div class="relative min-h-screen overflow-hidden">
+    <!-- Animated Background -->
+    <div class="absolute inset-0 morphing-bg">
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute top-20 left-20 w-32 h-32 bg-white rounded-full float-animation"></div>
+            <div class="absolute top-40 right-32 w-24 h-24 bg-white rounded-full float-animation" style="animation-delay: 1s;"></div>
+            <div class="absolute bottom-32 left-1/4 w-20 h-20 bg-white rounded-full float-animation" style="animation-delay: 2s;"></div>
+            <div class="absolute bottom-20 right-20 w-28 h-28 bg-white rounded-full float-animation" style="animation-delay: 0.5s;"></div>
+            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-white/5 rounded-full rotate-3d"></div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="relative z-10 container mx-auto px-4 py-8">
+        <!-- Welcome Header -->
+        <div class="text-center mb-12 slide-in-left">
+            <div class="inline-block p-6 bg-white/10 backdrop-blur-lg rounded-3xl mb-6 border border-white/20">
+                <h1 class="text-4xl md:text-6xl font-bold text-white mb-4">
+                    Dashboard Staff
+                </h1>
+                <p class="text-xl text-white/80">Gestion et supervision de la plateforme</p>
+                <div class="mt-4 flex items-center justify-center space-x-4">
+                    <span class="px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-sm">En ligne</span>
+                    <span class="text-white/60">{{ user.username }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <!-- Total Orders Card -->
+            <div class="group card-hover bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 fade-in-up" style="animation-delay: 0.1s;">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center pulse-glow">
+                        <i data-lucide="shopping-bag" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-white/60 text-sm">Commandes</p>
+                        <p class="text-2xl font-bold text-white">{{ total_orders|default:0 }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center text-blue-300 text-sm">
+                    <i data-lucide="arrow-up" class="w-4 h-4 mr-1"></i>
+                    <span>+15.3% aujourd'hui</span>
+                </div>
+            </div>
+
+            <!-- Pending Orders Card -->
+            <div class="group card-hover bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 fade-in-up" style="animation-delay: 0.2s;">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center">
+                        <i data-lucide="clock" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-white/60 text-sm">En Attente</p>
+                        <p class="text-2xl font-bold text-white">{{ pending_orders|default:0 }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center text-yellow-300 text-sm">
+                    <i data-lucide="alert-circle" class="w-4 h-4 mr-1"></i>
+                    <span>Nécessitent attention</span>
+                </div>
+            </div>
+
+            <!-- Total Users Card -->
+            <div class="group card-hover bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 fade-in-up" style="animation-delay: 0.3s;">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center">
+                        <i data-lucide="users" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-white/60 text-sm">Utilisateurs</p>
+                        <p class="text-2xl font-bold text-white">{{ total_users|default:0 }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center text-green-300 text-sm">
+                    <i data-lucide="user-plus" class="w-4 h-4 mr-1"></i>
+                    <span>+8 nouveaux</span>
+                </div>
+            </div>
+
+            <!-- Revenue Card -->
+            <div class="group card-hover bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 fade-in-up" style="animation-delay: 0.4s;">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center">
+                        <i data-lucide="trending-up" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-white/60 text-sm">Revenus</p>
+                        <p class="text-2xl font-bold text-white">{{ total_revenue|default:0|floatformat:0 }} FCFA</p>
+                    </div>
+                </div>
+                <div class="flex items-center text-purple-300 text-sm">
+                    <i data-lucide="dollar-sign" class="w-4 h-4 mr-1"></i>
+                    <span>+22.1% ce mois</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Orders Management -->
+                <div class="card-hover bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 slide-in-left">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-semibold text-white flex items-center">
+                            <i data-lucide="package" class="w-5 h-5 mr-2 text-blue-400"></i>
+                            Gestion des Commandes
+                        </h3>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30 transition-colors">Aujourd'hui</button>
+                            <button class="px-3 py-1 bg-blue-500 text-white rounded-lg text-sm">Cette semaine</button>
+                            <button class="px-3 py-1 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30 transition-colors">Ce mois</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Orders Chart Placeholder -->
+                    <div class="h-64 bg-white/5 rounded-xl flex items-center justify-center mb-6">
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="bar-chart-3" class="w-8 h-8 text-blue-400"></i>
+                            </div>
+                            <p class="text-white/60">Graphique des commandes</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <a href="#" class="group p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 transform hover:scale-105">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center mr-3 group-hover:rotate-12 transition-transform">
+                                    <i data-lucide="check" class="w-5 h-5 text-green-400"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-white">Approuver</p>
+                                    <p class="text-sm text-white/60">Commandes en attente</p>
+                                </div>
+                            </div>
+                        </a>
+                        
+                        <a href="#" class="group p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 transform hover:scale-105">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center mr-3 group-hover:rotate-12 transition-transform">
+                                    <i data-lucide="truck" class="w-5 h-5 text-yellow-400"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-white">Livraison</p>
+                                    <p class="text-sm text-white/60">Suivi des colis</p>
+                                </div>
+                            </div>
+                        </a>
+                        
+                        <a href="#" class="group p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 transform hover:scale-105">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center mr-3 group-hover:rotate-12 transition-transform">
+                                    <i data-lucide="alert-triangle" class="w-5 h-5 text-red-400"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-white">Problèmes</p>
+                                    <p class="text-sm text-white/60">Résolution</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Recent Activities -->
+                <div class="card-hover bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 slide-in-left">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-semibold text-white flex items-center">
+                            <i data-lucide="activity" class="w-5 h-5 mr-2 text-green-400"></i>
+                            Activités Récentes
+                        </h3>
+                        <a href="#" class="text-green-300 hover:text-green-200 text-sm font-medium">
+                            Voir tout
+                        </a>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
+                            <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mr-4">
+                                <i data-lucide="check" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium text-white">Commande #1234 approuvée</p>
+                                <p class="text-sm text-white/60">Il y a 5 minutes</p>
+                            </div>
+                            <span class="text-green-300 text-sm">Approuvé</span>
+                        </div>
+                        
+                        <div class="flex items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
+                            <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center mr-4">
+                                <i data-lucide="user" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium text-white">Nouveau client inscrit</p>
+                                <p class="text-sm text-white/60">Il y a 15 minutes</p>
+                            </div>
+                            <span class="text-blue-300 text-sm">Nouveau</span>
+                        </div>
+                        
+                        <div class="flex items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
+                            <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center mr-4">
+                                <i data-lucide="alert-triangle" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium text-white">Problème signalé</p>
+                                <p class="text-sm text-white/60">Il y a 30 minutes</p>
+                            </div>
+                            <span class="text-yellow-300 text-sm">En cours</span>
+                        </div>
+                        
+                        <div class="flex items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
+                            <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center mr-4">
+                                <i data-lucide="truck" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium text-white">Livraison confirmée</p>
+                                <p class="text-sm text-white/60">Il y a 1 heure</p>
+                            </div>
+                            <span class="text-purple-300 text-sm">Livré</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="space-y-8">
+                <!-- Quick Actions -->
+                <div class="card-hover bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 slide-in-right">
+                    <h3 class="text-xl font-semibold text-white mb-6 flex items-center">
+                        <i data-lucide="zap" class="w-5 h-5 mr-2 text-yellow-400"></i>
+                        Actions Rapides
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <a href="#" class="group flex items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 transform hover:scale-105">
+                            <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center mr-4 group-hover:rotate-12 transition-transform">
+                                <i data-lucide="package" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <span class="font-medium text-white group-hover:text-blue-300 transition-colors">Gérer les commandes</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-white/60 ml-auto group-hover:translate-x-1 transition-transform"></i>
+                        </a>
+                        
+                        <a href="#" class="group flex items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 transform hover:scale-105">
+                            <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center mr-4 group-hover:rotate-12 transition-transform">
+                                <i data-lucide="users" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <span class="font-medium text-white group-hover:text-green-300 transition-colors">Gérer les utilisateurs</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-white/60 ml-auto group-hover:translate-x-1 transition-transform"></i>
+                        </a>
+                        
+                        <a href="#" class="group flex items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 transform hover:scale-105">
+                            <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center mr-4 group-hover:rotate-12 transition-transform">
+                                <i data-lucide="message-circle" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <span class="font-medium text-white group-hover:text-purple-300 transition-colors">Support client</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-white/60 ml-auto group-hover:translate-x-1 transition-transform"></i>
+                        </a>
+                        
+                        <a href="#" class="group flex items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 transform hover:scale-105">
+                            <div class="w-10 h-10 bg-gradient-to-br from-red-400 to-red-600 rounded-xl flex items-center justify-center mr-4 group-hover:rotate-12 transition-transform">
+                                <i data-lucide="settings" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <span class="font-medium text-white group-hover:text-red-300 transition-colors">Paramètres</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-white/60 ml-auto group-hover:translate-x-1 transition-transform"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Performance Metrics -->
+                <div class="card-hover bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 slide-in-right">
+                    <h3 class="text-xl font-semibold text-white mb-6 flex items-center">
+                        <i data-lucide="target" class="w-5 h-5 mr-2 text-purple-400"></i>
+                        Performance
+                    </h3>
+                    
+                    <!-- Orders Processed -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-white/80 text-sm">Commandes traitées</span>
+                            <span class="text-white font-semibold">85%</span>
+                        </div>
+                        <div class="w-full bg-white/20 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-blue-400 to-blue-600 h-2 rounded-full" style="width: 85%"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Response Time -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-white/80 text-sm">Temps de réponse</span>
+                            <span class="text-white font-semibold">2.3h</span>
+                        </div>
+                        <div class="w-full bg-white/20 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full" style="width: 92%"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Customer Satisfaction -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-white/80 text-sm">Satisfaction client</span>
+                            <span class="text-white font-semibold">4.7/5</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="flex space-x-1">
+                                {% for i in "12345" %}
+                                <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Status -->
+                <div class="card-hover bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 slide-in-right">
+                    <h3 class="text-xl font-semibold text-white mb-6 flex items-center">
+                        <i data-lucide="server" class="w-5 h-5 mr-2 text-green-400"></i>
+                        Statut du Système
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-green-400 rounded-full mr-3"></div>
+                                <span class="text-white text-sm">Serveur principal</span>
+                            </div>
+                            <span class="text-green-300 text-sm">Opérationnel</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-green-400 rounded-full mr-3"></div>
+                                <span class="text-white text-sm">Base de données</span>
+                            </div>
+                            <span class="text-green-300 text-sm">Opérationnel</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-yellow-400 rounded-full mr-3"></div>
+                                <span class="text-white text-sm">API externe</span>
+                            </div>
+                            <span class="text-yellow-300 text-sm">Lent</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-green-400 rounded-full mr-3"></div>
+                                <span class="text-white text-sm">Stockage</span>
+                            </div>
+                            <span class="text-green-300 text-sm">Opérationnel</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                <div class="card-hover bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 slide-in-right">
+                    <h3 class="text-xl font-semibold text-white mb-6 flex items-center">
+                        <i data-lucide="bell" class="w-5 h-5 mr-2 text-red-400"></i>
+                        Notifications
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center p-3 bg-red-500/20 rounded-lg border border-red-500/30">
+                            <i data-lucide="alert-triangle" class="w-5 h-5 text-red-400 mr-3"></i>
+                            <div class="flex-1">
+                                <p class="text-white text-sm font-medium">Commande urgente</p>
+                                <p class="text-white/60 text-xs">Commande #5678 nécessite attention</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center p-3 bg-yellow-500/20 rounded-lg border border-yellow-500/30">
+                            <i data-lucide="clock" class="w-5 h-5 text-yellow-400 mr-3"></i>
+                            <div class="flex-1">
+                                <p class="text-white text-sm font-medium">Maintenance prévue</p>
+                                <p class="text-white/60 text-xs">Demain à 2h00 du matin</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center p-3 bg-green-500/20 rounded-lg border border-green-500/30">
+                            <i data-lucide="check-circle" class="w-5 h-5 text-green-400 mr-3"></i>
+                            <div class="flex-1">
+                                <p class="text-white text-sm font-medium">Mise à jour terminée</p>
+                                <p class="text-white/60 text-xs">Système mis à jour avec succès</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Intersection Observer for animations
+const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
         }
     });
+}, observerOptions);
 
-    // Performance Chart
-    const performanceCtx = document.getElementById('performanceChart').getContext('2d');
-    const performanceChart = new Chart(performanceCtx, {
-        type: 'radar',
-        data: {
-            labels: ['Efficacité', 'Satisfaction', 'Rapidité', 'Précision', 'Communication'],
-            datasets: [{
-                label: 'Performance actuelle',
-                data: [85, 90, 78, 92, 88],
-                borderColor: '#8b5cf6',
-                backgroundColor: 'rgba(139, 92, 246, 0.2)',
-                pointBackgroundColor: '#8b5cf6',
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: '#8b5cf6'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                r: {
-                    beginAtZero: true,
-                    max: 100,
-                    ticks: {
-                        stepSize: 20
-                    }
-                }
-            }
-        }
+// Observe all animated elements
+document.addEventListener('DOMContentLoaded', function() {
+    const animatedElements = document.querySelectorAll('.fade-in-up, .slide-in-left, .slide-in-right');
+    animatedElements.forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        observer.observe(el);
     });
 });
+
+// Parallax effect
+window.addEventListener('scroll', function() {
+    const scrolled = window.pageYOffset;
+    const parallaxElements = document.querySelectorAll('.parallax-bg');
+    parallaxElements.forEach(element => {
+        const speed = 0.5;
+        element.style.transform = `translateY(${scrolled * speed}px)`;
+    });
+});
+
+// Smooth hover effects
+document.querySelectorAll('.card-hover').forEach(card => {
+    card.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-8px) scale(1.02)';
+    });
+    
+    card.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0) scale(1)';
+    });
+});
+
+// Progress ring animation
+function animateProgressRings() {
+    const rings = document.querySelectorAll('.progress-ring-circle');
+    rings.forEach(ring => {
+        const circumference = 2 * Math.PI * 45; // radius = 45
+        ring.style.strokeDasharray = circumference;
+        ring.style.strokeDashoffset = circumference;
+        
+        setTimeout(() => {
+            ring.style.strokeDashoffset = circumference - (circumference * 0.75) / 100;
+        }, 500);
+    });
+}
+
+// Initialize animations
+document.addEventListener('DOMContentLoaded', function() {
+    animateProgressRings();
+});
+
+// Real-time updates simulation
+setInterval(function() {
+    // Simulate real-time data updates
+    const statsElements = document.querySelectorAll('.text-2xl.font-bold');
+    statsElements.forEach(element => {
+        if (Math.random() > 0.95) { // 5% chance to update
+            element.classList.add('shimmer');
+            setTimeout(() => {
+                element.classList.remove('shimmer');
+            }, 1500);
+        }
+    });
+}, 5000);
 </script>
 {% endblock %}

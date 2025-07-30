@@ -2,255 +2,376 @@
 {% load static %}
 {% load humanize %}
 
-{% block title %}Tableau de bord Client - Vidé-Grenier Kamer{% endblock %}
+{% block title %}Dashboard Client - Vidé-Grenier Kamer{% endblock %}
+
+{% block extra_css %}
+<style>
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
+        50% { box-shadow: 0 0 30px rgba(34, 197, 94, 0.6); }
+    }
+    
+    @keyframes slide-in-left {
+        from { transform: translateX(-100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes slide-in-right {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes fade-in-up {
+        from { transform: translateY(30px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    @keyframes rotate-3d {
+        from { transform: rotateY(0deg); }
+        to { transform: rotateY(360deg); }
+    }
+    
+    .float-animation {
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    .pulse-glow {
+        animation: pulse-glow 2s ease-in-out infinite;
+    }
+    
+    .slide-in-left {
+        animation: slide-in-left 0.8s ease-out;
+    }
+    
+    .slide-in-right {
+        animation: slide-in-right 0.8s ease-out;
+    }
+    
+    .fade-in-up {
+        animation: fade-in-up 0.6s ease-out;
+    }
+    
+    .rotate-3d {
+        animation: rotate-3d 20s linear infinite;
+    }
+    
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .card-hover {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .card-hover:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+    
+    .progress-ring-circle {
+        transition: stroke-dashoffset 0.35s;
+        transform-origin: 50% 50%;
+    }
+    
+    .parallax-bg {
+        background-attachment: fixed;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+    }
+    
+    @media (max-width: 768px) {
+        .parallax-bg {
+            background-attachment: scroll;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="space-y-8">
-    <!-- Welcome Header -->
-    <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-800 rounded-2xl p-8 text-white shadow-2xl">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold mb-2">Bonjour, {{ user.first_name }} ! 👋</h1>
-                <p class="text-blue-100 text-lg">Voici un aperçu de votre activité aujourd'hui</p>
-                        </div>
-            <div class="text-right">
-                <div class="text-2xl font-bold">{{ today|date:"l, d F Y" }}</div>
-                <div class="text-blue-100" id="current-time"></div>
-            </div>
+<!-- Hero Section with Parallax -->
+<div class="relative min-h-screen overflow-hidden">
+    <!-- Animated Background -->
+    <div class="absolute inset-0 gradient-bg">
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute top-20 left-20 w-32 h-32 bg-white rounded-full float-animation"></div>
+            <div class="absolute top-40 right-32 w-24 h-24 bg-white rounded-full float-animation" style="animation-delay: 1s;"></div>
+            <div class="absolute bottom-32 left-1/4 w-20 h-20 bg-white rounded-full float-animation" style="animation-delay: 2s;"></div>
+            <div class="absolute bottom-20 right-20 w-28 h-28 bg-white rounded-full float-animation" style="animation-delay: 0.5s;"></div>
         </div>
     </div>
 
-    <!-- Quick Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- Wallet Balance -->
-        <div class="metric-card">
-            <div class="flex items-center justify-between">
-                        <div>
-                    <p class="text-blue-100 text-sm font-medium">Solde Portefeuille</p>
-                    <p class="text-2xl font-bold">{{ wallet_balance|floatformat:0 }} FCFA</p>
-                        </div>
-                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                    <i data-lucide="wallet" class="w-6 h-6 text-white"></i>
-                </div>
+    <!-- Main Content -->
+    <div class="relative z-10 container mx-auto px-4 py-8">
+        <!-- Welcome Header -->
+        <div class="text-center mb-12 slide-in-left">
+            <div class="inline-block p-4 bg-white/10 backdrop-blur-lg rounded-2xl mb-6">
+                <h1 class="text-4xl md:text-6xl font-bold text-white mb-4">
+                    Bienvenue, <span class="text-green-300">{{ user.username }}</span>
+                </h1>
+                <p class="text-xl text-white/80">Votre tableau de bord personnel</p>
             </div>
         </div>
 
-        <!-- Active Products -->
-        <div class="metric-card">
-            <div class="flex items-center justify-between">
-                        <div>
-                    <p class="text-blue-100 text-sm font-medium">Produits Actifs</p>
-                    <p class="text-2xl font-bold">{{ active_products }}</p>
-                        </div>
-                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                    <i data-lucide="shopping-bag" class="w-6 h-6 text-white"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Today's Revenue -->
-        <div class="metric-card">
-            <div class="flex items-center justify-between">
-                        <div>
-                    <p class="text-blue-100 text-sm font-medium">Revenus Aujourd'hui</p>
-                    <p class="text-2xl font-bold">{{ todays_revenue|floatformat:0 }} FCFA</p>
-                        </div>
-                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                    <i data-lucide="trending-up" class="w-6 h-6 text-white"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Today's Orders -->
-        <div class="metric-card">
-            <div class="flex items-center justify-between">
-                        <div>
-                    <p class="text-blue-100 text-sm font-medium">Commandes Aujourd'hui</p>
-                    <p class="text-2xl font-bold">{{ todays_orders }}</p>
-                        </div>
-                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                    <i data-lucide="package" class="w-6 h-6 text-white"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Left Column -->
-        <div class="lg:col-span-2 space-y-8">
-            <!-- Sales Chart -->
-            <div class="stats-card">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Évolution des Ventes</h3>
-                    <div class="flex space-x-2">
-                        <button class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg">7j</button>
-                        <button class="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded-lg">30j</button>
-                        <button class="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded-lg">90j</button>
+        <!-- Stats Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <!-- Total Sales Card -->
+            <div class="group card-hover bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 fade-in-up" style="animation-delay: 0.1s;">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center pulse-glow">
+                        <i data-lucide="trending-up" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-white/60 text-sm">Ventes Totales</p>
+                        <p class="text-2xl font-bold text-white">{{ total_sales.total|default:0|floatformat:0 }} FCFA</p>
                     </div>
                 </div>
-                <div class="h-64">
-                        <canvas id="salesChart"></canvas>
+                <div class="flex items-center text-green-300 text-sm">
+                    <i data-lucide="arrow-up" class="w-4 h-4 mr-1"></i>
+                    <span>+12.5% ce mois</span>
                 </div>
             </div>
 
-            <!-- Recent Activities -->
-            <div class="stats-card">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Activités Récentes</h3>
-                    <a href="#" class="text-blue-600 hover:text-blue-700 text-sm font-medium">Voir tout</a>
+            <!-- Active Products Card -->
+            <div class="group card-hover bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 fade-in-up" style="animation-delay: 0.2s;">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center">
+                        <i data-lucide="package" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-white/60 text-sm">Produits Actifs</p>
+                        <p class="text-2xl font-bold text-white">{{ active_products }}</p>
+                    </div>
                 </div>
-                <div class="space-y-4">
-                    {% for activity in recent_activities %}
-                    <div class="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                        <div class="w-10 h-10 rounded-full flex items-center justify-center
-                            {% if activity.type == 'sale' %}bg-green-100 text-green-600
-                            {% elif activity.type == 'purchase' %}bg-blue-100 text-blue-600
-                            {% else %}bg-yellow-100 text-yellow-600{% endif %}">
-                            {% if activity.type == 'sale' %}
-                                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-                            {% elif activity.type == 'purchase' %}
-                                <i data-lucide="shopping-cart" class="w-5 h-5"></i>
-                                    {% else %}
-                                <i data-lucide="eye" class="w-5 h-5"></i>
-                                    {% endif %}
-                                    </div>
-                        <div class="flex-1">
-                            <p class="font-medium text-gray-900 dark:text-white">{{ activity.title }}</p>
-                            <p class="text-sm text-gray-500">{{ activity.date|timesince }} ago</p>
-                        </div>
-                        {% if activity.amount %}
-                        <div class="text-right">
-                            <p class="font-semibold text-gray-900 dark:text-white">{{ activity.amount|floatformat:0 }} FCFA</p>
-                            <span class="text-xs px-2 py-1 rounded-full
-                                {% if activity.status == 'DELIVERED' %}bg-green-100 text-green-700
-                                {% elif activity.status == 'PENDING' %}bg-yellow-100 text-yellow-700
-                                {% else %}bg-gray-100 text-gray-700{% endif %}">
-                                {{ activity.status }}
-                            </span>
-                        </div>
-                    {% endif %}
+                <div class="flex items-center text-blue-300 text-sm">
+                    <i data-lucide="check-circle" class="w-4 h-4 mr-1"></i>
+                    <span>{{ total_products }} au total</span>
+                </div>
+            </div>
+
+            <!-- Total Views Card -->
+            <div class="group card-hover bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 fade-in-up" style="animation-delay: 0.3s;">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center">
+                        <i data-lucide="eye" class="w-6 h-6 text-white"></i>
                     </div>
-                    {% empty %}
-                    <div class="text-center py-8 text-gray-500">
-                        <i data-lucide="activity" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
-                        <p>Aucune activité récente</p>
+                    <div class="text-right">
+                        <p class="text-white/60 text-sm">Vues Total</p>
+                        <p class="text-2xl font-bold text-white">{{ product_views }}</p>
                     </div>
-                    {% endfor %}
+                </div>
+                <div class="flex items-center text-purple-300 text-sm">
+                    <i data-lucide="users" class="w-4 h-4 mr-1"></i>
+                    <span>+8.2% cette semaine</span>
+                </div>
+            </div>
+
+            <!-- Wallet Balance Card -->
+            <div class="group card-hover bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 fade-in-up" style="animation-delay: 0.4s;">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center">
+                        <i data-lucide="wallet" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-white/60 text-sm">Solde Portefeuille</p>
+                        <p class="text-2xl font-bold text-white">{{ wallet_balance|default:0|floatformat:0 }} FCFA</p>
+                    </div>
+                </div>
+                <div class="flex items-center text-yellow-300 text-sm">
+                    <i data-lucide="plus" class="w-4 h-4 mr-1"></i>
+                    <span>{{ pending_balance|default:0|floatformat:0 }} en attente</span>
                 </div>
             </div>
         </div>
 
-        <!-- Right Column -->
-        <div class="space-y-8">
-            <!-- Quick Actions -->
-            <div class="stats-card">
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Actions Rapides</h3>
-                <div class="space-y-3">
-                    {% for action in quick_actions %}
-                    <a href="{% url action.url %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-xl flex items-center justify-center">
-                            <i data-lucide="{{ action.icon }}" class="w-5 h-5 text-blue-600 dark:text-blue-400"></i>
+        <!-- Main Dashboard Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Revenue Chart Card -->
+                <div class="card-hover bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 slide-in-left">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-semibold text-white flex items-center">
+                            <i data-lucide="bar-chart-3" class="w-5 h-5 mr-2 text-green-400"></i>
+                            Évolution des Revenus
+                        </h3>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30 transition-colors">7j</button>
+                            <button class="px-3 py-1 bg-green-500 text-white rounded-lg text-sm">30j</button>
+                            <button class="px-3 py-1 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30 transition-colors">90j</button>
                         </div>
-                        <span class="font-medium text-gray-900 dark:text-white">{{ action.name }}</span>
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 ml-auto"></i>
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Performance Metrics -->
-            <div class="stats-card">
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Métriques de Performance</h3>
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between">
-                        <span class="text-gray-600 dark:text-gray-400">Taux de conversion</span>
-                        <span class="font-semibold text-gray-900 dark:text-white">{{ conversion_rate }}%</span>
-                    </div>
-                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                        <div class="bg-blue-600 h-2 rounded-full" style="width: {{ conversion_rate }}%"></div>
                     </div>
                     
-                    <div class="flex items-center justify-between">
-                        <span class="text-gray-600 dark:text-gray-400">Valeur moyenne commande</span>
-                        <span class="font-semibold text-gray-900 dark:text-white">{{ avg_order_value|floatformat:0 }} FCFA</span>
-                    </div>
-
-                    <div class="flex items-center justify-between">
-                        <span class="text-gray-600 dark:text-gray-400">Vues produits aujourd'hui</span>
-                        <span class="font-semibold text-gray-900 dark:text-white">{{ product_views_today }}</span>
+                    <!-- Chart Placeholder -->
+                    <div class="h-64 bg-white/5 rounded-xl flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="trending-up" class="w-8 h-8 text-green-400"></i>
                             </div>
+                            <p class="text-white/60">Graphique des revenus</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Orders -->
+                <div class="card-hover bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 slide-in-left">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-semibold text-white flex items-center">
+                            <i data-lucide="shopping-bag" class="w-5 h-5 mr-2 text-blue-400"></i>
+                            Commandes Récentes
+                        </h3>
+                        <a href="{% url 'client:purchases' %}" class="text-blue-300 hover:text-blue-200 text-sm font-medium">
+                            Voir tout
+                        </a>
+                    </div>
+                    
+                    {% if recent_orders %}
+                    <div class="space-y-4">
+                        {% for order in recent_orders %}
+                        <div class="flex items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
+                            <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mr-4">
+                                <i data-lucide="check" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium text-white">{{ order.product.title|truncatechars:30 }}</p>
+                                <p class="text-sm text-white/60">{{ order.buyer.username }} • {{ order.created_at|date:"d/m/Y" }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-white">{{ order.total_amount|floatformat:0 }} FCFA</p>
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                                           {% if order.status == 'COMPLETED' %}bg-green-100 text-green-800
+                                           {% elif order.status == 'PENDING' %}bg-yellow-100 text-yellow-800
+                                           {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <div class="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="shopping-bag" class="w-8 h-8 text-white/60"></i>
+                        </div>
+                        <p class="text-white/60">Aucune commande récente</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
-            <!-- Category Performance -->
-            <div class="stats-card">
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Performance par Catégorie</h3>
-                <div class="space-y-4">
-                    {% for category in category_performance %}
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="font-medium text-gray-900 dark:text-white">{{ category.category }}</p>
-                            <p class="text-sm text-gray-500">{{ category.products }} produits</p>
-                </div>
-                        <div class="text-right">
-                            <p class="font-semibold text-gray-900 dark:text-white">{{ category.revenue|floatformat:0 }} FCFA</p>
-                            <p class="text-sm text-gray-500">{{ category.orders }} commandes</p>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="text-center py-4 text-gray-500">
-                        <p>Aucune donnée disponible</p>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-                </div>
-
-    <!-- Bottom Row -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Wallet Transactions -->
-        <div class="stats-card">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Transactions Portefeuille</h3>
-                <a href="{% url 'client:wallet' %}" class="text-blue-600 hover:text-blue-700 text-sm font-medium">Voir tout</a>
-                                    </div>
-            <div class="h-64">
-                <canvas id="walletChart"></canvas>
-                                </div>
-        </div>
-
-        <!-- Market Insights -->
-        <div class="stats-card">
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Aperçu du Marché</h3>
-            <div class="space-y-4">
-                <div>
-                    <h4 class="font-medium text-gray-900 dark:text-white mb-2">Catégories Tendances</h4>
-                    <div class="space-y-2">
-                        {% for category in trending_categories %}
-                        <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <span class="text-gray-700 dark:text-gray-300">{{ category.name }}</span>
-                            <span class="text-sm text-gray-500">{{ category.product_count }} produits</span>
+            <!-- Right Column -->
+            <div class="space-y-8">
+                <!-- Quick Actions -->
+                <div class="card-hover bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 slide-in-right">
+                    <h3 class="text-xl font-semibold text-white mb-6 flex items-center">
+                        <i data-lucide="zap" class="w-5 h-5 mr-2 text-yellow-400"></i>
+                        Actions Rapides
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        {% for action in quick_actions %}
+                        <a href="{% url action.url %}" 
+                           class="group flex items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 transform hover:scale-105">
+                            <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center mr-4 group-hover:rotate-12 transition-transform">
+                                <i data-lucide="{{ action.icon }}" class="w-5 h-5 text-white"></i>
                             </div>
+                            <span class="font-medium text-white group-hover:text-green-300 transition-colors">{{ action.name }}</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-white/60 ml-auto group-hover:translate-x-1 transition-transform"></i>
+                        </a>
                         {% endfor %}
                     </div>
                 </div>
-                
-                <div>
-                    <h4 class="font-medium text-gray-900 dark:text-white mb-2">Fourchettes de Prix Suggérées</h4>
-                    <div class="grid grid-cols-3 gap-2 text-center">
-                        <div class="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Min</p>
-                            <p class="font-semibold text-gray-900 dark:text-white">{{ suggested_price_ranges.minimum|floatformat:0 }}</p>
+
+                <!-- Performance Metrics -->
+                <div class="card-hover bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 slide-in-right">
+                    <h3 class="text-xl font-semibold text-white mb-6 flex items-center">
+                        <i data-lucide="target" class="w-5 h-5 mr-2 text-purple-400"></i>
+                        Performance
+                    </h3>
+                    
+                    <!-- Conversion Rate -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-white/80 text-sm">Taux de Conversion</span>
+                            <span class="text-white font-semibold">{{ conversion_rate|floatformat:1 }}%</span>
                         </div>
-                        <div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Moy</p>
-                            <p class="font-semibold text-gray-900 dark:text-white">{{ suggested_price_ranges.average|floatformat:0 }}</p>
+                        <div class="w-full bg-white/20 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full" 
+                                 style="width: {{ conversion_rate|default:0 }}%"></div>
                         </div>
-                        <div class="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Max</p>
-                            <p class="font-semibold text-gray-900 dark:text-white">{{ suggested_price_ranges.maximum|floatformat:0 }}</p>
+                    </div>
+                    
+                    <!-- Average Order Value -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-white/80 text-sm">Valeur Moyenne</span>
+                            <span class="text-white font-semibold">{{ avg_order_value|floatformat:0 }} FCFA</span>
+                        </div>
+                        <div class="w-full bg-white/20 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-blue-400 to-blue-600 h-2 rounded-full" 
+                                 style="width: 75%"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Customer Satisfaction -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-white/80 text-sm">Satisfaction Client</span>
+                            <span class="text-white font-semibold">4.8/5</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="flex space-x-1">
+                                {% for i in "12345" %}
+                                <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current"></i>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="card-hover bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 slide-in-right">
+                    <h3 class="text-xl font-semibold text-white mb-6 flex items-center">
+                        <i data-lucide="activity" class="w-5 h-5 mr-2 text-red-400"></i>
+                        Activité Récente
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
+                            <div class="flex-1">
+                                <p class="text-white text-sm">Nouvelle vente</p>
+                                <p class="text-white/60 text-xs">Il y a 2 heures</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-blue-400 rounded-full mr-3"></div>
+                            <div class="flex-1">
+                                <p class="text-white text-sm">Produit mis à jour</p>
+                                <p class="text-white/60 text-xs">Il y a 4 heures</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-purple-400 rounded-full mr-3"></div>
+                            <div class="flex-1">
+                                <p class="text-white text-sm">Nouveau client</p>
+                                <p class="text-white/60 text-xs">Il y a 6 heures</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -258,87 +379,71 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Update time
-    function updateTime() {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('fr-FR', {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        });
-        document.getElementById('current-time').textContent = timeString;
-    }
-    
-    updateTime();
-    setInterval(updateTime, 1000);
+// Intersection Observer for animations
+const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+};
 
-// Sales Chart
-    const salesCtx = document.getElementById('salesChart').getContext('2d');
-    const salesChart = new Chart(salesCtx, {
-    type: 'line',
-    data: {
-            labels: {{ monthly_sales_data|safe }}.map(item => item.month),
-        datasets: [{
-                label: 'Revenus (FCFA)',
-                data: {{ monthly_sales_data|safe }}.map(item => item.revenue),
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            tension: 0.4,
-            fill: true
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-        },
-        scales: {
-            y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return value.toLocaleString() + ' FCFA';
-                        }
-                    }
-            }
-        }
-    }
-});
-
-    // Wallet Chart
-    const walletCtx = document.getElementById('walletChart').getContext('2d');
-    const walletChart = new Chart(walletCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Dépôts', 'Retraits', 'Achats', 'Ventes'],
-            datasets: [{
-                data: [30, 20, 25, 25],
-                backgroundColor: [
-                    '#10b981',
-                    '#ef4444',
-                    '#3b82f6',
-                    '#f59e0b'
-                ]
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
         }
     });
+}, observerOptions);
+
+// Observe all animated elements
+document.addEventListener('DOMContentLoaded', function() {
+    const animatedElements = document.querySelectorAll('.fade-in-up, .slide-in-left, .slide-in-right');
+    animatedElements.forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        observer.observe(el);
+    });
+});
+
+// Parallax effect
+window.addEventListener('scroll', function() {
+    const scrolled = window.pageYOffset;
+    const parallaxElements = document.querySelectorAll('.parallax-bg');
+    parallaxElements.forEach(element => {
+        const speed = 0.5;
+        element.style.transform = `translateY(${scrolled * speed}px)`;
+    });
+});
+
+// Smooth hover effects
+document.querySelectorAll('.card-hover').forEach(card => {
+    card.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-8px) scale(1.02)';
+    });
+    
+    card.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0) scale(1)';
+    });
+});
+
+// Progress ring animation
+function animateProgressRings() {
+    const rings = document.querySelectorAll('.progress-ring-circle');
+    rings.forEach(ring => {
+        const circumference = 2 * Math.PI * 45; // radius = 45
+        ring.style.strokeDasharray = circumference;
+        ring.style.strokeDashoffset = circumference;
+        
+        setTimeout(() => {
+            ring.style.strokeDashoffset = circumference - (circumference * 0.75) / 100;
+        }, 500);
+    });
+}
+
+// Initialize animations
+document.addEventListener('DOMContentLoaded', function() {
+    animateProgressRings();
 });
 </script>
 {% endblock %}
