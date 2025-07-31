@@ -1,6 +1,7 @@
 """
 AI Recommendation Engine for Vidé-Grenier Kamer
 Provides personalized product recommendations based on user behavior and product similarities
+Uses Google Gemini for AI features and TensorFlow Serving for custom ML models
 """
 
 import numpy as np
@@ -15,8 +16,243 @@ from django.conf import settings
 import logging
 from datetime import datetime, timedelta
 import json
+import requests
+import os
+
+# Import Gemini AI
+try:
+    import google.generativeai as genai
+    GEMINI_AVAILABLE = True
+except ImportError:
+    GEMINI_AVAILABLE = False
+    genai = None
+
+# Import TensorFlow Serving
+try:
+    import tensorflow as tf
+    import tensorflow_serving.apis.predict_pb2 as predict_pb2
+    import tensorflow_serving.apis.prediction_service_pb2_grpc as prediction_service_pb2_grpc
+    import grpc
+    TF_SERVING_AVAILABLE = True
+except ImportError:
+    TF_SERVING_AVAILABLE = False
+    tf = None
 
 logger = logging.getLogger(__name__)
+
+class GeminiAIEngine:
+    """Google Gemini AI integration for VGK"""
+    
+    def __init__(self):
+        if not GEMINI_AVAILABLE:
+            logger.warning("Google Generative AI not available. Install with: pip install google-generativeai")
+            return
+        
+        # Configure Gemini
+        api_key = os.environ.get('GEMINI_API_KEY')
+        if not api_key:
+            logger.warning("GEMINI_API_KEY not found in environment variables")
+            return
+        
+        genai.configure(api_key=api_key)
+        self.model = genai.GenerativeModel(os.environ.get('GEMINI_MODEL', 'gemini-1.5-flash'))
+        
+    def generate_product_description(self, product_data):
+        """Generate enhanced product description using Gemini"""
+        if not GEMINI_AVAILABLE or not self.model:
+            return product_data.get('description', '')
+        
+        try:
+            prompt = f"""
+            Améliorez la description de ce produit pour un marketplace camerounais:
+            
+            Titre: {product_data.get('title', '')}
+            Description actuelle: {product_data.get('description', '')}
+            Catégorie: {product_data.get('category', '')}
+            État: {product_data.get('condition', '')}
+            Prix: {product_data.get('price', '')} FCFA
+            Ville: {product_data.get('city', '')}
+            
+            Créez une description améliorée qui:
+            1. Est attrayante et professionnelle
+            2. Met en valeur les points forts du produit
+            3. Inclut des détails pertinents pour le marché camerounais
+            4. Utilise un langage clair et accessible
+            5. Respecte la limite de 500 mots
+            
+            Description améliorée:
+            """
+            
+            response = self.model.generate_content(prompt)
+            return response.text.strip()
+            
+        except Exception as e:
+            logger.error(f"Error generating product description with Gemini: {e}")
+            return product_data.get('description', '')
+    
+    def analyze_sentiment(self, text):
+        """Analyze sentiment of user reviews and feedback"""
+        if not GEMINI_AVAILABLE or not self.model:
+            return {'sentiment': 'neutral', 'score': 0.5}
+        
+        try:
+            prompt = f"""
+            Analysez le sentiment de ce texte et donnez une réponse au format JSON:
+            
+            Texte: "{text}"
+            
+            Répondez avec un JSON contenant:
+            - sentiment: "positive", "negative", ou "neutral"
+            - score: un nombre entre 0 et 1 (0 = très négatif, 1 = très positif)
+            - confidence: un nombre entre 0 et 1 indiquant la confiance de l'analyse
+            """
+            
+            response = self.model.generate_content(prompt)
+            result = json.loads(response.text.strip())
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error analyzing sentiment with Gemini: {e}")
+            return {'sentiment': 'neutral', 'score': 0.5, 'confidence': 0.0}
+    
+    def generate_recommendation_explanation(self, user_preferences, recommended_product):
+        """Generate personalized explanation for product recommendations"""
+        if not GEMINI_AVAILABLE or not self.model:
+            return "Produit recommandé par notre algorithme"
+        
+        try:
+            prompt = f"""
+            Expliquez pourquoi ce produit est recommandé à cet utilisateur:
+            
+            Préférences utilisateur:
+            - Catégories préférées: {user_preferences.get('categories', [])}
+            - Fourchette de prix: {user_preferences.get('price_range', {})}
+            - État préféré: {user_preferences.get('conditions', [])}
+            - Ville: {user_preferences.get('cities', [])}
+            
+            Produit recommandé:
+            - Titre: {recommended_product.get('title', '')}
+            - Catégorie: {recommended_product.get('category', '')}
+            - Prix: {recommended_product.get('price', '')} FCFA
+            - État: {recommended_product.get('condition', '')}
+            - Ville: {recommended_product.get('city', '')}
+            
+            Donnez une explication courte et personnalisée (max 100 mots) en français.
+            """
+            
+            response = self.model.generate_content(prompt)
+            return response.text.strip()
+            
+        except Exception as e:
+            logger.error(f"Error generating recommendation explanation with Gemini: {e}")
+            return "Produit recommandé par notre algorithme"
+    
+    def moderate_content(self, content, content_type='product'):
+        """Moderate user-generated content using AI"""
+        if not GEMINI_AVAILABLE or not self.model:
+            return {'approved': True, 'reason': 'AI moderation not available'}
+        
+        try:
+            prompt = f"""
+            Modérez ce contenu pour un marketplace camerounais:
+            
+            Type de contenu: {content_type}
+            Contenu: "{content}"
+            
+            Vérifiez si le contenu:
+            1. Respecte les règles de la communauté
+            2. N'est pas inapproprié ou offensant
+            3. Est pertinent pour un marketplace
+            4. Ne contient pas de spam ou de contenu commercial non autorisé
+            
+            Répondez avec un JSON:
+            - approved: true/false
+            - reason: explication courte
+            - confidence: niveau de confiance (0-1)
+            """
+            
+            response = self.model.generate_content(prompt)
+            result = json.loads(response.text.strip())
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error moderating content with Gemini: {e}")
+            return {'approved': True, 'reason': 'AI moderation error', 'confidence': 0.0}
+
+class TensorFlowServingClient:
+    """Client for TensorFlow Serving models"""
+    
+    def __init__(self):
+        self.tf_serving_url = os.environ.get('TF_SERVING_URL', 'http://localhost:8501')
+        self.enabled = os.environ.get('TF_SERVING_ENABLED', 'False').lower() == 'true'
+        
+        if not self.enabled:
+            logger.info("TensorFlow Serving is disabled")
+            return
+        
+        if not TF_SERVING_AVAILABLE:
+            logger.warning("TensorFlow Serving not available. Install with: pip install tensorflow tensorflow-serving-api")
+            return
+    
+    def get_recommendations(self, user_features, model_name='recommendation_model'):
+        """Get recommendations from TensorFlow Serving model"""
+        if not self.enabled or not TF_SERVING_AVAILABLE:
+            return []
+        
+        try:
+            # Prepare request
+            request = predict_pb2.PredictRequest()
+            request.model_spec.name = model_name
+            request.model_spec.signature_name = 'serving_default'
+            
+            # Convert features to tensor
+            features_tensor = tf.make_tensor_proto(user_features, dtype=tf.float32)
+            request.inputs['features'].CopyFrom(features_tensor)
+            
+            # Make prediction
+            channel = grpc.insecure_channel(self.tf_serving_url)
+            stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
+            response = stub.Predict(request, timeout=10.0)
+            
+            # Process response
+            predictions = tf.make_ndarray(response.outputs['predictions'])
+            return predictions.tolist()
+            
+        except Exception as e:
+            logger.error(f"Error getting recommendations from TensorFlow Serving: {e}")
+            return []
+    
+    def predict_user_behavior(self, user_data, model_name='behavior_model'):
+        """Predict user behavior using TensorFlow Serving"""
+        if not self.enabled or not TF_SERVING_AVAILABLE:
+            return {}
+        
+        try:
+            # Prepare request
+            request = predict_pb2.PredictRequest()
+            request.model_spec.name = model_name
+            request.model_spec.signature_name = 'serving_default'
+            
+            # Convert user data to tensor
+            user_tensor = tf.make_tensor_proto(user_data, dtype=tf.float32)
+            request.inputs['user_data'].CopyFrom(user_tensor)
+            
+            # Make prediction
+            channel = grpc.insecure_channel(self.tf_serving_url)
+            stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
+            response = stub.Predict(request, timeout=10.0)
+            
+            # Process response
+            predictions = tf.make_ndarray(response.outputs['predictions'])
+            return {
+                'purchase_probability': float(predictions[0][0]),
+                'churn_probability': float(predictions[0][1]),
+                'lifetime_value': float(predictions[0][2])
+            }
+            
+        except Exception as e:
+            logger.error(f"Error predicting user behavior from TensorFlow Serving: {e}")
+            return {}
 
 class AIRecommendationEngine:
     """AI-powered recommendation engine for product suggestions"""
@@ -30,6 +266,10 @@ class AIRecommendationEngine:
         self.nmf_model = None
         self.product_features = None
         self.user_preferences = {}
+        
+        # Initialize AI components
+        self.gemini_ai = GeminiAIEngine()
+        self.tf_serving = TensorFlowServingClient()
         
     def analyze_user_behavior(self, user_id=None, session_key=None):
         """Analyze user behavior to build preference profile"""
@@ -245,6 +485,12 @@ class AIRecommendationEngine:
         # Get user preferences
         preferences = self.analyze_user_behavior(user_id, session_key)
         
+        # Try TensorFlow Serving first if available
+        if self.tf_serving.enabled and user_id:
+            tf_recommendations = self._get_tf_serving_recommendations(user_id, preferences, limit)
+            if tf_recommendations:
+                return tf_recommendations
+        
         # Build query based on preferences
         query = Q(status='ACTIVE')
         
@@ -280,6 +526,57 @@ class AIRecommendationEngine:
             recommendations = list(recommendations) + list(popular_products)
         
         return recommendations[:limit]
+    
+    def _get_tf_serving_recommendations(self, user_id, preferences, limit):
+        """Get recommendations from TensorFlow Serving"""
+        try:
+            # Prepare user features for TensorFlow model
+            user_features = self._prepare_user_features_for_tf(user_id, preferences)
+            
+            # Get recommendations from TensorFlow Serving
+            tf_predictions = self.tf_serving.get_recommendations(user_features)
+            
+            if tf_predictions:
+                # Convert predictions to product IDs and fetch products
+                from .models import Product
+                product_ids = [int(pid) for pid in tf_predictions[:limit]]
+                products = Product.objects.filter(
+                    id__in=product_ids,
+                    status='ACTIVE'
+                ).order_by('?')[:limit]
+                
+                return products
+            
+        except Exception as e:
+            logger.error(f"Error getting TensorFlow Serving recommendations: {e}")
+        
+        return []
+    
+    def _prepare_user_features_for_tf(self, user_id, preferences):
+        """Prepare user features for TensorFlow model"""
+        # This is a simplified feature vector - in production, you'd have a more sophisticated feature engineering
+        features = []
+        
+        # Category preferences (one-hot encoded)
+        for i in range(10):  # Assuming 10 categories
+            features.append(preferences.get('categories', {}).get(i, 0))
+        
+        # Price range features
+        price_range = preferences.get('price_range', {'min': 0, 'max': 100000})
+        features.append(price_range['min'] / 100000)  # Normalize
+        features.append(price_range['max'] / 100000)  # Normalize
+        
+        # Condition preferences
+        conditions = ['NEUF', 'EXCELLENT', 'BON', 'CORRECT', 'USAGE']
+        for condition in conditions:
+            features.append(preferences.get('conditions', {}).get(condition, 0))
+        
+        # City preferences
+        cities = ['DOUALA', 'YAOUNDE', 'BAFOUSSAM', 'GAROUA', 'BAMENDA']
+        for city in cities:
+            features.append(preferences.get('cities', {}).get(city, 0))
+        
+        return features
     
     def get_trending_products(self, days=7, limit=10):
         """Get trending products based on recent activity"""
@@ -357,7 +654,7 @@ class AIRecommendationEngine:
         cache.delete(cache_key)
     
     def get_recommendation_explanation(self, product_id, user_id=None, session_key=None):
-        """Get explanation for why a product is recommended"""
+        """Get explanation for why a product is recommended using Gemini AI"""
         from .models import Product
         
         try:
@@ -367,6 +664,18 @@ class AIRecommendationEngine:
         
         preferences = self.analyze_user_behavior(user_id, session_key)
         
+        # Use Gemini AI for explanation if available
+        if self.gemini_ai:
+            product_data = {
+                'title': product.title,
+                'category': product.category.name,
+                'price': product.price,
+                'condition': product.get_condition_display(),
+                'city': product.city
+            }
+            return self.gemini_ai.generate_recommendation_explanation(preferences, product_data)
+        
+        # Fallback to rule-based explanation
         explanations = []
         
         # Category-based explanation
@@ -481,6 +790,8 @@ class ProductSimilarityEngine:
 # Global instances
 ai_engine = AIRecommendationEngine()
 similarity_engine = ProductSimilarityEngine()
+gemini_ai = GeminiAIEngine()
+tf_serving = TensorFlowServingClient()
 
 
 def get_recommendations_for_user(user_id=None, session_key=None, limit=10):
@@ -500,4 +811,24 @@ def get_trending_products(days=7, limit=10):
 
 def update_user_behavior(user_id=None, session_key=None, product_id=None, action_type='VIEW'):
     """Update user behavior for recommendations"""
-    ai_engine.update_user_preferences(user_id, session_key, product_id, action_type) 
+    ai_engine.update_user_preferences(user_id, session_key, product_id, action_type)
+
+
+def generate_product_description(product_data):
+    """Generate enhanced product description using Gemini AI"""
+    return gemini_ai.generate_product_description(product_data) if gemini_ai else product_data.get('description', '')
+
+
+def analyze_sentiment(text):
+    """Analyze sentiment of text using Gemini AI"""
+    return gemini_ai.analyze_sentiment(text) if gemini_ai else {'sentiment': 'neutral', 'score': 0.5}
+
+
+def moderate_content(content, content_type='product'):
+    """Moderate content using Gemini AI"""
+    return gemini_ai.moderate_content(content, content_type) if gemini_ai else {'approved': True, 'reason': 'AI moderation not available'}
+
+
+def predict_user_behavior(user_data):
+    """Predict user behavior using TensorFlow Serving"""
+    return tf_serving.predict_user_behavior(user_data) if tf_serving else {} 

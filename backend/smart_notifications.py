@@ -8,6 +8,11 @@ from datetime import datetime, timedelta
 import json
 import logging
 from typing import Dict, List, Optional, Tuple
+import os
+import requests
+import random
+import string
+
 # Make celery optional to avoid dependency issues during development
 try:
     from celery import shared_task
@@ -17,16 +22,299 @@ except ImportError:
     CELERY_AVAILABLE = False
     def shared_task(func):
         return func
-import requests
 
 from .models import User, Product, Order
 from .models_advanced import (
     SmartNotification, NotificationTemplate, UserBehavior,
     UserPreference, WishlistItem
 )
-from .utils import send_sms_notification
 
 logger = logging.getLogger(__name__)
+
+class SMSService:
+    """SMS service using multiple providers with fallback"""
+    
+    def __init__(self):
+        self.twilio_enabled = os.environ.get('TWILIO_ENABLED', 'False').lower() == 'true'
+        self.infobip_enabled = os.environ.get('INFOBIP_ENABLED', 'False').lower() == 'true'
+        self.africastalking_enabled = os.environ.get('AFRICASTALKING_ENABLED', 'False').lower() == 'true'
+        
+        # Twilio configuration
+        self.twilio_account_sid = os.environ.get('TWILIO_ACCOUNT_SID')
+        self.twilio_auth_token = os.environ.get('TWILIO_AUTH_TOKEN')
+        self.twilio_phone_number = os.environ.get('TWILIO_PHONE_NUMBER')
+        
+        # Infobip configuration
+        self.infobip_api_key = os.environ.get('INFOBIP_API_KEY')
+        self.infobip_base_url = os.environ.get('INFOBIP_BASE_URL', 'https://api.infobip.com')
+        self.infobip_sender_id = os.environ.get('INFOBIP_SENDER_ID', 'VIDEGRENIER')
+        
+        # Africa's Talking configuration
+        self.africastalking_api_key = os.environ.get('AFRICASTALKING_API_KEY')
+        self.africastalking_username = os.environ.get('AFRICASTALKING_USERNAME')
+        self.africastalking_sender_id = os.environ.get('AFRICASTALKING_SENDER_ID', 'VIDEGRENIER')
+    
+    def send_sms(self, phone_number: str, message: str) -> Dict:
+        """Send SMS using available providers with fallback"""
+        providers = []
+        
+        if self.twilio_enabled and self.twilio_account_sid:
+            providers.append(('twilio', self._send_twilio_sms))
+        
+        if self.infobip_enabled and self.infobip_api_key:
+            providers.append(('infobip', self._send_infobip_sms))
+        
+        if self.africastalking_enabled and self.africastalking_api_key:
+            providers.append(('africastalking', self._send_africastalking_sms))
+        
+        # Try each provider until one succeeds
+        for provider_name, provider_func in providers:
+            try:
+                result = provider_func(phone_number, message)
+                if result.get('success'):
+                    logger.info(f"SMS sent successfully via {provider_name} to {phone_number}")
+                    return result
+                else:
+                    logger.warning(f"SMS failed via {provider_name}: {result.get('error')}")
+            except Exception as e:
+                logger.error(f"Error sending SMS via {provider_name}: {str(e)}")
+                continue
+        
+        logger.error(f"All SMS providers failed for {phone_number}")
+        return {'success': False, 'error': 'All SMS providers failed'}
+    
+    def _send_twilio_sms(self, phone_number: str, message: str) -> Dict:
+        """Send SMS via Twilio"""
+        try:
+            url = f"https://api.twilio.com/2010-04-01/Accounts/{self.twilio_account_sid}/Messages.json"
+            
+            data = {
+                'To': phone_number,
+                'From': self.twilio_phone_number,
+                'Body': message
+            }
+            
+            response = requests.post(
+                url,
+                data=data,
+                auth=(self.twilio_account_sid, self.twilio_auth_token),
+                timeout=30
+            )
+            
+            if response.status_code == 201:
+                result = response.json()
+                return {
+                    'success': True,
+                    'provider': 'twilio',
+                    'message_id': result.get('sid'),
+                    'status': result.get('status')
+                }
+            else:
+                return {
+                    'success': False,
+                    'provider': 'twilio',
+                    'error': f"HTTP {response.status_code}: {response.text}"
+                }
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'provider': 'twilio',
+                'error': str(e)
+            }
+    
+    def _send_infobip_sms(self, phone_number: str, message: str) -> Dict:
+        """Send SMS via Infobip"""
+        try:
+            url = f"{self.infobip_base_url}/sms/2/text/advanced"
+            
+            headers = {
+                'Authorization': f'App {self.infobip_api_key}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+            
+            data = {
+                'messages': [
+                    {
+                        'destinations': [{'to': phone_number}],
+                        'from': self.infobip_sender_id,
+                        'text': message
+                    }
+                ]
+            }
+            
+            response = requests.post(url, headers=headers, json=data, timeout=30)
+            
+            if response.status_code == 200:
+                result = response.json()
+                return {
+                    'success': True,
+                    'provider': 'infobip',
+                    'message_id': result.get('messages', [{}])[0].get('messageId'),
+                    'status': 'SENT'
+                }
+            else:
+                return {
+                    'success': False,
+                    'provider': 'infobip',
+                    'error': f"HTTP {response.status_code}: {response.text}"
+                }
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'provider': 'infobip',
+                'error': str(e)
+            }
+    
+    def _send_africastalking_sms(self, phone_number: str, message: str) -> Dict:
+        """Send SMS via Africa's Talking"""
+        try:
+            url = "https://api.africastalking.com/version1/messaging"
+            
+            headers = {
+                'apiKey': self.africastalking_api_key,
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json'
+            }
+            
+            data = {
+                'username': self.africastalking_username,
+                'to': phone_number,
+                'message': message,
+                'from': self.africastalking_sender_id
+            }
+            
+            response = requests.post(url, headers=headers, data=data, timeout=30)
+            
+            if response.status_code == 201:
+                result = response.json()
+                return {
+                    'success': True,
+                    'provider': 'africastalking',
+                    'message_id': result.get('SMSMessageData', {}).get('Recipients', [{}])[0].get('messageId'),
+                    'status': 'SENT'
+                }
+            else:
+                return {
+                    'success': False,
+                    'provider': 'africastalking',
+                    'error': f"HTTP {response.status_code}: {response.text}"
+                }
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'provider': 'africastalking',
+                'error': str(e)
+            }
+
+class WhatsAppService:
+    """WhatsApp service using Twilio"""
+    
+    def __init__(self):
+        self.twilio_account_sid = os.environ.get('TWILIO_ACCOUNT_SID')
+        self.twilio_auth_token = os.environ.get('TWILIO_AUTH_TOKEN')
+        self.whatsapp_phone_number_id = os.environ.get('WHATSAPP_PHONE_NUMBER_ID')
+        self.enabled = bool(self.twilio_account_sid and self.whatsapp_phone_number_id)
+    
+    def send_whatsapp(self, phone_number: str, message: str) -> Dict:
+        """Send WhatsApp message via Twilio"""
+        if not self.enabled:
+            return {'success': False, 'error': 'WhatsApp service not configured'}
+        
+        try:
+            url = f"https://graph.facebook.com/v17.0/{self.whatsapp_phone_number_id}/messages"
+            
+            headers = {
+                'Authorization': f'Bearer {self.twilio_auth_token}',
+                'Content-Type': 'application/json'
+            }
+            
+            data = {
+                'messaging_product': 'whatsapp',
+                'to': phone_number,
+                'type': 'text',
+                'text': {'body': message}
+            }
+            
+            response = requests.post(url, headers=headers, json=data, timeout=30)
+            
+            if response.status_code == 200:
+                result = response.json()
+                return {
+                    'success': True,
+                    'provider': 'whatsapp',
+                    'message_id': result.get('messages', [{}])[0].get('id'),
+                    'status': 'SENT'
+                }
+            else:
+                return {
+                    'success': False,
+                    'provider': 'whatsapp',
+                    'error': f"HTTP {response.status_code}: {response.text}"
+                }
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'provider': 'whatsapp',
+                'error': str(e)
+            }
+
+class EmailService:
+    """Enhanced email service with multiple backends"""
+    
+    def __init__(self):
+        self.default_from_email = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@videgrenierkamer.com')
+        self.admin_email = os.environ.get('ADMIN_EMAIL', 'admin@videgrenierkamer.com')
+    
+    def send_email(self, to_email: str, subject: str, message: str, html_message: str = None) -> Dict:
+        """Send email using Django's email backend"""
+        try:
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=self.default_from_email,
+                recipient_list=[to_email],
+                html_message=html_message,
+                fail_silently=False
+            )
+            
+            logger.info(f"Email sent successfully to {to_email}")
+            return {
+                'success': True,
+                'provider': 'django_email',
+                'to': to_email,
+                'subject': subject
+            }
+            
+        except Exception as e:
+            logger.error(f"Error sending email to {to_email}: {str(e)}")
+            return {
+                'success': False,
+                'provider': 'django_email',
+                'error': str(e)
+            }
+    
+    def send_template_email(self, to_email: str, template_name: str, context: Dict) -> Dict:
+        """Send email using template"""
+        try:
+            # Render email templates
+            subject = render_to_string(f'emails/{template_name}_subject.txt', context).strip()
+            text_message = render_to_string(f'emails/{template_name}.txt', context)
+            html_message = render_to_string(f'emails/{template_name}.html', context)
+            
+            return self.send_email(to_email, subject, text_message, html_message)
+            
+        except Exception as e:
+            logger.error(f"Error sending template email to {to_email}: {str(e)}")
+            return {
+                'success': False,
+                'provider': 'django_email',
+                'error': str(e)
+            }
 
 class SmartNotificationEngine:
     """
@@ -39,11 +327,14 @@ class SmartNotificationEngine:
     """
     
     def __init__(self):
+        self.sms_service = SMSService()
+        self.whatsapp_service = WhatsAppService()
+        self.email_service = EmailService()
+        
         self.delivery_channels = {
             'IN_APP': self._deliver_in_app,
             'EMAIL': self._deliver_email,
             'SMS': self._deliver_sms,
-            'PUSH': self._deliver_push,
             'WHATSAPP': self._deliver_whatsapp
         }
         
@@ -246,11 +537,11 @@ class SmartNotificationEngine:
             
             # Priority channels based on notification type
             priority_channels = {
-                'PRICE_DROP': ['PUSH', 'EMAIL'],
-                'BACK_IN_STOCK': ['PUSH', 'SMS'],
+                'PRICE_DROP': ['SMS', 'EMAIL'],
+                'BACK_IN_STOCK': ['SMS', 'EMAIL'],
                 'NEW_SIMILAR': ['IN_APP', 'EMAIL'],
                 'PROMOTION': ['EMAIL', 'IN_APP'],
-                'REMINDER': ['PUSH', 'IN_APP'],
+                'REMINDER': ['SMS', 'IN_APP'],
                 'MILESTONE': ['IN_APP', 'EMAIL']
             }
             
@@ -283,9 +574,6 @@ class SmartNotificationEngine:
                 return bool(user.phone and user.phone_verified)
             elif channel == 'WHATSAPP':
                 return bool(user.phone)
-            elif channel == 'PUSH':
-                # Check if user has push subscription (would need to implement)
-                return True  # Assume available for now
             elif channel == 'IN_APP':
                 return True  # Always available
             
@@ -393,10 +681,14 @@ class SmartNotificationEngine:
                 self._deliver_notification(notification)
             else:
                 # Schedule for later (would use Celery in production)
-                schedule_notification_delivery.apply_async(
-                    args=[notification.id],
-                    eta=send_time
-                )
+                if CELERY_AVAILABLE:
+                    schedule_notification_delivery.apply_async(
+                        args=[notification.id],
+                        eta=send_time
+                    )
+                else:
+                    # Fallback for development
+                    logger.info(f"Notification scheduled for {send_time}: {notification.id}")
             
         except Exception as e:
             logger.error(f"Error creating notification: {e}")
@@ -475,15 +767,13 @@ class SmartNotificationEngine:
             else:
                 body = notification.message
             
-            send_mail(
-                subject=subject,
-                message=body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[notification.user.email],
-                fail_silently=False
+            result = self.email_service.send_email(
+                notification.user.email,
+                subject,
+                body
             )
             
-            return True
+            return result.get('success', False)
             
         except Exception as e:
             logger.error(f"Error delivering email notification: {e}")
@@ -500,47 +790,26 @@ class SmartNotificationEngine:
             else:
                 message = notification.message[:160]  # SMS character limit
             
-            return send_sms_notification(notification.user.phone, message)
+            result = self.sms_service.send_sms(notification.user.phone, message)
+            return result.get('success', False)
             
         except Exception as e:
             logger.error(f"Error delivering SMS notification: {e}")
             return False
     
-    def _deliver_push(self, notification: SmartNotification) -> bool:
-        """Deliver push notification"""
-        try:
-            # Implement push notification delivery
-            # This would integrate with services like Firebase, OneSignal, etc.
-            
-            # Placeholder implementation
-            push_data = {
-                'title': notification.title,
-                'body': notification.message,
-                'data': notification.data,
-                'user_id': str(notification.user.id)
-            }
-            
-            # Would send to push service here
-            logger.info(f"Push notification sent: {push_data}")
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Error delivering push notification: {e}")
-            return False
-    
     def _deliver_whatsapp(self, notification: SmartNotification) -> bool:
         """Deliver WhatsApp notification"""
         try:
-            # Implement WhatsApp Business API integration
-            # This would use services like Twilio, WhatsApp Business API, etc.
+            template = notification.template
             
-            message = f"*{notification.title}*\n\n{notification.message}"
+            # Use WhatsApp template if available, otherwise use message
+            if template.whatsapp_template:
+                message = self._render_template(template.whatsapp_template, notification.data)
+            else:
+                message = f"*{notification.title}*\n\n{notification.message}"
             
-            # Placeholder implementation
-            logger.info(f"WhatsApp message sent to {notification.user.phone}: {message}")
-            
-            return True
+            result = self.whatsapp_service.send_whatsapp(notification.user.phone, message)
+            return result.get('success', False)
             
         except Exception as e:
             logger.error(f"Error delivering WhatsApp notification: {e}")
@@ -570,6 +839,7 @@ class SmartNotificationEngine:
                 Achetez maintenant: {{product_url}}
                 ''',
                 'sms_template': 'Prix réduit! {{product_name}}: {{new_price}} FCFA (était {{old_price}}). Voir: {{short_url}}',
+                'whatsapp_template': '💰 *Prix Réduit!*\n\n{{product_name}}\n\n💵 Nouveau prix: {{new_price}} FCFA\n💸 Ancien prix: {{old_price}} FCFA\n💎 Économies: {{savings}} FCFA\n\nAchetez maintenant: {{product_url}}',
                 'trigger_conditions': {
                     'type': 'price_drop',
                     'min_drop_percentage': 10,
@@ -581,6 +851,8 @@ class SmartNotificationEngine:
                 'notification_type': 'BACK_IN_STOCK',
                 'title_template': '🔥 De retour en stock: {{product_name}}',
                 'message_template': '{{product_name}} est de nouveau disponible! Dépêchez-vous, quantité limitée.',
+                'sms_template': '🔥 {{product_name}} est de retour en stock! Quantité limitée. Voir: {{short_url}}',
+                'whatsapp_template': '🔥 *De retour en stock!*\n\n{{product_name}}\n\n⚠️ Quantité limitée\n\nAchetez maintenant: {{product_url}}',
                 'trigger_conditions': {
                     'type': 'back_in_stock',
                     'max_daily': 1
@@ -591,6 +863,8 @@ class SmartNotificationEngine:
                 'notification_type': 'REMINDER',
                 'title_template': '🛒 Vous avez oublié quelque chose!',
                 'message_template': 'Votre panier contient {{item_count}} article(s) pour {{total_amount}} FCFA. Terminez votre achat maintenant!',
+                'sms_template': '🛒 Votre panier vous attend! {{item_count}} article(s) pour {{total_amount}} FCFA. Terminez votre achat: {{short_url}}',
+                'whatsapp_template': '🛒 *Votre panier vous attend!*\n\n📦 {{item_count}} article(s)\n💵 Total: {{total_amount}} FCFA\n\nTerminez votre achat: {{product_url}}',
                 'trigger_conditions': {
                     'type': 'abandoned_cart',
                     'hours_abandoned': 24,
@@ -602,6 +876,8 @@ class SmartNotificationEngine:
                 'notification_type': 'RECOMMENDATION',
                 'title_template': '✨ Recommandé pour vous',
                 'message_template': 'Découvrez {{product_name}} à {{price}} FCFA. {{reason}}',
+                'sms_template': '✨ {{product_name}} à {{price}} FCFA - Recommandé pour vous! Voir: {{short_url}}',
+                'whatsapp_template': '✨ *Recommandé pour vous*\n\n{{product_name}}\n💵 {{price}} FCFA\n\n{{reason}}\n\nVoir: {{product_url}}',
                 'trigger_conditions': {
                     'type': 'recommendation',
                     'min_confidence': 0.7,
@@ -613,6 +889,8 @@ class SmartNotificationEngine:
                 'notification_type': 'MILESTONE',
                 'title_template': '🎉 Félicitations! Nouveau niveau atteint',
                 'message_template': 'Vous venez d\'atteindre le niveau {{new_level}}! Débloquez de nouveaux avantages.',
+                'sms_template': '🎉 Félicitations! Vous avez atteint le niveau {{new_level}}! Nouveaux avantages débloqués.',
+                'whatsapp_template': '🎉 *Félicitations!*\n\nVous avez atteint le niveau *{{new_level}}*!\n\n✨ Nouveaux avantages débloqués',
                 'trigger_conditions': {
                     'type': 'milestone',
                     'max_daily': 1
@@ -644,5 +922,25 @@ def schedule_notification_delivery(notification_id):
     except Exception as e:
         logger.error(f"Error in scheduled notification delivery: {e}")
 
-# Singleton instance
-smart_notifications = SmartNotificationEngine() 
+# Singleton instances
+smart_notifications = SmartNotificationEngine()
+sms_service = SMSService()
+whatsapp_service = WhatsAppService()
+email_service = EmailService()
+
+# Utility functions
+def send_sms_notification(phone_number: str, message: str) -> Dict:
+    """Send SMS notification using available providers"""
+    return sms_service.send_sms(phone_number, message)
+
+def send_whatsapp_notification(phone_number: str, message: str) -> Dict:
+    """Send WhatsApp notification"""
+    return whatsapp_service.send_whatsapp(phone_number, message)
+
+def send_email_notification(to_email: str, subject: str, message: str, html_message: str = None) -> Dict:
+    """Send email notification"""
+    return email_service.send_email(to_email, subject, message, html_message)
+
+def send_template_email_notification(to_email: str, template_name: str, context: Dict) -> Dict:
+    """Send email notification using template"""
+    return email_service.send_template_email(to_email, template_name, context) 

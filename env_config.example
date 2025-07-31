@@ -1,29 +1,60 @@
 # ===========================================
-# VIDÉ-GRENIER KAMER - ENVIRONMENT VARIABLES
+# VIDÉ-GRENIER KAMER - COMPLETE ENVIRONMENT VARIABLES
 # ===========================================
+# Copy this file to .env and fill in your actual values
+# cp env_config.example .env
 
 # ===========================================
 # DJANGO CORE CONFIGURATION
 # ===========================================
 DEBUG=True
-SECRET_KEY=your-secret-key-here-should-be-at-least-50-characters-long-and-random
+SECRET_KEY=your-super-secret-key-here-should-be-at-least-50-characters-long-and-random-use-django-admin-generate-secret-key
 
 # ===========================================
 # DATABASE CONFIGURATION
 # ===========================================
-# PostgreSQL (Production)
-DATABASE_URL=postgresql://username:password@localhost:5432/vide_grenier_db
+# PostgreSQL (Production) - Recommended
+DB_ENGINE=django.db.backends.postgresql
+DB_NAME=vide_grenier_db
+DB_USER=postgres
+DB_PASSWORD=your_secure_password_here
+DB_HOST=localhost
+DB_PORT=5432
 
 # Alternative SQLite (Development)
-# DATABASE_URL=sqlite:///db.sqlite3
+# DB_ENGINE=django.db.backends.sqlite3
+# DB_NAME=db.sqlite3
+
+# Database URL (alternative format)
+DATABASE_URL=postgresql://username:password@localhost:5432/vide_grenier_db
+
+# Database optimization settings
+DB_CONN_MAX_AGE=600
+DB_MAX_CONNS=20
+DB_OPTIONS_MAX_CONNS=20
 
 # ===========================================
-# EMAIL CONFIGURATION (YAGMAIL)
+# REDIS CONFIGURATION
+# ===========================================
+# Redis for caching, sessions, and Celery
+REDIS_URL=redis://localhost:6379/0
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
+REDIS_PASSWORD=
+
+# Redis for different purposes
+REDIS_CACHE_URL=redis://localhost:6379/1
+REDIS_SESSION_URL=redis://localhost:6379/2
+REDIS_CELERY_URL=redis://localhost:6379/3
+
+# ===========================================
+# EMAIL CONFIGURATION
 # ===========================================
 # Email backend
 EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
 
-# YAGMAIL SMTP Configuration
+# SMTP Configuration (Gmail recommended)
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
@@ -31,20 +62,31 @@ EMAIL_USE_SSL=False
 EMAIL_HOST_USER=your-email@gmail.com
 EMAIL_HOST_PASSWORD=your-app-password-here
 
+# Alternative SMTP providers
+# EMAIL_HOST=smtp.office365.com  # For Outlook
+# EMAIL_HOST=smtp.mailgun.org    # For Mailgun
+# EMAIL_HOST=smtp.sendgrid.net   # For SendGrid
+
 # Default from email
 DEFAULT_FROM_EMAIL=noreply@videgrenierkamer.com
 ADMIN_EMAIL=admin@videgrenierkamer.com
+SUPPORT_EMAIL=support@videgrenierkamer.com
+
+# Email templates
+EMAIL_TEMPLATE_DIR=templates/emails/
 
 # ===========================================
 # SITE CONFIGURATION
 # ===========================================
 SITE_URL=http://localhost:8000
 SITE_NAME=Vidé-Grenier Kamer
-ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+SITE_DESCRIPTION=Marketplace camerounais pour les biens d'occasion
+ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,.onrender.com
 
 # ===========================================
 # SECURITY SETTINGS
 # ===========================================
+# SSL/HTTPS Configuration
 SECURE_SSL_REDIRECT=False
 SECURE_PROXY_SSL_HEADER_NAME=HTTP_X_FORWARDED_PROTO
 SECURE_PROXY_SSL_HEADER_VALUE=https
@@ -52,54 +94,94 @@ SECURE_PROXY_SSL_HEADER_VALUE=https
 # Session & Cookie Security
 SESSION_COOKIE_SECURE=False
 CSRF_COOKIE_SECURE=False
+SESSION_COOKIE_HTTPONLY=True
+CSRF_COOKIE_HTTPONLY=True
+SESSION_COOKIE_AGE=1500
+SESSION_EXPIRE_AT_BROWSER_CLOSE=True
+
+# Security Headers
 SECURE_BROWSER_XSS_FILTER=True
 SECURE_CONTENT_TYPE_NOSNIFF=True
+SECURE_HSTS_SECONDS=31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS=True
+SECURE_HSTS_PRELOAD=True
+
+# Content Security Policy
+CSP_DEFAULT_SRC="'self'"
+CSP_STYLE_SRC="'self' 'unsafe-inline' https://fonts.googleapis.com"
+CSP_SCRIPT_SRC="'self' 'unsafe-inline' https://cdn.jsdelivr.net"
+CSP_IMG_SRC="'self' data: https:"
+CSP_FONT_SRC="'self' https://fonts.gstatic.com"
 
 # ===========================================
 # VGK BUSINESS SETTINGS
 # ===========================================
-# Commission rate (percentage as decimal, e.g., 0.08 = 8%)
+# Commission and pricing
 VGK_COMMISSION_RATE=0.08
-
-# Minimum product price (in FCFA)
 VGK_MIN_PRODUCT_PRICE=1000
-
-# Maximum product price (in FCFA)
 VGK_MAX_PRODUCT_PRICE=50000000
+VGK_DELIVERY_FEE=2000
+VGK_DELIVERY_FEE_OTHER_CITIES=5000
 
-# Default currency
+# Currency settings
 VGK_CURRENCY=FCFA
 VGK_CURRENCY_SYMBOL=FCFA
+VGK_CURRENCY_CODE=XAF
 
-# Maximum file upload size (in MB)
+# File upload limits
 VGK_MAX_FILE_SIZE=10
+VGK_MAX_IMAGE_SIZE=5
+VGK_ALLOWED_IMAGE_TYPES=jpg,jpeg,png,webp
 
 # Admin Contact Information
-ADMIN_WHATSAPP=237123456789
+ADMIN_WHATSAPP=237694638412
+ADMIN_PHONE=+237694638412
+ADMIN_NAME=Vidé-Grenier Kamer Support
+
+# Company Information
+COMPANY_NAME=Vidé-Grenier Kamer
+COMPANY_EMAIL=support@videgrenierkamer.com
+COMPANY_PHONE=+237694638412
+COMPANY_ADDRESS=Douala, Cameroun
 
 # ===========================================
 # PAYMENT CONFIGURATION
 # ===========================================
-# Campay Payment Gateway
+# Campay Payment Gateway (Primary)
 CAMPAY_API_KEY=your-campay-api-key
 CAMPAY_API_SECRET=your-campay-secret
 CAMPAY_BASE_URL=https://api.campay.net/v1
 CAMPAY_WEBHOOK_SECRET=your-campay-webhook-secret
+CAMPAY_ENVIRONMENT=sandbox  # or production
 
 # Orange Money
 ORANGE_MONEY_API_KEY=your-orange-money-api-key
 ORANGE_MONEY_SECRET=your-orange-money-secret
 ORANGE_MONEY_BASE_URL=https://api.orange.com/oauth/v3
+ORANGE_MONEY_ENVIRONMENT=sandbox
 
 # MTN Mobile Money
 MTN_MOMO_API_KEY=your-mtn-momo-api-key
 MTN_MOMO_SECRET=your-mtn-momo-secret
 MTN_MOMO_BASE_URL=https://sandbox.momodeveloper.mtn.com
+MTN_MOMO_ENVIRONMENT=sandbox
 
-# Stripe (if needed)
+# Noupia Money
+NOUPIA_API_KEY=your-noupia-api-key
+NOUPIA_SECRET=your-noupia-secret
+NOUPIA_BASE_URL=https://api.noupia.com
+NOUPIA_ENVIRONMENT=sandbox
+
+# Stripe (International payments)
 STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key
 STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=whsec_your_stripe_webhook_secret
+STRIPE_ENVIRONMENT=test  # or live
+
+# PayPal (Alternative)
+PAYPAL_CLIENT_ID=your-paypal-client-id
+PAYPAL_CLIENT_SECRET=your-paypal-client-secret
+PAYPAL_ENVIRONMENT=sandbox  # or live
 
 # ===========================================
 # FILE STORAGE & MEDIA
@@ -107,146 +189,303 @@ STRIPE_WEBHOOK_SECRET=whsec_your_stripe_webhook_secret
 # Local file storage
 MEDIA_URL=/media/
 MEDIA_ROOT=media
-
-# Static files
 STATIC_URL=/static/
 STATIC_ROOT=staticfiles
 
-# AWS S3 (if using cloud storage)
+# AWS S3 (Recommended for production)
 AWS_ACCESS_KEY_ID=your-aws-access-key
 AWS_SECRET_ACCESS_KEY=your-aws-secret-key
 AWS_STORAGE_BUCKET_NAME=your-s3-bucket-name
 AWS_S3_REGION_NAME=us-east-1
 AWS_S3_CUSTOM_DOMAIN=your-cloudfront-domain.com
 AWS_DEFAULT_ACL=public-read
+AWS_S3_OBJECT_PARAMETERS={'CacheControl': 'max-age=86400'}
+
+# Cloudinary (Alternative)
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+
+# Dropbox (Alternative storage for heavy files)
+DROPBOX_APP_KEY=your-dropbox-app-key
+DROPBOX_APP_SECRET=your-dropbox-app-secret
+DROPBOX_ACCESS_TOKEN=your-dropbox-access-token
+DROPBOX_ENABLED=False
+DROPBOX_DB_SIZE_THRESHOLD=100  # GB - switch to Dropbox when DB reaches this size
 
 # ===========================================
-# REDIS & CACHING (Optional)
+# CELERY CONFIGURATION
 # ===========================================
-REDIS_URL=redis://localhost:6379/0
-CACHE_TTL=300
-
-# ===========================================
-# CELERY CONFIGURATION (Background Tasks)
-# ===========================================
+# Background tasks
 CELERY_BROKER_URL=redis://localhost:6379/0
 CELERY_RESULT_BACKEND=redis://localhost:6379/0
+CELERY_ACCEPT_CONTENT=['json']
+CELERY_TASK_SERIALIZER='json'
+CELERY_RESULT_SERIALIZER='json'
+CELERY_TIMEZONE=Africa/Douala
+
+# Celery task settings
+CELERY_TASK_ALWAYS_EAGER=False
+CELERY_TASK_EAGER_PROPAGATES=True
+CELERY_WORKER_CONCURRENCY=4
+CELERY_WORKER_MAX_TASKS_PER_CHILD=1000
 
 # ===========================================
 # LOGGING CONFIGURATION
 # ===========================================
 LOG_LEVEL=INFO
 LOG_FILE=logs/vide_grenier.log
+LOG_MAX_SIZE=10485760  # 10MB
+LOG_BACKUP_COUNT=5
+
+# Sentry (Error tracking)
+SENTRY_DSN=your-sentry-dsn-url
+SENTRY_ENVIRONMENT=development
+SENTRY_TRACES_SAMPLE_RATE=0.1
 
 # ===========================================
-# EXTERNAL SERVICES
+# SOCIAL AUTHENTICATION
 # ===========================================
-# Google Services (for authentication, maps, etc.)
+# Google OAuth2
 GOOGLE_OAUTH2_CLIENT_ID=your-google-client-id
 GOOGLE_OAUTH2_CLIENT_SECRET=your-google-client-secret
+GOOGLE_OAUTH2_SCOPE=email profile
 
-# Facebook OAuth (if needed)
+# Facebook OAuth
 FACEBOOK_APP_ID=your-facebook-app-id
 FACEBOOK_APP_SECRET=your-facebook-app-secret
+FACEBOOK_SCOPE=email public_profile
 
-# SMS Service (for phone verification)
+# Twitter OAuth (if needed)
+TWITTER_API_KEY=your-twitter-api-key
+TWITTER_API_SECRET=your-twitter-api-secret
+TWITTER_ACCESS_TOKEN=your-twitter-access-token
+TWITTER_ACCESS_TOKEN_SECRET=your-twitter-access-token-secret
+
+# ===========================================
+# SMS & VERIFICATION SERVICES
+# ===========================================
+# Twilio (Primary SMS verification)
 TWILIO_ACCOUNT_SID=your-twilio-account-sid
 TWILIO_AUTH_TOKEN=your-twilio-auth-token
 TWILIO_PHONE_NUMBER=+1234567890
+TWILIO_ENABLED=True
+
+# Infobip (Alternative SMS provider)
+INFOBIP_API_KEY=your-infobip-api-key
+INFOBIP_BASE_URL=https://api.infobip.com
+INFOBIP_SENDER_ID=VIDEGRENIER
+INFOBIP_ENABLED=True
+
+# Africa's Talking (Alternative)
+AFRICASTALKING_API_KEY=your-africastalking-api-key
+AFRICASTALKING_USERNAME=your-africastalking-username
+AFRICASTALKING_SENDER_ID=VIDEGRENIER
+AFRICASTALKING_ENABLED=False
 
 # ===========================================
 # ANALYTICS & MONITORING
 # ===========================================
 # Google Analytics
 GOOGLE_ANALYTICS_ID=GA-XXXXXXXXX
+GOOGLE_ANALYTICS_4_ID=G-XXXXXXXXXX
 
-# Sentry (error tracking)
-SENTRY_DSN=your-sentry-dsn-url
+# Google Tag Manager
+GOOGLE_TAG_MANAGER_ID=GTM-XXXXXXX
 
-# ===========================================
-# DEVELOPMENT TOOLS
-# ===========================================
-# Django Debug Toolbar
-ENABLE_DEBUG_TOOLBAR=True
+# Facebook Pixel
+FACEBOOK_PIXEL_ID=your-facebook-pixel-id
 
-# Development email backend (prints to console)
-# EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+# Hotjar (User behavior analytics)
+HOTJAR_ID=your-hotjar-id
 
 # ===========================================
-# PRODUCTION OVERRIDES
+# NOTIFICATION SERVICES
 # ===========================================
-# Set these in production environment
-# DEBUG=False
-# SECURE_SSL_REDIRECT=True
-# SESSION_COOKIE_SECURE=True
-# CSRF_COOKIE_SECURE=True
-# ALLOWED_HOSTS=your-domain.com,www.your-domain.com
+# Python-based notification system (no third-party dependencies)
+PYTHON_NOTIFICATIONS_ENABLED=True
+PYTHON_SMS_ENABLED=True
+PYTHON_EMAIL_ENABLED=True
+PYTHON_WHATSAPP_ENABLED=True
+
+# WhatsApp Business API (via Twilio)
+WHATSAPP_BUSINESS_TOKEN=your-whatsapp-business-token
+WHATSAPP_PHONE_NUMBER_ID=your-whatsapp-phone-number-id
+WHATSAPP_VERIFY_TOKEN=your-whatsapp-verify-token
+
+# Telegram Bot (if needed)
+TELEGRAM_BOT_TOKEN=your-telegram-bot-token
+TELEGRAM_CHAT_ID=your-telegram-chat-id
 
 # ===========================================
-# ADMIN PANEL CONFIGURATION
+# AI & RECOMMENDATION ENGINE
 # ===========================================
-# Admin panel settings
-ADMIN_PANEL_TITLE=VGK Admin Panel
-ADMIN_SITE_HEADER=Vidé-Grenier Kamer Administration
+# Google Gemini (replacing OpenAI)
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-1.5-flash
+GEMINI_ENABLED=True
 
-# Auto-logout time for admin users (in seconds)
-ADMIN_SESSION_TIMEOUT=3600
+# TensorFlow Serving for custom ML models
+TF_SERVING_URL=http://localhost:8501
+TF_SERVING_ENABLED=False
+
+# Recommendation engine settings
+RECOMMENDATION_ALGORITHM=collaborative_filtering
+RECOMMENDATION_CACHE_TTL=3600
+RECOMMENDATION_MIN_SIMILARITY=0.3
+
+# ===========================================
+# RATE LIMITING & THROTTLING
+# ===========================================
+# API rate limits
+API_RATE_LIMIT=1000/hour
+LOGIN_RATE_LIMIT=5/minute
+REGISTER_RATE_LIMIT=3/hour
+PASSWORD_RESET_RATE_LIMIT=3/hour
+
+# Throttling settings
+THROTTLE_ANON=100/hour
+THROTTLE_USER=1000/hour
+THROTTLE_STAFF=2000/hour
+THROTTLE_ADMIN=5000/hour
+
+# ===========================================
+# CACHE CONFIGURATION
+# ===========================================
+# Cache settings
+CACHE_TTL=300
+CACHE_LONG_TTL=3600
+CACHE_SESSION_TTL=1500
+
+# Cache keys
+CACHE_PRODUCT_LIST_KEY=product_list
+CACHE_USER_PROFILE_KEY=user_profile
+CACHE_CATEGORY_TREE_KEY=category_tree
+
+# ===========================================
+# SEARCH CONFIGURATION
+# ===========================================
+# Elasticsearch (if using)
+ELASTICSEARCH_HOST=localhost
+ELASTICSEARCH_PORT=9200
+ELASTICSEARCH_INDEX=vide_grenier
+
+# Search settings
+SEARCH_MIN_SCORE=0.1
+SEARCH_MAX_RESULTS=100
+SEARCH_HIGHLIGHT_FIELDS=title,description
 
 # ===========================================
 # NOTIFICATION SETTINGS
 # ===========================================
 # Real-time notifications
 ENABLE_REAL_TIME_NOTIFICATIONS=True
+ENABLE_EMAIL_NOTIFICATIONS=True
+ENABLE_SMS_NOTIFICATIONS=True
+ENABLE_PUSH_NOTIFICATIONS=True
 
-# Email notification settings
-SEND_EMAIL_NOTIFICATIONS=True
+# Notification delays
 EMAIL_NOTIFICATION_DELAY=300
-
-# Push notifications (if implemented)
-FIREBASE_SERVER_KEY=your-firebase-server-key
-FIREBASE_SENDER_ID=your-firebase-sender-id
+SMS_NOTIFICATION_DELAY=60
+PUSH_NOTIFICATION_DELAY=0
 
 # ===========================================
-# RATE LIMITING
+# LOYALTY & REWARDS
 # ===========================================
-# API rate limits
-API_RATE_LIMIT=1000/hour
-LOGIN_RATE_LIMIT=5/minute
-
-# ===========================================
-# CUSTOM VGK FEATURES
-# ===========================================
-# Product moderation
-AUTO_APPROVE_ADMIN_PRODUCTS=True
-REQUIRE_PRODUCT_MODERATION=True
-
-# User verification
-REQUIRE_PHONE_VERIFICATION=True
-REQUIRE_EMAIL_VERIFICATION=True
-
 # Loyalty program
 ENABLE_LOYALTY_PROGRAM=True
 LOYALTY_POINTS_PER_EURO=10
+LOYALTY_MINIMUM_REDEMPTION=1000
+LOYALTY_POINT_EXPIRY_DAYS=365
 
-# Newsletter
-ENABLE_NEWSLETTER=True
-NEWSLETTER_FROM_EMAIL=newsletter@videgrenierkamer.com
+# Referral system
+ENABLE_REFERRAL_SYSTEM=True
+REFERRAL_BONUS_POINTS=500
+REFERRAL_BONUS_PERCENTAGE=0.05
 
+# ===========================================
+# WALLET & FINANCIAL
+# ===========================================
 # Wallet system
 ENABLE_APP_WALLET=True
 WALLET_MINIMUM_BALANCE=0
+WALLET_MAXIMUM_BALANCE=10000000
+WALLET_TRANSACTION_LIMIT=1000000
+
+# Escrow system
+ENABLE_ESCROW_SYSTEM=True
+ESCROW_HOLD_DURATION_DAYS=7
+ESCROW_DISPUTE_DURATION_DAYS=14
 
 # ===========================================
-# PERFORMANCE SETTINGS
+# PRODUCT MODERATION
 # ===========================================
-# Database connection pooling
-DB_CONN_MAX_AGE=60
+# Auto-moderation
+AUTO_APPROVE_ADMIN_PRODUCTS=True
+REQUIRE_PRODUCT_MODERATION=True
+AUTO_REJECT_INAPPROPRIATE_CONTENT=True
+
+# Moderation settings
+MODERATION_QUEUE_SIZE=50
+MODERATION_RESPONSE_TIME_HOURS=24
+MODERATION_AI_ENABLED=True
+
+# ===========================================
+# USER VERIFICATION & 2FA
+# ===========================================
+# Verification requirements
+REQUIRE_PHONE_VERIFICATION=True
+REQUIRE_EMAIL_VERIFICATION=True
+REQUIRE_ID_VERIFICATION=False
+REQUIRE_ADDRESS_VERIFICATION=False
+
+# 2FA Configuration
+TWO_FACTOR_AUTH_ENABLED=True
+TWO_FACTOR_METHODS=email,sms
+TWO_FACTOR_REQUIRED_FOR_STAFF=True
+TWO_FACTOR_REQUIRED_FOR_ADMIN=True
+
+# Verification settings
+VERIFICATION_EXPIRY_HOURS=24
+VERIFICATION_MAX_ATTEMPTS=3
+VERIFICATION_RESEND_DELAY_MINUTES=5
+
+# ===========================================
+# NEWSLETTER & MARKETING
+# ===========================================
+# Newsletter
+ENABLE_NEWSLETTER=True
+NEWSLETTER_FROM_EMAIL=newsletter@videgrenierkamer.com
+NEWSLETTER_SEND_TIME=09:00
+NEWSLETTER_TIMEZONE=Africa/Douala
+
+# Marketing automation
+ENABLE_MARKETING_AUTOMATION=True
+MARKETING_EMAIL_FREQUENCY=weekly
+MARKETING_SMS_FREQUENCY=monthly
+
+# ===========================================
+# PERFORMANCE & OPTIMIZATION
+# ===========================================
+# Database optimization
+DB_QUERY_TIMEOUT=30
+DB_CONNECTION_POOL_SIZE=20
+DB_STATEMENT_TIMEOUT=30000
 
 # Template caching
 ENABLE_TEMPLATE_CACHING=True
+TEMPLATE_CACHE_TTL=3600
 
-# Static file compression
+# Static file optimization
 ENABLE_STATIC_COMPRESSION=True
+ENABLE_IMAGE_OPTIMIZATION=True
+IMAGE_QUALITY=85
+IMAGE_FORMAT=webp
+
+# CDN settings
+CDN_URL=
+CDN_ENABLED=False
+CDN_CACHE_TTL=86400
 
 # ===========================================
 # BACKUP & MAINTENANCE
@@ -255,10 +494,17 @@ ENABLE_STATIC_COMPRESSION=True
 DB_BACKUP_ENABLED=True
 DB_BACKUP_SCHEDULE=0 2 * * *
 DB_BACKUP_RETENTION_DAYS=30
+DB_BACKUP_STORAGE=s3  # or local
+
+# File backup
+FILE_BACKUP_ENABLED=True
+FILE_BACKUP_SCHEDULE=0 3 * * *
+FILE_BACKUP_RETENTION_DAYS=90
 
 # Maintenance mode
 MAINTENANCE_MODE=False
 MAINTENANCE_MESSAGE=Site en maintenance temporaire
+MAINTENANCE_ALLOWED_IPS=127.0.0.1,::1
 
 # ===========================================
 # LOCALE & INTERNATIONALIZATION
@@ -271,7 +517,178 @@ USE_TZ=True
 
 # Available languages
 LANGUAGES=fr,en
+DEFAULT_LANGUAGE=fr
+
+# Currency formatting
+CURRENCY_FORMAT=#,##0.00
+DECIMAL_SEPARATOR=,
+THOUSAND_SEPARATOR=.
+
+# ===========================================
+# DEVELOPMENT TOOLS
+# ===========================================
+# Django Debug Toolbar
+ENABLE_DEBUG_TOOLBAR=True
+DEBUG_TOOLBAR_CONFIG={'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG}
+
+# Development email backend
+# EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+
+# Development cache backend
+# CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
+
+# Development database
+# DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': 'db.sqlite3'}}
+
+# ===========================================
+# TESTING CONFIGURATION
+# ===========================================
+# Test settings
+TEST_RUNNER=django.test.runner.DiscoverRunner
+TEST_DATABASE_NAME=test_vide_grenier_db
+TEST_EMAIL_BACKEND=django.core.mail.backends.locmem.EmailBackend
+
+# Coverage settings
+COVERAGE_RC_FILE=.coveragerc
+COVERAGE_EXCLUDE=*/tests/*,*/migrations/*,*/venv/*
+
+# ===========================================
+# PRODUCTION OVERRIDES
+# ===========================================
+# Set these in production environment
+# DEBUG=False
+# SECURE_SSL_REDIRECT=True
+# SESSION_COOKIE_SECURE=True
+# CSRF_COOKIE_SECURE=True
+# ALLOWED_HOSTS=your-domain.com,www.your-domain.com
+# SECURE_HSTS_SECONDS=31536000
+# SECURE_HSTS_INCLUDE_SUBDOMAINS=True
+# SECURE_HSTS_PRELOAD=True
+
+# ===========================================
+# ADMIN PANEL CONFIGURATION
+# ===========================================
+# Admin panel settings
+ADMIN_PANEL_TITLE=VGK Admin Panel
+ADMIN_SITE_HEADER=Vidé-Grenier Kamer Administration
+ADMIN_SITE_TITLE=Vidé-Grenier Kamer
+ADMIN_INDEX_TITLE=Administration
+
+# Auto-logout time for admin users (in seconds)
+ADMIN_SESSION_TIMEOUT=3600
+ADMIN_MAX_LOGIN_ATTEMPTS=5
+ADMIN_LOCKOUT_DURATION=900
+
+# ===========================================
+# API CONFIGURATION
+# ===========================================
+# REST API settings
+API_VERSION=v1
+API_PAGE_SIZE=20
+API_MAX_PAGE_SIZE=100
+
+# API authentication
+API_TOKEN_EXPIRY_DAYS=30
+API_RATE_LIMIT_PER_USER=1000
+API_RATE_LIMIT_PER_IP=500
+
+# ===========================================
+# MOBILE APP CONFIGURATION
+# ===========================================
+# Kivy app settings
+KIVY_APP_VERSION=1.0.0
+KIVY_APP_BUILD_NUMBER=1
+KIVY_APP_PACKAGE_NAME=com.videgrenierkamer.app
+
+# Mobile API
+MOBILE_API_VERSION=v1
+MOBILE_API_BASE_URL=https://api.videgrenierkamer.com
+MOBILE_API_TIMEOUT=30
+
+# Mobile app features
+MOBILE_OFFLINE_MODE=True
+MOBILE_SPLASH_SCREEN=True
+MOBILE_OFFLINE_PAGES=visitor_home,visitor_products,visitor_categories
+MOBILE_REQUIRE_CONNECTION_FOR=chat,orders,payments,user_profile
+
+# ===========================================
+# THIRD-PARTY INTEGRATIONS
+# ===========================================
+# Google Maps
+GOOGLE_MAPS_API_KEY=your-google-maps-api-key
+
+# Google Places
+GOOGLE_PLACES_API_KEY=your-google-places-api-key
+
+# Google Drive (for file storage)
+GOOGLE_DRIVE_CLIENT_ID=your-google-drive-client-id
+GOOGLE_DRIVE_CLIENT_SECRET=your-google-drive-client-secret
+
+# ===========================================
+# MONITORING & ALERTS
+# ===========================================
+# Uptime monitoring
+UPTIME_MONITORING_ENABLED=True
+UPTIME_CHECK_INTERVAL=300
+UPTIME_ALERT_EMAIL=alerts@videgrenierkamer.com
+
+# Performance monitoring
+PERFORMANCE_MONITORING_ENABLED=True
+PERFORMANCE_THRESHOLD_MS=2000
+PERFORMANCE_ALERT_ENABLED=True
+
+# Error monitoring
+ERROR_MONITORING_ENABLED=True
+ERROR_ALERT_THRESHOLD=10
+ERROR_ALERT_WINDOW_MINUTES=5
+
+# ===========================================
+# SECURITY MONITORING
+# ===========================================
+# Security monitoring
+SECURITY_MONITORING_ENABLED=True
+SECURITY_ALERT_EMAIL=security@videgrenierkamer.com
+
+# Failed login monitoring
+FAILED_LOGIN_MONITORING=True
+FAILED_LOGIN_THRESHOLD=5
+FAILED_LOGIN_WINDOW_MINUTES=15
+
+# Suspicious activity monitoring
+SUSPICIOUS_ACTIVITY_MONITORING=True
+SUSPICIOUS_ACTIVITY_THRESHOLD=10
+
+# ===========================================
+# COMPLIANCE & LEGAL
+# ===========================================
+# GDPR compliance
+GDPR_COMPLIANCE_ENABLED=True
+GDPR_DATA_RETENTION_DAYS=2555  # 7 years
+GDPR_RIGHT_TO_BE_FORGOTTEN=True
+
+# Privacy policy
+PRIVACY_POLICY_URL=https://videgrenierkamer.com/privacy
+TERMS_OF_SERVICE_URL=https://videgrenierkamer.com/terms
+COOKIE_POLICY_URL=https://videgrenierkamer.com/cookies
 
 # ===========================================
 # END OF CONFIGURATION
-# =========================================== 
+# ===========================================
+# 
+# IMPORTANT NOTES:
+# 1. Never commit your .env file to version control
+# 2. Use strong, unique passwords for all services
+# 3. Regularly rotate API keys and secrets
+# 4. Use environment-specific settings for different deployments
+# 5. Test all configurations in development before production
+# 6. Keep backups of your configuration files
+# 7. Monitor your application logs for any configuration issues
+#
+# For production deployment:
+# - Set DEBUG=False
+# - Use strong SECRET_KEY
+# - Enable all security settings
+# - Configure proper database and cache
+# - Set up monitoring and alerting
+# - Use HTTPS/SSL certificates
+# - Configure proper backup strategies 

@@ -1,689 +1,718 @@
-# 🏪 Vidé-Grenier Kamer - Complete Marketplace Platform
+# Vidé-Grenier Kamer - Enhanced Marketplace Platform
 
-## 📋 **PROJECT OVERVIEW**
+A comprehensive marketplace platform for Cameroon with advanced features including AI-powered recommendations, real-time messaging, mobile app support, and more.
 
-Vidé-Grenier Kamer is a **100% Cameroonian marketplace platform** dedicated to second-hand and reconditioned goods. The platform adopts an innovative hybrid model (physical + digital) to offer a secure, accessible, and modern buy-sell ecosystem between individuals, reinforced by physical stock administration.
+## 🚀 New Features Implemented
 
-### 🎯 **Strategic Objectives**
-- **Primary**: Facilitate secure second-hand transactions in Cameroon
-- **Payment Integration**: Local mobile payment solutions (Campay, Noupia, Orange Money, MTN Money)
-- **Security**: Multi-level escrow system for transaction security
-- **Physical Presence**: Administered physical stock with strategic pickup points
-- **User Experience**: Optimized PWA mobile experience with modern UI (3D animations, motion design)
+### 🤖 AI & Machine Learning Integration
 
-### 🚀 **Launch Zones**
-- **MVP**: Douala (economic hub, port proximity, population > 2.8M) & Yaoundé (political capital, student market >150k, population > 3.2M)
-- **Phase 2 Expansion** (18 months): Bafoussam, Garoua, Bamenda, Limbé
+#### Google Gemini AI Integration
+- **Replaced OpenAI** with Google Gemini for cost-effective AI features
+- **Product Description Enhancement**: Automatically improves product descriptions
+- **Sentiment Analysis**: Analyzes user reviews and feedback
+- **Content Moderation**: AI-powered content filtering
+- **Personalized Recommendations**: Smart product suggestions with explanations
 
----
+#### TensorFlow Serving Support
+- **Custom ML Models**: Support for TensorFlow Serving models
+- **Recommendation Engine**: Advanced product recommendation algorithms
+- **User Behavior Prediction**: Predicts user actions and preferences
+- **Scalable ML Infrastructure**: Ready for production ML workloads
 
-## 🏗️ **APPLICATION ARCHITECTURE**
+### 📱 Enhanced Mobile App
 
-### **📁 Project Structure**
-```
-vide-grenier/
-├── backend/                    # Main Django application
-│   ├── models.py              # Core database models
-│   ├── models_visitor.py      # Visitor-specific models
-│   ├── models_advanced.py     # Advanced features models
-│   ├── models_admin_chat.py   # Admin chat system models
-│   ├── views.py               # Main views
-│   ├── views_visitor.py       # Visitor views
-│   ├── views_client.py        # Client views
-│   ├── views_staff.py         # Staff views
-│   ├── views_admin.py         # Admin views
-│   ├── views_client_enhanced.py # Enhanced client features
-│   ├── views_admin_chat.py    # Admin chat system
-│   ├── urls.py                # Main URL patterns
-│   ├── urls_client.py         # Client-specific URLs
-│   ├── urls_staff.py          # Staff-specific URLs
-│   ├── urls_admin.py          # Admin-specific URLs
-│   ├── forms.py               # Form definitions
-│   ├── forms_admin_chat.py    # Admin chat forms
-│   ├── middleware.py          # Custom middleware
-│   ├── signals.py             # Django signals
-│   ├── tasks.py               # Celery tasks
-│   └── migrations/            # Database migrations
-├── templates/                 # HTML templates
-│   ├── backend/
-│   │   ├── base/              # Base templates
-│   │   ├── visitor/           # Visitor templates
-│   │   ├── client/            # Client templates
-│   │   ├── staff/             # Staff templates
-│   │   ├── admin/             # Admin templates
-│   │   └── admin_chat/        # Admin chat templates
-├── static/                    # Static files
-├── media/                     # User uploaded files
-├── vide/                      # Project settings
-│   └── settings/
-│       ├── base.py            # Base settings
-│       ├── development.py     # Development settings
-│       ├── production.py      # Production settings
-│       └── social_providers.py # Social authentication
-├── kivy_app/                  # Mobile app (Kivy)
-├── docker/                    # Docker configuration
-├── doc/                       # Documentation
-└── requirements.txt           # Python dependencies
-```
+#### Kivy Mobile Application
+- **Offline Mode**: Works without internet connection
+- **Splash Screen**: Professional app loading experience
+- **Connection Management**: Smart connection detection and fallback
+- **Progressive Web App**: PWA features for web-to-mobile conversion
 
-### **🗄️ Database Models**
+#### APK Generation System
+- **Automated Build Process**: Complete APK/AAB generation pipeline
+- **Multi-Platform Support**: Android APK, AAB, and iOS builds
+- **Build Reports**: Detailed build status and logs
+- **Asset Management**: Automatic icon and splash screen generation
 
-#### **Core Models**
-- **User**: Extended AbstractUser with user types (CLIENT, ADMIN, STAFF)
-- **Category**: Hierarchical product categories
-- **Product**: Main product model with advanced features
-- **ProductImage**: Product image management
-- **Order**: Order management with status tracking
-- **Payment**: Payment processing and tracking
-- **Review**: Product reviews and ratings
+### 🔔 Smart Notification System
 
-#### **Visitor Models**
-- **VisitorCart**: Anonymous shopping cart
-- **VisitorCartItem**: Cart items for visitors
-- **VisitorBehavior**: User behavior tracking
-- **VisitorPreference**: AI recommendation data
+#### Multi-Channel Notifications
+- **SMS Integration**: Twilio, Infobip, and Africa's Talking support
+- **Email Notifications**: Enhanced email delivery system
+- **WhatsApp Integration**: WhatsApp Business API support
+- **In-App Notifications**: Real-time in-app messaging
 
-#### **Advanced Models**
-- **Wallet**: User wallet system
-- **Transaction**: Financial transactions
-- **Commission**: Commission tracking
-- **SocialPost**: Social media features
-- **UserBehavior**: User interaction tracking
-- **ProductRecommendation**: AI recommendations
+#### Intelligent Notification Engine
+- **Behavior-Based Timing**: Optimal notification delivery times
+- **Personalization**: User preference-based notifications
+- **A/B Testing**: Notification optimization
+- **Rate Limiting**: Prevents notification spam
 
-#### **Communication Models**
-- **Chat**: User-to-user chat
-- **GroupChat**: Group chat functionality
-- **AdminChat**: Admin support chat system
-- **AdminMessage**: Admin chat messages
-- **AdminChatTemplate**: Chat templates
-- **AdminChatNote**: Internal notes
+### 🔐 Two-Factor Authentication (2FA)
 
-### **🌐 URL Structure**
+#### Secure Authentication
+- **Multiple Methods**: Email and SMS verification
+- **User Type Support**: Different 2FA requirements for different user types
+- **Fallback Mechanisms**: Multiple verification options
+- **Security Features**: Lockout protection and attempt limiting
 
-#### **Main URLs**
-- `/` - Homepage
-- `/dashboard/` - Dashboard redirector
-- `/visitor/` - Visitor-specific pages
-- `/client/` - Client dashboard and features
-- `/staff/` - Staff dashboard and features
-- `/admin-panel/` - Admin panel
+### 💬 Real-Time Chat System
 
-#### **Visitor URLs**
-- `/visitor/products/` - Product browsing
-- `/visitor/product/<slug>/` - Product details
-- `/visitor/cart/` - Shopping cart
-- `/visitor/cart/checkout/` - Checkout process
+#### WebSocket Chat Implementation
+- **Private Messaging**: Direct user-to-user communication
+- **Group Chats**: Multi-user conversations
+- **Real-Time Features**: Typing indicators, read receipts
+- **Message History**: Persistent chat history
+- **User Types**: Different chat interfaces for clients, admin, and staff
 
-#### **Client URLs**
-- `/client/dashboard/` - Client dashboard
-- `/client/products/` - Product management
-- `/client/wallet/` - Wallet management
-- `/client/orders/` - Order history
-- `/client/analytics/` - Personal analytics
+### ☁️ Advanced File Storage
 
-#### **Staff URLs**
-- `/staff/dashboard/` - Staff dashboard
-- `/staff/orders/` - Order processing
-- `/staff/inventory/` - Inventory management
-- `/staff/analytics/` - Performance analytics
+#### Dropbox Integration
+- **Heavy File Storage**: Automatic migration to Dropbox for large files
+- **Database Size Monitoring**: Automatic threshold-based switching
+- **Shared Links**: Public file sharing capabilities
+- **Storage Analytics**: Usage monitoring and reporting
 
----
+### 📊 Performance Optimizations
 
-## ✅ **IMPLEMENTED FEATURES**
-
-### **🛒 VISITOR SYSTEM (ANONYMOUS USERS) - COMPLETE**
-
-#### **✅ Core Shopping Experience**
-- **Product Browsing**: View products without account creation
-- **Advanced Filtering**: Categories, cities, price ranges, conditions
-- **Search Functionality**: Full-text search with suggestions
-- **Product Details**: Complete product information with image galleries
-- **Real-time Cart**: Add/remove items with live updates
-- **Session Management**: Secure anonymous shopping with session isolation
-
-#### **✅ Multiple Payment Options**
-1. **Campay Delivery**: Pay 2000 FCFA delivery fee + cash on delivery
-2. **WhatsApp Pickup**: Direct pickup with WhatsApp coordination
-3. **WhatsApp Negotiation**: Price negotiation via WhatsApp
-
-#### **✅ Enhanced Features**
-- **AI-Powered Recommendations**: Personalized product suggestions
-- **QR Code Receipts**: PDF receipts with verifiable QR codes
-- **Product Interactions**: Like, favorite, compare, comment
-- **Account Migration**: Smooth transition from visitor to registered user
-- **Mobile-First Design**: Responsive PWA experience
-
-### **👤 CLIENT SYSTEM - COMPLETE**
-
-#### **✅ Dashboard & Analytics**
-- **Modern Dashboard**: Animated interface with 3D effects and motion design
-- **Performance Metrics**: Sales analytics, conversion rates, customer satisfaction
-- **Real-time Updates**: Live data updates with shimmer effects
-- **Responsive Design**: Mobile-first approach with adaptive layouts
-
-#### **✅ Product Management**
-- **Product Creation**: Multi-step form with image upload
-- **Product Listing**: Advanced filtering and search
-- **Product Editing**: Full CRUD operations
-- **Status Management**: Active/inactive product states
-
-#### **✅ Financial Management**
-- **Wallet System**: Balance tracking and transaction history
-- **Commission Tracking**: Automatic commission calculations
-- **Withdrawal Requests**: Secure withdrawal system
-- **Payment History**: Detailed transaction logs
-
-#### **✅ Social Features**
-- **User Profiles**: Detailed user profiles with ratings
-- **Social Feed**: Community interaction
-- **Follow System**: User following functionality
-- **Social Posts**: Community content sharing
-
-### **👨‍💼 STAFF SYSTEM - COMPLETE**
-
-#### **✅ Order Processing**
-- **Order Management**: Process and track orders
-- **Status Updates**: Real-time order status changes
-- **Delivery Coordination**: Pickup point management
-- **Customer Support**: Direct customer assistance
-
-#### **✅ Inventory Management**
-- **Stock Tracking**: Real-time inventory levels
-- **Movement Recording**: Stock movement logs
-- **Receiving Management**: Incoming stock processing
-- **Inventory Analytics**: Stock performance metrics
-
-#### **✅ Performance Analytics**
-- **Efficiency Metrics**: Processing times and accuracy
-- **Customer Satisfaction**: Rating and feedback tracking
-- **Task Management**: Staff task assignment and tracking
-- **Performance Reports**: Detailed analytics dashboard
-
-### **🔧 ADMIN SYSTEM - COMPLETE**
-
-#### **✅ System Administration**
-- **User Management**: Complete user administration
-- **Product Moderation**: Content approval and moderation
-- **Financial Oversight**: Revenue and commission tracking
-- **System Analytics**: Platform-wide performance metrics
-
-#### **✅ Advanced Features**
-- **Admin Chat System**: Multi-user support chat
-- **Template Management**: Chat and notification templates
-- **Escrow Management**: Payment escrow system
-- **Dispute Resolution**: Customer dispute handling
-
-### **💬 CHAT SYSTEM - COMPLETE**
-
-#### **✅ Multi-User Chat**
-- **Admin Chat**: Support chat for all user types
-- **User-to-User Chat**: Direct messaging between users
-- **Group Chat**: Community chat functionality
-- **Template System**: Predefined response templates
-
-#### **✅ Advanced Features**
-- **Real-time Messaging**: WebSocket-powered chat
-- **File Sharing**: Image and document sharing
-- **Status Tracking**: Online/offline status
-- **Message History**: Complete conversation logs
-
----
-
-## 🎨 **FRONTEND FEATURES**
-
-### **✨ Modern Design System**
-- **Glass Morphism**: Backdrop blur and transparency effects
-- **3D Animations**: Rotating elements and depth effects
-- **Motion Design**: Smooth transitions and micro-interactions
-- **Responsive Layout**: Mobile-first adaptive design
-
-### **🎭 Animation System**
-- **Float Animation**: Gentle up-and-down movement
-- **Pulse Glow**: Pulsing shadow effects
-- **Slide-in Animations**: Entrance animations
-- **Hover Effects**: Interactive element responses
-- **Shimmer Effects**: Loading and update animations
-
-### **📱 PWA Features**
-- **Offline Support**: Service worker for offline functionality
-- **App-like Experience**: Native app feel on mobile
-- **Push Notifications**: Real-time notifications
-- **Install Prompt**: Easy app installation
-
----
-
-## 🔐 **SECURITY & COMPLIANCE**
-
-### **✅ Data Protection**
-- **Session Management**: Secure user session handling
-- **Input Validation**: XSS and CSRF protection
-- **File Upload Security**: Image validation and virus scanning
-- **Payment Security**: PCI compliance measures
-
-### **✅ Privacy Features**
-- **GDPR Compliance**: Privacy controls and data rights
-- **Data Anonymization**: Visitor data handling
-- **Consent Management**: User preference controls
-- **Data Retention**: Automatic data cleanup
-
----
-
-## 🚀 **DEPLOYMENT & INFRASTRUCTURE**
-
-### **✅ Production Ready**
-- **Docker Support**: Containerized deployment
-- **Cloud Deployment**: Render.com configuration
-- **CDN Integration**: Static file optimization
-- **Database Optimization**: PostgreSQL with connection pooling
-
-### **✅ Performance Optimization**
-- **Caching Strategy**: Redis-based caching
+#### Database & Caching
+- **Redis Integration**: Advanced caching system
 - **Database Indexing**: Optimized query performance
-- **Static File Compression**: Gzip compression
-- **Image Optimization**: WebP format support
+- **Connection Pooling**: Efficient database connections
+- **Query Optimization**: Reduced database load
 
----
+#### Image & File Optimization
+- **Automatic Compression**: Image optimization
+- **Format Conversion**: WebP support for better performance
+- **CDN Ready**: Cloud storage integration
+- **Lazy Loading**: Optimized content delivery
 
-## 📊 **CURRENT STATUS & METRICS**
+## 🛠 Installation & Setup
 
-### **✅ Implementation Status**
-- **Core Features**: 100% Complete
-- **User Interfaces**: 100% Complete
-- **Payment Integration**: 100% Complete
-- **Security Features**: 100% Complete
-- **Mobile App**: 90% Complete (Kivy app)
-- **Documentation**: 85% Complete
+### Prerequisites
 
-### **✅ Performance Metrics**
-- **Page Load Time**: < 2 seconds
-- **Database Response**: < 100ms average
-- **Mobile Performance**: 95+ Lighthouse score
-- **Uptime**: 99.9% target
-
----
-
-## 🔧 **TECHNICAL IMPROVEMENTS NEEDED**
-
-### **🚨 Critical Issues**
-
-#### **1. Database Optimization**
-- **Issue**: Some queries lack proper indexing
-- **Solution**: Add database indexes for frequently queried fields
-- **Priority**: High
-- **Impact**: Performance improvement
-
-#### **2. Caching Strategy**
-- **Issue**: Limited caching implementation
-- **Solution**: Implement Redis caching for product listings and user sessions
-- **Priority**: High
-- **Impact**: Reduced database load
-
-#### **3. API Rate Limiting**
-- **Issue**: No rate limiting on API endpoints
-- **Solution**: Implement Django REST framework throttling
-- **Priority**: Medium
-- **Impact**: Security improvement
-
-### **⚡ Performance Improvements**
-
-#### **1. Image Optimization**
-```python
-# Add to settings.py
-IMAGEKIT_CONFIG = {
-    'cache_file_dir': 'CACHE/images',
-    'generate_on_demand': True,
-    'spec_file_location': 'imagekit/specs',
-}
-```
-
-#### **2. Database Query Optimization**
-```python
-# Add select_related and prefetch_related
-products = Product.objects.select_related('seller', 'category').prefetch_related('images')
-```
-
-#### **3. Static File Optimization**
-```python
-# Add to settings.py
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
-```
-
-### **🔒 Security Enhancements**
-
-#### **1. Content Security Policy**
-```python
-# Add to settings.py
-CSP_DEFAULT_SRC = ("'self'",)
-CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://fonts.googleapis.com")
-CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net")
-```
-
-#### **2. Rate Limiting**
-```python
-# Add to settings.py
-REST_FRAMEWORK = {
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle'
-    ],
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/hour',
-        'user': '1000/hour'
-    }
-}
-```
-
-#### **3. Two-Factor Authentication**
-```python
-# Add to requirements.txt
-django-two-factor-auth==1.15.5
-```
-
----
-
-## 📈 **SCALABILITY IMPROVEMENTS**
-
-### **🏗️ Architecture Improvements**
-
-#### **1. Microservices Migration**
-```yaml
-# docker-compose.yml
-services:
-  auth-service:
-    build: ./auth
-    ports:
-      - "8001:8000"
-  
-  product-service:
-    build: ./products
-    ports:
-      - "8002:8000"
-  
-  payment-service:
-    build: ./payments
-    ports:
-      - "8003:8000"
-```
-
-#### **2. Message Queue Implementation**
-```python
-# Add to settings.py
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-```
-
-#### **3. API Gateway**
-```python
-# Add to requirements.txt
-django-cors-headers==4.3.1
-django-filter==23.5
-```
-
-### **🗄️ Database Scaling**
-
-#### **1. Read Replicas**
-```python
-# Add to settings.py
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'vgk_main',
-        'HOST': 'main-db.example.com',
-    },
-    'read_replica': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'vgk_read',
-        'HOST': 'read-db.example.com',
-    }
-}
-```
-
-#### **2. Database Sharding**
-```python
-# Add database routing
-class DatabaseRouter:
-    def db_for_read(self, model, **hints):
-        if model._meta.app_label == 'backend':
-            return 'read_replica'
-        return 'default'
-```
-
----
-
-## 🎯 **BEST PRACTICES IMPLEMENTATION**
-
-### **📝 Code Quality**
-
-#### **1. Type Hints**
-```python
-from typing import List, Optional, Dict, Any
-
-def get_user_products(user: User) -> List[Product]:
-    return Product.objects.filter(seller=user)
-```
-
-#### **2. Documentation**
-```python
-def process_order(order: Order) -> Dict[str, Any]:
-    """
-    Process an order and return the result.
-    
-    Args:
-        order: The order to process
-        
-    Returns:
-        Dict containing processing result
-        
-    Raises:
-        OrderProcessingError: If order cannot be processed
-    """
-    pass
-```
-
-#### **3. Error Handling**
-```python
-from django.core.exceptions import ValidationError
-
-def validate_product_price(price: Decimal) -> None:
-    if price < settings.MIN_PRODUCT_PRICE:
-        raise ValidationError(f"Price must be at least {settings.MIN_PRODUCT_PRICE} FCFA")
-```
-
-### **🧪 Testing Strategy**
-
-#### **1. Unit Tests**
-```python
-# tests/test_models.py
-from django.test import TestCase
-from backend.models import Product, User
-
-class ProductModelTest(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(
-            email='test@example.com',
-            password='testpass123'
-        )
-    
-    def test_product_creation(self):
-        product = Product.objects.create(
-            title='Test Product',
-            price=1000,
-            seller=self.user
-        )
-        self.assertEqual(product.title, 'Test Product')
-```
-
-#### **2. Integration Tests**
-```python
-# tests/test_views.py
-from django.test import TestCase, Client
-
-class ProductViewTest(TestCase):
-    def setUp(self):
-        self.client = Client()
-    
-    def test_product_list_view(self):
-        response = self.client.get('/visitor/products/')
-        self.assertEqual(response.status_code, 200)
-```
-
-#### **3. Performance Tests**
-```python
-# tests/test_performance.py
-from django.test import TestCase
-from django.test.utils import override_settings
-
-class PerformanceTest(TestCase):
-    @override_settings(DEBUG=False)
-    def test_product_list_performance(self):
-        # Create 1000 products
-        for i in range(1000):
-            Product.objects.create(title=f'Product {i}', price=1000)
-        
-        # Test query performance
-        import time
-        start_time = time.time()
-        products = Product.objects.all()
-        end_time = time.time()
-        
-        self.assertLess(end_time - start_time, 0.1)  # Should load in < 100ms
-```
-
----
-
-## 🔮 **FUTURE ROADMAP**
-
-### **📅 Phase 1 (Next 3 Months)**
-- [ ] **Mobile App Completion**: Finish Kivy app development
-- [ ] **Payment Gateway Expansion**: Add more local payment methods
-- [ ] **AI Enhancement**: Improve recommendation algorithms
-- [ ] **Performance Optimization**: Implement caching and CDN
-
-### **📅 Phase 2 (3-6 Months)**
-- [ ] **Microservices Migration**: Split into smaller services
-- [ ] **Real-time Features**: WebSocket implementation
-- [ ] **Advanced Analytics**: Business intelligence dashboard
-- [ ] **API Documentation**: Complete API documentation
-
-### **📅 Phase 3 (6-12 Months)**
-- [ ] **Multi-language Support**: English and local languages
-- [ ] **Advanced Security**: Two-factor authentication
-- [ ] **Mobile App Stores**: iOS and Android app stores
-- [ ] **International Expansion**: Other African countries
-
-### **📅 Phase 4 (12+ Months)**
-- [ ] **Blockchain Integration**: Decentralized marketplace
-- [ ] **AI Marketplace**: AI-powered product matching
-- [ ] **VR/AR Features**: Virtual product viewing
-- [ ] **IoT Integration**: Smart inventory management
-
----
-
-## 🛠️ **DEVELOPMENT SETUP**
-
-### **Prerequisites**
-- Python 3.11+
-- PostgreSQL 13+
-- Redis 6+
-- Node.js 16+ (for frontend assets)
-
-### **Installation**
 ```bash
-# Clone repository
-git clone https://github.com/your-username/vide-grenier.git
-cd vide-grenier
+# Python 3.8+
+python --version
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Node.js (for frontend assets)
+node --version
 
-# Install dependencies
-pip install -r requirements.txt
+# Redis (for caching and sessions)
+redis-server --version
 
-# Install frontend dependencies
-npm install
+# PostgreSQL (recommended for production)
+psql --version
 
-# Set up environment variables
+# Java (for Android builds)
+java --version
+```
+
+### Environment Configuration
+
+1. **Copy environment template**:
+```bash
 cp env_config.example .env
-# Edit .env with your configuration
-
-# Run migrations
-python manage.py migrate
-
-# Create superuser
-python manage.py createsuperuser
-
-# Run development server
-python manage.py runserver
 ```
 
-### **Environment Variables**
+2. **Configure essential services**:
 ```bash
+# AI Services
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-1.5-flash
+
+# SMS Services
+TWILIO_ACCOUNT_SID=your-twilio-sid
+TWILIO_AUTH_TOKEN=your-twilio-token
+INFOBIP_API_KEY=your-infobip-key
+
+# File Storage
+DROPBOX_APP_KEY=your-dropbox-key
+DROPBOX_APP_SECRET=your-dropbox-secret
+DROPBOX_ACCESS_TOKEN=your-dropbox-token
+
 # Database
-DB_NAME=vide_grenier_db
-DB_USER=postgres
-DB_PASSWORD=your_password
-DB_HOST=localhost
-DB_PORT=5432
+DATABASE_URL=postgresql://user:password@localhost:5432/vide_grenier_db
 
 # Redis
 REDIS_URL=redis://localhost:6379/0
-
-# Email
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_HOST_USER=your_email@gmail.com
-EMAIL_HOST_PASSWORD=your_app_password
-
-# Payment Gateway
-CAMPAY_API_KEY=your_campay_api_key
-CAMPAY_WEBHOOK_SECRET=your_webhook_secret
-
-# Social Authentication
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-FACEBOOK_APP_ID=your_facebook_app_id
-FACEBOOK_APP_SECRET=your_facebook_app_secret
 ```
 
----
+### Installation Steps
 
-## 📞 **SUPPORT & CONTRIBUTION**
+1. **Clone and setup**:
+```bash
+git clone <repository-url>
+cd vide-grenier
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-### **🤝 Contributing**
+2. **Database setup**:
+```bash
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py collectstatic
+```
+
+3. **Start services**:
+```bash
+# Start Redis
+redis-server
+
+# Start Django development server
+python manage.py runserver
+
+# Start Celery (for background tasks)
+celery -A vide worker -l info
+
+# Start Celery Beat (for scheduled tasks)
+celery -A vide beat -l info
+```
+
+## 📱 Mobile App Development
+
+### Building the Mobile App
+
+1. **Setup Kivy environment**:
+```bash
+cd kivy_app
+pip install kivy buildozer
+```
+
+2. **Generate APK**:
+```bash
+# Generate debug APK
+python generate_apk_enhanced.py --platforms android_apk
+
+# Generate release APK and AAB
+python generate_apk_enhanced.py --platforms android_apk android_aab --release
+
+# Clean build and generate
+python generate_apk_enhanced.py --platforms android_apk --clean
+```
+
+3. **iOS Build** (requires macOS):
+```bash
+python generate_apk_enhanced.py --platforms ios
+```
+
+### Mobile App Features
+
+- **Offline Mode**: Browse products without internet
+- **Splash Screen**: Professional app loading
+- **Connection Management**: Smart online/offline detection
+- **Push Notifications**: Real-time updates
+- **Camera Integration**: Product photo capture
+- **Location Services**: Local product discovery
+
+## 🤖 AI Features Usage
+
+### Product Recommendations
+
+```python
+from backend.ai_engine import get_recommendations_for_user
+
+# Get personalized recommendations
+recommendations = get_recommendations_for_user(user_id=123, limit=10)
+
+# Get similar products
+from backend.ai_engine import get_similar_products
+similar = get_similar_products(product_id=456, limit=6)
+```
+
+### Content Generation
+
+```python
+from backend.ai_engine import generate_product_description
+
+# Enhance product description
+enhanced_desc = generate_product_description({
+    'title': 'iPhone 12',
+    'description': 'Good condition',
+    'price': '250000',
+    'condition': 'BON'
+})
+```
+
+### Sentiment Analysis
+
+```python
+from backend.ai_engine import analyze_sentiment
+
+# Analyze review sentiment
+sentiment = analyze_sentiment("Great product, fast delivery!")
+# Returns: {'sentiment': 'positive', 'score': 0.8, 'confidence': 0.9}
+```
+
+## 🔔 Notification System
+
+### Sending Notifications
+
+```python
+from backend.smart_notifications import smart_notifications
+
+# Send price drop alert
+smart_notifications.trigger_notification(
+    template_name='price_drop_alert',
+    user=user,
+    context={
+        'product_name': 'iPhone 12',
+        'old_price': '300000',
+        'new_price': '250000',
+        'savings': '50000'
+    },
+    preferred_channels=['SMS', 'EMAIL']
+)
+```
+
+### SMS Notifications
+
+```python
+from backend.smart_notifications import send_sms_notification
+
+# Send SMS
+result = send_sms_notification(
+    phone_number='+237694638412',
+    message='Your order has been confirmed!'
+)
+```
+
+## 🔐 2FA Implementation
+
+### Enabling 2FA
+
+```python
+from backend.two_factor_auth import enable_2fa_for_user
+
+# Enable 2FA for user
+result = enable_2fa_for_user(user, method='email')
+if result['success']:
+    print("2FA enabled successfully")
+```
+
+### Verifying 2FA
+
+```python
+from backend.two_factor_auth import verify_2fa_code
+
+# Verify 2FA code
+result = verify_2fa_code(user, code='123456', method='email')
+if result['success']:
+    print("2FA verification successful")
+```
+
+## 💬 Chat System
+
+### Creating Chats
+
+```python
+from backend.chat_websocket import create_chat_between_users
+
+# Create private chat
+chat = create_chat_between_users(user1, user2, product=product)
+
+# Create group chat (admin only)
+from backend.chat_websocket import create_group_chat
+group_chat = create_group_chat(
+    name='Support Group',
+    chat_type='ADMIN_CLIENT',
+    participants=[user1, user2, admin],
+    created_by=admin
+)
+```
+
+### WebSocket Connection
+
+```javascript
+// Connect to private chat
+const chatSocket = new WebSocket(
+    `ws://localhost:8000/ws/chat/${chatId}/`
+);
+
+// Connect to group chat
+const groupSocket = new WebSocket(
+    `ws://localhost:8000/ws/group_chat/${groupId}/`
+);
+
+// Send message
+chatSocket.send(JSON.stringify({
+    'type': 'message',
+    'content': 'Hello!',
+    'message_type': 'TEXT'
+}));
+```
+
+## ☁️ File Storage
+
+### Dropbox Integration
+
+```python
+from backend.dropbox_storage import upload_to_dropbox
+
+# Upload file to Dropbox
+result = upload_to_dropbox(
+    file_path='/path/to/file.jpg',
+    dropbox_path='/vgk_files/products/file.jpg'
+)
+
+# Create shared link
+from backend.dropbox_storage import create_dropbox_shared_link
+link = create_dropbox_shared_link('/vgk_files/products/file.jpg')
+```
+
+## 📊 Performance Monitoring
+
+### Database Optimization
+
+```python
+# Add database indexes
+python manage.py makemigrations
+python manage.py migrate
+
+# Monitor database size
+from backend.dropbox_storage import get_database_size_gb
+size_gb = get_database_size_gb()
+print(f"Database size: {size_gb} GB")
+```
+
+### Cache Management
+
+```python
+from django.core.cache import cache
+
+# Cache product recommendations
+cache.set('recommendations_user_123', recommendations, 3600)
+
+# Get cached data
+cached_data = cache.get('recommendations_user_123')
+```
+
+## 🚀 Deployment
+
+### Production Setup
+
+1. **Environment Variables**:
+```bash
+DEBUG=False
+SECRET_KEY=your-production-secret-key
+DATABASE_URL=postgresql://user:password@host:5432/db
+REDIS_URL=redis://host:6379/0
+```
+
+2. **Static Files**:
+```bash
+python manage.py collectstatic --noinput
+```
+
+3. **Database**:
+```bash
+python manage.py migrate
+python manage.py createsuperuser
+```
+
+4. **Services**:
+```bash
+# Start Gunicorn
+gunicorn vide.wsgi:application --bind 0.0.0.0:8000
+
+# Start Celery
+celery -A vide worker -l info
+
+# Start Redis
+redis-server
+```
+
+### Docker Deployment
+
+```bash
+# Build and run with Docker Compose
+docker-compose up -d
+
+# Or build individual services
+docker build -t vide-grenier .
+docker run -p 8000:8000 vide-grenier
+```
+
+## 🔧 Troubleshooting
+
+### APK Generation Issues
+
+#### Common Problems and Solutions
+
+1. **"Unknown command/target android" Error (Windows)**:
+   ```bash
+   # This is a known Windows issue with buildozer
+   # Try the Windows-specific installation
+   python install_buildozer_windows.py
+   
+   # If that doesn't work, use Docker (recommended for Windows)
+   python docker_buildozer.py
+   
+   # Or use WSL (Windows Subsystem for Linux)
+   wsl --install
+   # Then in WSL:
+   sudo apt update && sudo apt install python3-pip
+   pip3 install buildozer
+   ```
+
+2. **Buildozer not working on Windows**:
+   ```bash
+   # Use Docker-based solution (recommended)
+   python docker_buildozer.py
+   
+   # Or install Docker Desktop and run:
+   docker pull kivy/buildozer
+   docker run --volume "$PWD":/home/user/hostcwd kivy/buildozer --workdir /home/user/hostcwd android debug
+   ```
+
+2. **Unicode Encoding Errors (Windows)**:
+   ```bash
+   # The script now handles this automatically
+   # If you still see issues, run:
+   chcp 65001
+   python generate_apk_enhanced.py
+   ```
+
+3. **Java Not Found**:
+   ```bash
+   # Install OpenJDK
+   # Windows: Download from https://adoptium.net/
+   # Linux: sudo apt install openjdk-11-jdk
+   # macOS: brew install openjdk@11
+   ```
+
+4. **Android SDK Issues**:
+   ```bash
+   # Buildozer will download automatically
+   # Or set ANDROID_HOME environment variable
+   export ANDROID_HOME=/path/to/android/sdk
+   ```
+
+#### Manual Buildozer Commands
+
+If the automated script fails, try manual commands:
+
+```bash
+# Initialize buildozer (if not done)
+buildozer init
+
+# Build debug APK
+buildozer android debug
+
+# Build release APK
+buildozer android release
+
+# Clean build
+buildozer android clean
+```
+
+### Database Issues
+
+1. **Migration Errors**:
+   ```bash
+   # Reset migrations
+   python manage.py migrate --fake-initial
+   
+   # Or create fresh database
+   python manage.py flush
+   python manage.py migrate
+   ```
+
+2. **Redis Connection Issues**:
+   ```bash
+   # Check Redis status
+   redis-cli ping
+   
+   # Start Redis if not running
+   redis-server
+   ```
+
+### AI Service Issues
+
+1. **Gemini API Errors**:
+   ```bash
+   # Check API key
+   echo $GEMINI_API_KEY
+   
+   # Test API connection
+   python -c "import google.generativeai as genai; genai.configure(api_key='your-key')"
+   ```
+
+2. **TensorFlow Serving Issues**:
+   ```bash
+   # Check if TF Serving is running
+   curl http://localhost:8501/v1/models
+   
+   # Start TF Serving
+   tensorflow_model_server --port=8501 --rest_api_port=8501 --model_name=recommendation_model --model_base_path=/path/to/model
+   ```
+
+### Notification Issues
+
+1. **SMS Not Sending**:
+   ```bash
+   # Check Twilio credentials
+   echo $TWILIO_ACCOUNT_SID
+   echo $TWILIO_AUTH_TOKEN
+   
+   # Test SMS service
+   python -c "from backend.smart_notifications import sms_service; print(sms_service.send_sms('+1234567890', 'Test'))"
+   ```
+
+2. **Email Not Sending**:
+   ```bash
+   # Check email settings
+   python manage.py shell -c "from django.core.mail import send_mail; send_mail('Test', 'Test message', 'from@example.com', ['to@example.com'])"
+   ```
+
+## 📈 Analytics & Monitoring
+
+### Performance Metrics
+
+- **Database Query Performance**: Monitor slow queries
+- **Cache Hit Rates**: Track Redis performance
+- **API Response Times**: Monitor endpoint performance
+- **User Engagement**: Track user behavior patterns
+
+### Error Monitoring
+
+- **Sentry Integration**: Error tracking and alerting
+- **Log Aggregation**: Centralized logging
+- **Performance Alerts**: Automated performance monitoring
+
+## 🔧 Configuration Options
+
+### AI Configuration
+
+```python
+# AI settings in settings.py
+AI_RECOMMENDATIONS = {
+    'ENABLED': True,
+    'MIN_INTERACTIONS': 5,
+    'SIMILARITY_THRESHOLD': 0.1,
+    'CACHE_HOURS': 6
+}
+```
+
+### Notification Configuration
+
+```python
+# Notification settings
+SMART_NOTIFICATIONS = {
+    'ENABLED': True,
+    'CHANNELS': {
+        'IN_APP': True,
+        'EMAIL': True,
+        'SMS': True,
+        'WHATSAPP': True
+    }
+}
+```
+
+### Mobile App Configuration
+
+```python
+# Mobile app settings
+MOBILE_APP = {
+    'OFFLINE_MODE': True,
+    'SPLASH_SCREEN': True,
+    'OFFLINE_PAGES': ['visitor_home', 'visitor_products'],
+    'REQUIRE_CONNECTION_FOR': ['chat', 'orders', 'payments']
+}
+```
+
+## 📋 Development Workflow
+
+### Code Organization
+
+```
+vide/
+├── backend/                 # Django backend
+│   ├── ai_engine.py        # AI integration
+│   ├── smart_notifications.py  # Notification system
+│   ├── two_factor_auth.py  # 2FA implementation
+│   ├── chat_websocket.py   # Real-time chat
+│   ├── dropbox_storage.py  # File storage
+│   └── models.py           # Database models
+├── kivy_app/               # Mobile app
+│   ├── main_enhanced.py    # Enhanced mobile app
+│   └── main.py             # Basic mobile app
+├── templates/              # HTML templates
+├── static/                 # Static files
+├── requirements.txt        # Python dependencies
+├── buildozer.spec          # Mobile build configuration
+├── generate_apk_enhanced.py # APK generation script
+└── env_config.example      # Environment configuration
+```
+
+### Testing
+
+```bash
+# Run tests
+python manage.py test
+
+# Run specific tests
+python manage.py test backend.tests.AITestCase
+python manage.py test backend.tests.NotificationTestCase
+```
+
+### Code Quality
+
+```bash
+# Install development dependencies
+pip install flake8 black isort
+
+# Format code
+black .
+isort .
+
+# Check code quality
+flake8 .
+```
+
+## 🤝 Contributing
+
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
 
-### **🐛 Bug Reports**
-Please use the GitHub issue tracker to report bugs and request features.
+## 📄 License
 
-### **📧 Contact**
-- **Email**: support@videgrenier-kamer.com
-- **Phone**: +237 694 63 84 12
-- **Website**: https://videgrenier-kamer.com
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+For support and questions:
+- Email: support@videgrenierkamer.com
+- Phone: +237 694 63 84 12
+- WhatsApp: +237 694 63 84 12
+
+## 🔄 Changelog
+
+### Version 1.0.0 (Latest)
+- ✅ AI integration with Google Gemini
+- ✅ TensorFlow Serving support
+- ✅ Enhanced mobile app with offline mode
+- ✅ Smart notification system
+- ✅ Two-factor authentication
+- ✅ Real-time chat system
+- ✅ Dropbox file storage
+- ✅ Performance optimizations
+- ✅ APK generation system
+- ✅ Comprehensive documentation
+- ✅ Windows compatibility fixes
+- ✅ Troubleshooting guide
+
+### Version 0.9.0
+- ✅ Basic marketplace functionality
+- ✅ User authentication
+- ✅ Product management
+- ✅ Order processing
+- ✅ Payment integration
 
 ---
 
-## 📄 **LICENSE**
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 **ACKNOWLEDGMENTS**
-
-- **Django Community**: For the excellent web framework
-- **Tailwind CSS**: For the utility-first CSS framework
-- **Lucide Icons**: For the beautiful icon set
-- **Cameroonian Developers**: For local market insights
-- **Beta Testers**: For valuable feedback and testing
-
----
-
-**Last Updated**: July 30, 2025  
-**Version**: 2.5.0  
-**Status**: Production Ready 🚀 
+**Vidé-Grenier Kamer** - The ultimate marketplace platform for Cameroon 🇨🇲 
