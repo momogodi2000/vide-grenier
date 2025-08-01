@@ -60,6 +60,15 @@
         .loading-fallback { display: flex; justify-content: center; align-items: center; min-height: 50vh; }
         .loading-spinner { width: 2rem; height: 2rem; border: 2px solid #e5e7eb; border-top: 2px solid #16a34a; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Fallback to hide loading screen after 3 seconds */
+        #loading-screen {
+            animation: hideLoading 3s forwards;
+        }
+        @keyframes hideLoading {
+            0%, 90% { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; }
+        }
     </style>
     
     <!-- Main CSS Files -->
@@ -98,7 +107,7 @@
     </a>
     
     <!-- Loading Screen -->
-    <div id="loading-screen" class="fixed inset-0 bg-gradient-to-br from-vgk-green-600 to-vgk-orange-500 z-50 flex items-center justify-center">
+    <div id="loading-screen" class="fixed inset-0 bg-gradient-to-br from-vgk-green-600 to-vgk-orange-500 z-50 flex items-center justify-center" style="transition: opacity 0.3s ease;">
         <div class="text-center text-white animate-fade-in">
             <div class="loading-spinner mx-auto mb-4"></div>
             <h2 class="text-2xl font-bold mb-2">Vidé-Grenier Kamer</h2>
@@ -323,10 +332,15 @@
             // Hide loading screen
             const loadingScreen = document.getElementById('loading-screen');
             if (loadingScreen) {
+                // Force hide loading screen after 1 second
                 setTimeout(() => {
                     loadingScreen.style.opacity = '0';
-                    setTimeout(() => loadingScreen.remove(), 300);
-                }, 500);
+                    loadingScreen.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => {
+                        loadingScreen.remove();
+                        console.log('Loading screen removed');
+                    }, 300);
+                }, 1000);
             }
             
             // Auto-hide messages after 5 seconds

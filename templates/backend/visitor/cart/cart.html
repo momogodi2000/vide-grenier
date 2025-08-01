@@ -1,48 +1,17 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load custom_filters %}
 
 {% block title %}Mon Panier - Vidé-Grenier Kamer{% endblock %}
 
 {% block extra_css %}
 <style>
-    .cart-item {
-        transition: all 0.3s ease;
+    .cart-card {
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
     
-    .cart-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    }
-    
-    .quantity-btn {
-        transition: all 0.2s ease;
-    }
-    
-    .quantity-btn:hover {
-        transform: scale(1.1);
-    }
-    
-    .remove-btn {
-        transition: all 0.2s ease;
-    }
-    
-    .remove-btn:hover {
-        transform: scale(1.1);
-        color: #ef4444;
-    }
-    
-    .checkout-btn {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        transition: all 0.3s ease;
-    }
-    
-    .checkout-btn:hover {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%);
-        transform: translateY(-2px);
-    }
-    
-    .empty-cart {
+    .animate-fade-in-up {
         animation: fadeInUp 0.6s ease-out;
     }
     
@@ -56,42 +25,64 @@
             transform: translateY(0);
         }
     }
+    
+    .hover-lift {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .hover-lift:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+    
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-    <!-- Header -->
-    <div class="bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center space-x-4">
-                    <a href="{% url 'backend:visitor_product_list' %}" class="text-gray-400 hover:text-gray-600">
-                        <i data-lucide="arrow-left" class="w-6 h-6"></i>
-                    </a>
-                    <h1 class="text-2xl font-bold text-gray-900">Mon Panier</h1>
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="glass-effect rounded-2xl shadow-2xl mb-8 p-6 animate-fade-in-up">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-bold text-white mb-2">
+                        <span class="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                            Mon Panier
+                        </span>
+                    </h1>
+                    <p class="text-gray-300 text-lg">
+                        {{ cart_items|length }} article{{ cart_items|length|pluralize }} dans votre panier
+                    </p>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <span class="text-sm text-gray-500">{{ cart_count }} article{{ cart_count|pluralize }}</span>
+                
+                <div class="flex space-x-4">
+                    <a href="{% url 'backend:visitor_product_list' %}" 
+                       class="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-cyan-600 text-white px-6 py-3 rounded-xl hover:from-purple-700 hover:to-cyan-700 transition-all duration-300 font-medium">
+                        <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                        <span>Continuer les achats</span>
+                    </a>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {% if cart_items %}
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="grid lg:grid-cols-3 gap-8">
             <!-- Cart Items -->
             <div class="lg:col-span-2">
-                <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                        <i data-lucide="shopping-cart" class="w-6 h-6 mr-2 text-green-600"></i>
-                        Articles dans votre panier
+                <div class="cart-card rounded-2xl p-6 animate-fade-in-up" style="animation-delay: 0.1s;">
+                    <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="shopping-cart" class="w-6 h-6 mr-3 text-purple-400"></i>
+                        Articles
                     </h2>
                     
-                    <div class="space-y-4">
+                    <div class="space-y-6">
                         {% for item in cart_items %}
-                        <div class="cart-item bg-gray-50 rounded-xl p-4 border border-gray-200">
+                        <div class="cart-card rounded-xl p-4 hover-lift">
                             <div class="flex items-center space-x-4">
                                 <!-- Product Image -->
                                 <div class="flex-shrink-0">
@@ -100,53 +91,55 @@
                                          alt="{{ item.product.title }}" 
                                          class="w-20 h-20 object-cover rounded-lg">
                                     {% else %}
-                                    <div class="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
-                                        <i data-lucide="image" class="w-8 h-8 text-gray-400"></i>
+                                    <div class="w-20 h-20 bg-gradient-to-br from-purple-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                                        <i data-lucide="image" class="w-8 h-8 text-white"></i>
                                     </div>
                                     {% endif %}
                                 </div>
                                 
                                 <!-- Product Info -->
                                 <div class="flex-1 min-w-0">
-                                    <h3 class="text-lg font-semibold text-gray-900 mb-1">
-                                        <a href="{% url 'backend:visitor_product_detail' item.product.slug %}" 
-                                           class="hover:text-green-600 transition-colors">
+                                    <h3 class="font-semibold text-white mb-1 truncate">
+                                        <a href="{% url 'backend:visitor_product_detail' slug=item.product.slug %}" 
+                                           class="hover:text-purple-300 transition-colors">
                                             {{ item.product.title }}
                                         </a>
                                     </h3>
-                                    <p class="text-sm text-gray-600 mb-2">{{ item.product.get_city_display }}</p>
-                                    <div class="flex items-center space-x-2">
-                                        <span class="text-lg font-bold text-green-600">
-                                            {{ item.product.price|floatformat:0 }} FCFA
-                                        </span>
-                                        <span class="text-sm text-gray-500">par unité</span>
+                                    <p class="text-gray-400 text-sm mb-2">{{ item.product.get_city_display }}</p>
+                                    <div class="text-lg font-bold text-green-400">
+                                        {{ item.product.price|floatformat:0 }} FCFA
                                     </div>
                                 </div>
                                 
                                 <!-- Quantity Controls -->
                                 <div class="flex items-center space-x-3">
-                                    <button onclick="updateQuantity('{{ item.id }}', {{ item.quantity|add:'-1' }})" 
-                                            class="quantity-btn w-8 h-8 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors">
-                                        <i data-lucide="minus" class="w-4 h-4"></i>
+                                    <button onclick="updateQuantity('{{ item.id }}', -1)" 
+                                            class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors">
+                                        <i data-lucide="minus" class="w-4 h-4 text-white"></i>
                                     </button>
-                                    <span class="text-lg font-medium text-gray-900 w-12 text-center">{{ item.quantity }}</span>
-                                    <button onclick="updateQuantity('{{ item.id }}', {{ item.quantity|add:'1' }})" 
-                                            class="quantity-btn w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center hover:bg-green-200 transition-colors">
-                                        <i data-lucide="plus" class="w-4 h-4"></i>
+                                    
+                                    <span class="text-white font-semibold min-w-[2rem] text-center" id="quantity-{{ item.id }}">
+                                        {{ item.quantity }}
+                                    </span>
+                                    
+                                    <button onclick="updateQuantity('{{ item.id }}', 1)" 
+                                            class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors">
+                                        <i data-lucide="plus" class="w-4 h-4 text-white"></i>
                                     </button>
                                 </div>
                                 
                                 <!-- Total Price -->
                                 <div class="text-right">
-                                    <div class="text-lg font-bold text-gray-900">
+                                    <div class="text-xl font-bold text-green-400">
                                         {{ item.total_price|floatformat:0 }} FCFA
                                     </div>
-                                    <button onclick="removeItem('{{ item.id }}')" 
-                                            class="remove-btn text-red-500 hover:text-red-700 text-sm font-medium mt-1">
-                                        <i data-lucide="trash-2" class="w-4 h-4 inline mr-1"></i>
-                                        Supprimer
-                                    </button>
                                 </div>
+                                
+                                <!-- Remove Button -->
+                                <button onclick="removeItem('{{ item.id }}')" 
+                                        class="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center hover:bg-red-500/40 transition-colors">
+                                    <i data-lucide="trash-2" class="w-4 h-4 text-red-400"></i>
+                                </button>
                             </div>
                         </div>
                         {% endfor %}
@@ -156,225 +149,166 @@
             
             <!-- Order Summary -->
             <div class="lg:col-span-1">
-                <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 sticky top-8">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                        <i data-lucide="receipt" class="w-5 h-5 mr-2 text-green-600"></i>
-                        Résumé de la commande
-                    </h3>
+                <div class="cart-card rounded-2xl p-6 sticky top-8 animate-fade-in-up" style="animation-delay: 0.2s;">
+                    <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="receipt" class="w-6 h-6 mr-3 text-purple-400"></i>
+                        Résumé
+                    </h2>
                     
-                    <!-- Price Breakdown -->
                     <div class="space-y-4 mb-6">
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">Sous-total ({{ cart_count }} article{{ cart_count|pluralize }})</span>
-                            <span class="font-medium">{{ subtotal|floatformat:0 }} FCFA</span>
+                        <div class="flex justify-between text-gray-300">
+                            <span>Sous-total</span>
+                            <span>{{ cart_subtotal|floatformat:0 }} FCFA</span>
                         </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">Frais de livraison</span>
-                            <span class="font-medium">{{ delivery_cost|floatformat:0 }} FCFA</span>
-                        </div>
-                        <div class="border-t border-gray-200 pt-4">
-                            <div class="flex justify-between text-xl font-bold">
-                                <span>Total</span>
-                                <span class="text-green-600">{{ total|floatformat:0 }} FCFA</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Action Buttons -->
-                    <div class="space-y-3">
-                        <button onclick="proceedToCheckout()" 
-                                class="checkout-btn w-full text-white py-4 px-6 rounded-xl font-bold text-lg flex items-center justify-center">
-                            <i data-lucide="credit-card" class="w-6 h-6 mr-3"></i>
-                            Procéder au paiement
-                        </button>
                         
-                        <div class="grid grid-cols-2 gap-3">
-                            <button onclick="whatsappOrder()" 
-                                    class="bg-green-500 text-white py-3 px-4 rounded-xl font-medium hover:bg-green-600 transition-colors flex items-center justify-center">
-                                <i data-lucide="message-circle" class="w-5 h-5 mr-2"></i>
-                                WhatsApp
-                            </button>
-                            
-                            <button onclick="pickupOrder()" 
-                                    class="bg-blue-600 text-white py-3 px-4 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center">
-                                <i data-lucide="map-pin" class="w-5 h-5 mr-2"></i>
-                                Point de retrait
-                            </button>
+                        <div class="flex justify-between text-gray-300">
+                            <span>Frais de livraison</span>
+                            <span>{{ delivery_cost|floatformat:0 }} FCFA</span>
                         </div>
-                    </div>
-                    
-                    <!-- Additional Info -->
-                    <div class="mt-6 p-4 bg-blue-50 rounded-xl">
-                        <div class="flex items-start space-x-3">
-                            <i data-lucide="info" class="w-5 h-5 text-blue-600 mt-0.5"></i>
-                            <div class="text-sm text-blue-800">
-                                <p class="font-medium mb-1">Informations importantes</p>
-                                <ul class="space-y-1 text-xs">
-                                    <li>• Paiement sécurisé</li>
-                                    <li>• Livraison rapide</li>
-                                    <li>• Support 24/7</li>
-                                </ul>
+                        
+                        <div class="border-t border-white/20 pt-4">
+                            <div class="flex justify-between text-xl font-bold text-white">
+                                <span>Total</span>
+                                <span>{{ cart_total|floatformat:0 }} FCFA</span>
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Checkout Button -->
+                    <button onclick="proceedToCheckout()" 
+                            class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 font-bold text-lg hover-lift">
+                        <i data-lucide="credit-card" class="w-5 h-5 inline mr-2"></i>
+                        Procéder au paiement
+                    </button>
+                    
+                    <!-- Continue Shopping -->
+                    <a href="{% url 'backend:visitor_product_list' %}" 
+                       class="w-full mt-4 bg-gradient-to-r from-purple-600 to-cyan-600 text-white py-3 rounded-xl hover:from-purple-700 hover:to-cyan-700 transition-all duration-300 font-medium text-center block">
+                        <i data-lucide="arrow-left" class="w-4 h-4 inline mr-2"></i>
+                        Continuer les achats
+                    </a>
                 </div>
             </div>
         </div>
+        
         {% else %}
         <!-- Empty Cart -->
-        <div class="empty-cart bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
-            <div class="max-w-md mx-auto">
-                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i data-lucide="shopping-cart" class="w-12 h-12 text-gray-400"></i>
-                </div>
-                <h2 class="text-2xl font-bold text-gray-900 mb-4">Votre panier est vide</h2>
-                <p class="text-gray-600 mb-8">
-                    Découvrez nos produits et commencez vos achats. Vous trouverez des articles de qualité à des prix imbattables.
-                </p>
-                <div class="space-y-3">
-                    <a href="{% url 'backend:visitor_product_list' %}" 
-                       class="block w-full bg-green-600 text-white py-4 px-6 rounded-xl font-medium hover:bg-green-700 transition-colors flex items-center justify-center">
-                        <i data-lucide="shopping-bag" class="w-5 h-5 mr-2"></i>
-                        Découvrir les produits
-                    </a>
-                    <a href="{% url 'backend:visitor_product_list' %}?sort=trending" 
-                       class="block w-full bg-gray-100 text-gray-700 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 transition-colors flex items-center justify-center">
-                        <i data-lucide="trending-up" class="w-5 h-5 mr-2"></i>
-                        Produits tendance
-                    </a>
-                </div>
+        <div class="text-center py-16 animate-fade-in-up">
+            <div class="w-32 h-32 bg-gradient-to-br from-purple-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl">
+                <i data-lucide="shopping-cart" class="w-16 h-16 text-white"></i>
             </div>
+            <h3 class="text-2xl font-bold text-white mb-4">Votre panier est vide</h3>
+            <p class="text-gray-300 text-lg mb-8 max-w-md mx-auto">
+                Découvrez nos produits et commencez vos achats dès maintenant.
+            </p>
+            <a href="{% url 'backend:visitor_product_list' %}" 
+               class="inline-flex items-center space-x-3 bg-gradient-to-r from-purple-600 to-cyan-600 text-white px-8 py-4 rounded-xl hover:from-purple-700 hover:to-cyan-700 transition-all duration-300 shadow-2xl font-bold text-lg hover-lift">
+                <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+                <span>Découvrir les produits</span>
+            </a>
         </div>
         {% endif %}
     </div>
 </div>
 
-<!-- Toast Container -->
-<div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
-
 <script>
-function updateQuantity(itemId, newQuantity) {
-    if (newQuantity <= 0) {
-        removeItem(itemId);
-        return;
-    }
-    
-    fetch(`/visitor/cart/update/${itemId}/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ quantity: newQuantity }),
-    })
-    .then(response => response.json())
-    .then(data => {
+async function updateQuantity(itemId, change) {
+    try {
+        const currentQuantity = parseInt(document.getElementById(`quantity-${itemId}`).textContent);
+        const newQuantity = Math.max(1, currentQuantity + change);
+        
+        const response = await fetch(`/visitor/cart/update/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            },
+            body: `quantity=${newQuantity}`
+        });
+        
+        const data = await response.json();
+        
         if (data.success) {
-            location.reload();
+            // Update quantity display
+            document.getElementById(`quantity-${itemId}`).textContent = newQuantity;
+            
+            // Reload page to update totals
+            setTimeout(() => location.reload(), 500);
+            
+            showNotification(data.message, 'success');
         } else {
-            showToast(data.message || 'Erreur lors de la mise à jour', 'error');
+            showNotification(data.message, 'error');
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('Erreur lors de la mise à jour', 'error');
-    });
+    } catch (error) {
+        showNotification('Erreur lors de la mise à jour', 'error');
+    }
 }
 
-function removeItem(itemId) {
+async function removeItem(itemId) {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cet article ?')) {
         return;
     }
     
-    fetch(`/visitor/cart/remove/${itemId}/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'Content-Type': 'application/json',
-        },
-    })
-    .then(response => response.json())
-    .then(data => {
+    try {
+        const response = await fetch(`/visitor/cart/remove/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            }
+        });
+        
+        const data = await response.json();
+        
         if (data.success) {
-            location.reload();
+            showNotification(data.message, 'success');
+            
+            // Reload page to update cart
+            setTimeout(() => location.reload(), 500);
         } else {
-            showToast(data.message || 'Erreur lors de la suppression', 'error');
+            showNotification(data.message, 'error');
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('Erreur lors de la suppression', 'error');
-    });
+    } catch (error) {
+        showNotification('Erreur lors de la suppression', 'error');
+    }
 }
 
 function proceedToCheckout() {
-    window.location.href = '{% url "backend:visitor_cart_checkout" %}';
+    window.location.href = "{% url 'backend:visitor_cart_checkout' %}";
 }
 
-function whatsappOrder() {
-    const items = [
-        {% for item in cart_items %}
-        {
-            title: '{{ item.product.title }}',
-            quantity: {{ item.quantity }},
-            price: {{ item.product.price|floatformat:0 }},
-            total: {{ item.total_price|floatformat:0 }}
-        }{% if not forloop.last %},{% endif %}
-        {% endfor %}
-    ];
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 max-w-sm p-4 rounded-xl shadow-2xl transition-all duration-300 animate-fade-in-up ${
+        type === 'success' ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white' : 'bg-gradient-to-r from-red-500 to-pink-500 text-white'
+    }`;
+    notification.innerHTML = `
+        <div class="flex items-center justify-between">
+            <span class="font-medium">${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white/80 hover:text-white transition-colors">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+    `;
     
-    const message = `Bonjour, je souhaite commander les produits suivants:\n\n${items.map(item => 
-        `- ${item.title} (${item.quantity}x) - ${item.total} FCFA`
-    ).join('\n')}\n\nTotal: {{ total|floatformat:0 }} FCFA\n\nPouvez-vous me confirmer la disponibilité et les modalités de livraison ?`;
+    document.body.appendChild(notification);
     
-    const whatsappUrl = `https://wa.me/237694638412?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-}
-
-function pickupOrder() {
-    window.location.href = '{% url "backend:visitor_cart_checkout" %}';
-}
-
-function showToast(message, type = 'info') {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
+    // Auto remove
+    setTimeout(() => notification.remove(), 5000);
     
-    const bgColor = type === 'success' ? 'bg-green-600' : 
-                   type === 'error' ? 'bg-red-600' : 'bg-blue-600';
-    
-    toast.className = `${bgColor} text-white px-6 py-3 rounded-xl shadow-lg transform translate-x-full transition-transform duration-300`;
-    toast.textContent = message;
-    
-    container.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.classList.remove('translate-x-full');
-        toast.classList.add('translate-x-0');
-    }, 100);
-    
-    setTimeout(() => {
-        toast.classList.remove('translate-x-0');
-        toast.classList.add('translate-x-full');
-        
-        setTimeout(() => {
-            container.removeChild(toast);
-        }, 300);
-    }, 3000);
-}
-
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
+    // Re-initialize icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
     }
-    return cookieValue;
 }
+
+// Initialize animations on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Add staggered animation to cart items
+    const cartItems = document.querySelectorAll('.cart-card');
+    cartItems.forEach((item, index) => {
+        item.style.animationDelay = `${index * 0.1}s`;
+    });
+});
 </script>
 {% endblock %} 

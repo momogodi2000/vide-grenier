@@ -1,0 +1,425 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Comparer les Produits - Vidé-Grenier Kamer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .compare-card {
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .animate-fade-in-up {
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .animate-scale-in {
+        animation: scaleIn 0.5s ease-out;
+    }
+    
+    @keyframes scaleIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    
+    .hover-lift {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .hover-lift:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+    
+    .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="glass-effect rounded-2xl shadow-2xl mb-8 p-6 animate-fade-in-up">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-bold text-white mb-2">
+                        <span class="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                            Comparaison de Produits
+                        </span>
+                    </h1>
+                    <p class="text-gray-300 text-lg">
+                        {{ products|length }} produit{{ products|length|pluralize }} à comparer 
+                        <span class="text-purple-400 font-semibold">(max 4)</span>
+                    </p>
+                </div>
+                <div class="text-right">
+                    <a href="{% url 'backend:visitor_product_list' %}" 
+                       class="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-cyan-600 text-white px-6 py-3 rounded-xl hover:from-purple-700 hover:to-cyan-700 transition-all duration-300 hover-lift">
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                        <span>Retour aux produits</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {% if products %}
+        <!-- Comparison Table -->
+        <div class="glass-effect rounded-2xl shadow-2xl overflow-hidden animate-scale-in">
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-white/10">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
+                                Critères
+                            </th>
+                            {% for product in products %}
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
+                                <div class="flex items-center space-x-2">
+                                    <span>Produit {{ forloop.counter }}</span>
+                                    {% if product.is_best_price %}
+                                    <span class="bg-green-500 text-white px-2 py-1 rounded-full text-xs">Meilleur prix</span>
+                                    {% endif %}
+                                </div>
+                            </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/10">
+                        <!-- Product Images -->
+                        <tr class="bg-white/5">
+                            <td class="px-6 py-6 whitespace-nowrap text-sm font-semibold text-white">
+                                <div class="flex items-center space-x-3">
+                                    <i data-lucide="image" class="w-5 h-5 text-purple-400"></i>
+                                    <span>Image</span>
+                                </div>
+                            </td>
+                            {% for product in products %}
+                            <td class="px-6 py-6 whitespace-nowrap">
+                                <div class="relative group">
+                                    {% if product.main_image %}
+                                    <img src="{{ product.main_image.image.url }}" 
+                                         alt="{{ product.title }}" 
+                                         class="w-24 h-24 object-cover rounded-xl shadow-lg group-hover:scale-105 transition-transform duration-300">
+                                    {% else %}
+                                    <div class="w-24 h-24 bg-gradient-to-br from-purple-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
+                                        <i data-lucide="image" class="w-8 h-8 text-white"></i>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <!-- Remove button -->
+                                    <button onclick="removeFromCompare('{{ product.id }}')" 
+                                            class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-all duration-300 shadow-lg">
+                                        <i data-lucide="x" class="w-3 h-3"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        
+                        <!-- Product Titles -->
+                        <tr class="bg-white/5">
+                            <td class="px-6 py-6 whitespace-nowrap text-sm font-semibold text-white">
+                                <div class="flex items-center space-x-3">
+                                    <i data-lucide="tag" class="w-5 h-5 text-purple-400"></i>
+                                    <span>Titre</span>
+                                </div>
+                            </td>
+                            {% for product in products %}
+                            <td class="px-6 py-6 text-sm text-white">
+                                <a href="{% url 'backend:visitor_product_detail' slug=product.slug %}" 
+                                   class="text-purple-300 hover:text-purple-200 font-medium transition-colors duration-300">
+                                    {{ product.title }}
+                                </a>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        
+                        <!-- Prices -->
+                        <tr class="bg-white/10">
+                            <td class="px-6 py-6 whitespace-nowrap text-sm font-semibold text-white">
+                                <div class="flex items-center space-x-3">
+                                    <i data-lucide="dollar-sign" class="w-5 h-5 text-green-400"></i>
+                                    <span>Prix</span>
+                                </div>
+                            </td>
+                            {% for product in products %}
+                            <td class="px-6 py-6 whitespace-nowrap text-sm text-white">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xl font-bold text-green-400">{{ product.price|floatformat:0 }} FCFA</span>
+                                    {% if product.is_best_price %}
+                                    <span class="bg-green-500 text-white px-2 py-1 rounded-full text-xs animate-pulse">⭐ Meilleur</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        
+                        <!-- Condition -->
+                        <tr class="bg-white/5">
+                            <td class="px-6 py-6 whitespace-nowrap text-sm font-semibold text-white">
+                                <div class="flex items-center space-x-3">
+                                    <i data-lucide="award" class="w-5 h-5 text-yellow-400"></i>
+                                    <span>État</span>
+                                </div>
+                            </td>
+                            {% for product in products %}
+                            <td class="px-6 py-6 whitespace-nowrap text-sm text-white">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium 
+                                           {% if product.condition == 'NEUF' %}bg-green-500/20 text-green-300 border border-green-500/30
+                                           {% elif product.condition == 'EXCELLENT' %}bg-blue-500/20 text-blue-300 border border-blue-500/30
+                                           {% elif product.condition == 'BON' %}bg-yellow-500/20 text-yellow-300 border border-yellow-500/30
+                                           {% else %}bg-gray-500/20 text-gray-300 border border-gray-500/30{% endif %}">
+                                    {{ product.get_condition_display }}
+                                </span>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        
+                        <!-- Category -->
+                        <tr class="bg-white/10">
+                            <td class="px-6 py-6 whitespace-nowrap text-sm font-semibold text-white">
+                                <div class="flex items-center space-x-3">
+                                    <i data-lucide="folder" class="w-5 h-5 text-blue-400"></i>
+                                    <span>Catégorie</span>
+                                </div>
+                            </td>
+                            {% for product in products %}
+                            <td class="px-6 py-6 whitespace-nowrap text-sm text-white">
+                                <span class="bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full text-xs border border-blue-500/30">
+                                    {{ product.category.name }}
+                                </span>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        
+                        <!-- City -->
+                        <tr class="bg-white/5">
+                            <td class="px-6 py-6 whitespace-nowrap text-sm font-semibold text-white">
+                                <div class="flex items-center space-x-3">
+                                    <i data-lucide="map-pin" class="w-5 h-5 text-red-400"></i>
+                                    <span>Ville</span>
+                                </div>
+                            </td>
+                            {% for product in products %}
+                            <td class="px-6 py-6 whitespace-nowrap text-sm text-white">
+                                <span class="bg-red-500/20 text-red-300 px-3 py-1 rounded-full text-xs border border-red-500/30">
+                                    {{ product.get_city_display }}
+                                </span>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        
+                        <!-- Seller -->
+                        <tr class="bg-white/10">
+                            <td class="px-6 py-6 whitespace-nowrap text-sm font-semibold text-white">
+                                <div class="flex items-center space-x-3">
+                                    <i data-lucide="user" class="w-5 h-5 text-purple-400"></i>
+                                    <span>Vendeur</span>
+                                </div>
+                            </td>
+                            {% for product in products %}
+                            <td class="px-6 py-6 whitespace-nowrap text-sm text-white">
+                                <div class="flex items-center space-x-2">
+                                    {% if product.seller.profile_picture %}
+                                    <img src="{{ product.seller.profile_picture.url }}" 
+                                         alt="{{ product.seller.get_full_name }}" 
+                                         class="w-6 h-6 rounded-full">
+                                    {% else %}
+                                    <div class="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-xs text-white">
+                                        {{ product.seller.first_name|first|upper }}
+                                    </div>
+                                    {% endif %}
+                                    <span>{{ product.seller.get_full_name }}</span>
+                                </div>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        
+                        <!-- Actions -->
+                        <tr class="bg-white/5">
+                            <td class="px-6 py-6 whitespace-nowrap text-sm font-semibold text-white">
+                                <div class="flex items-center space-x-3">
+                                    <i data-lucide="settings" class="w-5 h-5 text-cyan-400"></i>
+                                    <span>Actions</span>
+                                </div>
+                            </td>
+                            {% for product in products %}
+                            <td class="px-6 py-6 whitespace-nowrap text-sm text-white">
+                                <div class="space-y-3">
+                                    <button onclick="addToCart('{{ product.id }}')" 
+                                            class="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 text-sm font-medium hover-lift">
+                                        <i data-lucide="shopping-cart" class="w-4 h-4 inline mr-2"></i>
+                                        Ajouter au panier
+                                    </button>
+                                    <a href="{% url 'backend:visitor_product_detail' slug=product.slug %}" 
+                                       class="w-full bg-gradient-to-r from-purple-600 to-cyan-600 text-white px-4 py-2 rounded-xl hover:from-purple-700 hover:to-cyan-700 transition-all duration-300 text-sm font-medium hover-lift block text-center">
+                                        <i data-lucide="eye" class="w-4 h-4 inline mr-2"></i>
+                                        Voir détails
+                                    </a>
+                                </div>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Clear All Button -->
+        <div class="mt-8 text-center">
+            <button onclick="clearAllComparisons()" 
+                    class="bg-gradient-to-r from-red-600 to-pink-600 text-white px-8 py-4 rounded-xl hover:from-red-700 hover:to-pink-700 transition-all duration-300 shadow-2xl font-bold text-lg hover-lift">
+                <i data-lucide="trash-2" class="w-5 h-5 inline mr-2"></i>
+                Effacer toutes les comparaisons
+            </button>
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-16 animate-fade-in-up">
+            <div class="w-32 h-32 bg-gradient-to-br from-purple-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl">
+                <i data-lucide="git-compare" class="w-16 h-16 text-white"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-white mb-4">Aucun produit en comparaison</h3>
+            <p class="text-gray-300 text-lg mb-8 max-w-md mx-auto">
+                Ajoutez des produits à comparer pour voir leurs différences côte à côte et faire le meilleur choix.
+            </p>
+            <a href="{% url 'backend:visitor_product_list' %}" 
+               class="inline-flex items-center space-x-3 bg-gradient-to-r from-purple-600 to-cyan-600 text-white px-8 py-4 rounded-xl hover:from-purple-700 hover:to-cyan-700 transition-all duration-300 shadow-2xl font-bold text-lg hover-lift">
+                <i data-lucide="search" class="w-6 h-6"></i>
+                <span>Découvrir des produits</span>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+async function removeFromCompare(productId) {
+    try {
+        const response = await fetch(`/visitor/compare/toggle/${productId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification(data.message, 'success');
+            // Reload to update the comparison table
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification(data.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Erreur lors de la suppression', 'error');
+    }
+}
+
+async function addToCart(productId) {
+    try {
+        const response = await fetch(`/visitor/cart/add/${productId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            },
+            body: 'quantity=1'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification(data.message, 'success');
+            
+            // Update cart widget if available
+            if (typeof updateVisitorCartWidget === 'function') {
+                updateVisitorCartWidget();
+            }
+        } else {
+            showNotification(data.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Erreur lors de l\'ajout au panier', 'error');
+    }
+}
+
+async function clearAllComparisons() {
+    if (!confirm('Êtes-vous sûr de vouloir effacer toutes les comparaisons ?')) {
+        return;
+    }
+    
+    // Get all product IDs and remove them one by one
+    const productIds = Array.from(document.querySelectorAll('button[onclick^="removeFromCompare"]'))
+        .map(btn => btn.getAttribute('onclick').match(/'([^']+)'/)[1]);
+    
+    for (const productId of productIds) {
+        await removeFromCompare(productId);
+    }
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 max-w-sm p-4 rounded-xl shadow-2xl transition-all duration-300 animate-fade-in-up ${
+        type === 'success' ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white' : 'bg-gradient-to-r from-red-500 to-pink-500 text-white'
+    }`;
+    notification.innerHTML = `
+        <div class="flex items-center justify-between">
+            <span class="font-medium">${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white/80 hover:text-white transition-colors">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove
+    setTimeout(() => notification.remove(), 5000);
+    
+    // Re-initialize icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+// Initialize animations on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Add staggered animation to table rows
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach((row, index) => {
+        row.style.animationDelay = `${index * 0.1}s`;
+        row.classList.add('animate-fade-in-up');
+    });
+});
+</script>
+{% endblock %} 

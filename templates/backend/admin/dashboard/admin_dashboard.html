@@ -2,593 +2,614 @@
 {% load static %}
 {% load humanize %}
 
-{% block title %}Dashboard Administrateur - Vidé-Grenier Kamer{% endblock %}
+{% block title %}Tableau de Bord Admin - Vidé-Grenier Kamer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    .ai-insight {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    .realtime-indicator {
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<!-- Header -->
-<div class="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center">
-    <div class="mb-4 sm:mb-0">
-        <h1 class="text-2xl font-bold text-gray-900">Dashboard Administrateur</h1>
-        <p class="mt-1 text-sm text-gray-600">Vue d'ensemble de la plateforme Vidé-Grenier Kamer - Marketplace Camerounaise</p>
-    </div>
-    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-        <button onclick="exportReport()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center">
-            <i data-lucide="download" class="w-4 h-4 mr-2"></i>
-            Exporter Rapport
-        </button>
-        <button onclick="refreshDashboard()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center">
-            <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
-            Actualiser
-        </button>
-    </div>
-</div>
-
-<!-- Métriques principales -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-    <div class="metric-card from-green-500 to-emerald-600">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-green-100 text-sm font-medium">Utilisateurs Totaux</p>
-                <p class="text-3xl font-bold">{{ stats.total_users|intcomma }}</p>
-                <p class="text-green-200 text-sm">{{ stats.new_users_this_month }}% ce mois</p>
-            </div>
-            <i data-lucide="users" class="w-8 h-8 text-green-200"></i>
-        </div>
-    </div>
-
-    <div class="metric-card from-blue-500 to-blue-600">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-blue-100 text-sm font-medium">Produits Actifs</p>
-                <p class="text-3xl font-bold">{{ stats.active_products|intcomma }}</p>
-                <p class="text-blue-200 text-sm">{{ stats.admin_stock_products }} admin stock</p>
-            </div>
-            <i data-lucide="package" class="w-8 h-8 text-blue-200"></i>
-        </div>
-    </div>
-
-    <div class="metric-card from-purple-500 to-purple-600">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-purple-100 text-sm font-medium">Commandes Aujourd'hui</p>
-                <p class="text-3xl font-bold">{{ stats.today_orders }}</p>
-                <p class="text-purple-200 text-sm">{{ stats.pending_orders }} en attente</p>
-            </div>
-            <i data-lucide="shopping-cart" class="w-8 h-8 text-purple-200"></i>
-        </div>
-    </div>
-
-    <div class="metric-card from-orange-500 to-orange-600">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-orange-100 text-sm font-medium">CA Mensuel</p>
-                <p class="text-3xl font-bold">{{ stats.monthly_revenue|floatformat:0|intcomma }}</p>
-                <p class="text-orange-200 text-sm">FCFA ce mois</p>
-            </div>
-            <i data-lucide="trending-up" class="w-8 h-8 text-orange-200"></i>
-        </div>
-    </div>
-
-    <div class="metric-card from-pink-500 to-pink-600">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-pink-100 text-sm font-medium">Commission 10%</p>
-                <p class="text-3xl font-bold">{{ stats.monthly_commission|floatformat:0|intcomma }}</p>
-                <p class="text-pink-200 text-sm">FCFA ce mois</p>
-            </div>
-            <i data-lucide="percent" class="w-8 h-8 text-pink-200"></i>
-        </div>
-    </div>
-</div>
-
-<!-- KPI Supplémentaires -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <div class="stats-card">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-600 text-sm">Paiements Mobile</p>
-                <p class="text-2xl font-bold text-gray-900">{{ stats.mobile_payments|intcomma }}</p>
-                <p class="text-green-600 text-sm">MTN/Orange Money</p>
-            </div>
-            <div class="p-3 bg-green-100 rounded-full">
-                <i data-lucide="smartphone" class="w-6 h-6 text-green-600"></i>
-            </div>
-        </div>
-    </div>
-
-    <div class="stats-card">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-600 text-sm">Stock Admin</p>
-                <p class="text-2xl font-bold text-gray-900">{{ stats.admin_stock_total }}</p>
-                <p class="text-red-600 text-sm">{{ stats.low_stock_count }} en rupture</p>
-            </div>
-            <div class="p-3 bg-red-100 rounded-full">
-                <i data-lucide="package-check" class="w-6 h-6 text-red-600"></i>
-            </div>
-        </div>
-    </div>
-
-    <div class="stats-card">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-600 text-sm">Points Retrait</p>
-                <p class="text-2xl font-bold text-gray-900">{{ stats.pickup_points_count }}</p>
-                <p class="text-blue-600 text-sm">Douala/Yaoundé</p>
-            </div>
-            <div class="p-3 bg-blue-100 rounded-full">
-                <i data-lucide="map-pin" class="w-6 h-6 text-blue-600"></i>
-            </div>
-        </div>
-    </div>
-
-    <div class="stats-card">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-600 text-sm">Taux Satisfaction</p>
-                <p class="text-2xl font-bold text-gray-900">{{ stats.average_rating|floatformat:1 }}/5</p>
-                <p class="text-green-600 text-sm">{{ stats.total_reviews|intcomma }} avis</p>
-            </div>
-            <div class="p-3 bg-yellow-100 rounded-full">
-                <i data-lucide="star" class="w-6 h-6 text-yellow-600"></i>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Graphiques et analyses -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <!-- Graphique des ventes -->
-    <div class="stats-card">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">Évolution des Ventes (FCFA)</h3>
-            <select class="text-sm border-gray-300 rounded-md">
-                <option>7 derniers jours</option>
-                <option>30 derniers jours</option>
-                <option>3 derniers mois</option>
-            </select>
-        </div>
-        <div class="h-64">
-            <canvas id="salesChart"></canvas>
-        </div>
-    </div>
-
-    <!-- Types de paiement -->
-    <div class="stats-card">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Répartition Paiements</h3>
-        <div class="h-64">
-            <canvas id="paymentChart"></canvas>
-        </div>
-    </div>
-</div>
-
-<!-- Top catégories avec données réelles -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-    <div class="stats-card">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Catégories</h3>
-        <div class="space-y-4">
-            {% for category in top_categories %}
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                    <span class="text-sm font-medium">{{ category.name }}</span>
-                </div>
-                <span class="text-sm text-gray-600">{{ category.product_count }} produits</span>
-            </div>
-            {% empty %}
-            <p class="text-gray-500 text-sm">Aucune catégorie trouvée</p>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- Système de fidélité avec données réelles -->
-    <div class="stats-card">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Fidélité Clients</h3>
-        <div class="space-y-4">
-            {% for level in loyalty_levels %}
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <div class="w-4 h-4 {{ level.color }} rounded mr-3"></div>
-                    <span class="text-sm font-medium">{{ level.name }}</span>
-                </div>
-                <span class="text-sm text-gray-600">{{ level.count|intcomma }} clients</span>
-            </div>
-            {% endfor %}
-            <div class="mt-4 p-3 bg-green-50 rounded-lg">
-                <p class="text-sm text-green-800">Rétention: <strong>{{ stats.retention_rate }}%</strong></p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Performance par ville avec données réelles -->
-    <div class="stats-card">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance par Ville</h3>
-        <div class="space-y-4">
-            {% for city in city_stats %}
-            <div>
-                <div class="flex justify-between items-center mb-1">
-                    <span class="text-sm font-medium text-gray-700">{{ city.name }}</span>
-                    <span class="text-sm text-gray-600">{{ city.percentage }}% ({{ city.users|intcomma }} users)</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                    <div class="bg-green-500 h-2 rounded-full" style="width: {{ city.percentage }}%"></div>
-                </div>
-            </div>
-            {% endfor %}
-            <div class="mt-4 grid grid-cols-2 gap-4">
-                <div class="text-center p-2 bg-green-50 rounded">
-                    <p class="text-xs text-green-600">CA Douala</p>
-                    <p class="font-bold text-green-800">{{ city_stats.douala_revenue|floatformat:0|intcomma }} FCFA</p>
-                </div>
-                <div class="text-center p-2 bg-blue-50 rounded">
-                    <p class="text-xs text-blue-600">CA Yaoundé</p>
-                    <p class="font-bold text-blue-800">{{ city_stats.yaounde_revenue|floatformat:0|intcomma }} FCFA</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Actions rapides et alertes -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-    <!-- Actions rapides -->
-    <div class="stats-card">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions Rapides</h3>
-        <div class="space-y-3">
-            <a href="#" class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-green-300 transition-colors">
-                <div class="flex items-center">
-                    <i data-lucide="plus-circle" class="w-5 h-5 text-green-600 mr-3"></i>
-                    <span class="text-sm font-medium">Ajouter Stock Admin</span>
-                </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
-            </a>
-                            <a href="{% url 'admin_panel:users' %}" class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
-                <div class="flex items-center">
-                    <i data-lucide="user-plus" class="w-5 h-5 text-blue-600 mr-3"></i>
-                    <span class="text-sm font-medium">Gérer Utilisateurs</span>
-                </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
-            </a>
-            <a href="{% url 'backend:pickup_point_list' %}" class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-purple-300 transition-colors">
-                <div class="flex items-center">
-                    <i data-lucide="map-pin" class="w-5 h-5 text-purple-600 mr-3"></i>
-                    <span class="text-sm font-medium">Points de Retrait</span>
-                </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
-            </a>
-            <a href="#" class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:border-orange-300 transition-colors">
-                <div class="flex items-center">
-                    <i data-lucide="megaphone" class="w-5 h-5 text-orange-600 mr-3"></i>
-                    <span class="text-sm font-medium">Campagne Promo</span>
-                </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
-            </a>
-        </div>
-    </div>
-
-    <!-- Alertes système avec données réelles -->
-    <div class="stats-card">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Alertes Système</h3>
-        <div class="space-y-3">
-            {% if stats.low_stock_count > 0 %}
-            <div class="flex items-start p-3 bg-red-50 rounded-lg">
-                <i data-lucide="alert-triangle" class="w-5 h-5 text-red-500 mr-3 mt-0.5"></i>
-                <div>
-                    <p class="text-sm font-medium text-red-800">Stock faible</p>
-                    <p class="text-xs text-red-600">{{ stats.low_stock_count }} produits admin en rupture</p>
-                </div>
-            </div>
-            {% endif %}
-            
-            {% if stats.pending_payments > 0 %}
-            <div class="flex items-start p-3 bg-yellow-50 rounded-lg">
-                <i data-lucide="clock" class="w-5 h-5 text-yellow-500 mr-3 mt-0.5"></i>
-                <div>
-                    <p class="text-sm font-medium text-yellow-800">Paiements en attente</p>
-                    <p class="text-xs text-yellow-600">{{ stats.pending_payments }} paiements à valider</p>
-                </div>
-            </div>
-            {% endif %}
-            
-            {% if unread_messages_count > 0 %}
-            <div class="flex items-start p-3 bg-blue-50 rounded-lg">
-                <i data-lucide="message-circle" class="w-5 h-5 text-blue-500 mr-3 mt-0.5"></i>
-                <div>
-                    <p class="text-sm font-medium text-blue-800">Support Chat</p>
-                    <p class="text-xs text-blue-600">{{ unread_messages_count }} conversations en attente</p>
-                </div>
-            </div>
-            {% endif %}
-            
-            {% if stats.pending_orders > 0 %}
-            <div class="flex items-start p-3 bg-purple-50 rounded-lg">
-                <i data-lucide="truck" class="w-5 h-5 text-purple-500 mr-3 mt-0.5"></i>
-                <div>
-                    <p class="text-sm font-medium text-purple-800">Livraisons</p>
-                    <p class="text-xs text-purple-600">{{ stats.pending_orders }} commandes à traiter</p>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Commandes récentes à traiter avec données réelles -->
-    <div class="stats-card">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Commandes Urgentes</h3>
-        <div class="space-y-3">
-            {% for order in urgent_orders %}
-            <div class="border-l-4 {% if order.status == 'PENDING' %}border-red-500{% elif order.status == 'PAID' %}border-yellow-500{% else %}border-blue-500{% endif %} pl-3">
-                <p class="text-sm font-medium text-gray-900">{{ order.order_number }}</p>
-                <p class="text-xs text-gray-600">{{ order.product.title|truncatechars:30 }} - {{ order.total_amount|floatformat:0|intcomma }} FCFA</p>
-                <p class="text-xs {% if order.status == 'PENDING' %}text-red-600{% elif order.status == 'PAID' %}text-yellow-600{% else %}text-blue-600{% endif %}">
-                    {% if order.status == 'PENDING' %}
-                        Paiement en attente
-                    {% elif order.status == 'PAID' %}
-                        En attente de retrait
-                    {% else %}
-                        {{ order.get_status_display }}
-                    {% endif %}
-                </p>
-            </div>
-            {% empty %}
-            <p class="text-gray-500 text-sm">Aucune commande urgente</p>
-            {% endfor %}
-                            <a href="{% url 'admin_panel:orders' %}" class="w-full mt-3 text-center py-2 text-sm text-green-600 hover:bg-green-50 rounded block">
-                Voir toutes les commandes
-            </a>
-        </div>
-    </div>
-</div>
-
-<!-- État des points de retrait avec données réelles -->
-<div class="stats-card mb-8">
-    <h3 class="text-lg font-semibold text-gray-900 mb-6">État des Points de Retrait</h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {% for pickup_point in pickup_points %}
-        <div class="border rounded-lg p-4">
-            <div class="flex items-center justify-between mb-3">
-                <h4 class="font-medium text-gray-900">{{ pickup_point.name }}</h4>
-                <span class="bg-{% if pickup_point.is_active %}green{% else %}red{% endif %}-100 text-{% if pickup_point.is_active %}green{% else %}red{% endif %}-800 text-xs px-2 py-1 rounded-full">
-                    {% if pickup_point.is_active %}Actif{% else %}Inactif{% endif %}
-                </span>
-            </div>
-            <div class="space-y-2 text-sm">
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Commandes en attente:</span>
-                    <span class="font-medium">{{ pickup_point.pending_orders_count|default:0 }}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Staff:</span>
-                    <span class="font-medium">{{ pickup_point.staff_count|default:0 }} actifs</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Capacité:</span>
-                    <span class="font-medium">{{ pickup_point.capacity|default:0 }}%</span>
-                </div>
-            </div>
-        </div>
-        {% empty %}
-        <div class="col-span-4 text-center text-gray-500">
-            <p>Aucun point de retrait configuré</p>
-            <a href="{% url 'backend:pickup_point_list' %}" class="text-green-600 hover:text-green-800">Ajouter un point de retrait</a>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-
-<!-- Statistiques avancées avec données réelles -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <!-- Performance mensuelle -->
-    <div class="stats-card">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance Mensuelle</h3>
-        <div class="space-y-4">
-            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
-                <span class="text-sm font-medium">Nouveaux utilisateurs</span>
-                <span class="text-sm font-bold text-green-600">+{{ stats.new_users_this_month|intcomma }} ({{ stats.new_users_percentage }}%)</span>
-            </div>
-            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
-                <span class="text-sm font-medium">Taux de conversion</span>
-                <span class="text-sm font-bold text-blue-600">{{ stats.conversion_rate }}% (+{{ stats.conversion_change }}%)</span>
-            </div>
-            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
-                <span class="text-sm font-medium">Panier moyen</span>
-                <span class="text-sm font-bold text-purple-600">{{ stats.average_order_value|floatformat:0|intcomma }} FCFA (+{{ stats.basket_change }}%)</span>
-            </div>
-            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
-                <span class="text-sm font-medium">Retours clients</span>
-                <span class="text-sm font-bold text-red-600">{{ stats.return_rate }}% ({{ stats.return_change }}%)</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Top vendeurs avec données réelles -->
-    <div class="stats-card">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Vendeurs du Mois</h3>
-        <div class="space-y-4">
-            {% for seller in top_sellers %}
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <div class="w-8 h-8 bg-{% if forloop.counter == 1 %}yellow{% elif forloop.counter == 2 %}gray{% else %}orange{% endif %}-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                        {{ forloop.counter }}
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm font-medium">{{ seller.get_full_name|default:seller.email }}</p>
-                        <p class="text-xs text-gray-600">{{ seller.city_display|default:"Lieu non spécifié" }} - {{ seller.total_sales }} ventes</p>
+<div class="min-h-screen bg-gray-50">
+    <!-- Header with AI Status -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-2xl font-bold text-gray-900">Tableau de Bord Admin</h1>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-green-500 rounded-full realtime-indicator"></div>
+                        <span class="text-sm text-gray-600">Temps réel</span>
                     </div>
                 </div>
-                <span class="text-sm font-bold">{{ seller.total_revenue|floatformat:0|intcomma }} FCFA</span>
+                
+                <!-- AI Status Indicator -->
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2 bg-green-50 px-3 py-2 rounded-lg">
+                        <i data-lucide="brain" class="w-5 h-5 text-green-600"></i>
+                        <span class="text-sm font-medium text-green-800">IA Active</span>
+                    </div>
+                    
+                    <!-- 2FA Status -->
+                    {% if user.two_factor_enabled %}
+                    <div class="flex items-center space-x-2 bg-blue-50 px-3 py-2 rounded-lg">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-blue-600"></i>
+                        <span class="text-sm font-medium text-blue-800">2FA Activé</span>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Notifications -->
+                    <div class="relative">
+                        <button onclick="toggleNotifications()" class="relative p-2 text-gray-600 hover:text-gray-900">
+                            <i data-lucide="bell" class="w-6 h-6"></i>
+                            {% if unread_notifications_count > 0 %}
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                {{ unread_notifications_count }}
+                            </span>
+                            {% endif %}
+                        </button>
+                    </div>
+                </div>
             </div>
-            {% empty %}
-            <p class="text-gray-500 text-sm">Aucun vendeur ce mois</p>
-            {% endfor %}
         </div>
     </div>
-</div>
 
-<!-- Dernières activités avec données réelles -->
-<div class="stats-card">
-    <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-semibold text-gray-900">Activités Récentes</h3>
-                        <a href="{% url 'admin_panel:analytics' %}" class="text-sm text-green-600 hover:text-green-800">Voir tout</a>
-    </div>
-    <div class="flow-root">
-        <ul class="-mb-8">
-            {% for activity in recent_activities %}
-            <li>
-                <div class="relative {% if not forloop.last %}pb-8{% endif %}">
-                    {% if not forloop.last %}
-                    <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"></span>
-                    {% endif %}
-                    <div class="relative flex space-x-3">
-                        <div>
-                            <span class="h-8 w-8 rounded-full bg-{{ activity.color }}-500 flex items-center justify-center">
-                                <i data-lucide="{{ activity.icon }}" class="w-4 h-4 text-white"></i>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Users -->
+            <div class="stat-card rounded-lg p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-90">Utilisateurs Totaux</p>
+                        <p class="text-3xl font-bold">{{ total_users|intcomma }}</p>
+                        <p class="text-sm opacity-90 mt-1">
+                            <span class="text-green-300">+{{ new_users_today }}</span> aujourd'hui
+                        </p>
+                    </div>
+                    <i data-lucide="users" class="w-12 h-12 opacity-80"></i>
+                </div>
+            </div>
+
+            <!-- Total Products -->
+            <div class="stat-card rounded-lg p-6 text-white" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-90">Produits Actifs</p>
+                        <p class="text-3xl font-bold">{{ total_products|intcomma }}</p>
+                        <p class="text-sm opacity-90 mt-1">
+                            <span class="text-green-300">+{{ new_products_today }}</span> aujourd'hui
+                        </p>
+                    </div>
+                    <i data-lucide="package" class="w-12 h-12 opacity-80"></i>
+                </div>
+            </div>
+
+            <!-- Total Orders -->
+            <div class="stat-card rounded-lg p-6 text-white" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-90">Commandes</p>
+                        <p class="text-3xl font-bold">{{ total_orders|intcomma }}</p>
+                        <p class="text-sm opacity-90 mt-1">
+                            <span class="text-green-300">{{ orders_today }}</span> aujourd'hui
+                        </p>
+                    </div>
+                    <i data-lucide="shopping-cart" class="w-12 h-12 opacity-80"></i>
+                </div>
+            </div>
+
+            <!-- Revenue -->
+            <div class="stat-card rounded-lg p-6 text-white" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-90">Revenus (FCFA)</p>
+                        <p class="text-3xl font-bold">{{ total_revenue|intcomma }}</p>
+                        <p class="text-sm opacity-90 mt-1">
+                            <span class="text-green-300">{{ revenue_today|intcomma }}</span> aujourd'hui
+                        </p>
+                    </div>
+                    <i data-lucide="trending-up" class="w-12 h-12 opacity-80"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Insights Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- AI Recommendations -->
+            <div class="ai-insight rounded-lg p-6 text-white">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">Insights IA</h3>
+                    <i data-lucide="brain" class="w-6 h-6"></i>
+                </div>
+                
+                <div class="space-y-4">
+                    {% for insight in ai_insights %}
+                    <div class="bg-white/10 rounded-lg p-3">
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="{{ insight.icon }}" class="w-5 h-5 mt-0.5"></i>
+                            <div>
+                                <p class="font-medium text-sm">{{ insight.title }}</p>
+                                <p class="text-xs opacity-90">{{ insight.description }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <button onclick="refreshAIInsights()" class="mt-4 w-full bg-white/20 hover:bg-white/30 text-white py-2 px-4 rounded-lg transition-colors">
+                    Actualiser les insights
+                </button>
+            </div>
+
+            <!-- Real-time Activity -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Activité en Temps Réel</h3>
+                    <i data-lucide="activity" class="w-5 h-5 text-gray-600"></i>
+                </div>
+                
+                <div class="space-y-4" id="realtime-activity">
+                    {% for activity in realtime_activities %}
+                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-900">{{ activity.title }}</p>
+                            <p class="text-xs text-gray-600">{{ activity.time|timesince }} ago</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- System Health -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">État du Système</h3>
+                    <i data-lucide="server" class="w-5 h-5 text-gray-600"></i>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Serveur Web</span>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span class="text-sm font-medium text-green-600">Opérationnel</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Base de données</span>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span class="text-sm font-medium text-green-600">Opérationnel</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Cache Redis</span>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span class="text-sm font-medium text-green-600">Opérationnel</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">IA Gemini</span>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span class="text-sm font-medium text-green-600">Opérationnel</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">SMS Twilio</span>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span class="text-sm font-medium text-green-600">Opérationnel</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts and Analytics -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Sales Chart -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Ventes des 30 derniers jours</h3>
+                    <div class="flex space-x-2">
+                        <button onclick="updateChart('sales', '7d')" class="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200">7j</button>
+                        <button onclick="updateChart('sales', '30d')" class="px-3 py-1 text-xs bg-vgk-green-600 text-white rounded">30j</button>
+                        <button onclick="updateChart('sales', '90d')" class="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200">90j</button>
+                    </div>
+                </div>
+                <canvas id="salesChart" width="400" height="200"></canvas>
+            </div>
+
+            <!-- User Growth Chart -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Croissance des utilisateurs</h3>
+                    <div class="flex space-x-2">
+                        <button onclick="updateChart('users', '7d')" class="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200">7j</button>
+                        <button onclick="updateChart('users', '30d')" class="px-3 py-1 text-xs bg-vgk-green-600 text-white rounded">30j</button>
+                        <button onclick="updateChart('users', '90d')" class="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200">90j</button>
+                    </div>
+                </div>
+                <canvas id="usersChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Recent Activities -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Recent Orders -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Commandes Récentes</h3>
+                    <a href="{% url 'admin_orders' %}" class="text-sm text-vgk-green-600 hover:text-vgk-green-700">Voir tout</a>
+                </div>
+                
+                <div class="space-y-4">
+                    {% for order in recent_orders %}
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-vgk-green-100 rounded-lg flex items-center justify-center">
+                                <i data-lucide="shopping-bag" class="w-5 h-5 text-vgk-green-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Commande #{{ order.id }}</p>
+                                <p class="text-xs text-gray-600">{{ order.created_at|timesince }} ago</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-medium text-gray-900">{{ order.total_amount|intcomma }} FCFA</p>
+                            <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full 
+                                {% if order.status == 'PENDING' %}bg-yellow-100 text-yellow-800
+                                {% elif order.status == 'CONFIRMED' %}bg-blue-100 text-blue-800
+                                {% elif order.status == 'COMPLETED' %}bg-green-100 text-green-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ order.get_status_display }}
                             </span>
                         </div>
-                        <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                            <div>
-                                <p class="text-sm text-gray-500">{{ activity.message|safe }}</p>
-                            </div>
-                            <div class="text-right text-sm whitespace-nowrap text-gray-500">
-                                <time>{{ activity.created_at|timesince }} ago</time>
-                            </div>
-                        </div>
                     </div>
+                    {% endfor %}
                 </div>
-            </li>
-            {% empty %}
-            <li class="text-gray-500 text-sm">Aucune activité récente</li>
-            {% endfor %}
-        </ul>
+            </div>
+
+            <!-- Recent Products -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Produits Récents</h3>
+                    <a href="{% url 'admin_products' %}" class="text-sm text-vgk-green-600 hover:text-vgk-green-700">Voir tout</a>
+                </div>
+                
+                <div class="space-y-4">
+                    {% for product in recent_products %}
+                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        {% if product.images.first %}
+                        <img src="{{ product.images.first.image.url }}" alt="{{ product.title }}" class="w-12 h-12 rounded-lg object-cover">
+                        {% else %}
+                        <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                            <i data-lucide="image" class="w-6 h-6 text-gray-400"></i>
+                        </div>
+                        {% endif %}
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-900">{{ product.title }}</p>
+                            <p class="text-xs text-gray-600">{{ product.price|intcomma }} FCFA • {{ product.city }}</p>
+                        </div>
+                        <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full 
+                            {% if product.status == 'PENDING' %}bg-yellow-100 text-yellow-800
+                            {% elif product.status == 'ACTIVE' %}bg-green-100 text-green-800
+                            {% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ product.get_status_display }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notifications Panel -->
+<div id="notifications-panel" class="fixed right-0 top-0 h-full w-80 bg-white shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+    <div class="p-4 border-b">
+        <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold">Notifications</h3>
+            <button onclick="toggleNotifications()" class="text-gray-500 hover:text-gray-700">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="overflow-y-auto h-full">
+        <div id="notifications-list" class="p-4 space-y-4">
+            <!-- Notifications will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- AI Insights Modal -->
+<div id="ai-insights-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">Insights IA Détaillés</h3>
+            <button onclick="closeAIInsightsModal()" class="text-gray-500 hover:text-gray-700">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        
+        <div id="detailed-ai-insights">
+            <!-- Detailed insights will be loaded here -->
+        </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-// Dashboard-specific JavaScript
-function refreshDashboard() {
-    const button = event.target.closest('button');
-    const icon = button.querySelector('i[data-lucide="refresh-cw"]');
-    
-    if (icon) {
-        icon.classList.add('spin');
-    }
-    button.disabled = true;
-    
-    // Reload page for fresh data
-    setTimeout(() => {
-        window.location.reload();
-    }, 1000);
-}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Global variables
+let salesChart, usersChart;
+let realtimeUpdateInterval;
 
-// Export de rapport
-function exportReport() {
-    const button = event.target.closest('button');
-    button.disabled = true;
-    button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 spin"></i>Export...';
-    
-    // Redirect to export URL
-    setTimeout(() => {
-                    window.location.href = '{% url "admin_panel:analytics" %}?export=pdf';
-    }, 1000);
-}
-
-// Initialisation des graphiques avec données réelles
-function initializeCharts() {
-    try {
-        // Graphique des ventes - utiliser les données Django
-        const salesCtx = document.getElementById('salesChart');
-        if (salesCtx && typeof Chart !== 'undefined') {
-            new Chart(salesCtx, {
-                type: 'line',
-                data: {
-                    labels: {{ daily_sales_labels|safe }},
-                    datasets: [
-                        {
-                            label: 'Ventes Totales (FCFA)',
-                            data: {{ daily_sales_data|safe }},
-                            borderColor: 'rgb(34, 197, 94)',
-                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                            tension: 0.4,
-                            fill: true
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return value.toLocaleString() + ' FCFA';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Graphique des paiements - utiliser les données Django
-        const paymentCtx = document.getElementById('paymentChart');
-        if (paymentCtx && typeof Chart !== 'undefined') {
-            new Chart(paymentCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: {{ payment_methods_labels|safe }},
-                    datasets: [{
-                        data: {{ payment_methods_data|safe }},
-                        backgroundColor: [
-                            '#3b82f6',
-                            '#10b981',
-                            '#f59e0b',
-                            '#ef4444',
-                            '#8b5cf6'
-                        ],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-        }
-    } catch (error) {
-        console.error('Erreur initialisation graphiques:', error);
-    }
-}
-
-// Dashboard initialization
+// Initialize charts
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize charts
     initializeCharts();
-    
-    console.log('Dashboard VGK Admin initialisé avec succès');
+    startRealtimeUpdates();
+    loadNotifications();
 });
 
-// Dashboard-specific keyboard shortcuts
-document.addEventListener('keydown', function(e) {
-    // Ctrl/Cmd + R pour actualiser
-    if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
-        e.preventDefault();
-        refreshDashboard();
+// Initialize Charts
+function initializeCharts() {
+    const salesCtx = document.getElementById('salesChart').getContext('2d');
+    const usersCtx = document.getElementById('usersChart').getContext('2d');
+    
+    salesChart = new Chart(salesCtx, {
+        type: 'line',
+        data: {
+            labels: {{ sales_chart_labels|safe }},
+            datasets: [{
+                label: 'Ventes (FCFA)',
+                data: {{ sales_chart_data|safe }},
+                borderColor: '#16a34a',
+                backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    usersChart = new Chart(usersCtx, {
+        type: 'line',
+        data: {
+            labels: {{ users_chart_labels|safe }},
+            datasets: [{
+                label: 'Nouveaux utilisateurs',
+                data: {{ users_chart_data|safe }},
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Update charts
+function updateChart(type, period) {
+    fetch(`/admin/api/chart-data/${type}/${period}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (type === 'sales') {
+                salesChart.data.labels = data.labels;
+                salesChart.data.datasets[0].data = data.data;
+                salesChart.update();
+            } else if (type === 'users') {
+                usersChart.data.labels = data.labels;
+                usersChart.data.datasets[0].data = data.data;
+                usersChart.update();
+            }
+        });
+}
+
+// Real-time updates
+function startRealtimeUpdates() {
+    realtimeUpdateInterval = setInterval(() => {
+        updateRealtimeData();
+    }, 30000); // Update every 30 seconds
+}
+
+function updateRealtimeData() {
+    fetch('/admin/api/realtime-data/')
+        .then(response => response.json())
+        .then(data => {
+            // Update stats
+            document.getElementById('total-users').textContent = data.total_users.toLocaleString();
+            document.getElementById('total-products').textContent = data.total_products.toLocaleString();
+            document.getElementById('total-orders').textContent = data.total_orders.toLocaleString();
+            document.getElementById('total-revenue').textContent = data.total_revenue.toLocaleString();
+            
+            // Update realtime activity
+            updateRealtimeActivity(data.activities);
+        });
+}
+
+function updateRealtimeActivity(activities) {
+    const container = document.getElementById('realtime-activity');
+    container.innerHTML = '';
+    
+    activities.forEach(activity => {
+        const activityElement = document.createElement('div');
+        activityElement.className = 'flex items-center space-x-3 p-3 bg-gray-50 rounded-lg';
+        activityElement.innerHTML = `
+            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-900">${activity.title}</p>
+                <p class="text-xs text-gray-600">${activity.time}</p>
+            </div>
+        `;
+        container.appendChild(activityElement);
+    });
+}
+
+// Notifications
+function toggleNotifications() {
+    const panel = document.getElementById('notifications-panel');
+    panel.classList.toggle('translate-x-full');
+}
+
+function loadNotifications() {
+    fetch('/admin/api/notifications/')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('notifications-list');
+            container.innerHTML = '';
+            
+            data.notifications.forEach(notification => {
+                const notificationElement = document.createElement('div');
+                notificationElement.className = 'p-3 border-b border-gray-200';
+                notificationElement.innerHTML = `
+                    <div class="flex items-start space-x-3">
+                        <i data-lucide="${notification.icon}" class="w-5 h-5 text-${notification.color}-600 mt-0.5"></i>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-900">${notification.title}</p>
+                            <p class="text-xs text-gray-600">${notification.message}</p>
+                            <p class="text-xs text-gray-500 mt-1">${notification.time}</p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(notificationElement);
+            });
+        });
+}
+
+// AI Insights
+function refreshAIInsights() {
+    fetch('/admin/api/ai-insights/')
+        .then(response => response.json())
+        .then(data => {
+            // Update AI insights
+            const container = document.querySelector('.ai-insight .space-y-4');
+            container.innerHTML = '';
+            
+            data.insights.forEach(insight => {
+                const insightElement = document.createElement('div');
+                insightElement.className = 'bg-white/10 rounded-lg p-3';
+                insightElement.innerHTML = `
+                    <div class="flex items-start space-x-3">
+                        <i data-lucide="${insight.icon}" class="w-5 h-5 mt-0.5"></i>
+                        <div>
+                            <p class="font-medium text-sm">${insight.title}</p>
+                            <p class="text-xs opacity-90">${insight.description}</p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(insightElement);
+            });
+        });
+}
+
+function showDetailedAIInsights() {
+    fetch('/admin/api/ai-insights/detailed/')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('detailed-ai-insights');
+            container.innerHTML = '';
+            
+            data.insights.forEach(insight => {
+                const insightElement = document.createElement('div');
+                insightElement.className = 'mb-6 p-4 bg-gray-50 rounded-lg';
+                insightElement.innerHTML = `
+                    <h4 class="font-semibold text-gray-900 mb-2">${insight.title}</h4>
+                    <p class="text-sm text-gray-600 mb-3">${insight.description}</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500">Confiance: ${insight.confidence}%</span>
+                        <button onclick="applyAIInsight('${insight.id}')" class="text-xs bg-vgk-green-600 text-white px-3 py-1 rounded hover:bg-vgk-green-700">
+                            Appliquer
+                        </button>
+                    </div>
+                `;
+                container.appendChild(insightElement);
+            });
+            
+            document.getElementById('ai-insights-modal').classList.remove('hidden');
+        });
+}
+
+function closeAIInsightsModal() {
+    document.getElementById('ai-insights-modal').classList.add('hidden');
+}
+
+function applyAIInsight(insightId) {
+    fetch(`/admin/api/ai-insights/${insightId}/apply/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Insight appliqué avec succès !');
+            closeAIInsightsModal();
+        } else {
+            alert('Erreur lors de l\'application de l\'insight.');
+        }
+    });
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (realtimeUpdateInterval) {
+        clearInterval(realtimeUpdateInterval);
     }
 });
+</script>
 {% endblock %}

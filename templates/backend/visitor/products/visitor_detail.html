@@ -1,574 +1,468 @@
-{% extends 'backend/visitor/base.html' %}
+{% extends 'base.html' %}
 {% load static %}
-{% load humanize %}
 
 {% block title %}{{ product.title }} - Vidé-Grenier Kamer{% endblock %}
 
 {% block extra_css %}
 <style>
-    .product-gallery {
-        position: relative;
-        overflow: hidden;
-        border-radius: 16px;
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    }
-    
-    .product-image {
-        transition: transform 0.3s ease;
-        cursor: pointer;
-    }
-    
-    .product-image:hover {
-        transform: scale(1.05);
-    }
-    
-    .thumbnail {
-        transition: all 0.3s ease;
-        border: 2px solid transparent;
-        cursor: pointer;
-    }
-    
-    .thumbnail:hover {
-        border-color: #3b82f6;
-        transform: scale(1.1);
-    }
-    
-    .thumbnail.active {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-    }
-    
-    .price-badge {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-weight: bold;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    }
-    
-    .condition-badge {
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-    }
-    
-    .condition-neuf { background: #dcfce7; color: #166534; }
-    .condition-excellent { background: #dbeafe; color: #1e40af; }
-    .condition-bon { background: #fef3c7; color: #92400e; }
-    .condition-correct { background: #f3e8ff; color: #7c3aed; }
-    .condition-usage { background: #fee2e2; color: #991b1b; }
-    
-    .action-button {
-        transition: all 0.3s ease;
-        border-radius: 12px;
-        font-weight: 600;
-        padding: 12px 24px;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        text-decoration: none;
-        border: none;
-        cursor: pointer;
-    }
-    
-    .action-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    }
-    
-    .btn-primary {
-        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-        color: white;
-    }
-    
-    .btn-secondary {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-    }
-    
-    .btn-outline {
-        background: transparent;
-        border: 2px solid #3b82f6;
-        color: #3b82f6;
-    }
-    
-    .btn-outline:hover {
-        background: #3b82f6;
-        color: white;
-    }
-    
-    .seller-card {
-        background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
-        border: 1px solid #e5e7eb;
-        border-radius: 16px;
+    .product-detail-card {
         backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
     
-    .similar-product {
-        transition: all 0.3s ease;
-        border-radius: 12px;
-        overflow: hidden;
-        background: white;
-        border: 1px solid #e5e7eb;
+    .animate-fade-in-up {
+        animation: fadeInUp 0.6s ease-out;
     }
     
-    .similar-product:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-        border-color: #3b82f6;
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     
-    .quantity-input {
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        padding: 8px 12px;
-        text-align: center;
-        font-weight: 600;
-        transition: border-color 0.3s ease;
+    .animate-scale-in {
+        animation: scaleIn 0.5s ease-out;
     }
     
-    .quantity-input:focus {
-        outline: none;
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    @keyframes scaleIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
     }
     
-    .quantity-btn {
-        width: 40px;
-        height: 40px;
-        border: 2px solid #e5e7eb;
-        background: white;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-weight: bold;
+    .hover-lift {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
-    .quantity-btn:hover {
-        border-color: #3b82f6;
-        background: #3b82f6;
-        color: white;
+    .hover-lift:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
     }
     
-    .quantity-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
     
-    .whatsapp-button {
-        background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        padding: 12px 24px;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        text-decoration: none;
-        transition: all 0.3s ease;
+    .image-gallery {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
     }
     
-    .whatsapp-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(37, 211, 102, 0.3);
-        color: white;
+    .image-gallery::-webkit-scrollbar {
+        width: 6px;
     }
     
-    .cart-success {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-        padding: 16px 24px;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
-        z-index: 1000;
-        transform: translateX(400px);
-        transition: transform 0.3s ease;
+    .image-gallery::-webkit-scrollbar-track {
+        background: transparent;
     }
     
-    .cart-success.show {
-        transform: translateX(0);
-    }
-    
-    .loading-spinner {
-        border: 2px solid #f3f4f6;
-        border-top: 2px solid #3b82f6;
-        border-radius: 50%;
-        width: 20px;
-        height: 20px;
-        animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+    .image-gallery::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Breadcrumb -->
-    <nav class="flex mb-8" aria-label="Breadcrumb">
-        <ol class="inline-flex items-center space-x-1 md:space-x-3">
-            <li class="inline-flex items-center">
-                <a href="{% url 'backend:visitor_product_list' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
-                    <i data-lucide="home" class="w-4 h-4 mr-2"></i>
-                    Produits
-                </a>
-            </li>
-            <li>
-                <div class="flex items-center">
-                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
-                    <a href="{% url 'backend:category_detail' product.category.slug %}" class="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Breadcrumb -->
+        <nav class="mb-8 animate-fade-in-up">
+            <ol class="flex items-center space-x-2 text-gray-300">
+                <li>
+                    <a href="{% url 'backend:home' %}" class="hover:text-white transition-colors">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                    </a>
+                </li>
+                <li><i data-lucide="chevron-right" class="w-4 h-4"></i></li>
+                <li>
+                    <a href="{% url 'backend:visitor_product_list' %}" class="hover:text-white transition-colors">
+                        Produits
+                    </a>
+                </li>
+                <li><i data-lucide="chevron-right" class="w-4 h-4"></i></li>
+                <li>
+                    <a href="{% url 'backend:visitor_category_detail' slug=product.category.slug %}" class="hover:text-white transition-colors">
                         {{ product.category.name }}
                     </a>
-                </div>
-            </li>
-            <li aria-current="page">
-                <div class="flex items-center">
-                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
-                    <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">
-                        {{ product.title|truncatechars:30 }}
-                    </span>
-                </div>
-            </li>
-        </ol>
-    </nav>
+                </li>
+                <li><i data-lucide="chevron-right" class="w-4 h-4"></i></li>
+                <li class="text-white font-medium">{{ product.title }}</li>
+            </ol>
+        </nav>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Product Images -->
-        <div class="space-y-4">
-            <div class="product-gallery">
-                <img id="main-image" src="{{ product.main_image.image.url|default:'/static/backend/images/placeholder.jpg' }}" 
-                     alt="{{ product.title }}" 
-                     class="w-full h-96 object-cover product-image">
-                
-                <!-- Image Navigation -->
-                <div class="absolute top-4 right-4 flex space-x-2">
-                    <button onclick="previousImage()" class="bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-all">
-                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
-                    </button>
-                    <button onclick="nextImage()" class="bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-all">
-                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Thumbnails -->
-            {% if product.images.count > 1 %}
-            <div class="flex space-x-2 overflow-x-auto pb-2">
-                {% for image in product.images.all %}
-                <img src="{{ image.image.url }}" 
-                     alt="{{ product.title }}" 
-                     onclick="changeMainImage('{{ image.image.url }}', this)"
-                     class="thumbnail w-20 h-20 object-cover rounded-lg cursor-pointer {% if forloop.first %}active{% endif %}">
-                {% endfor %}
-            </div>
-            {% endif %}
-        </div>
-
-        <!-- Product Details -->
-        <div class="space-y-6">
-            <!-- Title and Price -->
-            <div class="space-y-4">
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ product.title }}</h1>
-                
-                <div class="flex items-center justify-between">
-                    <div class="price-badge text-2xl">
-                        {{ product.price|floatformat:0 }} FCFA
-                    </div>
-                    <span class="condition-badge condition-{{ product.condition|lower }}">
-                        {{ product.get_condition_display }}
-                    </span>
-                </div>
-            </div>
-
-            <!-- Description -->
-            <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Description</h3>
-                <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ product.description|linebreaks }}</p>
-            </div>
-
-            <!-- Product Info -->
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                    <div class="flex items-center space-x-2">
-                        <i data-lucide="map-pin" class="w-5 h-5 text-blue-500"></i>
-                        <span class="text-gray-700 dark:text-gray-300">Ville</span>
-                    </div>
-                    <p class="font-semibold text-gray-900 dark:text-white mt-1">{{ product.get_city_display }}</p>
-                </div>
-                
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                    <div class="flex items-center space-x-2">
-                        <i data-lucide="eye" class="w-5 h-5 text-blue-500"></i>
-                        <span class="text-gray-700 dark:text-gray-300">Vues</span>
-                    </div>
-                    <p class="font-semibold text-gray-900 dark:text-white mt-1">{{ product.views_count|default:0 }}</p>
-                </div>
-            </div>
-
-            <!-- Add to Cart Section -->
-            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Ajouter au panier</h3>
-                
-                <div class="space-y-4">
-                    <!-- Quantity Selector -->
-                    <div class="flex items-center space-x-4">
-                        <label class="text-gray-700 dark:text-gray-300 font-medium">Quantité:</label>
-                        <div class="flex items-center space-x-2">
-                            <button onclick="decreaseQuantity()" class="quantity-btn" id="decrease-btn">
-                                <i data-lucide="minus" class="w-4 h-4"></i>
+        <div class="grid lg:grid-cols-2 gap-8 lg:gap-12">
+            <!-- Product Images -->
+            <div class="animate-fade-in-up">
+                <div class="product-detail-card rounded-2xl overflow-hidden">
+                    <!-- Main Image -->
+                    <div class="relative">
+                        <img id="main-image" 
+                             src="{% if product.main_image %}{{ product.main_image.image.url }}{% else %}{% static 'images/placeholder.jpg' %}{% endif %}" 
+                             alt="{{ product.title }}" 
+                             class="w-full h-96 lg:h-[500px] object-cover">
+                        
+                        <!-- Condition Badge -->
+                        <div class="absolute top-4 left-4">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+                                       {% if product.condition == 'NEUF' %}bg-green-500 text-white
+                                       {% elif product.condition == 'EXCELLENT' %}bg-blue-500 text-white
+                                       {% elif product.condition == 'BON' %}bg-yellow-500 text-white
+                                       {% else %}bg-gray-500 text-white{% endif %}">
+                                {{ product.get_condition_display }}
+                            </span>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="absolute top-4 right-4 flex space-x-2">
+                            <button onclick="toggleFavorite('{{ product.id }}')" 
+                                    class="w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors favorite-btn" 
+                                    data-favorited="{{ product.is_favorited|yesno:'true,false' }}">
+                                <i data-lucide="heart" class="w-5 h-5 {% if product.is_favorited %}text-red-500 fill-current{% else %}text-gray-600{% endif %}"></i>
                             </button>
-                            <input type="number" id="quantity" value="1" min="1" max="99" 
-                                   class="quantity-input w-16">
-                            <button onclick="increaseQuantity()" class="quantity-btn" id="increase-btn">
-                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            
+                            <button onclick="toggleCompare('{{ product.id }}')" 
+                                    class="w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors compare-btn" 
+                                    data-comparing="{{ product.is_comparing|yesno:'true,false' }}">
+                                <i data-lucide="git-compare" class="w-5 h-5 {% if product.is_comparing %}text-blue-500{% else %}text-gray-600{% endif %}"></i>
+                            </button>
+                            
+                            <button onclick="shareProduct()" 
+                                    class="w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors">
+                                <i data-lucide="share-2" class="w-5 h-5 text-gray-600"></i>
                             </button>
                         </div>
                     </div>
-
+                    
+                    <!-- Image Gallery -->
+                    {% if product.images.count > 1 %}
+                    <div class="p-4">
+                        <div class="image-gallery flex space-x-2 overflow-x-auto">
+                            {% for image in product.images.all %}
+                            <button onclick="changeMainImage('{{ image.image.url }}')" 
+                                    class="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 border-transparent hover:border-purple-400 transition-colors">
+                                <img src="{{ image.image.url }}" 
+                                     alt="{{ product.title }}" 
+                                     class="w-full h-full object-cover">
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Product Info -->
+            <div class="animate-fade-in-up" style="animation-delay: 0.2s;">
+                <div class="product-detail-card rounded-2xl p-6 lg:p-8">
+                    <!-- Title and Price -->
+                    <div class="mb-6">
+                        <h1 class="text-2xl lg:text-3xl font-bold text-white mb-4">{{ product.title }}</h1>
+                        <div class="text-3xl lg:text-4xl font-bold text-green-400 mb-4">
+                            {{ product.price|floatformat:0 }} FCFA
+                        </div>
+                        
+                        <!-- Seller Info -->
+                        <div class="flex items-center space-x-3 mb-6">
+                            {% if product.seller.profile_picture %}
+                            <img src="{{ product.seller.profile_picture.url }}" 
+                                 alt="{{ product.seller.get_full_name }}" 
+                                 class="w-12 h-12 rounded-full">
+                            {% else %}
+                            <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                                {{ product.seller.first_name|first|upper }}
+                            </div>
+                            {% endif %}
+                            <div>
+                                <div class="text-white font-semibold">{{ product.seller.get_full_name }}</div>
+                                <div class="text-gray-400 text-sm">{{ product.get_city_display }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Product Details -->
+                    <div class="space-y-4 mb-8">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-300">Catégorie:</span>
+                            <span class="text-white font-medium">{{ product.category.name }}</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-300">Ville:</span>
+                            <span class="text-white font-medium">{{ product.get_city_display }}</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-300">Vues:</span>
+                            <span class="text-white font-medium">{{ product.views_count }}</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-300">Publié le:</span>
+                            <span class="text-white font-medium">{{ product.created_at|date:"d/m/Y" }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    {% if product.description %}
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold text-white mb-3">Description</h3>
+                        <div class="text-gray-300 leading-relaxed">
+                            {{ product.description|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
                     <!-- Action Buttons -->
-                    <div class="flex flex-col sm:flex-row gap-3">
-                        <button onclick="addToCart()" id="add-to-cart-btn" 
-                                class="action-button btn-primary flex-1">
-                            <i data-lucide="shopping-cart" class="w-5 h-5"></i>
-                            <span>Ajouter au panier</span>
+                    <div class="space-y-4">
+                        <button onclick="addToCart('{{ product.id }}')" 
+                                class="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-bold text-lg hover-lift">
+                            <i data-lucide="shopping-cart" class="w-5 h-5 inline mr-2"></i>
+                            Ajouter au panier
                         </button>
                         
-                        <button onclick="toggleFavorite()" id="favorite-btn" 
-                                class="action-button btn-outline">
-                            <i data-lucide="heart" class="w-5 h-5"></i>
-                            <span>Favoris</span>
+                        <button onclick="buyNow('{{ product.id }}')" 
+                                class="w-full bg-gradient-to-r from-purple-600 to-cyan-600 text-white py-4 rounded-xl hover:from-purple-700 hover:to-cyan-700 transition-all duration-300 font-bold text-lg hover-lift">
+                            <i data-lucide="zap" class="w-5 h-5 inline mr-2"></i>
+                            Acheter maintenant
+                        </button>
+                        
+                        <button onclick="contactSeller()" 
+                                class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 font-bold text-lg hover-lift">
+                            <i data-lucide="message-circle" class="w-5 h-5 inline mr-2"></i>
+                            Contacter le vendeur
                         </button>
                     </div>
-
-                    <!-- WhatsApp Button -->
-                    <a href="{{ whatsapp_url }}" target="_blank" class="whatsapp-button w-full justify-center">
-                        <i data-lucide="message-circle" class="w-5 h-5"></i>
-                        <span>Contacter le vendeur</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- Seller Information -->
-            <div class="seller-card p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Vendeur</h3>
-                <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-                        {{ product.seller.first_name.0|upper }}
-                    </div>
-                    <div>
-                        <p class="font-semibold text-gray-900 dark:text-white">{{ product.seller.get_full_name }}</p>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">Membre depuis {{ product.seller.date_joined|date:"M Y" }}</p>
-                    </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Similar Products -->
-    {% if similar_products %}
-    <div class="mt-16">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">Produits similaires</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {% for similar in similar_products %}
-            <div class="similar-product">
-                <img src="{{ similar.main_image.image.url|default:'/static/backend/images/placeholder.jpg' }}" 
-                     alt="{{ similar.title }}" 
-                     class="w-full h-48 object-cover">
-                <div class="p-4">
-                    <h3 class="font-semibold text-gray-900 dark:text-white mb-2">{{ similar.title|truncatechars:40 }}</h3>
-                    <p class="text-lg font-bold text-green-600">{{ similar.price|floatformat:0 }} FCFA</p>
-                    <div class="flex items-center justify-between mt-3">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">{{ similar.get_city_display }}</span>
-                        <a href="{% url 'backend:visitor_product_detail' similar.slug %}" 
-                           class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                            Voir détails
-                        </a>
+        
+        <!-- Similar Products -->
+        {% if similar_products %}
+        <div class="mt-12 animate-fade-in-up" style="animation-delay: 0.4s;">
+            <div class="glass-effect rounded-2xl p-6 lg:p-8">
+                <h2 class="text-2xl font-bold text-white mb-6">Produits similaires</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {% for similar_product in similar_products %}
+                    <div class="product-detail-card rounded-xl overflow-hidden hover-lift">
+                        <div class="relative">
+                            {% if similar_product.main_image %}
+                            <img src="{{ similar_product.main_image.image.url }}" 
+                                 alt="{{ similar_product.title }}" 
+                                 class="w-full h-32 object-cover">
+                            {% else %}
+                            <div class="w-full h-32 bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
+                                <i data-lucide="image" class="w-8 h-8 text-white"></i>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Condition Badge -->
+                            <div class="absolute top-2 left-2">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium 
+                                           {% if similar_product.condition == 'NEUF' %}bg-green-500 text-white
+                                           {% elif similar_product.condition == 'EXCELLENT' %}bg-blue-500 text-white
+                                           {% elif similar_product.condition == 'BON' %}bg-yellow-500 text-white
+                                           {% else %}bg-gray-500 text-white{% endif %}">
+                                    {{ similar_product.get_condition_display }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="p-3">
+                            <h3 class="font-semibold text-white text-sm mb-2 line-clamp-2">
+                                <a href="{% url 'backend:visitor_product_detail' slug=similar_product.slug %}" 
+                                   class="hover:text-purple-300 transition-colors">
+                                    {{ similar_product.title }}
+                                </a>
+                            </h3>
+                            
+                            <div class="text-lg font-bold text-green-400 mb-2">
+                                {{ similar_product.price|floatformat:0 }} FCFA
+                            </div>
+                            
+                            <div class="flex items-center justify-between text-xs text-gray-400">
+                                <span>{{ similar_product.get_city_display }}</span>
+                                <span>{{ similar_product.views_count }} vues</span>
+                            </div>
+                        </div>
                     </div>
+                    {% endfor %}
                 </div>
             </div>
-            {% endfor %}
         </div>
-    </div>
-    {% endif %}
-</div>
-
-<!-- Cart Success Notification -->
-<div id="cart-notification" class="cart-success">
-    <div class="flex items-center space-x-3">
-        <i data-lucide="check-circle" class="w-6 h-6"></i>
-        <div>
-            <p class="font-semibold">Produit ajouté au panier!</p>
-            <p class="text-sm opacity-90">Vérifiez votre panier pour continuer</p>
-        </div>
+        {% endif %}
     </div>
 </div>
 
 <script>
-    let currentImageIndex = 0;
-    const images = [
-        {% for image in product.images.all %}
-        '{{ image.image.url }}',
-        {% endfor %}
-    ];
+function changeMainImage(imageUrl) {
+    document.getElementById('main-image').src = imageUrl;
+}
 
-    function changeMainImage(src, thumbnail) {
-        document.getElementById('main-image').src = src;
-        
-        // Update active thumbnail
-        document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
-        thumbnail.classList.add('active');
-        
-        // Update current index
-        currentImageIndex = images.indexOf(src);
-    }
-
-    function nextImage() {
-        if (images.length > 1) {
-            currentImageIndex = (currentImageIndex + 1) % images.length;
-            changeMainImage(images[currentImageIndex], document.querySelectorAll('.thumbnail')[currentImageIndex]);
-        }
-    }
-
-    function previousImage() {
-        if (images.length > 1) {
-            currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
-            changeMainImage(images[currentImageIndex], document.querySelectorAll('.thumbnail')[currentImageIndex]);
-        }
-    }
-
-    function increaseQuantity() {
-        const input = document.getElementById('quantity');
-        const value = parseInt(input.value) || 1;
-        if (value < 99) {
-            input.value = value + 1;
-        }
-        updateQuantityButtons();
-    }
-
-    function decreaseQuantity() {
-        const input = document.getElementById('quantity');
-        const value = parseInt(input.value) || 1;
-        if (value > 1) {
-            input.value = value - 1;
-        }
-        updateQuantityButtons();
-    }
-
-    function updateQuantityButtons() {
-        const input = document.getElementById('quantity');
-        const value = parseInt(input.value) || 1;
-        
-        document.getElementById('decrease-btn').disabled = value <= 1;
-        document.getElementById('increase-btn').disabled = value >= 99;
-    }
-
-    function addToCart() {
-        const quantity = parseInt(document.getElementById('quantity').value) || 1;
-        const button = document.getElementById('add-to-cart-btn');
-        const originalContent = button.innerHTML;
-        
-        // Show loading state
-        button.innerHTML = '<div class="loading-spinner"></div><span>Ajout en cours...</span>';
-        button.disabled = true;
-        
-        fetch('{% url "backend:visitor_add_to_cart" product.id %}', {
+async function toggleFavorite(productId) {
+    try {
+        const response = await fetch(`/visitor/favorite/toggle/${productId}/`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({
-                quantity: quantity
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showCartNotification();
-                // Update cart count if available
-                const cartCount = document.getElementById('cart-count');
-                if (cartCount) {
-                    cartCount.textContent = data.cart_items;
-                }
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const btn = document.querySelector('.favorite-btn');
+            const icon = btn.querySelector('i');
+            
+            if (data.is_favorited) {
+                icon.classList.add('text-red-500', 'fill-current');
+                icon.classList.remove('text-gray-600');
             } else {
-                alert('Erreur: ' + data.message);
+                icon.classList.remove('text-red-500', 'fill-current');
+                icon.classList.add('text-gray-600');
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Erreur lors de l\'ajout au panier');
-        })
-        .finally(() => {
-            // Restore button state
-            button.innerHTML = originalContent;
-            button.disabled = false;
-        });
+            
+            showNotification(data.message, 'success');
+        } else {
+            showNotification(data.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Erreur lors de l\'ajout aux favoris', 'error');
     }
+}
 
-    function toggleFavorite() {
-        const button = document.getElementById('favorite-btn');
-        const icon = button.querySelector('i');
-        
-        fetch('{% url "backend:visitor_toggle_favorite" product.id %}', {
+async function toggleCompare(productId) {
+    try {
+        const response = await fetch(`/visitor/compare/toggle/${productId}/`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
             }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                if (data.is_favorite) {
-                    icon.setAttribute('data-lucide', 'heart');
-                    icon.style.fill = '#ef4444';
-                    icon.style.color = '#ef4444';
-                } else {
-                    icon.setAttribute('data-lucide', 'heart');
-                    icon.style.fill = 'none';
-                    icon.style.color = 'currentColor';
-                }
-                lucide.createIcons();
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const btn = document.querySelector('.compare-btn');
+            const icon = btn.querySelector('i');
+            
+            if (data.is_comparing) {
+                icon.classList.add('text-blue-500');
+                icon.classList.remove('text-gray-600');
+            } else {
+                icon.classList.remove('text-blue-500');
+                icon.classList.add('text-gray-600');
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
+            
+            showNotification(data.message, 'success');
+        } else {
+            showNotification(data.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Erreur lors de l\'ajout à la comparaison', 'error');
+    }
+}
+
+async function addToCart(productId) {
+    try {
+        const response = await fetch(`/visitor/cart/add/${productId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            },
+            body: 'quantity=1'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification(data.message, 'success');
+            
+            // Update cart widget if available
+            if (typeof updateVisitorCartWidget === 'function') {
+                updateVisitorCartWidget();
+            }
+        } else {
+            showNotification(data.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Erreur lors de l\'ajout au panier', 'error');
+    }
+}
+
+function buyNow(productId) {
+    // Redirect to quick buy page
+    window.location.href = `/buy/${productId}/`;
+}
+
+function contactSeller() {
+    // Redirect to contact page or open chat
+    window.location.href = `/contact/?product={{ product.id }}`;
+}
+
+function shareProduct() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ product.title }}',
+            text: 'Découvrez ce produit sur Vidé-Grenier Kamer',
+            url: window.location.href
+        });
+    } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            showNotification('Lien copié dans le presse-papiers', 'success');
         });
     }
+}
 
-    function showCartNotification() {
-        const notification = document.getElementById('cart-notification');
-        notification.classList.add('show');
-        
-        setTimeout(() => {
-            notification.classList.remove('show');
-        }, 3000);
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 max-w-sm p-4 rounded-xl shadow-2xl transition-all duration-300 animate-fade-in-up ${
+        type === 'success' ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white' : 'bg-gradient-to-r from-red-500 to-pink-500 text-white'
+    }`;
+    notification.innerHTML = `
+        <div class="flex items-center justify-between">
+            <span class="font-medium">${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white/80 hover:text-white transition-colors">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove
+    setTimeout(() => notification.remove(), 5000);
+    
+    // Re-initialize icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
     }
+}
 
-    // Initialize
-    document.addEventListener('DOMContentLoaded', function() {
-        updateQuantityButtons();
-        
-        // Update quantity buttons when input changes
-        document.getElementById('quantity').addEventListener('input', updateQuantityButtons);
-        
-        // Initialize Lucide icons
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
+// Initialize animations on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Add staggered animation to similar products
+    const similarProducts = document.querySelectorAll('.product-detail-card');
+    similarProducts.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
     });
+});
 </script>
 {% endblock %} 

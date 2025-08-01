@@ -2,7 +2,7 @@
 
 from django.urls import path, include
 from django.views.decorators.csrf import csrf_exempt
-from . import views, additional_views
+from . import views, additional_views, views_visitor
 from .views_enhanced import DashboardRedirectView
 
 app_name = 'backend'
@@ -18,9 +18,8 @@ urlpatterns = [
     # Newsletter subscription
     path('api/newsletter/subscribe/', views.newsletter_subscribe, name='newsletter_subscribe'),
     
-    # APK Download
-    path('download-apk/', views.APKDownloadView.as_view(), name='download_apk'),
-    path('generate-apk/', views.APKGenerationView.as_view(), name='generate_apk'),
+    # Mobile API endpoints
+    path('mobile/api/', include('backend.mobile.urls')),
     
     # Static pages
     path('about/', additional_views.AboutView.as_view(), name='about'),
@@ -38,6 +37,12 @@ urlpatterns += [
     path('auth/password-reset-request/', additional_views.PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('auth/password-reset-confirm/<str:token>/', additional_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('auth/verify-phone/', views.PhoneVerificationView.as_view(), name='verify_phone'),
+    path('auth/resend-2fa-code/', views.resend_2fa_code, name='resend_2fa_code'),
+    path('auth/setup-2fa/', views.setup_2fa, name='setup_2fa'),
+    path('auth/verify-2fa-code/', views.verify_2fa_code, name='verify_2fa_code'),
+    path('auth/send-verification-code/', views.send_verification_code, name='send_verification_code'),
+    path('auth/verify-and-create-account/', views.verify_and_create_account, name='verify_and_create_account'),
+    path('auth/ajax-login/', views.ajax_login, name='ajax_login'),
 ]
 
 # ============= PRODUCTS =============
@@ -53,6 +58,7 @@ urlpatterns += [
     path('visitor/products/', views.VisitorProductListView.as_view(), name='visitor_product_list'),
     path('visitor/product/<slug:slug>/', views.VisitorProductDetailView.as_view(), name='visitor_product_detail'),
     path('visitor/product/id/<uuid:pk>/', views.VisitorProductDetailView.as_view(), name='visitor_product_detail_pk'),
+    path('visitor/category/<slug:slug>/', views_visitor.VisitorCategoryDetailView.as_view(), name='visitor_category_detail'),
     
     # Product CRUD
     path('products/create/', views.ProductCreateView.as_view(), name='product_create'),

@@ -57,6 +57,9 @@ except ImportError:
     def get_apk_info(apk_path):
         return None
 
+# Import 2FA functions
+from .two_factor_auth import resend_2fa_code, enable_2fa_for_user, verify_2fa_code
+
 # Import modular visitor views
 from .views_visitor import (
     VisitorProductListView, VisitorProductDetailView,
@@ -3756,7 +3759,7 @@ def newsletter_subscribe(request):
                         variables={'name': name or 'Abonné', 'email': email}
                     )
             except Exception as e:
-                logger.warning(f"Failed to send welcome email: {str(e)}")
+                logging.warning(f"Failed to send welcome email: {str(e)}")
             
             return JsonResponse({
                 'success': True,
@@ -3769,7 +3772,7 @@ def newsletter_subscribe(request):
                 'error': 'Données invalides'
             })
         except Exception as e:
-            logger.error(f"Newsletter subscription error: {str(e)}")
+            logging.error(f"Newsletter subscription error: {str(e)}")
             return JsonResponse({
                 'success': False,
                 'error': 'Erreur serveur, veuillez réessayer plus tard'
@@ -4413,9 +4416,9 @@ class VisitorProductListView(ListView):
             except (ValueError, TypeError):
                 pass
         
-        condition = self.request.GET.get('condition')
-        if condition:
-            queryset = queryset.filter(condition=condition)
+        conditions = self.request.GET.getlist('condition')
+        if conditions:
+            queryset = queryset.filter(condition__in=conditions)
         
         # Order by featured first, then by creation date
         queryset = queryset.order_by('-is_featured', '-created_at')
@@ -4433,6 +4436,9 @@ class VisitorProductListView(ListView):
         
         # Add conditions for filtering
         context['conditions'] = Product.CONDITIONS
+        
+        # Add selected conditions for template
+        context['selected_conditions'] = self.request.GET.getlist('condition')
         
         # Add search query
         context['search_query'] = self.request.GET.get('search', '')
@@ -5522,4 +5528,328 @@ def ai_recommendations_view(request):
         return JsonResponse({
             'success': False,
             'message': str(e)
+        })
+
+
+@require_POST
+def resend_2fa_code(request):
+    """Resend 2FA code to user"""
+    try:
+        # Get user from session or request
+        user = request.user
+        if not user.is_authenticated:
+            return JsonResponse({
+                'success': False,
+                'message': 'Utilisateur non authentifié'
+            })
+        
+        # Get method from request (sms or email)
+        method = request.POST.get('method', 'sms')
+        
+        # Resend the 2FA code
+        success = resend_2fa_code(user, method)
+        
+        if success:
+            return JsonResponse({
+                'success': True,
+                'message': f'Code 2FA renvoyé par {method}'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'Erreur lors de l\'envoi du code 2FA'
+            })
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erreur: {str(e)}'
+        })
+
+
+@require_POST
+def setup_2fa(request):
+    """Setup 2FA for user"""
+    try:
+        # Get user from session or request
+        user = request.user
+        if not user.is_authenticated:
+            return JsonResponse({
+                'success': False,
+                'message': 'Utilisateur non authentifié'
+            })
+        
+        # Get method from request (sms or email)
+        data = json.loads(request.body)
+        method = data.get('method', 'sms')
+        
+        # Setup 2FA for the user
+        result = enable_2fa_for_user(user, method)
+        success = result.get('success', False)
+        
+        if success:
+            return JsonResponse({
+                'success': True,
+                'message': f'2FA configuré avec succès via {method}'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'Erreur lors de la configuration 2FA'
+            })
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erreur: {str(e)}'
+        })
+
+
+@require_POST
+def verify_2fa_code(request):
+    """Verify 2FA code"""
+    try:
+        # Get user from session or request
+        user = request.user
+        if not user.is_authenticated:
+            return JsonResponse({
+                'success': False,
+                'message': 'Utilisateur non authentifié'
+            })
+        
+        # Get code from request
+        data = json.loads(request.body)
+        code = data.get('code', '')
+        method = data.get('method', 'sms')
+        
+        # Verify the 2FA code
+        result = verify_2fa_code(user, code, method)
+        
+        if result.get('success'):
+            return JsonResponse({
+                'success': True,
+                'message': 'Code 2FA vérifié avec succès'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': result.get('error', 'Code 2FA invalide')
+            })
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erreur: {str(e)}'
+        })
+
+
+@require_POST
+def send_verification_code(request):
+    """Send verification code for registration"""
+    try:
+        # Get form data
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        
+        if not email and not phone:
+            return JsonResponse({
+                'success': False,
+                'message': 'Email ou numéro de téléphone requis'
+            })
+        
+        # Check if user already exists
+        if User.objects.filter(email=email).exists():
+            return JsonResponse({
+                'success': False,
+                'message': 'Un compte avec cet email existe déjà'
+            })
+        
+        # Generate verification code
+        code = ''.join(random.choices('0123456789', k=6))
+        
+        # Store code in cache for 10 minutes
+        cache_key = f'verification_code_{email or phone}'
+        cache.set(cache_key, code, 600)
+        
+        # Send code via email or SMS
+        if email:
+            # Send email
+            send_mail(
+                'Code de vérification - Vidé-Grenier Kamer',
+                f'Votre code de vérification est: {code}\n\nCe code expire dans 10 minutes.',
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+            method = 'email'
+        else:
+            # Send SMS (implement SMS sending logic here)
+            # For now, just print the code
+            print(f"SMS code for {phone}: {code}")
+            method = 'SMS'
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Code de vérification envoyé par {method}',
+            'method': method
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erreur lors de l\'envoi du code: {str(e)}'
+        })
+
+
+@require_POST
+def verify_and_create_account(request):
+    """Verify code and create user account"""
+    try:
+        # Get form data
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        password1 = request.POST.get('password1')
+        password2 = request.POST.get('password2')
+        verification_code = request.POST.get('verification_code')
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        
+        # Validate required fields
+        if not all([email, password1, password2, verification_code]):
+            return JsonResponse({
+                'success': False,
+                'message': 'Tous les champs sont requis'
+            })
+        
+        if password1 != password2:
+            return JsonResponse({
+                'success': False,
+                'message': 'Les mots de passe ne correspondent pas'
+            })
+        
+        # Verify code
+        cache_key = f'verification_code_{email}'
+        stored_code = cache.get(cache_key)
+        
+        if not stored_code or stored_code != verification_code:
+            return JsonResponse({
+                'success': False,
+                'message': 'Code de vérification invalide ou expiré'
+            })
+        
+        # Create user
+        user = User.objects.create_user(
+            username=email,
+            email=email,
+            password=password1,
+            first_name=first_name or '',
+            last_name=last_name or '',
+            phone=phone or '',
+            is_active=True
+        )
+        
+        # Clear verification code
+        cache.delete(cache_key)
+        
+        # Log user in
+        login(request, user)
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Compte créé avec succès',
+            'redirect_url': reverse('backend:dashboard')
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erreur lors de la création du compte: {str(e)}'
+        })
+
+
+@require_POST
+def ajax_login(request):
+    """Handle AJAX login with user status checking"""
+    try:
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        
+        if not email or not password:
+            return JsonResponse({
+                'success': False,
+                'message': 'Email et mot de passe requis'
+            })
+        
+        # Check if user exists
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'Email ou mot de passe incorrect'
+            })
+        
+        # Check if user is active
+        if not user.is_active:
+            # Send email notification
+            send_mail(
+                'Tentative de connexion - Compte désactivé',
+                f'Une tentative de connexion a été détectée pour votre compte désactivé.\n\nEmail: {email}\nDate: {timezone.now()}\n\nSi vous pensez qu\'il s\'agit d\'une erreur, contactez le support.',
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+            
+            return JsonResponse({
+                'success': False,
+                'message': 'Votre compte a été désactivé. Contactez le support pour plus d\'informations.'
+            })
+        
+        # Check if user is blocked
+        if hasattr(user, 'is_blocked') and user.is_blocked:
+            # Send email notification
+            send_mail(
+                'Tentative de connexion - Compte bloqué',
+                f'Une tentative de connexion a été détectée pour votre compte bloqué.\n\nEmail: {email}\nDate: {timezone.now()}\n\nSi vous pensez qu\'il s\'agit d\'une erreur, contactez le support.',
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+            
+            return JsonResponse({
+                'success': False,
+                'message': 'Votre compte a été bloqué. Contactez le support pour plus d\'informations.'
+            })
+        
+        # Authenticate user
+        user = authenticate(request, username=email, password=password)
+        
+        if user is None:
+            return JsonResponse({
+                'success': False,
+                'message': 'Email ou mot de passe incorrect'
+            })
+        
+        # Log user in
+        login(request, user)
+        
+        # Send login notification email
+        send_mail(
+            'Connexion réussie - Vidé-Grenier Kamer',
+            f'Connexion réussie à votre compte.\n\nEmail: {email}\nDate: {timezone.now()}\n\nSi vous n\'êtes pas à l\'origine de cette connexion, contactez immédiatement le support.',
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            fail_silently=False,
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Connexion réussie',
+            'redirect_url': reverse('backend:dashboard')
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erreur de connexion: {str(e)}'
         })

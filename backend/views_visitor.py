@@ -165,6 +165,162 @@ class VisitorProductListView(ListView):
             return []
 
 
+class VisitorCategoryDetailView(ListView):
+    """Enhanced category detail view for visitors"""
+    model = Product
+    template_name = 'backend/visitor/categories/detail.html'
+    context_object_name = 'products'
+    paginate_by = 24
+    
+    def get_queryset(self):
+        """Get products for the specific category"""
+        self.category = get_object_or_404(Category, slug=self.kwargs['slug'])
+        queryset = Product.objects.filter(
+            category=self.category,
+            status='ACTIVE'
+        ).select_related('seller').prefetch_related('images')
+        
+        # Apply filters
+        city = self.request.GET.get('city')
+        if city:
+            queryset = queryset.filter(city=city)
+        
+        condition = self.request.GET.get('condition')
+        if condition:
+            queryset = queryset.filter(condition=condition)
+        
+        min_price = self.request.GET.get('min_price')
+        if min_price:
+            queryset = queryset.filter(price__gte=min_price)
+        
+        max_price = self.request.GET.get('max_price')
+        if max_price:
+            queryset = queryset.filter(price__lte=max_price)
+        
+        # Apply sorting
+        sort_by = self.request.GET.get('sort', '-created_at')
+        if sort_by in ['price', '-price', 'created_at', '-created_at', 'views_count', '-views_count']:
+            queryset = queryset.order_by(sort_by)
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        """Add category and visitor-specific context"""
+        context = super().get_context_data(**kwargs)
+        context['category'] = self.category
+        
+        # Get visitor session
+        session_key = self.request.session.session_key
+        if not session_key:
+            self.request.session.create()
+            session_key = self.request.session.session_key
+        
+        # Track category view
+        self._track_category_view(session_key)
+        
+        # Get AI recommendations for this category
+        context['ai_recommendations'] = self._get_ai_recommendations(session_key)
+        
+        # Get visitor cart
+        context['visitor_cart'] = self._get_visitor_cart(session_key)
+        
+        # Get subcategories
+        context['subcategories'] = Category.objects.filter(
+            parent=self.category
+        ).annotate(
+            products_count=Count('products', filter=Q(products__status='ACTIVE'))
+        )
+        
+        return context
+    
+    def _track_category_view(self, session_key):
+        """Track category view for analytics"""
+        try:
+            behavior, created = VisitorBehavior.objects.get_or_create(
+                session_key=session_key,
+                behavior_type='CATEGORY_VIEW',
+                defaults={
+                    'category': self.category,
+                    'timestamp': timezone.now(),
+                    'metadata': {
+                        'category_name': self.category.name,
+                        'category_slug': self.category.slug,
+                        'products_count': self.get_queryset().count()
+                    }
+                }
+            )
+            if not created:
+                behavior.timestamp = timezone.now()
+                behavior.metadata.update({
+                    'category_name': self.category.name,
+                    'category_slug': self.category.slug,
+                    'products_count': self.get_queryset().count()
+                })
+                behavior.save()
+        except Exception as e:
+            logger.error(f"Error tracking category view: {e}")
+    
+    def _get_ai_recommendations(self, session_key, limit=6):
+        """Get AI recommendations for this category"""
+        try:
+            # Get visitor preferences
+            preferences = VisitorPreference.objects.filter(session_key=session_key).first()
+            
+            if preferences:
+                # Use preferences to generate recommendations
+                recommendations = []
+                
+                # Price-based recommendations
+                if preferences.preferred_price_range:
+                    min_price, max_price = preferences.preferred_price_range
+                    price_recs = Product.objects.filter(
+                        category=self.category,
+                        status='ACTIVE',
+                        price__gte=min_price,
+                        price__lte=max_price
+                    ).exclude(
+                        id__in=self.get_queryset().values_list('id', flat=True)
+                    )[:limit//2]
+                    
+                    for product in price_recs:
+                        recommendations.append({
+                            'type': 'price_based',
+                            'product': product,
+                            'reason': f'Produit dans votre fourchette de prix ({min_price} - {max_price} FCFA)'
+                        })
+                
+                # Condition-based recommendations
+                if preferences.preferred_condition:
+                    condition_recs = Product.objects.filter(
+                        category=self.category,
+                        status='ACTIVE',
+                        condition=preferences.preferred_condition
+                    ).exclude(
+                        id__in=self.get_queryset().values_list('id', flat=True)
+                    )[:limit//2]
+                    
+                    for product in condition_recs:
+                        recommendations.append({
+                            'type': 'condition_based',
+                            'product': product,
+                            'reason': f'Produit en {preferences.preferred_condition}'
+                        })
+                
+                return recommendations[:limit]
+            
+            return []
+        except Exception as e:
+            logger.error(f"Error getting AI recommendations: {e}")
+            return []
+    
+    def _get_visitor_cart(self, session_key):
+        """Get visitor cart for this session"""
+        try:
+            return VisitorCart.objects.get(session_key=session_key)
+        except VisitorCart.DoesNotExist:
+            return None
+
+
 class VisitorProductDetailView(DetailView):
     """Enhanced product detail view for visitors"""
     model = Product
